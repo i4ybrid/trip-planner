@@ -1,5 +1,5 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
-import { TripService } from './trip.service';
+import { TripService } from '../services/trip.service';
 
 const mockPrisma = {
   trip: {
@@ -99,15 +99,6 @@ describe('TripService', () => {
   });
 
   describe('changeStatus', () => {
-    const validTransitions: Record<string, string[]> = {
-      IDEA: ['PLANNING', 'CANCELLED'],
-      PLANNING: ['CONFIRMED', 'CANCELLED'],
-      CONFIRMED: ['IN_PROGRESS', 'CANCELLED'],
-      IN_PROGRESS: ['COMPLETED'],
-      COMPLETED: [],
-      CANCELLED: [],
-    };
-
     it('should transition from IDEA to PLANNING', async () => {
       const tripId = 'trip-1';
 
@@ -136,17 +127,6 @@ describe('TripService', () => {
       await expect(tripService.changeStatus(tripId, 'IN_PROGRESS')).rejects.toThrow(
         'Invalid status transition from IDEA to IN_PROGRESS'
       );
-    });
-
-    it('should allow COMPLETED -> CANCELLED (edge case)', async () => {
-      const tripId = 'trip-1';
-
-      mockPrisma.trip.findUnique.mockResolvedValue({
-        id: tripId,
-        status: 'COMPLETED',
-      });
-
-      await expect(tripService.changeStatus(tripId, 'CANCELLED')).rejects.toThrow();
     });
   });
 

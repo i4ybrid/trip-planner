@@ -14,6 +14,40 @@
 
 ## 2. System Architecture
 
+### Project Structure
+```
+trip-planner/
+├── frontend/                 # Next.js Web Application
+│   ├── src/
+│   │   ├── app/             # Next.js App Router pages
+│   │   ├── components/      # React components
+│   │   ├── hooks/           # Custom React hooks
+│   │   ├── lib/             # Utilities
+│   │   ├── services/         # API client services
+│   │   ├── store/           # Zustand state management
+│   │   └── types/            # TypeScript types
+│   ├── Dockerfile
+│   ├── Dockerfile.test
+│   └── vitest.config.ts
+│
+├── backend/                  # Node.js API Server
+│   ├── src/
+│   │   ├── routes/          # Express routes
+│   │   ├── services/        # Business logic
+│   │   ├── lib/             # Utilities & stubs
+│   │   ├── middleware/      # Express middleware
+│   │   └── types/           # TypeScript types
+│   ├── prisma/              # Database schema
+│   ├── Dockerfile
+│   ├── Dockerfile.test
+│   └── vitest.config.ts
+│
+├── docker-compose.yml        # Development environment
+├── docker-compose.test.yml   # Test environment
+└── scripts/                 # Build & test scripts
+```
+
+### System Diagram
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                           CLIENTS                                       │
@@ -26,39 +60,23 @@
                                   │
                                   ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                          API GATEWAY (Next.js API Routes)               │
-│  ┌─────────────────────────────────────────────────────────────────────┐ │
-│  │  Authentication │ Trip Management │ Invites │ Activities │ Chat  │ │
-│  └─────────────────────────────────────────────────────────────────────┘ │
+│                         BACKEND API                                     │
+│  ┌──────────────────────────────────────────────────────────────────┐  │
+│  │  Express Server (Port 4000)                                      │  │
+│  │  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌──────────┐  │  │
+│  │  │   Auth      │ │    Trip     │ │   Invite    │ │   Chat   │  │  │
+│  │  │   Routes    │ │   Routes    │ │   Routes    │ │  Routes  │  │  │
+│  │  └─────────────┘ └─────────────┘ └─────────────┘ └──────────┘  │  │
+│  └──────────────────────────────────────────────────────────────────┘  │
 └───────────────────────────────────┬─────────────────────────────────────┘
                                     │
           ┌─────────────────────────┼─────────────────────────┐
           │                         │                         │
           ▼                         ▼                         ▼
 ┌─────────────────┐      ┌─────────────────┐      ┌─────────────────┐
-│   PostgreSQL    │      │    Socket.io   │      │      S3/       │
-│   Database      │      │    Server      │      │   File Storage │
+│   PostgreSQL    │      │    Socket.io    │      │      S3/       │
+│   Database      │      │    Server        │      │   File Storage │
 └─────────────────┘      └─────────────────┘      └─────────────────┘
-          │                         │                         │
-          │                         ▼                         │
-          │               ┌─────────────────┐               │
-          │               │   WebPush       │               │
-          │               │   Server        │               │
-          │               └─────────────────┘               │
-          │                                                     │
-          └─────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
-                    ┌───────────────────────────────┐
-                    │    External Services          │
-                    │  • Venmo API                  │
-                    │  • PayPal API                 │
-                    │  • Zelle (manual link)        │
-                    │  • Google OAuth               │
-                    │  • Apple OAuth                │
-                    │  • Facebook OAuth             │
-                    │  • SendGrid (Email)           │
-                    └───────────────────────────────┘
 ```
 
 ### Technology Stack
@@ -67,11 +85,11 @@
 |-------|------------|---------|
 | Frontend Web | Next.js 14 (App Router) | React UI with SSR |
 | Frontend Mobile | React Native | iOS & Android apps |
-| Backend | Node.js + Express | API logic (embedded in Next.js) |
+| Backend | Node.js + Express | REST API server |
 | Database | PostgreSQL + Prisma | Relational data |
 | Real-time | Socket.io | Chat & live updates |
 | Push Notifications | WebPush + FCM | Browser & mobile notifications |
-| Auth | NextAuth.js | Social login providers |
+| Auth | NextAuth.js (Frontend) + JWT | Social login providers |
 | File Storage | AWS S3 | Photos, videos |
 | Email | SendGrid | Transactional emails |
 

@@ -1,0 +1,15 @@
+# Backend Dockerfile - Test
+FROM node:20-alpine
+
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --legacy-peer-deps
+
+COPY vitest.config.ts ./
+COPY tsconfig.json ./
+COPY src/ ./src/
+COPY prisma/ ./prisma/
+
+RUN npx prisma generate
+
+CMD ["sh", "-c", "npm run test:unit -- --coverage"]

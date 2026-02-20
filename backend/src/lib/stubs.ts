@@ -9,6 +9,8 @@ export interface User {
   venmo?: string;
   paypal?: string;
   zelle?: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface Trip {
@@ -25,6 +27,19 @@ export interface Trip {
   updatedAt: Date;
 }
 
+export interface TripMember {
+  id: string;
+  tripId: string;
+  userId: string;
+  role: 'MASTER' | 'ORGANIZER' | 'MEMBER' | 'VIEWER';
+  status: 'INVITED' | 'DECLINED' | 'MAYBE' | 'CONFIRMED' | 'REMOVED';
+  paymentStatus?: string;
+  paymentAmount?: number;
+  joinedAt: Date;
+  trip?: Trip;
+  user?: User;
+}
+
 export interface Activity {
   id: string;
   tripId: string;
@@ -37,27 +52,77 @@ export interface Activity {
   currency: string;
   category: string;
   proposedBy: string;
+  votes?: Vote[];
+}
+
+export interface Vote {
+  id: string;
+  activityId: string;
+  userId: string;
+  option: 'yes' | 'no' | 'maybe';
+}
+
+export interface Invite {
+  id: string;
+  tripId: string;
+  token: string;
+  email?: string;
+  phone?: string;
+  status: 'PENDING' | 'ACCEPTED' | 'EXPIRED' | 'REVOKED';
+  expiresAt: Date;
+  sentById: string;
+}
+
+export interface TripMessage {
+  id: string;
+  tripId: string;
+  userId: string;
+  content: string;
+  messageType: 'TEXT' | 'IMAGE' | 'VIDEO' | 'SYSTEM';
+  createdAt: Date;
+}
+
+export interface Notification {
+  id: string;
+  userId: string;
+  tripId?: string;
+  type: string;
+  title: string;
+  body: string;
+  actionUrl?: string;
+  read: boolean;
+  createdAt: Date;
 }
 
 export class PrismaStub {
   private users: Map<string, User> = new Map();
   private trips: Map<string, Trip> = new Map();
+  private tripMembers: Map<string, TripMember> = new Map();
   private activities: Map<string, Activity> = new Map();
+  private invites: Map<string, Invite> = new Map();
+  private messages: Map<string, TripMessage> = new Map();
+  private notifications: Map<string, Notification> = new Map();
 
   user = {
     findUnique: vi.fn((args: { where: { id: string } }) => {
       return Promise.resolve(this.users.get(args.where.id) || null);
     }),
     findFirst: vi.fn(),
-    create: vi.fn((args: { data: User }) => {
-      const user = { id: crypto.randomUUID(), ...args.data };
+    findMany: vi.fn(() => Promise.resolve([...this.users.values()])),
+    create: vi.fn((args: { data: Omit<User, 'id' | 'createdAt' | 'updatedAt'> }) => {
+      const user = { 
+        id: crypto.randomUUID(), 
+        ...args.data,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
       this.users.set(user.id, user);
       return Promise.resolve(user);
     }),
     update: vi.fn((args: { where: { id: string }, data: Partial<User> }) => {
       const user = this.users.get(args.where.id);
       if (!user) return Promise.reject(new Error('User not found'));
-      const updated = { ...user, ...args.data };
+      const updated = { ...user, ...args.data, updatedAt: new Date() };
       this.users.set(updated.id, updated);
       return Promise.resolve(updated);
     }),
@@ -97,7 +162,33 @@ export class PrismaStub {
     }),
   };
 
+  tripMember = {
+    findUnique: vi.fn(),
+    findMany: vi.fn((args?: { where?: { userId?: string; tripId?: string } }) => {
+      const members = [...this.tripMembers.values()];
+      if (args?.where?.userId) {
+        return Promise.resolve(members.filter(m => m.userId === args.where!.userId));
+      }
+      if (args?.where?.tripId) {
+        return Promise.resolve(members.filter(m => m.tripId === args.where!.tripId));
+      }
+      return Promise.resolve(members);
+    }),
+    create: vi.fn((args: { data: Omit<TripMember, 'id' | 'joinedAt'> }) => {
+      const member = {
+        id: crypto.randomUUID(),
+        ...args.data,
+        joinedAt: new Date(),
+      };
+      this.tripMembers.set(member.id, member);
+      return Promise.resolve(member);
+    }),
+    update: vi.fn(),
+    delete: vi.fn(),
+  };
+
   activity = {
+    findUnique: vi.fn(),
     findMany: vi.fn((args?: { where?: { tripId: string } }) => {
       const activities = [...this.activities.values()];
       if (args?.where?.tripId) {
@@ -110,39 +201,65 @@ export class PrismaStub {
       this.activities.set(activity.id, activity);
       return Promise.resolve(activity);
     }),
-  };
-
-  tripMember = {
-    create: vi.fn(),
-    findMany: vi.fn(() => Promise.resolve([])),
     update: vi.fn(),
     delete: vi.fn(),
   };
 
+  vote = {
+    findMany: vi.fn(() => Promise.resolve([])),
+    create: vi.fn(),
+    delete: vi.fn(),
+  };
+
   invite = {
-    create: vi.fn((args: { data: { token: string } }) => {
-      return Promise.resolve({
+    findUnique: vi.fn((args: { where: { token: string } }) => {
+      const invite = [...this.invites.values()].find(i => i.token === args.where.token);
+      return Promise.resolve(invite || null);
+    }),
+    findMany: vi.fn(() => Promise.resolve([...this.invites.values()])),
+    create: vi.fn((args: { data: Omit<Invite, 'id' | 'createdAt'> }) => {
+      const invite = {
         id: crypto.randomUUID(),
         ...args.data,
-        status: 'PENDING',
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      });
+        createdAt: new Date(),
+      };
+      this.invites.set(invite.id, invite);
+      return Promise.resolve(invite);
     }),
-    findUnique: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+  };
+
+  tripMessage = {
+    findMany: vi.fn(() => Promise.resolve([...this.messages.values()])),
+    create: vi.fn((args: { data: Omit<TripMessage, 'id' | 'createdAt'> }) => {
+      const message = {
+        id: crypto.randomUUID(),
+        ...args.data,
+        createdAt: new Date(),
+      };
+      this.messages.set(message.id, message);
+      return Promise.resolve(message);
+    }),
+    delete: vi.fn(),
   };
 
   notification = {
+    findMany: vi.fn(() => Promise.resolve([...this.notifications.values()])),
     create: vi.fn(),
-    findMany: vi.fn(() => Promise.resolve([])),
     update: vi.fn(),
   };
 
-  $transaction: any = vi.fn((callback) => callback(this));
+  $transaction: any = vi.fn((callback: any) => callback(this));
 
   mockReset() {
     this.users.clear();
     this.trips.clear();
+    this.tripMembers.clear();
     this.activities.clear();
+    this.invites.clear();
+    this.messages.clear();
+    this.notifications.clear();
     vi.clearAllMocks();
   }
 }
@@ -155,6 +272,8 @@ export class SocketStub {
   emit = vi.fn();
   emitAsync = vi.fn().mockResolvedValue(undefined);
   disconnect = vi.fn();
+  on = vi.fn();
+  off = vi.fn();
 
   mockReset() {
     vi.clearAllMocks();

@@ -1,0 +1,18 @@
+# Frontend Dockerfile - Test
+FROM node:20-alpine
+
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --legacy-peer-deps
+
+RUN npm install -D @playwright/test && npx playwright install --with-deps chromium
+
+COPY vitest.config.ts ./
+COPY tailwind.config.js ./
+COPY postcss.config.js ./
+COPY next.config.js ./
+COPY tsconfig.json ./
+COPY next-env.d.ts ./
+COPY src/ ./src/
+
+CMD ["sh", "-c", "npm run test:unit -- --coverage"]

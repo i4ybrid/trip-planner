@@ -1,6 +1,5 @@
 import '@testing-library/jest-dom';
 
-// Mock NextAuth
 vi.mock('next-auth/react', () => ({
   useSession: vi.fn(() => ({
     data: {
@@ -16,7 +15,6 @@ vi.mock('next-auth/react', () => ({
   signOut: vi.fn(),
 }));
 
-// Mock Socket.io client
 vi.mock('socket.io-client', () => ({
   io: vi.fn(() => ({
     emit: vi.fn(),
@@ -26,7 +24,15 @@ vi.mock('socket.io-client', () => ({
   })),
 }));
 
-// Mock window.matchMedia
+vi.mock('next/navigation', () => ({
+  useRouter: vi.fn(() => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    back: vi.fn(),
+  })),
+  usePathname: vi.fn(() => '/'),
+}));
+
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
   value: vi.fn().mockImplementation(query => ({
@@ -41,5 +47,4 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 });
 
-// Mock fetch
 global.fetch = vi.fn();
