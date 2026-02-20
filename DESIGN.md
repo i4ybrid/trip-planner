@@ -1261,6 +1261,638 @@ npm run test:coverage
 
 ---
 
+## 10. Deployment Strategy
+
+### 10.1 Docker Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                        DOCKER COMPOSE                                   │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐                  │
+│  │   Next.js   │  │   Socket.io  │  │   Worker    │                  │
+│  │   Web/API   │  │   Server     │  │   (Cron)    │                  │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘                  │
+│         │                 │                 │                          │
+│         └─────────────────┼─────────────────┘                          │
+│                           │                                              │
+│  ┌────────────────────────┼────────────────────────────────┐           │
+│  │                  Traefik Reverse Proxy                  │           │
+│  │            (SSL Termination + Load Balancing)            │           │
+│  └────────────────────────┬────────────────────────────────┘           │
+│                           │                                              │
+│         ┌─────────────────┼─────────────────┐                            │
+│         │                 │                 │                            │
+│         ▼                 ▼                 ▼                            │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐                  │
+│  │ PostgreSQL  │  │    Redis     │  │      S3     │                  │
+│  │  Database   │  │    Cache     │  │ (MinIO Dev) │                  │
+│  └──────────────┘  └──────────────┘  └──────────────┘                  │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### 10.2 Dockerfiles
+
+#### Production Dockerfile
+```dockerfile
+# Dockerfile
+FROM node:20-alpine AS base
+
+# Install dependencies only when needed
+FROM base AS deps
+WORKDIR /app
+COPY package.json package-lock.json* ./
+RUN npm ci --legacy-peer-deps
+
+# Rebuild the source code only when needed
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+RUN npx prisma generate
+RUN npm run build
+
+# Production image
+FROM base AS runner
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+USER nextjs
+
+EXPOSE 3000
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+
+CMD ["node", "server.js"]
+```
+
+#### Development Dockerfile
+```dockerfile
+# Dockerfile.dev
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install dependencies
+COPY package*.json ./
+RUN npm install
+
+# Install Prisma
+RUN npm install -g prisma
+
+# Copy source
+COPY . .
+
+# Generate Prisma client
+RUN npx prisma generate
+
+EXPOSE 3000
+
+CMD ["npm", "run", "dev"]
+```
+
+### 10.3 Docker Compose Files
+
+#### Development Compose
+```yaml
+# docker-compose.yml
+version: '3.8'
+
+services:
+  nextjs:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/tripplanner
+      - NEXTAUTH_SECRET=dev-secret-change-in-prod
+      - NEXTAUTH_URL=http://localhost:3000
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  db:
+    image: postgres:15-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: tripplanner
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  # Development mail catcher
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - "1025:1025"  # SMTP
+      - "8025:8025"  # Web UI
+
+volumes:
+  postgres_data:
+  redis_data:
+```
+
+#### Production Compose
+```yaml
+# docker-compose.prod.yml
+version: '3.8'
+
+services:
+  nextjs:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      - NEXTAUTH_URL=${NEXTAUTH_URL}
+      - REDIS_URL=redis://redis:6379
+      - S3_ENDPOINT=${S3_ENDPOINT}
+      - S3_ACCESS_KEY_ID=${S3_ACCESS_KEY_ID}
+      - S3_SECRET_ACCESS_KEY=${S3_SECRET_ACCESS_KEY}
+      - S3_BUCKET=${S3_BUCKET}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - app
+
+  socket:
+    build:
+      context: .
+      dockerfile: Dockerfile.socket
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=${DATABASE_URL}
+    depends_on:
+      - redis
+      - db
+    networks:
+      - app
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - db
+      - redis
+    networks:
+      - app
+
+  db:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - app
+
+  traefik:
+    image: traefik:v3.0
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik/traefik.yml:/traefik.yml:ro
+      - ./traefik/certs:/certs:ro
+      - traefik_acme:/acme
+    networks:
+      - app
+
+volumes:
+  postgres_data:
+  redis_data:
+  traefik_acme:
+
+networks:
+  app:
+    driver: bridge
+```
+
+### 10.4 Database Schema Migrations in Docker
+
+```yaml
+# docker-compose.migrate.yml
+version: '3.8'
+
+services:
+  migrate:
+    build: .
+    command: sh -c "npx prisma migrate deploy && npx prisma generate"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  seed:
+    build: .
+    command: npx tsx prisma/seed.ts
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+```
+
+### 10.5 Test Scripts with Docker
+
+```bash
+#!/bin/bash
+set -e
+
+# Run unit tests in Docker
+function test:unit:docker() {
+    echo "🧪 Running unit tests in Docker..."
+    docker run --rm \
+        -v $(pwd):/app \
+        -w /app \
+        node:20-alpine \
+        sh -c "npm ci && npm run test:unit -- --coverage"
+}
+
+# Run integration tests with test database
+function test:integration:docker() {
+    echo "🧪 Running integration tests in Docker..."
+    
+    # Start test database
+    docker compose -f docker-compose.test.yml up -d db test-redis
+    
+    # Wait for database
+    sleep 5
+    
+    # Run tests
+    docker run --rm \
+        --network tripplanner_default \
+        -v $(pwd):/app \
+        -w /app \
+        -e DATABASE_URL="postgresql://postgres:postgres@db:5432/tripplanner_test" \
+        node:20-alpine \
+        sh -c "npm ci && npm run test:integration"
+    
+    # Cleanup
+    docker compose -f docker-compose.test.yml down
+}
+
+# Run full test suite in Docker
+function test:all:docker() {
+    echo "🧪 Running full test suite in Docker..."
+    
+    docker compose -f docker-compose.test.yml up --abort-on-container-exit
+    
+    # Check exit code
+    EXIT_CODE=$(docker compose -f docker-compose.test.yml ps -q test-runner | xargs docker inspect -f '{{.State.ExitCode}}')
+    
+    docker compose -f docker-compose.test.yml down
+    
+    if [ "$EXIT_CODE" -eq 0 ]; then
+        echo "✅ All tests passed!"
+    else
+        echo "❌ Tests failed!"
+        exit 1
+    fi
+}
+
+# Test Docker build
+function test:build:docker() {
+    echo "🔨 Testing Docker build..."
+    docker build -t tripplanner:test .
+    echo "✅ Build successful!"
+}
+
+# Lint in Docker
+function lint:docker() {
+    echo "🔍 Running linter in Docker..."
+    docker run --rm \
+        -v $(pwd):/app \
+        -w /app \
+        node:20-alpine \
+        sh -c "npm ci && npm run lint"
+}
+
+# Typecheck in Docker
+function typecheck:docker() {
+    echo "🔍 Running type checker in Docker..."
+    docker run --rm \
+        -v $(pwd):/app \
+        -w /app \
+        node:20-alpine \
+        sh -c "npm ci && npx tsc --noEmit"
+}
+```
+
+### 10.6 Test Docker Compose
+
+```yaml
+# docker-compose.test.yml
+version: '3.8'
+
+services:
+  test-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    environment:
+      - NODE_ENV=test
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/tripplanner_test
+      - REDIS_URL=redis://test-redis:6379
+    depends_on:
+      db:
+        condition: service_healthy
+      test-redis:
+        condition: service_started
+    volumes:
+      - ./coverage:/app/coverage
+    command: sh -c "npm run test:all"
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: tripplanner_test
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    tmpfs:
+      - /var/lib/postgresql/data
+
+  test-redis:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"
+
+  # Mailhog for testing emails
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+```
+
+### 10.7 CI/CD with Docker
+
+```yaml
+# .github/workflows/deploy.yml
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run unit tests
+        run: docker compose -f docker-compose.test.yml run test-runner npm run test:unit
+      
+      - name: Run integration tests
+        run: docker compose -f docker-compose.test.yml run test-runner npm run test:integration
+      
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build production image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          tags: tripplanner:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy-staging:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - name: Deploy to staging
+        run: |
+          echo "Deploying to staging..."
+          # Add your staging deployment commands
+
+  deploy-production:
+    needs: deploy-staging
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - name: Deploy to production
+        run: |
+          echo "Deploying to production..."
+          # Add your production deployment commands
+```
+
+### 10.8 Environment Variables
+
+```bash
+# .env.example
+
+# Database
+DATABASE_URL="postgresql://user:password@host:5432/tripplanner"
+
+# Auth
+NEXTAUTH_SECRET="your-secret-key-min-32-chars-long"
+NEXTAUTH_URL="https://tripplanner.app"
+
+# OAuth Providers
+GOOGLE_CLIENT_ID=""
+GOOGLE_CLIENT_SECRET=""
+APPLE_CLIENT_ID=""
+APPLE_CLIENT_SECRET=""
+FACEBOOK_CLIENT_ID=""
+FACEBOOK_CLIENT_SECRET=""
+
+# Redis
+REDIS_URL="redis://localhost:6379"
+
+# S3 / Storage
+S3_ENDPOINT="https://s3.amazonaws.com"
+S3_ACCESS_KEY_ID=""
+S3_SECRET_ACCESS_KEY=""
+S3_BUCKET="tripplanner-prod"
+
+# Email
+SENDGRID_API_KEY=""
+EMAIL_FROM="noreply@tripplanner.app"
+
+# App
+NEXT_PUBLIC_APP_URL="https://tripplanner.app"
+NEXT_PUBLIC_SOCKET_URL="wss://socket.tripplanner.app"
+```
+
+### 10.9 Deployment Commands
+
+```bash
+# Development
+docker compose up -d              # Start all services
+docker compose logs -f           # View logs
+docker compose down               # Stop all services
+
+# Run tests in Docker
+docker compose -f docker-compose.test.yml up --abort-on-container-exit
+
+# Database migrations
+docker compose -f docker-compose.migrate.yml up migrate
+
+# Production
+docker compose -f docker-compose.prod.yml up -d --build
+
+# View logs
+docker compose -f docker-compose.prod.yml logs -f
+
+# Database backup
+docker compose -f docker-compose.prod.yml exec db pg_dump -U user tripplanner > backup.sql
+
+# Database restore
+docker compose -f docker-compose.prod.yml exec -T db psql -U user tripplanner < backup.sql
+```
+
+### 10.10 Health Checks
+
+```typescript
+// src/app/api/health/route.ts
+import { NextResponse } from 'next/server';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+
+export async function GET() {
+  const checks = {
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    services: {
+      database: false,
+    redis: false,
+    socket: false,
+    s3: false,
+    email: false,
+    external: false,
+    version: process.env.npm_package_version || '1.0.0',
+  };
+
+  // Database check
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    checks.services.database = true;
+  } catch (e) {
+    checks.status = 'degraded';
+  }
+
+  // Redis check
+  try {
+    const redis = await import('redis');
+    const client = redis.createClient({ url: process.env.REDIS_URL });
+    await client.connect();
+    await client.ping();
+    await client.disconnect();
+    checks.services.redis = true;
+  } catch (e) {
+    checks.status = 'degraded';
+  }
+
+  const statusCode = checks.status === 'ok' ? 200 : 503;
+  return NextResponse.json(checks, { status: statusCode });
+}
+```
+
+---
+
 ## 11. MVP Scope (6+ months)
 
 ### Phase 1: Core (Month 1-2)

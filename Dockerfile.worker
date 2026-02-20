@@ -1,0 +1,22 @@
+# Dockerfile.worker - Background Worker
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm ci --legacy-peer-deps
+RUN npm install -g prisma
+
+# Copy source
+COPY . .
+
+# Generate Prisma client
+RUN npx prisma generate
+
+# Build TypeScript
+RUN npx tsc --project worker/tsconfig.json
+
+CMD ["node", "worker/dist/index.js"]
