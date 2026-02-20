@@ -1,4 +1,3 @@
-import { vi } from 'vitest';
 import {
   Trip,
   TripMember,
@@ -20,7 +19,7 @@ import {
 
 const generateId = () => crypto.randomUUID();
 
-export class MockTrip {
+class MockTrip {
   trips: Map<string, Trip> = new Map();
   members: Map<string, TripMember[]> = new Map();
   activities: Map<string, Activity[]> = new Map();
@@ -216,30 +215,27 @@ export class MockTrip {
 export const mockTrip = new MockTrip();
 
 export const mockApi = {
-  getTrips: vi.fn(() => mockTrip.getTrips()),
-  getTrip: vi.fn((id: string) => mockTrip.getTrip(id)),
-  createTrip: vi.fn((userId: string, input: CreateTripInput) => mockTrip.createTrip(userId, input)),
-  updateTrip: vi.fn((id: string, input: UpdateTripInput) => mockTrip.updateTrip(id, input)),
-  deleteTrip: vi.fn((id: string) => mockTrip.deleteTrip(id)),
-  changeTripStatus: vi.fn((id: string, status: string) => mockTrip.changeTripStatus(id, status)),
-  getTripMembers: vi.fn((tripId: string) => mockTrip.getTripMembers(tripId)),
-  addTripMember: vi.fn((tripId: string, userId: string) => mockTrip.addTripMember(tripId, userId)),
-  getActivities: vi.fn((tripId: string) => mockTrip.getActivities(tripId)),
-  createActivity: vi.fn((tripId: string, userId: string, input: CreateActivityInput) => 
-    mockTrip.createActivity(tripId, userId, input)),
-  castVote: vi.fn((activityId: string, userId: string, option: string) => 
-    mockTrip.castVote(activityId, userId, option)),
-  getInvites: vi.fn((tripId: string) => mockTrip.getInvites(tripId)),
-  createInvite: vi.fn((tripId: string, input: CreateInviteInput) => mockTrip.createInvite(tripId, input)),
-  getBookings: vi.fn((tripId: string) => mockTrip.getBookings(tripId)),
-  getMessages: vi.fn((tripId: string) => mockTrip.getMessages(tripId)),
-  sendMessage: vi.fn((tripId: string, userId: string, input: SendMessageInput) => 
-    mockTrip.sendMessage(tripId, userId, input)),
-  getMedia: vi.fn((tripId: string) => mockTrip.getMedia(tripId)),
-  getNotifications: vi.fn(() => Promise.resolve({ data: [] })),
-  markNotificationRead: vi.fn(() => Promise.resolve({ data: undefined })),
-  markAllNotificationsRead: vi.fn(() => Promise.resolve({ data: undefined })),
-  getCurrentUser: vi.fn(() => Promise.resolve({ 
+  getTrips: (): Promise<ApiResponse<Trip[]>> => mockTrip.getTrips(),
+  getTrip: (id: string): Promise<ApiResponse<Trip>> => mockTrip.getTrip(id),
+  createTrip: (userId: string, input: CreateTripInput): Promise<ApiResponse<Trip>> => mockTrip.createTrip(userId, input),
+  updateTrip: (id: string, input: UpdateTripInput): Promise<ApiResponse<Trip>> => mockTrip.updateTrip(id, input),
+  deleteTrip: (id: string): Promise<ApiResponse<void>> => mockTrip.deleteTrip(id),
+  changeTripStatus: (id: string, status: string): Promise<ApiResponse<Trip>> => mockTrip.changeTripStatus(id, status),
+  getTripMembers: (tripId: string): Promise<ApiResponse<TripMember[]>> => mockTrip.getTripMembers(tripId),
+  addTripMember: (tripId: string, userId: string): Promise<ApiResponse<TripMember>> => mockTrip.addTripMember(tripId, userId),
+  getActivities: (tripId: string): Promise<ApiResponse<Activity[]>> => mockTrip.getActivities(tripId),
+  createActivity: (tripId: string, userId: string, input: CreateActivityInput): Promise<ApiResponse<Activity>> => mockTrip.createActivity(tripId, userId, input),
+  castVote: (activityId: string, userId: string, option: string): Promise<ApiResponse<Vote>> => mockTrip.castVote(activityId, userId, option),
+  getInvites: (tripId: string): Promise<ApiResponse<Invite[]>> => mockTrip.getInvites(tripId),
+  createInvite: (tripId: string, input: CreateInviteInput): Promise<ApiResponse<Invite>> => mockTrip.createInvite(tripId, input),
+  getBookings: (tripId: string): Promise<ApiResponse<Booking[]>> => mockTrip.getBookings(tripId),
+  getMessages: (tripId: string): Promise<ApiResponse<TripMessage[]>> => mockTrip.getMessages(tripId),
+  sendMessage: (tripId: string, userId: string, input: SendMessageInput): Promise<ApiResponse<TripMessage>> => mockTrip.sendMessage(tripId, userId, input),
+  getMedia: (tripId: string): Promise<ApiResponse<MediaItem[]>> => mockTrip.getMedia(tripId),
+  getNotifications: (): Promise<ApiResponse<Notification[]>> => Promise.resolve({ data: [] }),
+  markNotificationRead: (id: string): Promise<ApiResponse<void>> => Promise.resolve({ data: undefined }),
+  markAllNotificationsRead: (): Promise<ApiResponse<void>> => Promise.resolve({ data: undefined }),
+  getCurrentUser: (): Promise<ApiResponse<User>> => Promise.resolve({ 
     data: { 
       id: 'user-1', 
       email: 'test@example.com', 
@@ -247,7 +243,7 @@ export const mockApi = {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     } 
-  })),
-  updateProfile: vi.fn(),
-  getUser: vi.fn(),
+  }),
+  updateProfile: (): Promise<ApiResponse<User>> => Promise.resolve({ data: {} as User }),
+  getUser: (): Promise<ApiResponse<User>> => Promise.resolve({ data: {} as User }),
 };

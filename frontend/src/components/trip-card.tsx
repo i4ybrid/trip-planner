@@ -1,8 +1,8 @@
 import React from 'react';
 import { Trip } from '@/types';
-import { Card } from './card';
-import { Badge } from './badge';
-import { Avatar, AvatarGroup } from './avatar';
+import { Card } from './ui/card';
+import { Badge } from './ui/badge';
+import { Avatar, AvatarGroup } from './ui/avatar';
 import { formatDateRange, cn } from '@/lib/utils';
 import { MapPin, Calendar, Users } from 'lucide-react';
 
