@@ -22,6 +22,12 @@ describe('useTripStore', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockTrip.reset();
+    useTripStore.setState({
+      trips: [],
+      currentTrip: null,
+      isLoading: false,
+      error: null,
+    });
   });
 
   describe('initial state', () => {
@@ -98,6 +104,10 @@ describe('useTripStore', () => {
 
   describe('updateTrip', () => {
     it('should update trip in state', async () => {
+      useTripStore.setState({
+        trips: [{ id: '1', name: 'Trip', status: 'IDEA', tripMasterId: 'user-1', createdAt: '', updatedAt: '' }],
+      });
+      
       const updated = { id: '1', name: 'Updated', status: 'IDEA' as const, tripMasterId: 'user-1', createdAt: '', updatedAt: '' };
       (mockApi.updateTrip as any).mockResolvedValue({ data: updated });
       

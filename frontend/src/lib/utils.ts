@@ -23,7 +23,8 @@ export function formatDateRange(start?: string | Date, end?: string | Date): str
   const endDate = new Date(end);
   
   if (startDate.getMonth() === endDate.getMonth() && startDate.getFullYear() === endDate.getFullYear()) {
-    return `${startDate.getMonthShort()} ${startDate.getDate()}-${endDate.getDate()}, ${startDate.getFullYear()}`;
+    const startMonth = startDate.toLocaleDateString('en-US', { month: 'short' });
+    return `${startMonth} ${startDate.getDate()}-${endDate.getDate()}, ${startDate.getFullYear()}`;
   }
   
   return `${formatDate(start)} - ${formatDate(end)}`;
