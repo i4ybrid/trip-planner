@@ -5,8 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useTripStore } from '@/store';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, Button, Input, Textarea } from '@/components';
 import { LeftSidebar } from '@/components/left-sidebar';
-import { ThemeSwitcher } from '@/components/theme-switcher';
-import { NotificationDrawer } from '@/components/notification-drawer';
+import { AppHeader } from '@/components/app-header';
 import { ArrowLeft } from 'lucide-react';
 
 export default function NewTripPage() {
@@ -39,19 +38,10 @@ export default function NewTripPage() {
   return (
     <div className="min-h-screen bg-background">
       <LeftSidebar />
-      <div className="pl-sidebar">
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-background/95 px-6 backdrop-blur">
-          <div className="flex items-center gap-4">
-            <h1 className="text-xl font-semibold">Create New Trip</h1>
-          </div>
-          <div className="flex items-center gap-2">
-            <ThemeSwitcher />
-            <NotificationDrawer />
-          </div>
-        </header>
+      <AppHeader title="Create New Trip" showBack onBack={() => router.back()} />
 
-        <main className="p-6">
-          <div className="mx-auto max-w-2xl">
+      <main className="ml-sidebar p-6">
+        <div className="mx-auto max-w-2xl">
             <Button variant="ghost" onClick={() => router.back()} className="mb-4">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back
@@ -122,7 +112,6 @@ export default function NewTripPage() {
             </Card>
           </div>
         </main>
-      </div>
     </div>
   );
 }

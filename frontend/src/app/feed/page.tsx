@@ -2,8 +2,7 @@
 
 import { useState } from 'react';
 import { LeftSidebar } from '@/components/left-sidebar';
-import { ThemeSwitcher } from '@/components/theme-switcher';
-import { NotificationDrawer } from '@/components/notification-drawer';
+import { AppHeader } from '@/components/app-header';
 import { Bell, Heart, MessageCircle, ThumbsUp, Share2, MapPin, Calendar, DollarSign, Users, Filter } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -139,19 +138,10 @@ export default function FeedPage() {
   return (
     <div className="min-h-screen bg-background">
       <LeftSidebar />
-      <div className="pl-sidebar">
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-background/95 px-6 backdrop-blur">
-          <div className="flex items-center gap-4">
-            <h1 className="text-xl font-semibold">Activity Feed</h1>
-          </div>
-          <div className="flex items-center gap-2">
-            <ThemeSwitcher />
-            <NotificationDrawer />
-          </div>
-        </header>
+      <AppHeader title="Activity Feed" />
 
-        <main className="p-6">
-          <div className="mx-auto max-w-2xl space-y-6">
+      <main className="ml-sidebar p-6">
+        <div className="mx-auto max-w-2xl space-y-6">
             <div className="flex items-center justify-between">
               <div className="inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground">
                 {['all', 'vote', 'message', 'trip', 'payment'].map((f) => (
@@ -219,7 +209,6 @@ export default function FeedPage() {
             </div>
           </div>
         </main>
-      </div>
     </div>
   );
 }

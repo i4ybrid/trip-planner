@@ -3,8 +3,7 @@
 import { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, Button, Input, Label } from '@/components';
 import { LeftSidebar } from '@/components/left-sidebar';
-import { ThemeSwitcher } from '@/components/theme-switcher';
-import { NotificationDrawer } from '@/components/notification-drawer';
+import { AppHeader } from '@/components/app-header';
 import { Mail, Lock, Bell, Wallet, Save, Trash2, Plus, Check, MessageSquare, Smartphone } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -99,16 +98,10 @@ export default function SettingsPage() {
     <div className="min-h-screen bg-theme-gradient">
       <LeftSidebar />
       
-      <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-30 ml-sidebar">
-        <div className="mx-auto flex max-w-4xl items-center justify-end gap-2 px-6 py-4">
-          <ThemeSwitcher />
-          <NotificationDrawer />
-        </div>
-      </header>
+      <AppHeader title="Settings" />
 
       <main className="ml-sidebar p-6">
         <div className="mx-auto max-w-4xl">
-          <h1 className="mb-6 text-2xl font-bold">Settings</h1>
 
           <div className="flex gap-6">
             {/* Sidebar tabs */}

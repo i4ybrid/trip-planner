@@ -1,8 +1,7 @@
 'use client';
 
 import { LeftSidebar } from '@/components/left-sidebar';
-import { ThemeSwitcher } from '@/components/theme-switcher';
-import { NotificationDrawer } from '@/components/notification-drawer';
+import { AppHeader } from '@/components/app-header';
 import { Users, UserPlus, Search, MoreVertical } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -23,18 +22,9 @@ export default function FriendsPage() {
   return (
     <div className="min-h-screen bg-background">
       <LeftSidebar />
-      <div className="pl-sidebar">
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-background/95 px-6 backdrop-blur">
-          <div className="flex items-center gap-4">
-            <h1 className="text-xl font-semibold">Friends</h1>
-          </div>
-          <div className="flex items-center gap-2">
-            <ThemeSwitcher />
-            <NotificationDrawer />
-          </div>
-        </header>
+      <AppHeader title="Friends" />
 
-        <main className="p-6">
+      <main className="ml-sidebar p-6">
           <div className="mx-auto max-w-4xl space-y-6">
             <div className="flex items-center justify-between">
               <div className="relative flex-1 max-w-md">
@@ -98,10 +88,9 @@ export default function FriendsPage() {
                   </div>
                 ))}
               </div>
-            </Card>
+              </Card>
           </div>
         </main>
-      </div>
     </div>
   );
 }

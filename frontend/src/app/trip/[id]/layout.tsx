@@ -3,8 +3,7 @@
 import { useParams, useRouter } from 'next/navigation';
 import { usePathname } from 'next/navigation';
 import { LeftSidebar } from '@/components/left-sidebar';
-import { ThemeSwitcher } from '@/components/theme-switcher';
-import { NotificationDrawer } from '@/components/notification-drawer';
+import { AppHeader } from '@/components/app-header';
 import { HelpCircle, Clock, MessageCircle, Wallet, Images } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -33,22 +32,11 @@ export default function TripLayout({
     <div className="min-h-screen bg-background">
       <LeftSidebar />
       <div className="lg:pl-64">
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-background/95 px-6 backdrop-blur">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => router.push('/dashboard')}
-              className="text-sm text-muted-foreground hover:text-foreground"
-            >
-              Dashboard
-            </button>
-            <span className="text-muted-foreground">/</span>
-            <h1 className="text-lg font-semibold">Trip {tripId}</h1>
-          </div>
-          <div className="flex items-center gap-2">
-            <ThemeSwitcher />
-            <NotificationDrawer />
-          </div>
-        </header>
+        <AppHeader 
+          title={`Trip ${tripId}`}
+          showBack
+          onBack={() => router.push('/dashboard')}
+        />
 
         <div className="border-b border-border bg-background">
           <nav className="flex gap-1 px-6 py-2">

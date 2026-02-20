@@ -8,8 +8,7 @@ import { Plane, Calendar, MapPin } from 'lucide-react';
 import { mockTrip } from '@/services/mock-api';
 import { User, TripMember } from '@/types';
 import { LeftSidebar } from '@/components/left-sidebar';
-import { ThemeSwitcher } from '@/components/theme-switcher';
-import { NotificationDrawer } from '@/components/notification-drawer';
+import { AppHeader } from '@/components/app-header';
 
 interface TripWithMembers {
   id: string;
@@ -53,12 +52,7 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-theme-gradient">
       <LeftSidebar />
       
-      <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-30 ml-sidebar">
-        <div className="mx-auto flex max-w-4xl items-center justify-end gap-2 px-6 py-4">
-          <ThemeSwitcher />
-          <NotificationDrawer />
-        </div>
-      </header>
+      <AppHeader />
 
       <main className="ml-sidebar p-6">
         <div className="mx-auto max-w-4xl">

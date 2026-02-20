@@ -2,8 +2,7 @@
 
 import { useState } from 'react';
 import { LeftSidebar } from '@/components/left-sidebar';
-import { ThemeSwitcher } from '@/components/theme-switcher';
-import { NotificationDrawer } from '@/components/notification-drawer';
+import { AppHeader } from '@/components/app-header';
 import { MessageCircle, Search, Send, MoreVertical, Phone, Video } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -50,18 +49,9 @@ export default function MessagesPage() {
   return (
     <div className="min-h-screen bg-background">
       <LeftSidebar />
-      <div className="pl-sidebar">
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-background/95 px-6 backdrop-blur">
-          <div className="flex items-center gap-4">
-            <h1 className="text-xl font-semibold">Messages</h1>
-          </div>
-          <div className="flex items-center gap-2">
-            <ThemeSwitcher />
-            <NotificationDrawer />
-          </div>
-        </header>
+      <AppHeader title="Messages" />
 
-        <main className="h-[calc(100vh-4rem)]">
+      <main className="ml-sidebar h-[calc(100vh-4rem)]">
           <div className="flex h-full">
             <div className="w-80 border-r border-border">
               <div className="p-4">
