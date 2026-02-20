@@ -675,6 +675,189 @@ TripPlannerMobile/
 
 ---
 
+## 9. Design System
+
+### Theme Overview
+TripPlanner supports two distinct visual themes to suit different user preferences:
+
+| Theme | Name | Description | Use Case |
+|-------|------|-------------|----------|
+| Light | **Bright** | Farmhouse-inspired, warm, floral, sunny | Casual trips, friends, vacations |
+| Dark | **Vigilante** | Slate grey, cool, clean, blue undertones | Professional, business travel |
+
+---
+
+### 9.1 Bright Theme (Farmhouse)
+
+A warm, inviting theme inspired by farmhouse aesthetics with floral and sunny elements.
+
+```css
+/* Bright Theme - Farmhouse Style */
+:root {
+  /* Primary Colors */
+  --primary: 38 57% 45%;          /* Warm amber/gold */
+  --primary-foreground: 0 0% 100%;
+  
+  /* Secondary - Floral tones */
+  --secondary: 340 60% 75%;       /* Soft rose pink */
+  --secondary-foreground: 340 40% 20%;
+  
+  /* Background - Warm white */
+  --background: 40 30% 97%;       /* Cream white */
+  --foreground: 30 20% 25%;        /* Warm brown */
+  
+  /* Accent - Sunny yellow */
+  --accent: 45 90% 60%;           /* Sunny gold */
+  --accent-foreground: 30 20% 20%;
+  
+  /* Muted - Soft naturals */
+  --muted: 40 20% 90%;           /* Soft cream */
+  --muted-foreground: 30 15% 50%;
+  
+  /* Card & Popover */
+  --card: 0 0% 100%;
+  --card-foreground: 30 20% 25%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 30 20% 25%;
+  
+  /* Borders */
+  --border: 40 20% 85%;
+  --input: 40 20% 90%;
+  --ring: 38 57% 45%;
+  
+  /* Status Colors */
+  --success: 142 60% 45%;         /* Sage green */
+  --warning: 38 80% 55%;          /* Warm orange */
+  --error: 0 70% 50%;             /* Soft red */
+  --info: 200 70% 50%;           /* Sky blue */
+  
+  /* Radius */
+  --radius: 0.75rem;
+}
+```
+
+#### Bright Theme Characteristics
+- **Warm undertones**: Cream, beige, warm white backgrounds
+- **Floral accents**: Rose, lavender, sage green highlights
+- **Sunny touches**: Golden amber, warm yellow accents
+- **Rounded elements**: Soft corners (12px radius)
+- **Organic feel**: Slightly textured surfaces, warm shadows
+
+---
+
+### 9.2 Vigilante Theme (Slate Blue)
+
+A sophisticated dark theme with cool slate greys and blue undertones.
+
+```css
+/* Vigilante Theme - Slate Blue */
+:root[data-theme="vigilante"] {
+  /* Primary Colors */
+  --primary: 210 80% 55%;        /* Cool blue */
+  --primary-foreground: 0 0% 100%;
+  
+  /* Secondary - Steel blue */
+  --secondary: 215 25% 35%;      /* Slate blue */
+  --secondary-foreground: 0 0% 100%;
+  
+  /* Background - Deep slate */
+  --background: 215 30% 10%;      /* Dark slate */
+  --background-start: 215 30% 8%;
+  --background-end: 220 30% 12%;
+  --foreground: 210 10% 90%;     /* Cool white */
+  
+  /* Accent - Electric blue */
+  --accent: 210 100% 65%;       /* Bright cyan */
+  --accent-foreground: 0 0% 0%;
+  
+  /* Muted - Cool greys */
+  --muted: 215 20% 20%;         /* Dark slate */
+  --muted-foreground: 215 10% 65%;
+  
+  /* Card & Popover */
+  --card: 215 25% 14%;
+  --card-foreground: 210 10% 90%;
+  --popover: 215 25% 16%;
+  --popover-foreground: 210 10% 90%;
+  
+  /* Borders */
+  --border: 215 20% 25%;
+  --input: 215 20% 20%;
+  --ring: 210 80% 55%;
+  
+  /* Status Colors */
+  --success: 160 60% 45%;        /* Teal green */
+  --warning: 35 80% 55%;         /* Amber */
+  --error: 0 70% 55%;           /* Coral red */
+  --info: 200 80% 55%;           /* Bright blue */
+  
+  /* Radius */
+  --radius: 0.5rem;
+}
+```
+
+#### Vigilante Theme Characteristics
+- **Cool undertones**: Blue-grey, slate, cool white
+- **Sharp contrast**: Bright accents against dark backgrounds
+- **Clean lines**: Sharp corners, minimal shadows
+- **Tech feel**: Electric blue, cyan accents
+- **Professional**: Sleek, modern, sophisticated
+
+---
+
+### 9.3 Typography
+
+| Element | Font | Weight | Size |
+|---------|------|--------|------|
+| Display | Playfair Display | 700 | 48px |
+| H1 | Inter | 700 | 36px |
+| H2 | Inter | 600 | 28px |
+| H3 | Inter | 600 | 22px |
+| Body | Inter | 400 | 16px |
+| Small | Inter | 400 | 14px |
+| Caption | Inter | 500 | 12px |
+
+---
+
+### 9.4 Component Styling
+
+#### Buttons
+- **Primary**: Solid fill with theme primary color
+- **Secondary**: Outlined with subtle fill
+- **Ghost**: Transparent with hover state
+- **Danger**: Red for destructive actions
+
+#### Cards
+- **Bright**: White with warm shadow, rounded
+- **Vigilante**: Dark slate with subtle border
+
+#### Forms
+- Bright: Cream background, warm border
+- Vigilante: Dark input, blue focus ring
+
+---
+
+### 9.5 Animations & Transitions
+
+```css
+/* Smooth transitions */
+transition: all 200ms ease-out;
+
+/* Theme transition */
+* {
+  transition: background-color 300ms ease,
+              color 300ms ease,
+              border-color 300ms ease;
+}
+
+/* Micro-interactions */
+- Button hover: scale(1.02)
+- Card hover: translateY(-2px)
+- Loading: Pulse animation
+```
+
+---
+
 ## 10. Testing Strategy
 
 ### Testing Philosophy

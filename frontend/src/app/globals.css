@@ -1,23 +1,204 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: 0 0% 100%;
-  --foreground: 222.2 84% 4.9%;
-  --primary: 222.2 47.4% 11.2%;
-  --primary-foreground: 210 40% 98%;
-  --secondary: 210 40% 96.1%;
-  --secondary-foreground: 222.2 47.4% 11.2%;
-  --muted: 210 40% 96.1%;
-  --muted-foreground: 215.4 16.3% 46.9%;
-  --accent: 210 40% 96.1%;
-  --accent-foreground: 222.2 47.4% 11.2%;
-  --border: 214.3 31.8% 91.4%;
-  --radius: 0.5rem;
+@layer base {
+  /* ===========================
+     BRIGHT THEME (Default)
+     Farmhouse: warm, floral, sunny
+     =========================== */
+  :root {
+    /* Primary - Warm amber/gold */
+    --primary: 38 57% 45%;
+    --primary-foreground: 0 0% 100%;
+    
+    /* Secondary - Floral rose pink */
+    --secondary: 340 60% 75%;
+    --secondary-foreground: 340 40% 20%;
+    
+    /* Background - Cream white */
+    --background: 40 30% 97%;
+    --foreground: 30 20% 25%;
+    
+    /* Accent - Sunny gold */
+    --accent: 45 90% 60%;
+    --accent-foreground: 30 20% 20%;
+    
+    /* Muted - Soft cream */
+    --muted: 40 20% 90%;
+    --muted-foreground: 30 15% 50%;
+    
+    /* Card */
+    --card: 0 0% 100%;
+    --card-foreground: 30 20% 25%;
+    
+    /* Popover */
+    --popover: 0 0% 100%;
+    --popover-foreground: 30 20% 25%;
+    
+    /* Borders */
+    --border: 40 20% 85%;
+    --input: 40 20% 90%;
+    --ring: 38 57% 45%;
+    
+    /* Status Colors */
+    --success: 142 60% 45%;
+    --warning: 38 80% 55%;
+    --error: 0 70% 50%;
+    --info: 200 70% 50%;
+    
+    /* Radius */
+    --radius: 0.75rem;
+  }
+
+  /* ===========================
+     VIGILANTE THEME
+     Slate blue: cool, clean, dark
+     =========================== */
+  [data-theme="vigilante"] {
+    /* Primary - Cool blue */
+    --primary: 210 80% 55%;
+    --primary-foreground: 0 0% 100%;
+    
+    /* Secondary - Slate blue */
+    --secondary: 215 25% 35%;
+    --secondary-foreground: 0 0% 100%;
+    
+    /* Background - Deep slate */
+    --background: 215 30% 10%;
+    --foreground: 210 10% 90%;
+    
+    /* Accent - Electric cyan */
+    --accent: 210 100% 65%;
+    --accent-foreground: 0 0% 0%;
+    
+    /* Muted - Dark slate */
+    --muted: 215 20% 20%;
+    --muted-foreground: 215 10% 65%;
+    
+    /* Card */
+    --card: 215 25% 14%;
+    --card-foreground: 210 10% 90%;
+    
+    /* Popover */
+    --popover: 215 25% 16%;
+    --popover-foreground: 210 10% 90%;
+    
+    /* Borders */
+    --border: 215 20% 25%;
+    --input: 215 20% 20%;
+    --ring: 210 80% 55%;
+    
+    /* Status Colors */
+    --success: 160 60% 45%;
+    --warning: 35 80% 55%;
+    --error: 0 70% 55%;
+    --info: 200 80% 55%;
+    
+    /* Radius */
+    --radius: 0.5rem;
+  }
 }
 
-body {
-  background-color: hsl(var(--background));
-  color: hsl(var(--foreground));
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  
+  /* Smooth theme transitions */
+  * {
+    transition: background-color 300ms ease,
+                color 300ms ease,
+                border-color 300ms ease,
+                box-shadow 300ms ease;
+  }
+}
+
+/* ===========================
+   Custom Components
+   =========================== */
+
+/* Card hover effects */
+.card-hover {
+  @apply transition-all duration-200 ease-out;
+}
+
+.card-hover:hover {
+  @apply -translate-y-0.5 shadow-lg;
+}
+
+/* Button effects */
+.btn-bounce {
+  @apply transition-transform duration-200;
+}
+
+.btn-bounce:active {
+  @apply scale-95;
+}
+
+/* Gradient backgrounds */
+.bg-gradient-farmhouse {
+  background: linear-gradient(135deg, 
+    hsl(var(--background)) 0%, 
+    hsl(40 25% 92%) 50%, 
+    hsl(38 57% 45% / 0.1) 100%
+  );
+}
+
+.bg-gradient-slate {
+  background: linear-gradient(135deg, 
+    hsl(var(--background)) 0%, 
+    hsl(215 30% 12%) 50%, 
+    hsl(210 80% 55% / 0.1) 100%
+  );
+}
+
+/* Glass effect */
+.glass {
+  @apply backdrop-blur-md bg-background/80;
+}
+
+/* Status badges */
+.badge-success {
+  @apply bg-[hsl(var(--success)/0.1)] text-[hsl(var(--success))] border-[hsl(var(--success)/0.2)];
+}
+
+.badge-warning {
+  @apply bg-[hsl(var(--warning)/0.1)] text-[hsl(var(--warning))] border-[hsl(var(--warning)/0.2)];
+}
+
+.badge-error {
+  @apply bg-[hsl(var(--error)/0.1)] text-[hsl(var(--error))] border-[hsl(var(--error)/0.2)];
+}
+
+.badge-info {
+  @apply bg-[hsl(var(--info)/0.1)] text-[hsl(var(--info))] border-[hsl(var(--info)/0.2)];
+}
+
+/* Animated gradient border */
+.gradient-border {
+  position: relative;
+}
+
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  padding: 2px;
+  background: linear-gradient(135deg, 
+    hsl(var(--primary)), 
+    hsl(var(--accent))
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
 }
