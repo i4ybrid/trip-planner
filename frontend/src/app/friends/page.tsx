@@ -1,7 +1,6 @@
 'use client';
 
-import { LeftSidebar } from '@/components/left-sidebar';
-import { AppHeader } from '@/components/app-header';
+import { PageLayout } from '@/components/page-layout';
 import { Users, UserPlus, Search, MoreVertical } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -20,12 +19,8 @@ export default function FriendsPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
-      <LeftSidebar />
-      <AppHeader title="Friends" />
-
-      <main className="ml-sidebar p-6">
-          <div className="mx-auto max-w-4xl space-y-6">
+    <PageLayout title="Friends">
+      <div className="mx-auto max-w-4xl space-y-6">
             <div className="flex items-center justify-between">
               <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -88,9 +83,8 @@ export default function FriendsPage() {
                   </div>
                 ))}
               </div>
-              </Card>
+            </Card>
           </div>
-        </main>
-    </div>
-  );
-}
+        </PageLayout>
+      );
+    }

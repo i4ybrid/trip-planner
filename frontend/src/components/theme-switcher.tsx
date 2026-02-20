@@ -1,60 +1,34 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { Sun, Moon } from 'lucide-react';
-import { cn } from '@/lib/utils';
-
-type Theme = 'bright' | 'vigilante';
+import { useTheme } from '@/hooks/use-theme';
 
 export function ThemeSwitcher() {
-  const [theme, setTheme] = useState<Theme>('bright');
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-    const savedTheme = localStorage.getItem('theme') as Theme;
-    if (savedTheme) {
-      setTheme(savedTheme);
-      document.documentElement.setAttribute('data-theme', savedTheme);
-    }
-  }, []);
-
-  const toggleTheme = (newTheme: Theme) => {
-    setTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
-    document.documentElement.setAttribute('data-theme', newTheme);
-  };
+  const { theme, setTheme, mounted } = useTheme();
 
   if (!mounted) {
-    return <div className="w-9 h-9" />;
+    return <div className="w-11 h-6" />;
   }
 
+  const isDark = theme === 'vigilante';
+
   return (
-    <div className="flex items-center gap-1 p-1 bg-muted rounded-full">
-      <button
-        onClick={() => toggleTheme('bright')}
-        className={cn(
-          'flex items-center justify-center w-8 h-8 rounded-full transition-all duration-200',
-          theme === 'bright' 
-            ? 'bg-background text-foreground shadow-sm' 
-            : 'text-muted-foreground hover:text-foreground'
-        )}
-        title="Bright theme"
+    <button
+      onClick={() => setTheme(isDark ? 'bright' : 'vigilante')}
+      className="relative h-6 w-11 rounded-full bg-secondary transition-colors"
+      title={isDark ? 'Switch to Bright theme' : 'Switch to Dark theme'}
+    >
+      <div
+        className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-background shadow-sm transition-transform flex items-center justify-center ${
+          isDark ? 'translate-x-5' : 'translate-x-0'
+        }`}
       >
-        <Sun className="w-4 h-4" />
-      </button>
-      <button
-        onClick={() => toggleTheme('vigilante')}
-        className={cn(
-          'flex items-center justify-center w-8 h-8 rounded-full transition-all duration-200',
-          theme === 'vigilante' 
-            ? 'bg-background text-foreground shadow-sm' 
-            : 'text-muted-foreground hover:text-foreground'
+        {isDark ? (
+          <Moon className="h-3 w-3" />
+        ) : (
+          <Sun className="h-3 w-3 text-amber-500" />
         )}
-        title="Vigilante theme"
-      >
-        <Moon className="w-4 h-4" />
-      </button>
-    </div>
+      </div>
+    </button>
   );
 }

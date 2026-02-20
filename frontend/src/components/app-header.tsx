@@ -8,13 +8,14 @@ interface AppHeaderProps {
   showBack?: boolean;
   onBack?: () => void;
   actions?: React.ReactNode;
+  className?: string;
 }
 
-export function AppHeader({ title, showBack, onBack, actions }: AppHeaderProps) {
+export function AppHeader({ title, showBack, onBack, actions, className }: AppHeaderProps) {
   return (
-    <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-30 ml-sidebar">
+    <header className={`border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-30 ${className || 'ml-sidebar'}`}>
       <div className="flex h-16 items-center justify-between px-6">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-1 items-center gap-2">
           {showBack && onBack && (
             <button
               onClick={onBack}

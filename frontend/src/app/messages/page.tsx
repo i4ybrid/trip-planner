@@ -1,8 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { LeftSidebar } from '@/components/left-sidebar';
-import { AppHeader } from '@/components/app-header';
+import { useState, useRef, useEffect } from 'react';
+import { PageLayout } from '@/components/page-layout';
 import { MessageCircle, Search, Send, MoreVertical, Phone, Video } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -19,6 +18,7 @@ interface Conversation {
 
 interface Message {
   id: string;
+  conversationId: string;
   senderId: string;
   content: string;
   timestamp: string;
@@ -27,6 +27,7 @@ interface Message {
 export default function MessagesPage() {
   const [selectedConversation, setSelectedConversation] = useState<string | null>('1');
   const [newMessage, setNewMessage] = useState('');
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const conversations: Conversation[] = [
     { id: '1', name: 'Summer Road Trip 2024', lastMessage: 'Sarah: See you all tomorrow!', timestamp: '2 min ago', unread: 2, avatar: null },
@@ -35,32 +36,41 @@ export default function MessagesPage() {
     { id: '4', name: 'Emily Davis', lastMessage: 'Sounds good!', timestamp: 'Yesterday', unread: 0, avatar: null },
   ];
 
-  const messages: Message[] = [
-    { id: '1', senderId: 'user-1', content: 'Hey everyone! Just wanted to confirm our plans for tomorrow.', timestamp: '10:30 AM' },
-    { id: '2', senderId: 'user-2', content: "I'm so excited! Can't wait!", timestamp: '10:32 AM' },
-    { id: '3', senderId: 'user-3', content: 'Same here! Should we meet at the hotel first?', timestamp: '10:35 AM' },
-    { id: '4', senderId: 'user-1', content: "Yes, let's meet at 9 AM in the lobby. Then we can head to the beach together.", timestamp: '10:38 AM' },
-    { id: '5', senderId: 'user-2', content: 'Perfect! I\'ll bring some snacks for the drive.', timestamp: '10:40 AM' },
-    { id: '6', senderId: 'user-3', content: 'See you all tomorrow!', timestamp: '10:45 AM' },
+  const allMessages: Message[] = [
+    { id: '1', conversationId: '1', senderId: 'user-1', content: 'Hey everyone! Just wanted to confirm our plans for tomorrow.', timestamp: '10:30 AM' },
+    { id: '2', conversationId: '1', senderId: 'user-2', content: "I'm so excited! Can't wait!", timestamp: '10:32 AM' },
+    { id: '3', conversationId: '1', senderId: 'user-3', content: 'Same here! Should we meet at the hotel first?', timestamp: '10:35 AM' },
+    { id: '4', conversationId: '1', senderId: 'user-1', content: "Yes, let's meet at 9 AM in the lobby. Then we can head to the beach together.", timestamp: '10:38 AM' },
+    { id: '5', conversationId: '1', senderId: 'user-2', content: "Perfect! I'll bring some snacks for the drive.", timestamp: '10:40 AM' },
+    { id: '6', conversationId: '1', senderId: 'user-3', content: 'See you all tomorrow!', timestamp: '10:45 AM' },
+    { id: '7', conversationId: '2', senderId: 'user-2', content: 'Hey! Thanks for the restaurant recommendation.', timestamp: '2:00 PM' },
+    { id: '8', conversationId: '2', senderId: 'user-1', content: 'No problem! Let me know how it goes.', timestamp: '2:15 PM' },
+    { id: '9', conversationId: '2', senderId: 'user-2', content: 'Thanks for the recommendation!', timestamp: '3:00 PM' },
+    { id: '10', conversationId: '3', senderId: 'user-3', content: 'The restaurant was amazing!', timestamp: 'Yesterday' },
+    { id: '11', conversationId: '3', senderId: 'user-1', content: 'Glad you liked it!', timestamp: 'Yesterday' },
+    { id: '12', conversationId: '4', senderId: 'user-4', content: 'Are we still on for Saturday?', timestamp: 'Yesterday' },
+    { id: '13', conversationId: '4', senderId: 'user-1', content: 'Sounds good!', timestamp: 'Yesterday' },
   ];
+
+  const messages = allMessages.filter(m => m.conversationId === selectedConversation);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, selectedConversation]);
 
   const selectedConvo = conversations.find(c => c.id === selectedConversation);
 
   return (
-    <div className="min-h-screen bg-background">
-      <LeftSidebar />
-      <AppHeader title="Messages" />
-
-      <main className="ml-sidebar h-[calc(100vh-4rem)]">
-          <div className="flex h-full">
-            <div className="w-80 border-r border-border">
-              <div className="p-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input placeholder="Search messages..." className="pl-10" />
-                </div>
-              </div>
-              <div className="space-y-1 px-2">
+    <PageLayout title="Messages" className="p-0">
+      <div className="flex h-[calc(100vh-4.5rem)] w-full">
+        <aside className="w-80 border-r border-border shrink-0 flex flex-col">
+          <div className="p-4 border-b border-border">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input placeholder="Search messages..." className="pl-10" />
+            </div>
+          </div>
+          <div className="flex-1 overflow-y-auto space-y-1 p-2">
                 {conversations.map((convo) => (
                   <button
                     key={convo.id}
@@ -89,9 +99,9 @@ export default function MessagesPage() {
                   </button>
                 ))}
               </div>
-            </div>
+          </aside>
 
-            <div className="flex-1 flex flex-col">
+            <div className="flex-1 flex flex-col min-w-0">
               {selectedConvo ? (
                 <>
                   <div className="flex items-center justify-between border-b border-border p-4">
@@ -141,6 +151,7 @@ export default function MessagesPage() {
                         </div>
                       </div>
                     ))}
+                    <div ref={messagesEndRef} />
                   </div>
 
                   <div className="border-t border-border p-4">
@@ -166,9 +177,7 @@ export default function MessagesPage() {
                 </div>
               )}
             </div>
-          </div>
-        </main>
       </div>
-    </div>
+    </PageLayout>
   );
 }

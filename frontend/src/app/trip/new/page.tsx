@@ -38,7 +38,7 @@ export default function NewTripPage() {
   return (
     <div className="min-h-screen bg-background">
       <LeftSidebar />
-      <AppHeader title="Create New Trip" showBack onBack={() => router.back()} />
+      <AppHeader title="Create New Trip" />
 
       <main className="ml-sidebar p-6">
         <div className="mx-auto max-w-2xl">
