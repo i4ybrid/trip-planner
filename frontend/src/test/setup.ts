@@ -1,18 +1,14 @@
 import '@testing-library/jest-dom';
+import { vi } from 'vitest';
 
-vi.mock('next-auth/react', () => ({
-  useSession: vi.fn(() => ({
-    data: {
-      user: {
-        id: 'test-user-123',
-        email: 'test@example.com',
-        name: 'Test User',
-      },
-    },
-    status: 'authenticated',
+vi.mock('next/navigation', () => ({
+  useRouter: vi.fn(() => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    back: vi.fn(),
   })),
-  signIn: vi.fn(),
-  signOut: vi.fn(),
+  useParams: vi.fn(() => ({})),
+  usePathname: vi.fn(() => '/'),
 }));
 
 vi.mock('socket.io-client', () => ({
@@ -22,15 +18,6 @@ vi.mock('socket.io-client', () => ({
     off: vi.fn(),
     disconnect: vi.fn(),
   })),
-}));
-
-vi.mock('next/navigation', () => ({
-  useRouter: vi.fn(() => ({
-    push: vi.fn(),
-    replace: vi.fn(),
-    back: vi.fn(),
-  })),
-  usePathname: vi.fn(() => '/'),
 }));
 
 Object.defineProperty(window, 'matchMedia', {
