@@ -537,57 +537,61 @@ tripplanner://invite/{token}
 /
 ├── /login                    # Auth pages (handled by NextAuth)
 ├── /dashboard                # Main dashboard
-│   ├── /trips                # List of trips
-│   └── /trips/new            # Create trip wizard
+├── /friends                  # Friends management
+├── /messages                 # Direct messages
+├── /feed                     # Activity feed
+├── /settings                 # App settings
+├── /trip/new                 # Create new trip
 ├── /trip/[id]                # Trip detail (tabbed)
 │   ├── /trip/[id]/overview  # Trip overview
-│   ├── /trip/[id]/planning  # Activities & voting
-│   ├── /trip/[id]/bookings # Bookings
+│   ├── /trip/[id]/activities # Activities & voting
+│   ├── /trip/[id]/timeline  # Event timeline
 │   ├── /trip/[id]/chat     # Group chat
-│   ├── /trip/[id]/photos   # Photos & videos
-│   └── /trip/[id]/payments # Payment tracking
-├── /trip/[id]/settings     # Trip settings
-├── /invite/[token]         # Public invite acceptance
-├── /profile                # User profile
-└── /settings               # App settings
+│   ├── /trip/[id]/payments # Payment tracking
+│   └── /trip/[id]/memories # Photos & videos
+└── /invite/[token]         # Public invite acceptance
 ```
 
-### Trip Dashboard Layout
+### Layout Structure
+
+#### Main Layout with Left Sidebar
 ```
 ┌─────────────────────────────────────────────────────────┐
-│  [Logo]  TripPlanner           [Notifications] [Profile] │
-├─────────────────────────────────────────────────────────┤
-│                                                         │
-│  ┌─────────────────────────────────────────────────┐   │
-│  │  🎯 Active & Upcoming Trips                     │   │
-│  ├─────────────────────────────────────────────────┤   │
-│  │  [Trip Card]  [Trip Card]  [+ New Trip]         │   │
-│  └─────────────────────────────────────────────────┘   │
-│                                                         │
-│  ┌─────────────────────────────────────────────────┐   │
-│  │  📋 Past Trips                                  │   │
-│  ├─────────────────────────────────────────────────┤   │
-│  │  [Trip Card]  [Trip Card]                       │   │
-│  └─────────────────────────────────────────────────┘   │
-│                                                         │
+│ ┌─────────┐ ┌─────────────────────────────────────────┐ │
+│ │         │ │ [AppHeader: Title | Theme | Notif]      │ │
+│ │  Left   │ ├─────────────────────────────────────────┤ │
+│ │ Sidebar │ │                                         │ │
+│ │         │ │           Main Content Area              │ │
+│ │ [Logo]  │ │                                         │ │
+│ │         │ │                                         │ │
+│ │ [Menu]  │ │                                         │ │
+│ │ - Dash  │ │                                         │ │
+│ │ - New   │ │                                         │ │
+│ │ - Friend│ │                                         │ │
+│ │ - Msgs  │ │                                         │ │
+│ │ - Feed  │ │                                         │ │
+│ │ - Set   │ │                                         │ │
+│ │         │ │                                         │ │
+│ └─────────┘ └─────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────┘
 ```
 
-### Trip Detail Layout (Mobile-First)
-```
-┌─────────────────────────────────────────────────────────┐
-│  [Cover Image with Gradient Overlay]                    │
-│  Trip Name                          [Settings] [Share] │
-│  📍 Location  |  📅 Dates  |  👥 X members              │
-├─────────────────────────────────────────────────────────┤
-│  [Overview] [Planning] [Bookings] [Chat] [Photos] [$$$]│
-├─────────────────────────────────────────────────────────┤
-│                                                         │
-│  Tab Content Area                                       │
-│                                                         │
-│                                                         │
-└─────────────────────────────────────────────────────────┘
-```
+#### Left Sidebar Behavior
+- **Desktop (≥1024px)**: Always expanded (256px width)
+- **Mobile (<1024px)**: 
+  - Starts collapsed (80px width)
+  - Auto-expands on mouse hover
+  - Collapses after 5 seconds when mouse leaves
+- **Navigation Items**: Icon + Label (label hidden when collapsed on mobile)
+- **Logo**: Compass icon + "TripPlanner" text (text hidden when collapsed)
+
+#### AppHeader Component
+Unified header used across all pages:
+- Title (optional, page-specific)
+- Back button (optional, for nested pages)
+- Custom actions slot
+- Theme switcher (sun/moon toggle)
+- Notification drawer button
 
 ---
 
@@ -683,7 +687,7 @@ TripPlanner supports two distinct visual themes to suit different user preferenc
 | Theme | Name | Description | Use Case |
 |-------|------|-------------|----------|
 | Light | **Bright** | Farmhouse-inspired, warm, floral, sunny | Casual trips, friends, vacations |
-| Dark | **Vigilante** | Slate grey, cool, clean, blue undertones | Professional, business travel |
+| Dark | **Vigilante** | Warm brown, cozy, inviting | Evening use, users who prefer dark themes |
 
 ---
 
@@ -729,7 +733,7 @@ A warm, inviting theme inspired by farmhouse aesthetics with floral and sunny el
   --success: 142 60% 45%;         /* Sage green */
   --warning: 38 80% 55%;          /* Warm orange */
   --error: 0 70% 50%;             /* Soft red */
-  --info: 200 70% 50%;           /* Sky blue */
+  --info: 200 70% 50%;            /* Sky blue */
   
   /* Radius */
   --radius: 0.75rem;
@@ -745,51 +749,51 @@ A warm, inviting theme inspired by farmhouse aesthetics with floral and sunny el
 
 ---
 
-### 9.2 Vigilante Theme (Slate Blue)
+### 9.2 Vigilante Theme (Warm Brown)
 
-A sophisticated dark theme with cool slate greys and blue undertones.
+A cozy dark theme with warm brown tones that complements the farmhouse aesthetic.
 
 ```css
-/* Vigilante Theme - Slate Blue */
+/* Vigilante Theme - Warm Brown */
 :root[data-theme="vigilante"] {
   /* Primary Colors */
-  --primary: 210 80% 55%;        /* Cool blue */
+  --primary: 25 60% 45%;         /* Warm brown */
   --primary-foreground: 0 0% 100%;
   
-  /* Secondary - Steel blue */
-  --secondary: 215 25% 35%;      /* Slate blue */
+  /* Secondary - Darker brown */
+  --secondary: 25 40% 25%;        /* Dark brown */
   --secondary-foreground: 0 0% 100%;
   
-  /* Background - Deep slate */
-  --background: 215 30% 10%;      /* Dark slate */
-  --background-start: 215 30% 8%;
-  --background-end: 220 30% 12%;
-  --foreground: 210 10% 90%;     /* Cool white */
+  /* Background - Deep warm brown */
+  --background: 25 30% 10%;       /* Very dark brown */
+  --background-start: 25 30% 8%;
+  --background-end: 25 35% 12%;
+  --foreground: 30 20% 90%;      /* Warm white */
   
-  /* Accent - Electric blue */
-  --accent: 210 100% 65%;       /* Bright cyan */
+  /* Accent - Amber/gold */
+  --accent: 35 80% 55%;           /* Amber */
   --accent-foreground: 0 0% 0%;
   
-  /* Muted - Cool greys */
-  --muted: 215 20% 20%;         /* Dark slate */
-  --muted-foreground: 215 10% 65%;
+  /* Muted - Warm greys */
+  --muted: 25 20% 20%;           /* Dark brown-grey */
+  --muted-foreground: 25 10% 65%;
   
   /* Card & Popover */
-  --card: 215 25% 14%;
-  --card-foreground: 210 10% 90%;
-  --popover: 215 25% 16%;
-  --popover-foreground: 210 10% 90%;
+  --card: 25 25% 15%;
+  --card-foreground: 30 20% 90%;
+  --popover: 25 25% 18%;
+  --popover-foreground: 30 20% 90%;
   
   /* Borders */
-  --border: 215 20% 25%;
-  --input: 215 20% 20%;
-  --ring: 210 80% 55%;
+  --border: 25 20%;
+  --input: 25 20% 20%;
+  --ring% 25: 25 60% 45%;
   
   /* Status Colors */
-  --success: 160 60% 45%;        /* Teal green */
-  --warning: 35 80% 55%;         /* Amber */
-  --error: 0 70% 55%;           /* Coral red */
-  --info: 200 80% 55%;           /* Bright blue */
+  --success: 142 50% 40%;         /* Sage green */
+  --warning: 35 80% 50%;          /* Amber */
+  --error: 0 60% 50%;            /* Soft red */
+  --info: 200 70% 50%;           /* Sky blue */
   
   /* Radius */
   --radius: 0.5rem;
@@ -797,11 +801,11 @@ A sophisticated dark theme with cool slate greys and blue undertones.
 ```
 
 #### Vigilante Theme Characteristics
-- **Cool undertones**: Blue-grey, slate, cool white
-- **Sharp contrast**: Bright accents against dark backgrounds
+- **Warm undertones**: Brown, amber, cozy dark tones
+- **Complements Bright theme**: Similar color temperature family
+- **Inviting dark mode**: Not cold, but cozy
 - **Clean lines**: Sharp corners, minimal shadows
-- **Tech feel**: Electric blue, cyan accents
-- **Professional**: Sleek, modern, sophisticated
+- **Consistent aesthetic**: Works with farmhouse design language
 
 ---
 
