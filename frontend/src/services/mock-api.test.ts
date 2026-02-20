@@ -6,6 +6,7 @@ describe('MockTrip', () => {
 
   beforeEach(() => {
     mock = new MockTrip();
+    mock.reset();
   });
 
   describe('createTrip', () => {
@@ -33,17 +34,17 @@ describe('MockTrip', () => {
   });
 
   describe('getTrips', () => {
-    it('should return empty array when no trips exist', async () => {
+    it('should return seeded trips', async () => {
       const result = await mock.getTrips();
-      expect(result.data).toEqual([]);
+      expect(result.data).toHaveLength(5);
     });
 
-    it('should return created trips', async () => {
+    it('should return created trips plus seeded', async () => {
       await mock.createTrip('user-1', { name: 'Trip 1' });
       await mock.createTrip('user-1', { name: 'Trip 2' });
 
       const result = await mock.getTrips();
-      expect(result.data).toHaveLength(2);
+      expect(result.data).toHaveLength(7);
     });
   });
 

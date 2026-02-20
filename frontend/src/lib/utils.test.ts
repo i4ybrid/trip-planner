@@ -98,7 +98,7 @@ describe('getStatusColor', () => {
     expect(getStatusColor('IDEA')).toContain('gray');
     expect(getStatusColor('PLANNING')).toContain('blue');
     expect(getStatusColor('CONFIRMED')).toContain('green');
-    expect(getStatusColor('IN_PROGRESS')).toContain('purple');
+    expect(getStatusColor('HAPPENING')).toContain('purple');
     expect(getStatusColor('COMPLETED')).toContain('gray');
     expect(getStatusColor('CANCELLED')).toContain('red');
   });

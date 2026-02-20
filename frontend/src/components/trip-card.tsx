@@ -8,23 +8,21 @@ import { MapPin, Calendar, Users } from 'lucide-react';
 
 interface TripCardProps {
   trip: Trip;
-  memberCount?: number;
-  memberNames?: string[];
+  members?: string[];
   onClick?: () => void;
   className?: string;
 }
 
 export const TripCard: React.FC<TripCardProps> = ({
   trip,
-  memberCount = 0,
-  memberNames = [],
+  members = [],
   onClick,
   className,
 }) => {
   return (
     <Card
       className={cn(
-        'cursor-pointer overflow-hidden transition-all hover:shadow-md',
+        'cursor-pointer overflow-hidden transition-all hover:shadow-lg card-hover',
         className
       )}
       onClick={onClick}
@@ -39,11 +37,11 @@ export const TripCard: React.FC<TripCardProps> = ({
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
         <div className="absolute bottom-3 left-4 right-4">
-          <h3 className="text-xl font-bold text-white">{trip.name}</h3>
+          <h3 className="text-xl font-bold text-white line-clamp-1">{trip.name}</h3>
           {trip.destination && (
             <p className="flex items-center gap-1 text-sm text-white/80">
               <MapPin className="h-3 w-3" />
-              {trip.destination}
+              <span className="truncate">{trip.destination}</span>
             </p>
           )}
         </div>
@@ -60,16 +58,16 @@ export const TripCard: React.FC<TripCardProps> = ({
             )}
           </div>
         </div>
-        {memberCount > 0 && (
+        {members.length > 0 && (
           <div className="mt-3 flex items-center justify-between">
-            <AvatarGroup max={3} size="sm">
-              {memberNames.map((name, i) => (
+            <AvatarGroup max={4} size="sm">
+              {members.map((name, i) => (
                 <Avatar key={i} name={name} size="sm" />
               ))}
             </AvatarGroup>
             <span className="flex items-center gap-1 text-sm text-muted-foreground">
               <Users className="h-3 w-3" />
-              {memberCount}
+              {members.length}
             </span>
           </div>
         )}

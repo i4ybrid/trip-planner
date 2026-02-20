@@ -52,13 +52,12 @@ export function getStatusColor(status: string): string {
     IDEA: 'bg-gray-100 text-gray-800',
     PLANNING: 'bg-blue-100 text-blue-800',
     CONFIRMED: 'bg-green-100 text-green-800',
-    IN_PROGRESS: 'bg-purple-100 text-purple-800',
+    HAPPENING: 'bg-purple-100 text-purple-800',
     COMPLETED: 'bg-gray-100 text-gray-600',
     CANCELLED: 'bg-red-100 text-red-800',
     INVITED: 'bg-yellow-100 text-yellow-800',
     DECLINED: 'bg-red-100 text-red-800',
     MAYBE: 'bg-orange-100 text-orange-800',
-    CONFIRMED: 'bg-green-100 text-green-800',
     REMOVED: 'bg-gray-100 text-gray-500',
   };
   return colors[status] || 'bg-gray-100 text-gray-800';

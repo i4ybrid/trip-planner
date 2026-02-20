@@ -1,3 +1,36 @@
+/* Fallback styles - always load these first as a baseline */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Critical baseline colors */
+body {
+  background-color: #f5f3ef;
+  color: #262626;
+}
+
+/* Fallback primary button style */
+button, .btn-primary {
+  background-color: #b8860b;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  border: none;
+  cursor: pointer;
+}
+
+button:hover, .btn-primary:hover {
+  opacity: 0.9;
+}
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap');
 
 @tailwind base;
@@ -18,29 +51,29 @@
     --secondary: 340 60% 75%;
     --secondary-foreground: 340 40% 20%;
     
-    /* Background - Cream white */
-    --background: 40 30% 97%;
-    --foreground: 30 20% 25%;
+    /* Background - Warm off-white */
+    --background: 40 20% 94%;
+    --foreground: 30 20% 20%;
     
     /* Accent - Sunny gold */
     --accent: 45 90% 60%;
     --accent-foreground: 30 20% 20%;
     
     /* Muted - Soft cream */
-    --muted: 40 20% 90%;
-    --muted-foreground: 30 15% 50%;
+    --muted: 40 15% 88%;
+    --muted-foreground: 30 12% 45%;
     
-    /* Card */
-    --card: 0 0% 100%;
-    --card-foreground: 30 20% 25%;
+    /* Card - Off-white */
+    --card: 40 20% 96%;
+    --card-foreground: 30 20% 20%;
     
     /* Popover */
-    --popover: 0 0% 100%;
-    --popover-foreground: 30 20% 25%;
+    --popover: 40 20% 96%;
+    --popover-foreground: 30 20% 20%;
     
     /* Borders */
-    --border: 40 20% 85%;
-    --input: 40 20% 90%;
+    --border: 40 15% 82%;
+    --input: 40 15% 88%;
     --ring: 38 57% 45%;
     
     /* Status Colors */
@@ -55,47 +88,47 @@
 
   /* ===========================
      VIGILANTE THEME
-     Slate blue: cool, clean, dark
+     Warm brown: cozy, earthy, dark
      =========================== */
   [data-theme="vigilante"] {
-    /* Primary - Cool blue */
-    --primary: 210 80% 55%;
+    /* Primary - Warm amber/brown */
+    --primary: 25 60% 45%;
     --primary-foreground: 0 0% 100%;
     
-    /* Secondary - Slate blue */
-    --secondary: 215 25% 35%;
+    /* Secondary - Dark brown */
+    --secondary: 25 30% 25%;
     --secondary-foreground: 0 0% 100%;
     
-    /* Background - Deep slate */
-    --background: 215 30% 10%;
-    --foreground: 210 10% 90%;
+    /* Background - Deep brown */
+    --background: 25 25% 10%;
+    --foreground: 30 20% 90%;
     
-    /* Accent - Electric cyan */
-    --accent: 210 100% 65%;
+    /* Accent - Copper/bronze */
+    --accent: 30 70% 55%;
     --accent-foreground: 0 0% 0%;
     
-    /* Muted - Dark slate */
-    --muted: 215 20% 20%;
-    --muted-foreground: 215 10% 65%;
+    /* Muted - Dark warm gray */
+    --muted: 25 15% 18%;
+    --muted-foreground: 30 10% 65%;
     
     /* Card */
-    --card: 215 25% 14%;
-    --card-foreground: 210 10% 90%;
+    --card: 25 20% 14%;
+    --card-foreground: 30 20% 90%;
     
     /* Popover */
-    --popover: 215 25% 16%;
-    --popover-foreground: 210 10% 90%;
+    --popover: 25 20% 16%;
+    --popover-foreground: 30 20% 90%;
     
     /* Borders */
-    --border: 215 20% 25%;
-    --input: 215 20% 20%;
-    --ring: 210 80% 55%;
+    --border: 25 15% 22%;
+    --input: 25 15% 18%;
+    --ring: 25 60% 45%;
     
     /* Status Colors */
-    --success: 160 60% 45%;
-    --warning: 35 80% 55%;
-    --error: 0 70% 55%;
-    --info: 200 80% 55%;
+    --success: 150 50% 40%;
+    --warning: 35 70% 50%;
+    --error: 0 60% 50%;
+    --info: 200 60% 50%;
     
     /* Radius */
     --radius: 0.5rem;
@@ -118,6 +151,25 @@
 }
 
 /* ===========================
+   Sidebar collapsed state
+   =========================== */
+@layer utilities {
+  .ml-sidebar {
+    @apply ml-0 lg:ml-64;
+  }
+  .sidebar-collapsed .ml-sidebar {
+    @apply lg:ml-20;
+  }
+  
+  .pl-sidebar {
+    @apply pl-0 lg:pl-64;
+  }
+  .sidebar-collapsed .pl-sidebar {
+    @apply lg:pl-20;
+  }
+}
+
+/* ===========================
    Theme-aware gradient background
    =========================== */
 .bg-theme-gradient {
@@ -130,15 +182,15 @@
 
 /* Dark mode specific overrides */
 [data-theme="vigilante"] body {
-  background-color: hsl(215 30% 10%);
-  color: hsl(210 10% 90%);
+  background-color: hsl(25 25% 10%);
+  color: hsl(30 20% 90%);
 }
 
 [data-theme="vigilante"] .bg-theme-gradient {
   background: linear-gradient(135deg, 
-    hsl(215 30% 10%) 0%, 
-    hsl(215 30% 13%) 50%, 
-    hsl(210 80% 55% / 0.08) 100%
+    hsl(25 25% 10%) 0%, 
+    hsl(25 25% 13%) 50%, 
+    hsl(25 60% 45% / 0.08) 100%
   );
 }
 
@@ -165,11 +217,11 @@
 
 /* Gradient backgrounds */
 .bg-gradient-farmhouse {
-  background: linear-gradient(135deg, #f8f5f0 0%, #ede8df 50%, hsl(38 57% 45% / 0.1) 100%);
+  background: linear-gradient(135deg, #f5f3ef 0%, #e8e4dc 50%, hsl(38 57% 45% / 0.1) 100%);
 }
 
 .bg-gradient-slate {
-  background: linear-gradient(135deg, hsl(215 30% 10%) 0%, hsl(215 30% 12%) 50%, hsl(210 80% 55% / 0.1) 100%);
+  background: linear-gradient(135deg, hsl(25 25% 10%) 0%, hsl(25 25% 12%) 50%, hsl(25 60% 45% / 0.1) 100%);
 }
 
 /* Glass effect */

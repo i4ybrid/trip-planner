@@ -1,4 +1,4 @@
-export type TripStatus = 'IDEA' | 'PLANNING' | 'CONFIRMED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+export type TripStatus = 'IDEA' | 'PLANNING' | 'CONFIRMED' | 'HAPPENING' | 'COMPLETED' | 'CANCELLED';
 
 export type MemberRole = 'MASTER' | 'ORGANIZER' | 'MEMBER' | 'VIEWER';
 
@@ -16,6 +16,12 @@ export type ActivityCategory = 'accommodation' | 'excursion' | 'restaurant' | 't
 
 export type VoteOption = 'yes' | 'no' | 'maybe';
 
+export type EventType = 'trip_created' | 'member_joined' | 'member_invited' | 'activity_proposed' | 'activity_booked' | 'vote_cast' | 'payment_received' | 'payment_sent' | 'status_changed' | 'message_sent' | 'photo_shared';
+
+export type SettlementStatus = 'pending' | 'requested' | 'sent' | 'received' | 'cancelled';
+
+export type PaymentLink = 'venmo' | 'paypal' | 'zelle' | 'other';
+
 export type ShareChannel = 'email' | 'whatsapp' | 'sms' | 'messenger' | 'telegram' | 'google_chat' | 'link';
 
 export interface User {
@@ -29,6 +35,37 @@ export interface User {
   zelle?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface TripEvent {
+  id: string;
+  tripId: string;
+  type: EventType;
+  title: string;
+  description?: string;
+  userId?: string;
+  relatedId?: string;
+  createdAt: string;
+  user?: User;
+}
+
+export interface Settlement {
+  id: string;
+  tripId: string;
+  fromUserId: string;
+  toUserId: string;
+  amount: number;
+  currency: string;
+  description: string;
+  status: SettlementStatus;
+  paymentLink?: PaymentLink;
+  venmoHandle?: string;
+  paypalEmail?: string;
+  zellePhone?: string;
+  settledAt?: string;
+  createdAt: string;
+  fromUser?: User;
+  toUser?: User;
 }
 
 export interface Trip {
@@ -131,14 +168,29 @@ export interface TripMessage {
 export interface MediaItem {
   id: string;
   tripId: string;
+  albumId?: string;
   uploaderId: string;
   type: 'image' | 'video';
   url: string;
   thumbnailUrl?: string;
-  activityId?: string;
   caption?: string;
-  uploader?: User;
   createdAt: string;
+}
+
+export interface Album {
+  id: string;
+  tripId: string;
+  name: string;
+  description?: string;
+  coverImage?: string;
+  mediaItems: MediaItem[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateAlbumInput {
+  name: string;
+  description?: string;
 }
 
 export interface Notification {
@@ -188,6 +240,34 @@ export interface CreateInviteInput {
 export interface SendMessageInput {
   content: string;
   messageType?: MessageType;
+}
+
+export interface MediaItem {
+  id: string;
+  tripId: string;
+  albumId?: string;
+  uploaderId: string;
+  type: 'image' | 'video';
+  url: string;
+  thumbnailUrl?: string;
+  caption?: string;
+  createdAt: string;
+}
+
+export interface Album {
+  id: string;
+  tripId: string;
+  name: string;
+  description?: string;
+  coverImage?: string;
+  mediaItems: MediaItem[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateAlbumInput {
+  name: string;
+  description?: string;
 }
 
 export interface ApiResponse<T> {
