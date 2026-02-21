@@ -19,6 +19,36 @@ import {
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
 
+const isLoggingEnabled = process.env.NEXT_PUBLIC_API_LOGGING === 'true' || process.env.NODE_ENV !== 'production';
+
+function logApiCall(url: string, options: RequestInit, response?: Response, error?: Error) {
+  if (!isLoggingEnabled) return;
+  
+  const method = options.method || 'GET';
+  const timestamp = new Date().toISOString();
+  
+  if (error) {
+    console.log(`[API] ${timestamp} ${method} ${url} - ERROR:`, error.message);
+    return;
+  }
+  
+  if (response) {
+    console.log(`[API] ${timestamp} ${method} ${url} - ${response.status} ${response.statusText}`);
+  } else {
+    console.log(`[API] ${timestamp} ${method} ${url}`);
+  }
+}
+
+async function fetchWithLogging(url: string, options: RequestInit): Promise<Response> {
+  const response = await fetch(url, options);
+  
+  if (isLoggingEnabled) {
+    logApiCall(url, options, response);
+  }
+  
+  return response;
+}
+
 class ApiError extends Error {
   constructor(public status: number, message: string) {
     super(message);
@@ -52,21 +82,21 @@ function getHeaders(): HeadersInit {
 export const api = {
   // Trips
   async getTrips(): Promise<ApiResponse<Trip[]>> {
-    const response = await fetch(`${API_BASE_URL}/trips`, {
+    const response = await fetchWithLogging(`${API_BASE_URL}/trips`, {
       headers: getHeaders(),
     });
     return handleResponse(response);
   },
 
   async getTrip(id: string): Promise<ApiResponse<Trip>> {
-    const response = await fetch(`${API_BASE_URL}/trips/${id}`, {
+    const response = await fetchWithLogging(`${API_BASE_URL}/trips/${id}`, {
       headers: getHeaders(),
     });
     return handleResponse(response);
   },
 
   async createTrip(data: CreateTripInput): Promise<ApiResponse<Trip>> {
-    const response = await fetch(`${API_BASE_URL}/trips`, {
+    const response = await fetchWithLogging(`${API_BASE_URL}/trips`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(data),
@@ -75,7 +105,7 @@ export const api = {
   },
 
   async updateTrip(id: string, data: UpdateTripInput): Promise<ApiResponse<Trip>> {
-    const response = await fetch(`${API_BASE_URL}/trips/${id}`, {
+    const response = await fetchWithLogging(`${API_BASE_URL}/trips/${id}`, {
       method: 'PATCH',
       headers: getHeaders(),
       body: JSON.stringify(data),
@@ -84,7 +114,7 @@ export const api = {
   },
 
   async deleteTrip(id: string): Promise<ApiResponse<void>> {
-    const response = await fetch(`${API_BASE_URL}/trips/${id}`, {
+    const response = await fetchWithLogging(`${API_BASE_URL}/trips/${id}`, {
       method: 'DELETE',
       headers: getHeaders(),
     });
@@ -92,7 +122,7 @@ export const api = {
   },
 
   async changeTripStatus(id: string, status: string): Promise<ApiResponse<Trip>> {
-    const response = await fetch(`${API_BASE_URL}/trips/${id}/status`, {
+    const response = await fetchWithLogging(`${API_BASE_URL}/trips/${id}/status`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({ status }),
@@ -102,14 +132,14 @@ export const api = {
 
   // Trip Members
   async getTripMembers(tripId: string): Promise<ApiResponse<TripMember[]>> {
-    const response = await fetch(`${API_BASE_URL}/trips/${tripId}/members`, {
+    const response = await fetchWithLogging(`${API_BASE_URL}/trips/${tripId}/members`, {
       headers: getHeaders(),
     });
     return handleResponse(response);
   },
 
   async addTripMember(tripId: string, userId: string): Promise<ApiResponse<TripMember>> {
-    const response = await fetch(`${API_BASE_URL}/trips/${tripId}/members`, {
+    const response = await fetchWithLogging(`${API_BASE_URL}/trips/${tripId}/members`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({ userId }),
@@ -118,7 +148,7 @@ export const api = {
   },
 
   async removeTripMember(tripId: string, userId: string): Promise<ApiResponse<void>> {
-    const response = await fetch(`${API_BASE_URL}/trips/${tripId}/members/${userId}`, {
+    const response = await fetchWithLogging(`${API_BASE_URL}/trips/${tripId}/members/${userId}`, {
       method: 'DELETE',
       headers: getHeaders(),
     });
@@ -126,7 +156,7 @@ export const api = {
   },
 
   async confirmPayment(tripId: string, userId: string): Promise<ApiResponse<TripMember>> {
-    const response = await fetch(`${API_BASE_URL}/trips/${tripId}/members/${userId}/confirm-payment`, {
+    const response = await fetchWithLogging(`${API_BASE_URL}/trips/${tripId}/members/${userId}/confirm-payment`, {
       method: 'POST',
       headers: getHeaders(),
     });
@@ -135,14 +165,14 @@ export const api = {
 
   // Activities
   async getActivities(tripId: string): Promise<ApiResponse<Activity[]>> {
-    const response = await fetch(`${API_BASE_URL}/trips/${tripId}/activities`, {
+    const response = await fetchWithLogging(`${API_BASE_URL}/trips/${tripId}/activities`, {
       headers: getHeaders(),
     });
     return handleResponse(response);
   },
 
   async createActivity(tripId: string, data: CreateActivityInput): Promise<ApiResponse<Activity>> {
-    const response = await fetch(`${API_BASE_URL}/trips/${tripId}/activities`, {
+    const response = await fetchWithLogging(`${API_BASE_URL}/trips/${tripId}/activities`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(data),
@@ -151,7 +181,7 @@ export const api = {
   },
 
   async updateActivity(id: string, data: Partial<CreateActivityInput>): Promise<ApiResponse<Activity>> {
-    const response = await fetch(`${API_BASE_URL}/activities/${id}`, {
+    const response = await fetchWithLogging(`${API_BASE_URL}/activities/${id}`, {
       method: 'PATCH',
       headers: getHeaders(),
       body: JSON.stringify(data),
@@ -160,7 +190,7 @@ export const api = {
   },
 
   async deleteActivity(id: string): Promise<ApiResponse<void>> {
-    const response = await fetch(`${API_BASE_URL}/activities/${id}`, {
+    const response = await fetchWithLogging(`${API_BASE_URL}/activities/${id}`, {
       method: 'DELETE',
       headers: getHeaders(),
     });
@@ -169,14 +199,14 @@ export const api = {
 
   // Votes
   async getVotes(activityId: string): Promise<ApiResponse<Vote[]>> {
-    const response = await fetch(`${API_BASE_URL}/activities/${activityId}/votes`, {
+    const response = await fetchWithLogging(`${API_BASE_URL}/activities/${activityId}/votes`, {
       headers: getHeaders(),
     });
     return handleResponse(response);
   },
 
   async castVote(activityId: string, option: string): Promise<ApiResponse<Vote>> {
-    const response = await fetch(`${API_BASE_URL}/activities/${activityId}/votes`, {
+    const response = await fetchWithLogging(`${API_BASE_URL}/activities/${activityId}/votes`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({ option }),
@@ -185,7 +215,7 @@ export const api = {
   },
 
   async removeVote(activityId: string): Promise<ApiResponse<void>> {
-    const response = await fetch(`${API_BASE_URL}/activities/${activityId}/votes`, {
+    const response = await fetchWithLogging(`${API_BASE_URL}/activities/${activityId}/votes`, {
       method: 'DELETE',
       headers: getHeaders(),
     });
@@ -194,14 +224,14 @@ export const api = {
 
   // Invites
   async getInvites(tripId: string): Promise<ApiResponse<Invite[]>> {
-    const response = await fetch(`${API_BASE_URL}/trips/${tripId}/invites`, {
+    const response = await fetchWithLogging(`${API_BASE_URL}/trips/${tripId}/invites`, {
       headers: getHeaders(),
     });
     return handleResponse(response);
   },
 
   async createInvite(tripId: string, data: CreateInviteInput): Promise<ApiResponse<Invite>> {
-    const response = await fetch(`${API_BASE_URL}/trips/${tripId}/invites`, {
+    const response = await fetchWithLogging(`${API_BASE_URL}/trips/${tripId}/invites`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(data),
@@ -210,7 +240,7 @@ export const api = {
   },
 
   async acceptInvite(token: string): Promise<ApiResponse<{ tripId: string }>> {
-    const response = await fetch(`${API_BASE_URL}/invites/${token}/accept`, {
+    const response = await fetchWithLogging(`${API_BASE_URL}/invites/${token}/accept`, {
       method: 'POST',
       headers: getHeaders(),
     });
@@ -218,7 +248,7 @@ export const api = {
   },
 
   async declineInvite(token: string): Promise<ApiResponse<void>> {
-    const response = await fetch(`${API_BASE_URL}/invites/${token}/decline`, {
+    const response = await fetchWithLogging(`${API_BASE_URL}/invites/${token}/decline`, {
       method: 'POST',
       headers: getHeaders(),
     });
@@ -227,14 +257,14 @@ export const api = {
 
   // Bookings
   async getBookings(tripId: string): Promise<ApiResponse<Booking[]>> {
-    const response = await fetch(`${API_BASE_URL}/trips/${tripId}/bookings`, {
+    const response = await fetchWithLogging(`${API_BASE_URL}/trips/${tripId}/bookings`, {
       headers: getHeaders(),
     });
     return handleResponse(response);
   },
 
   async createBooking(tripId: string, data: { activityId?: string; notes?: string }): Promise<ApiResponse<Booking>> {
-    const response = await fetch(`${API_BASE_URL}/trips/${tripId}/bookings`, {
+    const response = await fetchWithLogging(`${API_BASE_URL}/trips/${tripId}/bookings`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(data),
@@ -243,7 +273,7 @@ export const api = {
   },
 
   async updateBooking(id: string, data: { status?: string; confirmationNum?: string }): Promise<ApiResponse<Booking>> {
-    const response = await fetch(`${API_BASE_URL}/bookings/${id}`, {
+    const response = await fetchWithLogging(`${API_BASE_URL}/bookings/${id}`, {
       method: 'PATCH',
       headers: getHeaders(),
       body: JSON.stringify(data),
@@ -253,14 +283,14 @@ export const api = {
 
   // Messages
   async getMessages(tripId: string): Promise<ApiResponse<TripMessage[]>> {
-    const response = await fetch(`${API_BASE_URL}/trips/${tripId}/messages`, {
+    const response = await fetchWithLogging(`${API_BASE_URL}/trips/${tripId}/messages`, {
       headers: getHeaders(),
     });
     return handleResponse(response);
   },
 
   async sendMessage(tripId: string, data: SendMessageInput): Promise<ApiResponse<TripMessage>> {
-    const response = await fetch(`${API_BASE_URL}/trips/${tripId}/messages`, {
+    const response = await fetchWithLogging(`${API_BASE_URL}/trips/${tripId}/messages`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(data),
@@ -270,7 +300,7 @@ export const api = {
 
   // Media
   async getMedia(tripId: string): Promise<ApiResponse<MediaItem[]>> {
-    const response = await fetch(`${API_BASE_URL}/trips/${tripId}/media`, {
+    const response = await fetchWithLogging(`${API_BASE_URL}/trips/${tripId}/media`, {
       headers: getHeaders(),
     });
     return handleResponse(response);
@@ -286,7 +316,7 @@ export const api = {
       headers['Authorization'] = `Bearer ${token}`;
     }
     
-    const response = await fetch(`${API_BASE_URL}/trips/${tripId}/media`, {
+    const response = await fetchWithLogging(`${API_BASE_URL}/trips/${tripId}/media`, {
       method: 'POST',
       headers,
       body: formData,
@@ -296,14 +326,14 @@ export const api = {
 
   // Notifications
   async getNotifications(): Promise<ApiResponse<Notification[]>> {
-    const response = await fetch(`${API_BASE_URL}/notifications`, {
+    const response = await fetchWithLogging(`${API_BASE_URL}/notifications`, {
       headers: getHeaders(),
     });
     return handleResponse(response);
   },
 
   async markNotificationRead(id: string): Promise<ApiResponse<void>> {
-    const response = await fetch(`${API_BASE_URL}/notifications/${id}`, {
+    const response = await fetchWithLogging(`${API_BASE_URL}/notifications/${id}`, {
       method: 'PATCH',
       headers: getHeaders(),
       body: JSON.stringify({ read: true }),
@@ -312,7 +342,7 @@ export const api = {
   },
 
   async markAllNotificationsRead(): Promise<ApiResponse<void>> {
-    const response = await fetch(`${API_BASE_URL}/notifications/mark-all-read`, {
+    const response = await fetchWithLogging(`${API_BASE_URL}/notifications/mark-all-read`, {
       method: 'POST',
       headers: getHeaders(),
     });
@@ -321,14 +351,14 @@ export const api = {
 
   // User
   async getCurrentUser(): Promise<ApiResponse<User>> {
-    const response = await fetch(`${API_BASE_URL}/users/me`, {
+    const response = await fetchWithLogging(`${API_BASE_URL}/users/me`, {
       headers: getHeaders(),
     });
     return handleResponse(response);
   },
 
   async updateProfile(data: Partial<User>): Promise<ApiResponse<User>> {
-    const response = await fetch(`${API_BASE_URL}/users/me`, {
+    const response = await fetchWithLogging(`${API_BASE_URL}/users/me`, {
       method: 'PATCH',
       headers: getHeaders(),
       body: JSON.stringify(data),
@@ -337,7 +367,7 @@ export const api = {
   },
 
   async getUser(id: string): Promise<ApiResponse<User>> {
-    const response = await fetch(`${API_BASE_URL}/users/${id}`, {
+    const response = await fetchWithLogging(`${API_BASE_URL}/users/${id}`, {
       headers: getHeaders(),
     });
     return handleResponse(response);

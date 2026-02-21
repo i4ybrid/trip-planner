@@ -1,11 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, Button, Input, Label } from '@/components';
 import { LeftSidebar } from '@/components/left-sidebar';
 import { AppHeader } from '@/components/app-header';
 import { Mail, Lock, Bell, Wallet, Save, Trash2, Plus, Check, MessageSquare, Smartphone } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK_API === 'true';
 
 type SettingsTab = 'profile' | 'security' | 'notifications' | 'payments';
 
@@ -30,9 +32,9 @@ export default function SettingsPage() {
   const [saved, setSaved] = useState(false);
 
   const [profile, setProfile] = useState({
-    name: 'Test User',
-    email: 'test@example.com',
-    phone: '+1 (555) 123-4567',
+    name: '',
+    email: '',
+    phone: '',
   });
 
   const [passwords, setPasswords] = useState({
@@ -56,12 +58,23 @@ export default function SettingsPage() {
     text: false,
   });
 
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([
-    { id: '1', type: 'venmo', handle: 'test-user' },
-  ]);
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
 
   const [newPaymentType, setNewPaymentType] = useState<'venmo' | 'paypal' | 'zelle' | ''>('');
   const [newPaymentHandle, setNewPaymentHandle] = useState('');
+
+  useEffect(() => {
+    if (USE_MOCK) {
+      setProfile({
+        name: 'Test User',
+        email: 'test@example.com',
+        phone: '+1 (555) 123-4567',
+      });
+      setPaymentMethods([
+        { id: '1', type: 'venmo', handle: 'test-user' },
+      ]);
+    }
+  }, []);
 
   const handleSave = () => {
     setIsSaving(true);

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardContent, EmptyState } from '@/components';
-import { mockApi } from '@/services/mock-api';
+import { api } from '@/services';
 import { Clock } from 'lucide-react';
 
 const eventTypeIcons: Record<string, string> = {
@@ -34,7 +34,7 @@ export default function TripTimeline() {
 
   useEffect(() => {
     const loadEvents = async () => {
-      const result = await mockApi.getEvents(tripId);
+      const result = await api.getEvents(tripId);
       if (result.data) setEvents(result.data);
     };
     loadEvents();

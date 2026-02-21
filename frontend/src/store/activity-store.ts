@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { Activity, CreateActivityInput, Vote, VoteOption } from '@/types';
-import { mockApi } from '@/services/mock-api';
+import { api } from '@/services';
 
 interface ActivityState {
   activities: Activity[];
@@ -23,7 +23,7 @@ export const useActivityStore = create<ActivityState>((set) => ({
   fetchActivities: async (tripId: string) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await mockApi.getActivities(tripId);
+      const response = await api.getActivities(tripId);
       if (response.error) {
         set({ error: response.error, isLoading: false });
         return;
@@ -37,7 +37,7 @@ export const useActivityStore = create<ActivityState>((set) => ({
   createActivity: async (tripId: string, input: CreateActivityInput) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await mockApi.createActivity(tripId, 'user-1', input);
+      const response = await api.createActivity(tripId, 'user-1', input);
       if (response.error) {
         set({ error: response.error, isLoading: false });
         return null;
@@ -57,7 +57,7 @@ export const useActivityStore = create<ActivityState>((set) => ({
   castVote: async (activityId: string, option: VoteOption) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await mockApi.castVote(activityId, 'user-1', option);
+      const response = await api.castVote(activityId, 'user-1', option);
       if (response.error) {
         set({ error: response.error, isLoading: false });
         return null;

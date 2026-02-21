@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { LeftSidebar } from '@/components/left-sidebar';
 import { AppHeader } from '@/components/app-header';
 import { Tabs } from '@/components/tabs';
-import { mockApi } from '@/services/mock-api';
+import { api } from '@/services';
 import { Trip } from '@/types';
 
 const tripTabs = [
@@ -29,7 +29,7 @@ export default function TripLayout({
 
   useEffect(() => {
     const fetchTrip = async () => {
-      const result = await mockApi.getTrip(tripId);
+      const result = await api.getTrip(tripId);
       if (result.data) {
         setTrip(result.data);
       }

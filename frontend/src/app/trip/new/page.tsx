@@ -8,6 +8,9 @@ import { LeftSidebar } from '@/components/left-sidebar';
 import { AppHeader } from '@/components/app-header';
 import { ArrowLeft } from 'lucide-react';
 
+const DEBUG = process.env.NEXT_PUBLIC_DEBUG === 'true';
+const debugLog = (...args: any[]) => DEBUG && console.log(...args);
+
 export default function NewTripPage() {
   const router = useRouter();
   const { createTrip, isLoading, error, clearError } = useTripStore();
@@ -20,7 +23,10 @@ export default function NewTripPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    debugLog('[CreateTrip] Button clicked - starting submission');
     clearError();
+    
+    debugLog('[CreateTrip] Form data:', { name, description, destination, startDate, endDate });
     
     const trip = await createTrip({
       name,
@@ -30,7 +36,10 @@ export default function NewTripPage() {
       endDate: endDate || undefined,
     });
 
+    debugLog('[CreateTrip] createTrip result:', trip);
+
     if (trip) {
+      debugLog('[CreateTrip] Redirecting to trip:', trip.id);
       router.push(`/trip/${trip.id}`);
     }
   };

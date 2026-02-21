@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   frontend:
     build:
@@ -12,6 +10,7 @@ services:
       - NEXT_PUBLIC_API_URL=http://localhost:4000
       - NEXTAUTH_SECRET=dev-secret-change-in-prod
       - NEXTAUTH_URL=http://localhost:3000
+      - NEXT_PUBLIC_API_LOGGING=true
     depends_on:
       - backend
       - db
@@ -29,6 +28,7 @@ services:
       - NODE_ENV=development
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/tripplanner
       - PORT=4000
+      - LOG_DIR=/logs
     depends_on:
       db:
         condition: service_healthy
@@ -37,6 +37,7 @@ services:
     volumes:
       - ./backend:/app
       - /app/node_modules
+      - ./logs:/logs
 
   db:
     image: postgres:15-alpine

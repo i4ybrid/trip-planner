@@ -3,9 +3,11 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardContent, Input, Button } from '@/components';
-import { mockApi, mockTrip } from '@/services/mock-api';
+import { api } from '@/services';
 import { Send, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK_API === 'true';
 
 export default function TripChat() {
   const params = useParams();
@@ -15,16 +17,31 @@ export default function TripChat() {
   const [newMessage, setNewMessage] = useState('');
   const [showMentions, setShowMentions] = useState(false);
   const [mentionSearch, setMentionSearch] = useState('');
+  const [tripMembers, setTripMembers] = useState<{ userId: string; role: string; user: { name: string } }[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  
-  const tripMembers = mockTrip.getTripMembersWithUsers(tripId);
 
   useEffect(() => {
     const loadMessages = async () => {
-      const result = await mockApi.getMessages(tripId);
+      const result = await api.getMessages(tripId);
       if (result.data) setMessages(result.data);
     };
     loadMessages();
+
+    if (USE_MOCK) {
+      import('@/services').then(({ mockTrip }) => {
+        setTripMembers(mockTrip.getTripMembersWithUsers(tripId));
+      });
+    } else {
+      api.getTripMembers(tripId).then((response) => {
+        if (response.data) {
+          setTripMembers(response.data.map((m: any) => ({
+            userId: m.userId,
+            role: m.role,
+            user: m.user || { name: 'Unknown' },
+          })));
+        }
+      });
+    }
   }, [tripId]);
 
   const handleMessageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -51,7 +68,8 @@ export default function TripChat() {
   };
 
   const insertMention = (name: string) => {
-    const cursorPos = document.getElementById('chat-input')?.selectionStart || newMessage.length;
+    const inputEl = document.getElementById('chat-input') as HTMLInputElement | null;
+    const cursorPos = inputEl?.selectionStart ?? newMessage.length;
     const textBeforeCursor = newMessage.slice(0, cursorPos);
     const lastAtPos = textBeforeCursor.lastIndexOf('@');
     
@@ -69,7 +87,7 @@ export default function TripChat() {
     e.preventDefault();
     if (!newMessage.trim()) return;
     
-    const result = await mockApi.sendMessage(tripId, 'user-1', { content: newMessage });
+    const result = await api.sendMessage(tripId, { content: newMessage });
     if (result.data) {
       setMessages([...messages, result.data]);
       setNewMessage('');

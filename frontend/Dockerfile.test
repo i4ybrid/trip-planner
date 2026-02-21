@@ -1,11 +1,11 @@
 # Frontend Dockerfile - Test
-FROM node:20-alpine
+FROM node:20
 
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci --legacy-peer-deps
 
-RUN npm install -D @playwright/test && npx playwright install --with-deps chromium
+RUN npm install -D @playwright/test && npx playwright install chromium
 
 COPY vitest.config.ts ./
 COPY tailwind.config.js ./

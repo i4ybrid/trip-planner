@@ -5,8 +5,10 @@ import { useParams } from 'next/navigation';
 import { useTripStore } from '@/store';
 import { Card, CardHeader, CardTitle, CardContent, Button, Badge, Select } from '@/components';
 import { formatDateRange, formatCurrency, cn } from '@/lib/utils';
-import { mockApi, mockTrip } from '@/services/mock-api';
+import { api } from '@/services';
 import { MapPin, Calendar, Users, DollarSign, Share2, Settings } from 'lucide-react';
+
+const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK_API === 'true';
 
 export default function TripOverview() {
   const params = useParams();
@@ -18,9 +20,23 @@ export default function TripOverview() {
   useEffect(() => {
     if (tripId) {
       fetchTrip(tripId);
-      setMembers(mockTrip.getTripMembersWithUsers(tripId));
+      if (USE_MOCK) {
+        import('@/services').then(({ mockTrip }) => {
+          setMembers(mockTrip.getTripMembersWithUsers(tripId));
+        });
+      } else {
+        api.getTripMembers(tripId).then((response) => {
+          if (response.data) {
+            setMembers(response.data.map((m: any) => ({
+              userId: m.userId,
+              role: m.role,
+              user: m.user || { name: 'Unknown', email: '' },
+            })));
+          }
+        });
+      }
     }
-  }, [tripId, fetchTrip]);
+  }, [tripId, fetchTrip, USE_MOCK]);
 
   if (isLoading || !currentTrip) {
     return (

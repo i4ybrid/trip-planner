@@ -7,6 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 
+const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK_API === 'true';
+
 interface Conversation {
   id: string;
   name: string;
@@ -24,33 +26,45 @@ interface Message {
   timestamp: string;
 }
 
+const STUBBED_CONVERSATIONS: Conversation[] = [
+  { id: '1', name: 'Summer Road Trip 2024', lastMessage: 'Sarah: See you all tomorrow!', timestamp: '2 min ago', unread: 2, avatar: null },
+  { id: '2', name: 'Mike Johnson', lastMessage: 'Thanks for the recommendation!', timestamp: '1 hour ago', unread: 0, avatar: null },
+  { id: '3', name: 'Tokyo Adventure', lastMessage: 'Emily: The restaurant was amazing', timestamp: 'Yesterday', unread: 0, avatar: null },
+  { id: '4', name: 'Emily Davis', lastMessage: 'Sounds good!', timestamp: 'Yesterday', unread: 0, avatar: null },
+];
+
+const STUBBED_MESSAGES: Message[] = [
+  { id: '1', conversationId: '1', senderId: 'user-1', content: 'Hey everyone! Just wanted to confirm our plans for tomorrow.', timestamp: '10:30 AM' },
+  { id: '2', conversationId: '1', senderId: 'user-2', content: "I'm so excited! Can't wait!", timestamp: '10:32 AM' },
+  { id: '3', conversationId: '1', senderId: 'user-3', content: 'Same here! Should we meet at the hotel first?', timestamp: '10:35 AM' },
+  { id: '4', conversationId: '1', senderId: 'user-1', content: "Yes, let's meet at 9 AM in the lobby. Then we can head to the beach together.", timestamp: '10:38 AM' },
+  { id: '5', conversationId: '1', senderId: 'user-2', content: "Perfect! I'll bring some snacks for the drive.", timestamp: '10:40 AM' },
+  { id: '6', conversationId: '1', senderId: 'user-3', content: 'See you all tomorrow!', timestamp: '10:45 AM' },
+  { id: '7', conversationId: '2', senderId: 'user-2', content: 'Hey! Thanks for the restaurant recommendation.', timestamp: '2:00 PM' },
+  { id: '8', conversationId: '2', senderId: 'user-1', content: 'No problem! Let me know how it goes.', timestamp: '2:15 PM' },
+  { id: '9', conversationId: '2', senderId: 'user-2', content: 'Thanks for the recommendation!', timestamp: '3:00 PM' },
+  { id: '10', conversationId: '3', senderId: 'user-3', content: 'The restaurant was amazing!', timestamp: 'Yesterday' },
+  { id: '11', conversationId: '3', senderId: 'user-1', content: 'Glad you liked it!', timestamp: 'Yesterday' },
+  { id: '12', conversationId: '4', senderId: 'user-4', content: 'Are we still on for Saturday?', timestamp: 'Yesterday' },
+  { id: '13', conversationId: '4', senderId: 'user-1', content: 'Sounds good!', timestamp: 'Yesterday' },
+];
+
 export default function MessagesPage() {
   const [selectedConversation, setSelectedConversation] = useState<string | null>('1');
   const [newMessage, setNewMessage] = useState('');
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [allMessages, setAllMessages] = useState<Message[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const conversations: Conversation[] = [
-    { id: '1', name: 'Summer Road Trip 2024', lastMessage: 'Sarah: See you all tomorrow!', timestamp: '2 min ago', unread: 2, avatar: null },
-    { id: '2', name: 'Mike Johnson', lastMessage: 'Thanks for the recommendation!', timestamp: '1 hour ago', unread: 0, avatar: null },
-    { id: '3', name: 'Tokyo Adventure', lastMessage: 'Emily: The restaurant was amazing', timestamp: 'Yesterday', unread: 0, avatar: null },
-    { id: '4', name: 'Emily Davis', lastMessage: 'Sounds good!', timestamp: 'Yesterday', unread: 0, avatar: null },
-  ];
-
-  const allMessages: Message[] = [
-    { id: '1', conversationId: '1', senderId: 'user-1', content: 'Hey everyone! Just wanted to confirm our plans for tomorrow.', timestamp: '10:30 AM' },
-    { id: '2', conversationId: '1', senderId: 'user-2', content: "I'm so excited! Can't wait!", timestamp: '10:32 AM' },
-    { id: '3', conversationId: '1', senderId: 'user-3', content: 'Same here! Should we meet at the hotel first?', timestamp: '10:35 AM' },
-    { id: '4', conversationId: '1', senderId: 'user-1', content: "Yes, let's meet at 9 AM in the lobby. Then we can head to the beach together.", timestamp: '10:38 AM' },
-    { id: '5', conversationId: '1', senderId: 'user-2', content: "Perfect! I'll bring some snacks for the drive.", timestamp: '10:40 AM' },
-    { id: '6', conversationId: '1', senderId: 'user-3', content: 'See you all tomorrow!', timestamp: '10:45 AM' },
-    { id: '7', conversationId: '2', senderId: 'user-2', content: 'Hey! Thanks for the restaurant recommendation.', timestamp: '2:00 PM' },
-    { id: '8', conversationId: '2', senderId: 'user-1', content: 'No problem! Let me know how it goes.', timestamp: '2:15 PM' },
-    { id: '9', conversationId: '2', senderId: 'user-2', content: 'Thanks for the recommendation!', timestamp: '3:00 PM' },
-    { id: '10', conversationId: '3', senderId: 'user-3', content: 'The restaurant was amazing!', timestamp: 'Yesterday' },
-    { id: '11', conversationId: '3', senderId: 'user-1', content: 'Glad you liked it!', timestamp: 'Yesterday' },
-    { id: '12', conversationId: '4', senderId: 'user-4', content: 'Are we still on for Saturday?', timestamp: 'Yesterday' },
-    { id: '13', conversationId: '4', senderId: 'user-1', content: 'Sounds good!', timestamp: 'Yesterday' },
-  ];
+  useEffect(() => {
+    if (USE_MOCK) {
+      setConversations(STUBBED_CONVERSATIONS);
+      setAllMessages(STUBBED_MESSAGES);
+    } else {
+      setConversations([]);
+      setAllMessages([]);
+    }
+  }, []);
 
   const messages = allMessages.filter(m => m.conversationId === selectedConversation);
 

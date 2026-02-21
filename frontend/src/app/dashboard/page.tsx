@@ -1,14 +1,16 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTripStore } from '@/store';
 import { TripCard, EmptyState, Button } from '@/components';
 import { Plane, Calendar, MapPin } from 'lucide-react';
-import { mockTrip } from '@/services/mock-api';
+import { api } from '@/services';
 import { User, TripMember } from '@/types';
 import { LeftSidebar } from '@/components/left-sidebar';
 import { AppHeader } from '@/components/app-header';
+
+const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK_API === 'true';
 
 interface TripWithMembers {
   id: string;
@@ -28,13 +30,46 @@ interface TripWithMembers {
 export default function DashboardPage() {
   const router = useRouter();
   const { trips, isLoading, error, fetchTrips } = useTripStore();
+  const [tripMembers, setTripMembers] = useState<Record<string, (TripMember & { user: User })[]>>({});
 
   useEffect(() => {
     fetchTrips();
   }, [fetchTrips]);
 
+  useEffect(() => {
+    if (USE_MOCK) {
+      import('@/services').then(({ mockTrip }) => {
+        const membersMap: Record<string, (TripMember & { user: User })[]> = {};
+        trips.forEach(trip => {
+          membersMap[trip.id] = mockTrip.getTripMembersWithUsers(trip.id);
+        });
+        setTripMembers(membersMap);
+      });
+    } else {
+      const fetchMembers = async () => {
+        const membersMap: Record<string, (TripMember & { user: User })[]> = {};
+        for (const trip of trips) {
+          const response = await api.getTripMembers(trip.id);
+          if (response.data) {
+            membersMap[trip.id] = response.data.map((m: any) => ({
+              ...m,
+              user: m.user || { id: m.userId, name: 'Unknown', email: '', createdAt: '', updatedAt: '' },
+            }));
+          }
+        }
+        setTripMembers(membersMap);
+      };
+      if (trips.length > 0) {
+        fetchMembers();
+      }
+    }
+  }, [trips]);
+
   const getTripMembers = (tripId: string): (TripMember & { user: User })[] => {
-    return mockTrip.getTripMembersWithUsers(tripId);
+    if (USE_MOCK) {
+      return tripMembers[tripId] || [];
+    }
+    return tripMembers[tripId] || [];
   };
 
   const activeTrips = trips.filter(

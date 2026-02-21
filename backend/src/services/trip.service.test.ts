@@ -26,7 +26,7 @@ describe('TripService', () => {
   let tripService: TripService;
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
     tripService = new TripService(mockPrismaClient);
   });
 
@@ -172,6 +172,101 @@ describe('TripService', () => {
       await expect(tripService.addMember(tripId, userId)).rejects.toThrow(
         'Cannot add members to a completed trip'
       );
+    });
+
+    it('should not add member to cancelled trip', async () => {
+      const tripId = 'trip-1';
+      const userId = 'user-2';
+
+      mockPrisma.trip.findUnique.mockResolvedValue({
+        id: tripId,
+        status: 'CANCELLED',
+      });
+
+      await expect(tripService.addMember(tripId, userId)).rejects.toThrow(
+        'Cannot add members to a completed trip'
+      );
+    });
+
+    it('should throw when trip not found', async () => {
+      mockPrisma.trip.findUnique.mockResolvedValue(null);
+
+      await expect(tripService.addMember('trip-1', 'user-2')).rejects.toThrow(
+        'Trip not found'
+      );
+    });
+  });
+
+  describe('getTripById', () => {
+    it('should return trip by id with members and activities', async () => {
+      const trip = {
+        id: 'trip-1',
+        name: 'Test Trip',
+        members: [{ userId: 'user-1', user: { name: 'User' } }],
+        activities: [{ id: 'act-1' }],
+      };
+      mockPrisma.trip.findUnique.mockResolvedValue(trip);
+
+      const result = await tripService.getTripById('trip-1');
+
+      expect(result).toEqual(trip);
+      expect(mockPrisma.trip.findUnique).toHaveBeenCalledWith({
+        where: { id: 'trip-1' },
+        include: {
+          members: { include: { user: true } },
+          activities: true,
+        },
+      });
+    });
+
+    it('should return null for non-existent trip', async () => {
+      mockPrisma.trip.findUnique.mockResolvedValue(null);
+
+      const result = await tripService.getTripById('non-existent');
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('removeMember', () => {
+    it('should remove a member from trip', async () => {
+      mockPrisma.tripMember.delete.mockResolvedValue({} as any);
+
+      await tripService.removeMember('trip-1', 'user-2');
+
+      expect(mockPrisma.tripMember.delete).toHaveBeenCalledWith({
+        where: { tripId_userId: { tripId: 'trip-1', userId: 'user-2' } },
+      });
+    });
+  });
+
+  describe('updateTrip', () => {
+    it('should update trip fields', async () => {
+      const updateData = { name: 'Updated Trip', destination: 'Paris' };
+      mockPrisma.trip.update.mockResolvedValue({
+        id: 'trip-1',
+        ...updateData,
+      } as any);
+
+      const result = await tripService.updateTrip('trip-1', updateData);
+
+      expect(result.name).toBe('Updated Trip');
+      expect(mockPrisma.trip.update).toHaveBeenCalledWith({
+        where: { id: 'trip-1' },
+        data: updateData,
+      });
+    });
+  });
+
+  describe('deleteTrip', () => {
+    it('should delete a trip', async () => {
+      mockPrisma.trip.delete.mockResolvedValue({} as any);
+
+      await tripService.deleteTrip('trip-1');
+
+      expect(mockPrisma.trip.delete).toHaveBeenCalledWith({
+        where: { id: 'trip-1' },
+      });
     });
   });
 });

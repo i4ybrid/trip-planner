@@ -1,6 +1,9 @@
 import { create } from 'zustand';
 import { Trip, CreateTripInput, UpdateTripInput, TripStatus } from '@/types';
-import { mockApi } from '@/services/mock-api';
+import { api } from '@/services';
+
+const DEBUG = process.env.NEXT_PUBLIC_DEBUG === 'true';
+const debugLog = DEBUG ? console.log.bind(console) : () => {};
 
 interface TripState {
   trips: Trip[];
@@ -27,7 +30,7 @@ export const useTripStore = create<TripState>((set, get) => ({
   fetchTrips: async () => {
     set({ isLoading: true, error: null });
     try {
-      const response = await mockApi.getTrips();
+      const response = await api.getTrips();
       if (response.error) {
         set({ error: response.error, isLoading: false });
         return;
@@ -41,7 +44,7 @@ export const useTripStore = create<TripState>((set, get) => ({
   fetchTrip: async (id: string) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await mockApi.getTrip(id);
+      const response = await api.getTrip(id);
       if (response.error) {
         set({ error: response.error, isLoading: false });
         return;
@@ -53,20 +56,26 @@ export const useTripStore = create<TripState>((set, get) => ({
   },
 
   createTrip: async (input: CreateTripInput) => {
+    debugLog('[TripStore] createTrip called with input:', input);
     set({ isLoading: true, error: null });
     try {
-      const response = await mockApi.createTrip('user-1', input);
+      debugLog('[TripStore] Calling API createTrip...');
+      const response = await api.createTrip(input);
+      debugLog('[TripStore] API response:', response);
       if (response.error) {
+        debugLog('[TripStore] API error:', response.error);
         set({ error: response.error, isLoading: false });
         return null;
       }
       const newTrip = response.data!;
+      debugLog('[TripStore] Created trip:', newTrip);
       set((state) => ({
         trips: [...state.trips, newTrip],
         isLoading: false,
       }));
       return newTrip;
     } catch (error) {
+      console.error('[TripStore] Exception:', error);
       set({ error: 'Failed to create trip', isLoading: false });
       return null;
     }
@@ -75,7 +84,7 @@ export const useTripStore = create<TripState>((set, get) => ({
   updateTrip: async (id: string, input: UpdateTripInput) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await mockApi.updateTrip(id, input);
+      const response = await api.updateTrip(id, input);
       if (response.error) {
         set({ error: response.error, isLoading: false });
         return null;
@@ -96,7 +105,7 @@ export const useTripStore = create<TripState>((set, get) => ({
   deleteTrip: async (id: string) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await mockApi.deleteTrip(id);
+      const response = await api.deleteTrip(id);
       if (response.error) {
         set({ error: response.error, isLoading: false });
         return false;
@@ -116,7 +125,7 @@ export const useTripStore = create<TripState>((set, get) => ({
   changeStatus: async (id: string, status: TripStatus) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await mockApi.changeTripStatus(id, status);
+      const response = await api.changeTripStatus(id, status);
       if (response.error) {
         set({ error: response.error, isLoading: false });
         return null;

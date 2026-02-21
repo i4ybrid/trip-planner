@@ -1,0 +1,1149 @@
+{
+  "info": {
+    "name": "TripPlanner API",
+    "description": "API collection for TripPlanner backend. Import this collection and set the `api_address` environment variable (e.g., localhost:4000)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "api_address",
+      "value": "localhost:4000",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "admin",
+      "type": "string"
+    },
+    {
+      "key": "trip_id",
+      "value": "trip-1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health & Info",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://{{api_address}}/api/health",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "health"]
+            }
+          }
+        },
+        {
+          "name": "API Docs",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://{{api_address}}/api-docs",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api-docs"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://{{api_address}}/api/users/me",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "users", "me"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://{{api_address}}/api/users",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "users"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://{{api_address}}/api/users/user-1",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "users", "user-1"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Get User Friends",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://{{api_address}}/api/users/{{user_id}}/friends",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "users", "{{user_id}}", "friends"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Get Users Batch",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "http://{{api_address}}/api/users/batch",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "users", "batch"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ids\": [\"user-1\", \"user-2\"]\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Trips",
+      "item": [
+        {
+          "name": "Get All Trips",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://{{api_address}}/api/trips",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "trips"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Create Trip",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "http://{{api_address}}/api/trips",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "trips"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"My New Trip\",\n  \"description\": \"A great adventure\",\n  \"destination\": \"Paris, France\",\n  \"startDate\": \"2026-06-01T00:00:00Z\",\n  \"endDate\": \"2026-06-07T00:00:00Z\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Trip by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://{{api_address}}/api/trips/{{trip_id}}",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "trips", "{{trip_id}}"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Update Trip",
+          "request": {
+            "method": "PUT",
+            "url": {
+              "raw": "http://{{api_address}}/api/trips/{{trip_id}}",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "trips", "{{trip_id}}"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Trip Name\",\n  \"status\": \"PLANNING\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Trip",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "http://{{api_address}}/api/trips/{{trip_id}}",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "trips", "{{trip_id}}"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Change Trip Status",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "http://{{api_address}}/api/trips/{{trip_id}}/status",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "trips", "{{trip_id}}", "status"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"CONFIRMED\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Trip Members",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://{{api_address}}/api/trips/{{trip_id}}/members",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "trips", "{{trip_id}}", "members"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Add Trip Member",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "http://{{api_address}}/api/trips/{{trip_id}}/members",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "trips", "{{trip_id}}", "members"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"user-2\",\n  \"role\": \"MEMBER\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Remove Trip Member",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "http://{{api_address}}/api/trips/{{trip_id}}/members/user-2",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "trips", "{{trip_id}}", "members", "user-2"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Activities",
+      "item": [
+        {
+          "name": "Get Trip Activities",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://{{api_address}}/api/activities/trip/{{trip_id}}",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "activities", "trip", "{{trip_id}}"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Create Activity",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "http://{{api_address}}/api/activities/trip/{{trip_id}}",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "activities", "trip", "{{trip_id}}"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Visit Eiffel Tower\",\n  \"description\": \"Morning visit to the iconic landmark\",\n  \"location\": \"Eiffel Tower, Paris\",\n  \"cost\": 25,\n  \"category\": \"attraction\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Activity by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://{{api_address}}/api/activities/activity-1",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "activities", "activity-1"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Delete Activity",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "http://{{api_address}}/api/activities/activity-1",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "activities", "activity-1"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Cast Vote",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "http://{{api_address}}/api/activities/activity-1/votes",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "activities", "activity-1", "votes"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"option\": \"yes\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Votes",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://{{api_address}}/api/activities/activity-1/votes",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "activities", "activity-1", "votes"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Set Voting Deadline",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "http://{{api_address}}/api/activities/activity-1/deadline",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "activities", "activity-1", "deadline"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"votingEndsAt\": \"2026-06-01T00:00:00Z\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Book Activity",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "http://{{api_address}}/api/activities/activity-1/book",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "activities", "activity-1", "book"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"confirmationNum\": \"ABC123\",\n  \"status\": \"CONFIRMED\",\n  \"notes\": \"Booked through Expedia\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Messages",
+      "item": [
+        {
+          "name": "Get Trip Messages",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://{{api_address}}/api/messages/trip/{{trip_id}}",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "messages", "trip", "{{trip_id}}"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Send Message",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "http://{{api_address}}/api/messages/trip/{{trip_id}}",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "messages", "trip", "{{trip_id}}"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Hey everyone! Excited for this trip!\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Message",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "http://{{api_address}}/api/messages/msg-1",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "messages", "msg-1"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Add Reaction",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "http://{{api_address}}/api/messages/msg-1/reactions",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "messages", "msg-1", "reactions"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"emoji\": \"👍\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Reactions",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://{{api_address}}/api/messages/msg-1/reactions",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "messages", "msg-1", "reactions"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Mark Message Read",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "http://{{api_address}}/api/messages/msg-1/read",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "messages", "msg-1", "read"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Mark All Messages Read",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "http://{{api_address}}/api/messages/trip/{{trip_id}}/read-all",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "messages", "trip", "{{trip_id}}", "read-all"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Get Unread Count",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://{{api_address}}/api/messages/trip/{{trip_id}}/unread",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "messages", "trip", "{{trip_id}}", "unread"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Get Mentions",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://{{api_address}}/api/messages/trip/{{trip_id}}/mentions",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "messages", "trip", "{{trip_id}}", "mentions"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        {
+          "name": "Get Trip Payments",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://{{api_address}}/api/payments/trip/{{trip_id}}",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "payments", "trip", "{{trip_id}}"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Create Payment/Expense",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "http://{{api_address}}/api/payments/trip/{{trip_id}}",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "payments", "trip", "{{trip_id}}"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Dinner at Restaurant\",\n  \"amount\": 150.00,\n  \"paidById\": \"user-1\",\n  \"splitType\": \"equal\",\n  \"category\": \"restaurant\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Calculate Splits",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "http://{{api_address}}/api/payments/trip/{{trip_id}}/splits",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "payments", "trip", "{{trip_id}}", "splits"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 100.00,\n  \"splitType\": \"equal\",\n  \"userIds\": [\"user-1\", \"user-2\"]\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Settlements",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://{{api_address}}/api/payments/trip/{{trip_id}}/settlements",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "payments", "trip", "{{trip_id}}", "settlements"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Delete Payment",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "http://{{api_address}}/api/payments/booking-1",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "payments", "booking-1"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Media",
+      "item": [
+        {
+          "name": "Get Trip Media",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://{{api_address}}/api/media/trip/{{trip_id}}",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "media", "trip", "{{trip_id}}"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Upload Media",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "http://{{api_address}}/api/media/trip/{{trip_id}}",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "media", "trip", "{{trip_id}}"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"image\",\n  \"url\": \"https://example.com/photo.jpg\",\n  \"caption\": \"Beautiful sunset\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Media by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://{{api_address}}/api/media/media-1",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "media", "media-1"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Delete Media",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "http://{{api_address}}/api/media/media-1",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "media", "media-1"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        {
+          "name": "Get Notifications",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://{{api_address}}/api/notifications",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "notifications"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Get Unread Count",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://{{api_address}}/api/notifications/unread-count",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "notifications", "unread-count"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Mark Notification Read",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "http://{{api_address}}/api/notifications/notif-1/read",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "notifications", "notif-1", "read"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Mark All Read",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "http://{{api_address}}/api/notifications/read-all",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "notifications", "read-all"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Delete Notification",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "http://{{api_address}}/api/notifications/notif-1",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "notifications", "notif-1"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Invites",
+      "item": [
+        {
+          "name": "Get Trip Invites",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://{{api_address}}/api/invites/trip/{{trip_id}}",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "invites", "trip", "{{trip_id}}"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Create Invite",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "http://{{api_address}}/api/invites/trip/{{trip_id}}",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "invites", "trip", "{{trip_id}}"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"friend@example.com\",\n  \"channel\": \"email\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Accept Invite",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "http://{{api_address}}/api/invites/accept",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "invites", "accept"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"invite-token-here\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Decline Invite",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "http://{{api_address}}/api/invites/decline",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "invites", "decline"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"invite-token-here\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Validate Invite",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://{{api_address}}/api/invites/validate/invite-token",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "invites", "validate", "invite-token"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Get Invite by Token",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://{{api_address}}/api/invites/token/invite-token",
+              "protocol": "http",
+              "host": ["{{api_address}}"],
+              "path": ["api", "invites", "token", "invite-token"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

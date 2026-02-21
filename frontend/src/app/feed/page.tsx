@@ -1,11 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { LeftSidebar } from '@/components/left-sidebar';
 import { AppHeader } from '@/components/app-header';
 import { Bell, Heart, MessageCircle, ThumbsUp, Share2, MapPin, Calendar, DollarSign, Users, Filter } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+
+const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK_API === 'true';
 
 interface Activity {
   id: string;
@@ -21,91 +23,100 @@ interface Activity {
   comments: number;
 }
 
+const STUBBED_ACTIVITIES: Activity[] = [
+  {
+    id: '1',
+    type: 'vote',
+    user: { name: 'Sarah Chen', avatar: null },
+    content: 'voted for "Visit the Eiffel Tower" in Paris Adventure',
+    trip: 'Paris Adventure',
+    timestamp: '2 minutes ago',
+    likes: 3,
+    comments: 1,
+  },
+  {
+    id: '2',
+    type: 'message',
+    user: { name: 'Mike Johnson', avatar: null },
+    content: 'shared a photo in Summer Road Trip 2024',
+    trip: 'Summer Road Trip 2024',
+    timestamp: '15 minutes ago',
+    likes: 8,
+    comments: 2,
+  },
+  {
+    id: '3',
+    type: 'payment',
+    user: { name: 'Emily Davis', avatar: null },
+    content: 'paid $50 for hotel booking',
+    trip: 'Tokyo Adventure',
+    timestamp: '1 hour ago',
+    likes: 2,
+    comments: 0,
+  },
+  {
+    id: '4',
+    type: 'member',
+    user: { name: 'Alex Rivera', avatar: null },
+    content: 'joined Summer Road Trip 2024',
+    trip: 'Summer Road Trip 2024',
+    timestamp: '2 hours ago',
+    likes: 5,
+    comments: 3,
+  },
+  {
+    id: '5',
+    type: 'trip',
+    user: { name: 'Jordan Lee', avatar: null },
+    content: 'created a new trip: Winter Getaway 2024',
+    trip: 'Winter Getaway 2024',
+    timestamp: '3 hours ago',
+    likes: 12,
+    comments: 4,
+  },
+  {
+    id: '6',
+    type: 'like',
+    user: { name: 'Taylor Smith', avatar: null },
+    content: 'liked your comment on Beach Day activities',
+    trip: 'Summer Road Trip 2024',
+    timestamp: '5 hours ago',
+    likes: 1,
+    comments: 0,
+  },
+  {
+    id: '7',
+    type: 'vote',
+    user: { name: 'Casey Brown', avatar: null },
+    content: 'voted for "Sushi dinner at 7pm" in Tokyo Adventure',
+    trip: 'Tokyo Adventure',
+    timestamp: 'Yesterday',
+    likes: 4,
+    comments: 2,
+  },
+  {
+    id: '8',
+    type: 'message',
+    user: { name: 'Morgan White', avatar: null },
+    content: 'started a discussion about flight options',
+    trip: 'Paris Adventure',
+    timestamp: 'Yesterday',
+    likes: 2,
+    comments: 5,
+  },
+];
+
 export default function FeedPage() {
   const [filter, setFilter] = useState('all');
+  const [activities, setActivities] = useState<Activity[]>([]);
 
-  const activities: Activity[] = [
-    {
-      id: '1',
-      type: 'vote',
-      user: { name: 'Sarah Chen', avatar: null },
-      content: 'voted for "Visit the Eiffel Tower" in Paris Adventure',
-      trip: 'Paris Adventure',
-      timestamp: '2 minutes ago',
-      likes: 3,
-      comments: 1,
-    },
-    {
-      id: '2',
-      type: 'message',
-      user: { name: 'Mike Johnson', avatar: null },
-      content: 'shared a photo in Summer Road Trip 2024',
-      trip: 'Summer Road Trip 2024',
-      timestamp: '15 minutes ago',
-      likes: 8,
-      comments: 2,
-    },
-    {
-      id: '3',
-      type: 'payment',
-      user: { name: 'Emily Davis', avatar: null },
-      content: 'paid $50 for hotel booking',
-      trip: 'Tokyo Adventure',
-      timestamp: '1 hour ago',
-      likes: 2,
-      comments: 0,
-    },
-    {
-      id: '4',
-      type: 'member',
-      user: { name: 'Alex Rivera', avatar: null },
-      content: 'joined Summer Road Trip 2024',
-      trip: 'Summer Road Trip 2024',
-      timestamp: '2 hours ago',
-      likes: 5,
-      comments: 3,
-    },
-    {
-      id: '5',
-      type: 'trip',
-      user: { name: 'Jordan Lee', avatar: null },
-      content: 'created a new trip: Winter Getaway 2024',
-      trip: 'Winter Getaway 2024',
-      timestamp: '3 hours ago',
-      likes: 12,
-      comments: 4,
-    },
-    {
-      id: '6',
-      type: 'like',
-      user: { name: 'Taylor Smith', avatar: null },
-      content: 'liked your comment on Beach Day activities',
-      trip: 'Summer Road Trip 2024',
-      timestamp: '5 hours ago',
-      likes: 1,
-      comments: 0,
-    },
-    {
-      id: '7',
-      type: 'vote',
-      user: { name: 'Casey Brown', avatar: null },
-      content: 'voted for "Sushi dinner at 7pm" in Tokyo Adventure',
-      trip: 'Tokyo Adventure',
-      timestamp: 'Yesterday',
-      likes: 4,
-      comments: 2,
-    },
-    {
-      id: '8',
-      type: 'message',
-      user: { name: 'Morgan White', avatar: null },
-      content: 'started a discussion about flight options',
-      trip: 'Paris Adventure',
-      timestamp: 'Yesterday',
-      likes: 2,
-      comments: 5,
-    },
-  ];
+  useEffect(() => {
+    if (USE_MOCK) {
+      setActivities(STUBBED_ACTIVITIES);
+    } else {
+      setActivities([]);
+    }
+  }, []);
 
   const filteredActivities = filter === 'all' 
     ? activities 

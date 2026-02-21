@@ -1,22 +1,34 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { PageLayout } from '@/components/page-layout';
 import { Users, UserPlus, Search, MoreVertical } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 
-export default function FriendsPage() {
-  const friends = [
-    { id: '1', name: 'Sarah Chen', email: 'sarah@example.com', status: 'online', avatar: null },
-    { id: '2', name: 'Mike Johnson', email: 'mike@example.com', status: 'offline', avatar: null },
-    { id: '3', name: 'Emily Davis', email: 'emily@example.com', status: 'away', avatar: null },
-    { id: '4', name: 'Alex Rivera', email: 'alex@example.com', status: 'online', avatar: null },
-  ];
+const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK_API === 'true';
 
-  const pendingRequests = [
-    { id: '5', name: 'Jordan Lee', email: 'jordan@example.com', avatar: null },
-  ];
+export default function FriendsPage() {
+  const [friends, setFriends] = useState<{ id: string; name: string; email: string; status: string; avatar: null }[]>([]);
+  const [pendingRequests, setPendingRequests] = useState<{ id: string; name: string; email: string; avatar: null }[]>([]);
+
+  useEffect(() => {
+    if (USE_MOCK) {
+      setFriends([
+        { id: '1', name: 'Sarah Chen', email: 'sarah@example.com', status: 'online', avatar: null },
+        { id: '2', name: 'Mike Johnson', email: 'mike@example.com', status: 'offline', avatar: null },
+        { id: '3', name: 'Emily Davis', email: 'emily@example.com', status: 'away', avatar: null },
+        { id: '4', name: 'Alex Rivera', email: 'alex@example.com', status: 'online', avatar: null },
+      ]);
+      setPendingRequests([
+        { id: '5', name: 'Jordan Lee', email: 'jordan@example.com', avatar: null },
+      ]);
+    } else {
+      setFriends([]);
+      setPendingRequests([]);
+    }
+  }, []);
 
   return (
     <PageLayout title="Friends">
@@ -48,7 +60,7 @@ export default function FriendsPage() {
                         </div>
                       </div>
                       <div className="flex gap-2">
-                        <Button size="sm" variant="default">Accept</Button>
+                        <Button size="sm" variant="primary">Accept</Button>
                         <Button size="sm" variant="outline">Decline</Button>
                       </div>
                     </div>
@@ -77,7 +89,7 @@ export default function FriendsPage() {
                         <p className="text-sm text-muted-foreground">{friend.email}</p>
                       </div>
                     </div>
-                    <Button variant="ghost" size="icon">
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                       <MoreVertical className="h-4 w-4" />
                     </Button>
                   </div>

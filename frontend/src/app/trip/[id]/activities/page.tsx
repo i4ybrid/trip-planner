@@ -5,7 +5,6 @@ import { useParams } from 'next/navigation';
 import { useActivityStore } from '@/store';
 import { Card, CardHeader, CardTitle, CardContent, Button, Badge, Input, Textarea, Select, Modal, EmptyState } from '@/components';
 import { formatCurrency, cn } from '@/lib/utils';
-import { mockApi } from '@/services/mock-api';
 import { MapPin, DollarSign, ThumbsUp, ThumbsDown, HelpCircle, Plus } from 'lucide-react';
 import { CreateActivityInput, ActivityCategory } from '@/types';
 

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { Notification } from '@/types';
-import { mockApi } from '@/services/mock-api';
+import { api } from '@/services';
 
 interface NotificationState {
   notifications: Notification[];
@@ -23,7 +23,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
   fetchNotifications: async () => {
     set({ isLoading: true, error: null });
     try {
-      const response = await mockApi.getNotifications();
+      const response = await api.getNotifications();
       if (response.error) {
         set({ error: response.error, isLoading: false });
         return;
@@ -41,7 +41,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
 
   markAsRead: async (id: string) => {
     try {
-      await mockApi.markNotificationRead(id);
+      await api.markNotificationRead(id);
       set((state) => ({
         notifications: state.notifications.map((n) => 
           n.id === id ? { ...n, read: true } : n
@@ -55,7 +55,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
 
   markAllAsRead: async () => {
     try {
-      await mockApi.markAllNotificationsRead();
+      await api.markAllNotificationsRead();
       set((state) => ({
         notifications: state.notifications.map((n) => ({ ...n, read: true })),
         unreadCount: 0,

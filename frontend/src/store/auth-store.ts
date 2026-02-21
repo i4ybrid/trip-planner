@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { User } from '@/types';
-import { mockApi } from '@/services/mock-api';
+import { api } from '@/services';
 
 interface AuthState {
   user: User | null;
@@ -24,7 +24,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   fetchUser: async () => {
     set({ isLoading: true, error: null });
     try {
-      const response = await mockApi.getCurrentUser();
+      const response = await api.getCurrentUser();
       if (response.error) {
         set({ error: response.error, isLoading: false, isAuthenticated: false });
         return;
@@ -42,7 +42,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   login: async (email: string, password: string) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await mockApi.getCurrentUser();
+      const response = await api.getCurrentUser();
       if (response.error) {
         set({ error: response.error, isLoading: false });
         return false;
@@ -66,7 +66,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   updateUser: async (data: Partial<User>) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await mockApi.updateProfile(data);
+      const response = await api.updateProfile(data);
       if (response.error) {
         set({ error: response.error, isLoading: false });
         return;

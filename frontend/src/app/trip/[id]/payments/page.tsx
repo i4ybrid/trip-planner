@@ -4,8 +4,10 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardContent, Button, Input, Textarea, Modal, Badge } from '@/components';
 import { formatCurrency, cn } from '@/lib/utils';
-import { mockApi, mockTrip } from '@/services/mock-api';
+import { api } from '@/services';
 import { Wallet, CreditCard, Plus, Trash2, DollarSign, Users } from 'lucide-react';
+
+const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK_API === 'true';
 
 interface Expense {
   id: string;
@@ -28,8 +30,25 @@ export default function TripPayments() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
-  
-  const tripMembers = mockTrip.getTripMembersWithUsers(tripId);
+  const [tripMembers, setTripMembers] = useState<{ userId: string; role: string; user: { name: string } }[]>([]);
+
+  useEffect(() => {
+    if (USE_MOCK) {
+      import('@/services').then(({ mockTrip }) => {
+        setTripMembers(mockTrip.getTripMembersWithUsers(tripId));
+      });
+    } else {
+      api.getTripMembers(tripId).then((response) => {
+        if (response.data) {
+          setTripMembers(response.data.map((m: any) => ({
+            userId: m.userId,
+            role: m.role,
+            user: m.user || { name: 'Unknown' },
+          })));
+        }
+      });
+    }
+  }, [tripId]);
 
   const totalExpenses = expenses.reduce((sum, e) => sum + e.amount + e.tax + e.tip, 0);
 
