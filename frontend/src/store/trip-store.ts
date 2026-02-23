@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Trip, CreateTripInput, UpdateTripInput, TripStatus } from '@/types';
+import { Trip, TripMember, CreateTripInput, UpdateTripInput, TripStatus } from '@/types';
 import { api } from '@/services';
 
 const DEBUG = process.env.NEXT_PUBLIC_DEBUG === 'true';
@@ -10,7 +10,7 @@ interface TripState {
   currentTrip: Trip | null;
   isLoading: boolean;
   error: string | null;
-  
+
   fetchTrips: () => Promise<void>;
   fetchTrip: (id: string) => Promise<void>;
   createTrip: (input: CreateTripInput) => Promise<Trip | null>;
@@ -28,17 +28,58 @@ export const useTripStore = create<TripState>((set, get) => ({
   error: null,
 
   fetchTrips: async () => {
+    console.log('====== [TripStore fetchTrips] START ======');
     set({ isLoading: true, error: null });
     try {
+      console.log('[TripStore fetchTrips] Calling api.getTrips()');
       const response = await api.getTrips();
+      console.log('[TripStore fetchTrips] Raw response:', response);
+      console.log('[TripStore fetchTrips] response.data:', response.data);
+      console.log('[TripStore fetchTrips] response.data type:', Array.isArray(response.data) ? 'array' : typeof response.data);
+      console.log('[TripStore fetchTrips] response.data length:', Array.isArray(response.data) ? response.data.length : 'N/A');
+      console.log('[TripStore fetchTrips] response.error:', response.error);
+
       if (response.error) {
+        console.log('[TripStore fetchTrips] Has error, setting error state');
         set({ error: response.error, isLoading: false });
         return;
       }
-      set({ trips: response.data || [], isLoading: false });
+
+      // Backend returns TripMember[] with embedded trip objects
+      const tripMembers = response.data;
+
+      console.log('[TripStore fetchTrips] tripMembers count:', tripMembers.length);
+      if (tripMembers.length > 0) {
+        console.log('[TripStore fetchTrips] First tripMember:', tripMembers[0]);
+        console.log('[TripStore fetchTrips] First tripMember has trip?', 'trip' in tripMembers[0]);
+        if ('trip' in tripMembers[0]) {
+          console.log('[TripStore fetchTrips] First tripMember.trip:', tripMembers[0].trip);
+        }
+      }
+
+      // Extract trips from TripMember objects
+      const trips = tripMembers
+        .filter(m => {
+          const hasTrip = m && m.trip;
+          console.log('[TripStore fetchTrips] Filter member:', m.id, 'hasTrip:', hasTrip);
+          return hasTrip;
+        })
+        .map(m => {
+          console.log('[TripStore fetchTrips] Mapping member to trip:', m.trip);
+          return m.trip!;
+        });
+
+      console.log('[TripStore fetchTrips] Extracted trips count:', trips.length);
+      console.log('[TripStore fetchTrips] Extracted trips:', trips);
+      console.log('[TripStore fetchTrips] About to set state with trips:', trips);
+
+      set({ trips, isLoading: false });
+      console.log('[TripStore fetchTrips] State updated, current state trips:', get().trips);
     } catch (error) {
+      console.log('[TripStore fetchTrips] Caught error:', error);
       set({ error: 'Failed to fetch trips', isLoading: false });
     }
+    console.log('====== [TripStore fetchTrips] END ======');
   },
 
   fetchTrip: async (id: string) => {

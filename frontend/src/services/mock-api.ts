@@ -126,14 +126,14 @@ const SEED_MEMBERS: TripMember[] = [
 ];
 
 const SEED_ACTIVITIES: Activity[] = [
-  { id: 'act-1', tripId: 'trip-1', title: 'Surfing Lessons', description: '2-hour beginner surf lesson at Waikiki Beach', location: 'Waikiki Beach', cost: 75, currency: 'USD', category: 'activity', proposedBy: 'user-1', createdAt: '2026-01-20T00:00:00Z' },
-  { id: 'act-2', tripId: 'trip-1', title: 'Road to Hana', description: 'Full day guided tour along the famous Road to Hana', location: 'Maui', cost: 150, currency: 'USD', category: 'excursion', proposedBy: 'user-2', createdAt: '2026-01-22T00:00:00Z' },
-  { id: 'act-3', tripId: 'trip-1', title: 'Luau Dinner', description: 'Traditional Hawaiian luau with dinner and show', location: 'Grand Wailea', cost: 120, currency: 'USD', category: 'restaurant', proposedBy: 'user-3', createdAt: '2026-01-25T00:00:00Z' },
-  { id: 'act-4', tripId: 'trip-1', title: 'Hotel: Grand Wailea', description: 'Luxury resort booking', location: 'Maui', cost: 450, currency: 'USD', category: 'accommodation', proposedBy: 'user-1', createdAt: '2026-01-18T00:00:00Z' },
-  { id: 'act-5', tripId: 'trip-2', title: 'Broadway Show', description: 'Hamilton on Broadway!', location: 'Broadway, NYC', cost: 200, currency: 'USD', category: 'activity', proposedBy: 'user-2', createdAt: '2026-01-25T00:00:00Z' },
-  { id: 'act-6', tripId: 'trip-2', title: 'Hotel: Manhattan Club', description: 'Manhattan boutique hotel', location: 'Manhattan', cost: 300, currency: 'USD', category: 'accommodation', proposedBy: 'user-1', createdAt: '2026-01-22T00:00:00Z' },
-  { id: 'act-7', tripId: 'trip-3', title: 'Eiffel Tower Visit', description: 'Skip-the-line tickets', location: 'Paris', cost: 50, currency: 'EUR', category: 'activity', proposedBy: 'user-1', createdAt: '2026-02-01T00:00:00Z' },
-  { id: 'act-8', tripId: 'trip-3', title: 'Colosseum Tour', description: 'Guided tour of the Colosseum', location: 'Rome', cost: 60, currency: 'EUR', category: 'excursion', proposedBy: 'user-1', createdAt: '2026-02-01T00:00:00Z' },
+  { id: 'act-1', tripId: 'trip-1', title: 'Surfing Lessons', description: '2-hour beginner surf lesson at Waikiki Beach', location: 'Waikiki Beach', cost: 75, currency: 'USD', category: 'activity', proposedBy: 'user-1', createdAt: '2026-01-20T00:00:00Z', status: 'OPEN', votingEndsAt: undefined },
+  { id: 'act-2', tripId: 'trip-1', title: 'Road to Hana', description: 'Full day guided tour along the famous Road to Hana', location: 'Maui', cost: 150, currency: 'USD', category: 'attraction', proposedBy: 'user-2', createdAt: '2026-01-22T00:00:00Z', status: 'OPEN', votingEndsAt: undefined },
+  { id: 'act-3', tripId: 'trip-1', title: 'Luau Dinner', description: 'Traditional Hawaiian luau with dinner and show', location: 'Grand Wailea', cost: 120, currency: 'USD', category: 'restaurant', proposedBy: 'user-3', createdAt: '2026-01-25T00:00:00Z', status: 'OPEN', votingEndsAt: undefined },
+  { id: 'act-4', tripId: 'trip-1', title: 'Hotel: Grand Wailea', description: 'Luxury resort booking', location: 'Maui', cost: 450, currency: 'USD', category: 'hotel', proposedBy: 'user-1', createdAt: '2026-01-18T00:00:00Z', status: 'OPEN', votingEndsAt: undefined },
+  { id: 'act-5', tripId: 'trip-2', title: 'Broadway Show', description: 'Hamilton on Broadway!', location: 'Broadway, NYC', cost: 200, currency: 'USD', category: 'activity', proposedBy: 'user-2', createdAt: '2026-01-25T00:00:00Z', status: 'OPEN', votingEndsAt: undefined },
+  { id: 'act-6', tripId: 'trip-2', title: 'Hotel: Manhattan Club', description: 'Manhattan boutique hotel', location: 'Manhattan', cost: 300, currency: 'USD', category: 'hotel', proposedBy: 'user-1', createdAt: '2026-01-22T00:00:00Z', status: 'OPEN', votingEndsAt: undefined },
+  { id: 'act-7', tripId: 'trip-3', title: 'Eiffel Tower Visit', description: 'Skip-the-line tickets', location: 'Paris', cost: 50, currency: 'EUR', category: 'attraction', proposedBy: 'user-1', createdAt: '2026-02-01T00:00:00Z', status: 'OPEN', votingEndsAt: undefined },
+  { id: 'act-8', tripId: 'trip-3', title: 'Colosseum Tour', description: 'Guided tour of the Colosseum', location: 'Rome', cost: 60, currency: 'EUR', category: 'attraction', proposedBy: 'user-1', createdAt: '2026-02-01T00:00:00Z', status: 'OPEN', votingEndsAt: undefined },
 ];
 
 const SEED_VOTES: Vote[] = [
@@ -354,8 +354,30 @@ class MockTrip {
     }));
   }
 
-  async getTrips(): Promise<ApiResponse<Trip[]>> {
-    return { data: Array.from(this.trips.values()) };
+  async getTrips(userIdInput?: string): Promise<ApiResponse<(TripMember & { trip: Trip })[]>> {
+    // Get the current user ID from localStorage or argument
+    const userId = userIdInput || (typeof window !== 'undefined' ? localStorage.getItem('auth_token') || 'user-1' : 'user-1');
+
+    // If user doesn't exist, return empty trips (like backend would)
+    if (!this.getUserById(userId)) {
+      return { data: [] };
+    }
+
+    // Return TripMember objects with embedded trip objects (like backend)
+    const tripMembers: (TripMember & { trip: Trip })[] = [];
+    for (const [tripId, members] of this.members.entries()) {
+      const trip = this.trips.get(tripId);
+      if (trip) {
+        const userMembers = members.filter(m => m.userId === userId);
+        for (const member of userMembers) {
+          tripMembers.push({
+            ...member,
+            trip,
+          });
+        }
+      }
+    }
+    return { data: tripMembers };
   }
 
   async getTrip(id: string): Promise<ApiResponse<Trip>> {
@@ -448,20 +470,33 @@ class MockTrip {
     return { data: this.getActivitiesWithVotes(tripId) };
   }
 
-  async createActivity(tripId: string, userId: string, input: CreateActivityInput): Promise<ApiResponse<Activity>> {
+  async createActivity(tripId: string, userIdOrInput: string | CreateActivityInput, input?: CreateActivityInput): Promise<ApiResponse<Activity>> {
+    let userId: string;
+    let activityInput: CreateActivityInput;
+
+    if (typeof userIdOrInput === 'string') {
+      userId = userIdOrInput;
+      activityInput = input!;
+    } else {
+      userId = typeof window !== 'undefined' ? localStorage.getItem('auth_token') || 'user-1' : 'user-1';
+      activityInput = userIdOrInput;
+    }
+
     const activity: Activity = {
       id: generateId(),
       tripId,
-      title: input.title,
-      description: input.description,
-      location: input.location,
-      startTime: input.startTime,
-      endTime: input.endTime,
-      cost: input.cost,
+      title: activityInput.title,
+      description: activityInput.description,
+      location: activityInput.location,
+      startTime: activityInput.startTime,
+      endTime: activityInput.endTime,
+      cost: activityInput.cost,
       currency: 'USD',
-      category: input.category,
+      category: activityInput.category,
       proposedBy: userId,
       votes: [],
+      status: 'OPEN',
+      votingEndsAt: undefined,
       createdAt: new Date().toISOString(),
     };
     const activities = this.activities.get(tripId) || [];
@@ -470,17 +505,28 @@ class MockTrip {
     return { data: activity };
   }
 
-  async castVote(activityId: string, userId: string, option: string): Promise<ApiResponse<Vote>> {
+  async castVote(activityId: string, userIdOrOption: string, option?: string): Promise<ApiResponse<Vote>> {
+    let userId: string;
+    let voteOption: string;
+
+    if (option) {
+      userId = userIdOrOption;
+      voteOption = option;
+    } else {
+      userId = typeof window !== 'undefined' ? localStorage.getItem('auth_token') || 'user-1' : 'user-1';
+      voteOption = userIdOrOption;
+    }
+
     const existingVotes = this.votes.get(activityId) || [];
     const existingIndex = existingVotes.findIndex(v => v.userId === userId);
-    
+
     const vote: Vote = {
       id: generateId(),
       activityId,
       userId,
-      option: option as Vote['option'],
+      option: voteOption as Vote['option'],
     };
-    
+
     if (existingIndex >= 0) {
       existingVotes[existingIndex] = vote;
     } else {
@@ -618,36 +664,107 @@ export const mockTrip = new MockTrip(true);
 export { MockTrip };
 
 export const mockApi = {
-  getTrips: (): Promise<ApiResponse<Trip[]>> => mockTrip.getTrips(),
+  getTrips: (userId?: string): Promise<ApiResponse<(TripMember & { trip: Trip })[]>> => mockTrip.getTrips(userId),
   getTrip: (id: string): Promise<ApiResponse<Trip>> => mockTrip.getTrip(id),
-  createTrip: (userId: string, input: CreateTripInput): Promise<ApiResponse<Trip>> => mockTrip.createTrip(userId, input),
+  createTrip: (input: CreateTripInput): Promise<ApiResponse<Trip>> => {
+    const userId = typeof window !== 'undefined' ? localStorage.getItem('auth_token') || 'user-1' : 'user-1';
+    return mockTrip.createTrip(userId, input);
+  },
   updateTrip: (id: string, input: UpdateTripInput): Promise<ApiResponse<Trip>> => mockTrip.updateTrip(id, input),
   deleteTrip: (id: string): Promise<ApiResponse<void>> => mockTrip.deleteTrip(id),
   changeTripStatus: (id: string, status: string): Promise<ApiResponse<Trip>> => mockTrip.changeTripStatus(id, status),
   getTripMembers: (tripId: string): Promise<ApiResponse<TripMember[]>> => mockTrip.getTripMembers(tripId),
   addTripMember: (tripId: string, userId: string): Promise<ApiResponse<TripMember>> => mockTrip.addTripMember(tripId, userId),
   getActivities: (tripId: string): Promise<ApiResponse<Activity[]>> => mockTrip.getActivities(tripId),
-  createActivity: (tripId: string, userId: string, input: CreateActivityInput): Promise<ApiResponse<Activity>> => mockTrip.createActivity(tripId, userId, input),
-  castVote: (activityId: string, userId: string, option: string): Promise<ApiResponse<Vote>> => mockTrip.castVote(activityId, userId, option),
+  createActivity: (tripId: string, userIdOrInput: string | CreateActivityInput, input?: CreateActivityInput): Promise<ApiResponse<Activity>> => mockTrip.createActivity(tripId, userIdOrInput, input),
+  castVote: (activityId: string, userIdOrOption: string, option?: string): Promise<ApiResponse<Vote>> => mockTrip.castVote(activityId, userIdOrOption, option),
   getInvites: (tripId: string): Promise<ApiResponse<Invite[]>> => mockTrip.getInvites(tripId),
   createInvite: (tripId: string, input: CreateInviteInput): Promise<ApiResponse<Invite>> => mockTrip.createInvite(tripId, input),
   getBookings: (tripId: string): Promise<ApiResponse<Booking[]>> => mockTrip.getBookings(tripId),
   getMessages: (tripId: string): Promise<ApiResponse<TripMessage[]>> => mockTrip.getMessages(tripId),
-  sendMessage: (tripId: string, userId: string, input: SendMessageInput): Promise<ApiResponse<TripMessage>> => mockTrip.sendMessage(tripId, userId, input),
+  sendMessage: (tripId: string, input: SendMessageInput): Promise<ApiResponse<TripMessage>> => {
+    const userId = typeof window !== 'undefined' ? localStorage.getItem('auth_token') || 'user-1' : 'user-1';
+    return mockTrip.sendMessage(tripId, userId, input);
+  },
   getMedia: (tripId: string): Promise<ApiResponse<MediaItem[]>> => mockTrip.getMedia(tripId),
   getAlbums: (tripId: string): Promise<ApiResponse<Album[]>> => mockTrip.getAlbums(tripId),
-  createAlbum: (tripId: string, userId: string, input: CreateAlbumInput): Promise<ApiResponse<Album>> => mockTrip.createAlbum(tripId, userId, input),
-  addMediaToAlbum: (tripId: string, userId: string, type: 'image' | 'video', url: string, caption?: string): Promise<ApiResponse<MediaItem>> => mockTrip.addMediaToAlbum(tripId, userId, type, url, caption),
-  getNotifications: (): Promise<ApiResponse<Notification[]>> => {
-    const notifications = SEED_NOTIFICATIONS.sort((a, b) => 
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
-    return Promise.resolve({ data: notifications });
+  createAlbum: (tripId: string, input: CreateAlbumInput): Promise<ApiResponse<Album>> => {
+    const userId = typeof window !== 'undefined' ? localStorage.getItem('auth_token') || 'user-1' : 'user-1';
+    return mockTrip.createAlbum(tripId, userId, input);
   },
+  addMediaToAlbum: (tripId: string, type: 'image' | 'video', url: string, caption?: string): Promise<ApiResponse<MediaItem>> => {
+    const userId = typeof window !== 'undefined' ? localStorage.getItem('auth_token') || 'user-1' : 'user-1';
+    return mockTrip.addMediaToAlbum(tripId, userId, type, url, caption);
+  },
+  getNotifications: (): Promise<ApiResponse<Notification[]>> => Promise.resolve({ data: [] }),
   markNotificationRead: (id: string): Promise<ApiResponse<void>> => Promise.resolve({ data: undefined }),
   markAllNotificationsRead: (): Promise<ApiResponse<void>> => Promise.resolve({ data: undefined }),
-  getCurrentUser: (): Promise<ApiResponse<User>> => Promise.resolve({ data: mockTrip.getUserById('user-1')! }),
-  updateProfile: (data?: Partial<User>): Promise<ApiResponse<User>> => Promise.resolve({ data: { ...mockTrip.getUserById('user-1')!, ...data } as User }),
+  getCurrentUser: (): Promise<ApiResponse<User>> => {
+    const userId = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+    console.log('[MockAPI getCurrentUser] Called with userId:', userId);
+    
+    if (!userId) {
+      console.log('[MockAPI getCurrentUser] No userId, returning error');
+      return Promise.resolve({ error: 'Not authenticated' });
+    }
+
+    // Try to get existing user
+    let user = mockTrip.getUserById(userId);
+    console.log('[MockAPI getCurrentUser] Found existing user:', user);
+
+    // If user doesn't exist, create them dynamically (like backend would after auth)
+    if (!user) {
+      console.log('[MockAPI getCurrentUser] Creating new user for:', userId);
+      user = {
+        id: userId,
+        email: userId,
+        name: userId.split('@')[0], // Use email prefix as name
+        avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${userId}`,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      // Add user to the mock database
+      mockTrip.users.set(userId, user);
+      console.log('[MockAPI getCurrentUser] Created and stored user:', user);
+
+      // Add user as member to trips where they should be a member (for test@user.com)
+      if (userId === 'test@user.com') {
+        const members = mockTrip.members.get('trip-1') || [];
+        if (!members.some(m => m.userId === userId)) {
+          members.push({
+            id: `m-${userId}-1`,
+            tripId: 'trip-1',
+            userId,
+            role: 'MEMBER',
+            status: 'CONFIRMED',
+            paymentStatus: 'pending',
+            joinedAt: new Date().toISOString(),
+          });
+          mockTrip.members.set('trip-1', members);
+          console.log('[MockAPI getCurrentUser] Added user to trip-1 members');
+        }
+      }
+    }
+
+    const result = { data: user };
+    console.log('[MockAPI getCurrentUser] Returning:', JSON.stringify(result, null, 2));
+    return Promise.resolve(result);
+  },
+  updateProfile: (data?: Partial<User>): Promise<ApiResponse<User>> => {
+    const userId = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+    if (!userId) {
+      return Promise.resolve({ error: 'Not authenticated' });
+    }
+    
+    const currentUser = mockTrip.getUserById(userId);
+    if (!currentUser) {
+      return Promise.resolve({ error: 'User not found' });
+    }
+    
+    const updated = { ...currentUser, ...data };
+    mockTrip.users.set(userId, updated);
+    return Promise.resolve({ data: updated });
+  },
   getUser: (): Promise<ApiResponse<User>> => Promise.resolve({ data: {} as User }),
   getEvents: (tripId: string): Promise<ApiResponse<TripEvent[]>> => mockTrip.getEvents(tripId),
   getSettlements: (tripId: string): Promise<ApiResponse<Settlement[]>> => mockTrip.getSettlements(tripId),

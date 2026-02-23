@@ -85,7 +85,7 @@ export default function TripOverview() {
                     { value: 'IDEA', label: 'Idea (Feelers)' },
                     { value: 'PLANNING', label: 'Planning' },
                     { value: 'CONFIRMED', label: 'Confirmed' },
-                    { value: 'HAPPENING', label: 'Happening' },
+                    { value: 'IN_PROGRESS', label: 'In Progress' },
                     { value: 'COMPLETED', label: 'Completed' },
                     { value: 'CANCELLED', label: 'Cancelled' },
                   ]}

@@ -32,8 +32,8 @@ export default function NewTripPage() {
       name,
       description: description || undefined,
       destination: destination || undefined,
-      startDate: startDate || undefined,
-      endDate: endDate || undefined,
+      startDate: startDate ? `${startDate}T00:00:00Z` : undefined,
+      endDate: endDate ? `${endDate}T23:59:59Z` : undefined,
     });
 
     debugLog('[CreateTrip] createTrip result:', trip);

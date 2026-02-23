@@ -21,29 +21,101 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/a
 
 const isLoggingEnabled = process.env.NEXT_PUBLIC_API_LOGGING === 'true' || process.env.NODE_ENV !== 'production';
 
+// Enhanced console logging for API calls
+function consoleLogRequest(url: string, options: RequestInit) {
+  const method = options.method || 'GET';
+  const headers = options.headers as Record<string, string> || {};
+  const userId = headers['x-user-id'] || 'none';
+  
+  console.groupCollapsed(`🌐 [API REQUEST] ${method} ${url.replace(API_BASE_URL, '')}`);
+  console.log('📍 URL:', url);
+  console.log('🔑 User ID:', userId);
+  console.log('📝 Method:', method);
+  if (options.body && method !== 'GET') {
+    try {
+      const body = typeof options.body === 'string' ? JSON.parse(options.body) : options.body;
+      console.log('📦 Body:', body);
+    } catch {
+      console.log('📦 Body:', options.body);
+    }
+  }
+  console.groupEnd();
+}
+
+function consoleLogResponse(url: string, method: string, status: number, statusText: string, data: unknown, duration: number) {
+  const statusIcon = status >= 200 && status < 300 ? '✅' : status >= 400 ? '❌' : '⚠️';
+  
+  console.groupCollapsed(`${statusIcon} [API RESPONSE] ${method} ${url.replace(API_BASE_URL, '')} - ${status} (${duration}ms)`);
+  console.log('📊 Status:', status, statusText);
+  console.log('⏱️ Duration:', duration, 'ms');
+  if (data) {
+    console.log('📥 Response:', data);
+  }
+  console.groupEnd();
+}
+
+function consoleLogError(url: string, method: string, error: Error) {
+  console.groupCollapsed(`❌ [API ERROR] ${method} ${url.replace(API_BASE_URL, '')}`);
+  console.error('🚨 Error:', error);
+  console.groupEnd();
+}
+
+async function logToServer(level: string, message: string, extra: object = {}) {
+  if (!isLoggingEnabled) return;
+  
+  try {
+    await fetch(`${API_BASE_URL}/logs`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        level,
+        message,
+        timestamp: new Date().toISOString(),
+        ...extra
+      }),
+    });
+  } catch (err) {
+    // Fail silently to avoid infinite recursion or disrupting the UI
+    console.error('Failed to send log to server:', err);
+  }
+}
+
 function logApiCall(url: string, options: RequestInit, response?: Response, error?: Error) {
   if (!isLoggingEnabled) return;
   
   const method = options.method || 'GET';
   const timestamp = new Date().toISOString();
+  let message = '';
+  let level = 'INFO';
   
   if (error) {
-    console.log(`[API] ${timestamp} ${method} ${url} - ERROR:`, error.message);
-    return;
-  }
-  
-  if (response) {
-    console.log(`[API] ${timestamp} ${method} ${url} - ${response.status} ${response.statusText}`);
+    level = 'ERROR';
+    message = `${method} ${url} - ERROR: ${error.message}`;
+    console.log(`[API] ${timestamp} ${message}`);
+  } else if (response) {
+    message = `${method} ${url} - ${response.status} ${response.statusText}`;
+    console.log(`[API] ${timestamp} ${message}`);
   } else {
-    console.log(`[API] ${timestamp} ${method} ${url}`);
+    message = `${method} ${url}`;
+    console.log(`[API] ${timestamp} ${message}`);
   }
+
+  logToServer(level, `[API] ${message}`);
 }
 
 async function fetchWithLogging(url: string, options: RequestInit): Promise<Response> {
+  const startTime = Date.now();
+  consoleLogRequest(url, options);
+  
   const response = await fetch(url, options);
   
-  if (isLoggingEnabled) {
-    logApiCall(url, options, response);
+  const duration = Date.now() - startTime;
+  const method = options.method || 'GET';
+  
+  // Log response
+  if (response.ok) {
+    const data = await response.clone().json().catch(() => null);
+    consoleLogResponse(url, method, response.status, response.statusText, data, duration);
   }
   
   return response;
@@ -56,12 +128,14 @@ class ApiError extends Error {
   }
 }
 
-async function handleResponse<T>(response: Response): Promise<T> {
+async function handleResponse<T>(response: Response): Promise<ApiResponse<T>> {
+  const data = await response.json();
+  
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'An error occurred' }));
-    throw new ApiError(response.status, error.message || 'An error occurred');
+    return { error: data.message || 'An error occurred' };
   }
-  return response.json();
+  
+  return { data: data as T };
 }
 
 function getHeaders(): HeadersInit {
@@ -72,16 +146,17 @@ function getHeaders(): HeadersInit {
   if (typeof window !== 'undefined') {
     const token = localStorage.getItem('auth_token');
     if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+      headers['x-user-id'] = token;
     }
   }
   
   return headers;
 }
 
+
 export const api = {
   // Trips
-  async getTrips(): Promise<ApiResponse<Trip[]>> {
+  async getTrips(): Promise<ApiResponse<(TripMember & { trip: Trip })[]>> {
     const response = await fetchWithLogging(`${API_BASE_URL}/trips`, {
       headers: getHeaders(),
     });
@@ -313,8 +388,9 @@ export const api = {
     const headers: HeadersInit = {};
     const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
     if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+      headers['x-user-id'] = token;
     }
+
     
     const response = await fetchWithLogging(`${API_BASE_URL}/trips/${tripId}/media`, {
       method: 'POST',

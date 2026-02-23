@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardContent, Button, Input, Textarea, Modal, Badge } from '@/components';
 import { formatCurrency, cn } from '@/lib/utils';
 import { api } from '@/services';
-import { Wallet, CreditCard, Plus, Trash2, DollarSign, Users } from 'lucide-react';
+import { Wallet, CreditCard, Plus, Trash2, DollarSign, Users, X } from 'lucide-react';
 
 const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK_API === 'true';
 
@@ -217,21 +217,43 @@ function ExpenseModal({ isOpen, onClose, onSubmit, members, expense }: ExpenseMo
   const [category, setCategory] = useState<'restaurant' | 'excursion' | 'house' | 'other'>(expense?.category || 'other');
   const [splitType, setSplitType] = useState<'equal' | 'shares' | 'percentage' | 'custom'>(expense?.splitType || 'equal');
   const [notes, setNotes] = useState(expense?.notes || '');
-  const [splits, setSplits] = useState<{ userId: string; shares: number; percentage: number; customAmount: number }[]>(
-    members.map(m => ({ userId: m.userId, shares: 1, percentage: 0, customAmount: 0 }))
+  const [splitMembers, setSplitMembers] = useState<Set<string>>(
+    new Set(expense?.splits?.map(s => s.userId) || members.map(m => m.userId))
   );
+  const [splitValues, setSplitValues] = useState<Record<string, { shares: number; percentage: number; customAmount: number }>>(() => {
+    const initial: Record<string, { shares: number; percentage: number; customAmount: number }> = {};
+    (expense?.splits || members.map(m => ({ userId: m.userId, shares: 1, percentage: 0, amount: 0 }))).forEach(s => {
+      initial[s.userId] = { shares: s.shares || 1, percentage: s.percentage || 0, customAmount: s.amount || 0 };
+    });
+    return initial;
+  });
+  const [showAddMember, setShowAddMember] = useState(false);
+
+  const activeSplitMembers = members.filter(m => splitMembers.has(m.userId));
 
   const totalAmount = (parseFloat(amount) || 0) + (parseFloat(tax) || 0) + (parseFloat(tip) || 0);
-  const perPersonEqual = members.length > 0 ? totalAmount / members.length : 0;
-  const totalShares = splits.reduce((sum, s) => sum + s.shares, 0);
+  const perPersonEqual = activeSplitMembers.length > 0 ? totalAmount / activeSplitMembers.length : 0;
+  const totalShares = activeSplitMembers.reduce((sum, m) => sum + (splitValues[m.userId]?.shares || 1), 0);
+
+  const addMemberToSplit = (userId: string) => {
+    setSplitMembers(new Set([...splitMembers, userId]));
+    setSplitValues(prev => ({ ...prev, [userId]: { shares: 1, percentage: 0, customAmount: 0 } }));
+    setShowAddMember(false);
+  };
+
+  const removeMemberFromSplit = (userId: string) => {
+    const newSplitMembers = new Set(splitMembers);
+    newSplitMembers.delete(userId);
+    setSplitMembers(newSplitMembers);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!description || !amount) return;
 
     const calculateSplits = () => {
-      return members.map(member => {
-        const split = splits.find(s => s.userId === member.userId);
+      return activeSplitMembers.map(member => {
+        const split = splitValues[member.userId] || { shares: 1, percentage: 0, customAmount: 0 };
         let splitAmount = 0;
         
         switch (splitType) {
@@ -239,22 +261,22 @@ function ExpenseModal({ isOpen, onClose, onSubmit, members, expense }: ExpenseMo
             splitAmount = perPersonEqual;
             break;
           case 'shares':
-            const shares = split?.shares || 1;
+            const shares = split.shares || 1;
             splitAmount = totalShares > 0 ? (shares / totalShares) * totalAmount : 0;
             break;
           case 'percentage':
-            splitAmount = ((split?.percentage || 0) / 100) * totalAmount;
+            splitAmount = ((split.percentage || 0) / 100) * totalAmount;
             break;
           case 'custom':
-            splitAmount = split?.customAmount || 0;
+            splitAmount = split.customAmount || 0;
             break;
         }
         
         return {
           userId: member.userId,
           amount: Math.round(splitAmount * 100) / 100,
-          shares: split?.shares,
-          percentage: split?.percentage,
+          shares: split.shares,
+          percentage: split.percentage,
         };
       });
     };
@@ -396,10 +418,22 @@ function ExpenseModal({ isOpen, onClose, onSubmit, members, expense }: ExpenseMo
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium">Split Details</label>
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium">Split Details</label>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setShowAddMember(true)}
+              className="h-7 text-xs"
+            >
+              <Plus className="h-3 w-3 mr-1" />
+              Add
+            </Button>
+          </div>
           <div className="space-y-2 rounded-lg border border-border p-3">
-            {members.map((member) => {
-              const split = splits.find(s => s.userId === member.userId);
+            {activeSplitMembers.map((member) => {
+              const split = splitValues[member.userId] || { shares: 1, percentage: 0, customAmount: 0 };
               let splitAmount = 0;
               
               switch (splitType) {
@@ -407,14 +441,14 @@ function ExpenseModal({ isOpen, onClose, onSubmit, members, expense }: ExpenseMo
                   splitAmount = perPersonEqual;
                   break;
                 case 'shares':
-                  const shares = split?.shares || 1;
+                  const shares = split.shares || 1;
                   splitAmount = totalShares > 0 ? (shares / totalShares) * totalAmount : 0;
                   break;
                 case 'percentage':
-                  splitAmount = ((split?.percentage || 0) / 100) * totalAmount;
+                  splitAmount = ((split.percentage || 0) / 100) * totalAmount;
                   break;
                 case 'custom':
-                  splitAmount = split?.customAmount || 0;
+                  splitAmount = split.customAmount || 0;
                   break;
               }
               
@@ -431,8 +465,8 @@ function ExpenseModal({ isOpen, onClose, onSubmit, members, expense }: ExpenseMo
                       <Input
                         type="number"
                         min="0"
-                        value={split?.shares || 1}
-                        onChange={(e) => setSplits(splits.map(s => s.userId === member.userId ? { ...s, shares: parseInt(e.target.value) || 0 } : s))}
+                        value={split.shares}
+                        onChange={(e) => setSplitValues(prev => ({ ...prev, [member.userId]: { ...prev[member.userId] || { shares: 1, percentage: 0, customAmount: 0 }, shares: parseInt(e.target.value) || 0 } }))}
                         className="w-16 h-8 text-center"
                       />
                     )}
@@ -442,8 +476,8 @@ function ExpenseModal({ isOpen, onClose, onSubmit, members, expense }: ExpenseMo
                           type="number"
                           min="0"
                           max="100"
-                          value={split?.percentage || 0}
-                          onChange={(e) => setSplits(splits.map(s => s.userId === member.userId ? { ...s, percentage: parseFloat(e.target.value) || 0 } : s))}
+                          value={split.percentage}
+                          onChange={(e) => setSplitValues(prev => ({ ...prev, [member.userId]: { ...prev[member.userId] || { shares: 1, percentage: 0, customAmount: 0 }, percentage: parseFloat(e.target.value) || 0 } }))}
                           className="w-16 h-8 text-center"
                         />
                         <span>%</span>
@@ -453,19 +487,67 @@ function ExpenseModal({ isOpen, onClose, onSubmit, members, expense }: ExpenseMo
                       <Input
                         type="number"
                         step="0.01"
-                        value={split?.customAmount || 0}
-                        onChange={(e) => setSplits(splits.map(s => s.userId === member.userId ? { ...s, customAmount: parseFloat(e.target.value) || 0 } : s))}
+                        value={split.customAmount}
+                        onChange={(e) => setSplitValues(prev => ({ ...prev, [member.userId]: { ...prev[member.userId] || { shares: 1, percentage: 0, customAmount: 0 }, customAmount: parseFloat(e.target.value) || 0 } }))}
                         className="w-24 h-8"
                         placeholder="0.00"
                       />
                     )}
                     <span className="w-20 text-right text-sm font-medium">{formatCurrency(splitAmount)}</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-red-500"
+                      onClick={() => removeMemberFromSplit(member.userId)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
               );
             })}
+            {activeSplitMembers.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No members added to split. Click "Add" to include members.
+              </p>
+            )}
           </div>
         </div>
+
+        {/* Add Member Dropdown */}
+        {showAddMember && (
+          <div className="relative">
+            <div className="absolute right-0 top-0 z-10 w-full max-w-[200px] rounded-lg border border-border bg-background shadow-lg">
+              <div className="p-2">
+                <div className="text-xs font-medium text-muted-foreground px-2 py-1">Add member to split</div>
+                {members.filter(m => !splitMembers.has(m.userId)).map((member) => (
+                  <button
+                    key={member.userId}
+                    type="button"
+                    className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-secondary"
+                    onClick={() => addMemberToSplit(member.userId)}
+                  >
+                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs">
+                      {member.user.name.charAt(0)}
+                    </div>
+                    {member.user.name}
+                  </button>
+                ))}
+                {members.filter(m => !splitMembers.has(m.userId)).length === 0 && (
+                  <p className="text-xs text-muted-foreground px-2 py-2">All members added</p>
+                )}
+              </div>
+              <button
+                type="button"
+                className="w-full border-t border-border px-2 py-1.5 text-xs text-muted-foreground hover:bg-secondary"
+                onClick={() => setShowAddMember(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
 
         <Textarea
           label="Notes (optional)"

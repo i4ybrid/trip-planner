@@ -35,38 +35,38 @@ async function seed() {
   const users = await Promise.all([
     prisma.user.create({
       data: {
-        id: 'user-1',
-        email: 'john@example.com',
-        name: 'John Doe',
-        avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=john',
+        id: 'alice@example.com',
+        email: 'alice@example.com',
+        name: 'Alice Chen',
+        avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=alice',
         phone: '+1234567890',
-        venmo: '@johndoe',
-        paypal: 'johndoe',
-        zelle: 'john@example.com',
+        venmo: '@alicechen',
+        paypal: 'alicechen',
+        zelle: 'alice@example.com',
       },
     }),
     prisma.user.create({
       data: {
-        id: 'user-2',
-        email: 'jane@example.com',
-        name: 'Jane Smith',
-        avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=jane',
-      },
-    }),
-    prisma.user.create({
-      data: {
-        id: 'user-3',
+        id: 'bob@example.com',
         email: 'bob@example.com',
-        name: 'Bob Wilson',
+        name: 'Bob Johnson',
         avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=bob',
       },
     }),
     prisma.user.create({
       data: {
-        id: 'user-4',
-        email: 'alice@example.com',
-        name: 'Alice Johnson',
-        avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=alice',
+        id: 'carol@example.com',
+        email: 'carol@example.com',
+        name: 'Carol Williams',
+        avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=carol',
+      },
+    }),
+    prisma.user.create({
+      data: {
+        id: 'david@example.com',
+        email: 'david@example.com',
+        name: 'David Brown',
+        avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=david',
       },
     }),
   ]);
@@ -75,7 +75,7 @@ async function seed() {
 
   // Create trips with different states
   const trips = await Promise.all([
-    // Trip 1: Planning state
+    // Trip 1: Planning state - test@user.com is MASTER
     prisma.trip.create({
       data: {
         id: 'trip-1',
@@ -85,17 +85,17 @@ async function seed() {
         startDate: new Date('2026-06-15'),
         endDate: new Date('2026-06-22'),
         status: 'PLANNING',
-        tripMasterId: 'user-1',
+        tripMasterId: 'test@user.com',
         members: {
           create: [
-            { userId: 'user-1', role: 'MASTER', status: 'CONFIRMED' },
-            { userId: 'user-2', role: 'MEMBER', status: 'CONFIRMED' },
-            { userId: 'user-3', role: 'MEMBER', status: 'CONFIRMED' },
+            { userId: 'test@user.com', role: 'MASTER', status: 'CONFIRMED' },
+            { userId: 'alice@example.com', role: 'MEMBER', status: 'CONFIRMED' },
+            { userId: 'bob@example.com', role: 'MEMBER', status: 'CONFIRMED' },
           ],
         },
       },
     }),
-    // Trip 2: Confirmed state
+    // Trip 2: Confirmed state - test@user.com is MEMBER
     prisma.trip.create({
       data: {
         id: 'trip-2',
@@ -105,16 +105,17 @@ async function seed() {
         startDate: new Date('2026-07-01'),
         endDate: new Date('2026-07-07'),
         status: 'CONFIRMED',
-        tripMasterId: 'user-2',
+        tripMasterId: 'alice@example.com',
         members: {
           create: [
-            { userId: 'user-2', role: 'MASTER', status: 'CONFIRMED' },
-            { userId: 'user-1', role: 'MEMBER', status: 'CONFIRMED' },
+            { userId: 'alice@example.com', role: 'MASTER', status: 'CONFIRMED' },
+            { userId: 'test@user.com', role: 'MEMBER', status: 'CONFIRMED' },
+            { userId: 'bob@example.com', role: 'MEMBER', status: 'CONFIRMED' },
           ],
         },
       },
     }),
-    // Trip 3: Completed
+    // Trip 3: Completed - test@user.com is MASTER
     prisma.trip.create({
       data: {
         id: 'trip-3',
@@ -124,16 +125,16 @@ async function seed() {
         startDate: new Date('2025-12-20'),
         endDate: new Date('2025-12-30'),
         status: 'COMPLETED',
-        tripMasterId: 'user-1',
+        tripMasterId: 'test@user.com',
         members: {
           create: [
-            { userId: 'user-1', role: 'MASTER', status: 'CONFIRMED' },
-            { userId: 'user-4', role: 'MEMBER', status: 'CONFIRMED' },
+            { userId: 'test@user.com', role: 'MASTER', status: 'CONFIRMED' },
+            { userId: 'david@example.com', role: 'MEMBER', status: 'CONFIRMED' },
           ],
         },
       },
     }),
-    // Trip 4: In Progress
+    // Trip 4: In Progress - test@user.com is MEMBER
     prisma.trip.create({
       data: {
         id: 'trip-4',
@@ -143,11 +144,12 @@ async function seed() {
         startDate: new Date('2026-02-20'),
         endDate: new Date('2026-02-23'),
         status: 'IN_PROGRESS',
-        tripMasterId: 'user-3',
+        tripMasterId: 'carol@example.com',
         members: {
           create: [
-            { userId: 'user-3', role: 'MASTER', status: 'CONFIRMED' },
-            { userId: 'user-2', role: 'MEMBER', status: 'CONFIRMED' },
+            { userId: 'carol@example.com', role: 'MASTER', status: 'CONFIRMED' },
+            { userId: 'test@user.com', role: 'MEMBER', status: 'CONFIRMED' },
+            { userId: 'bob@example.com', role: 'MEMBER', status: 'CONFIRMED' },
           ],
         },
       },
@@ -156,7 +158,7 @@ async function seed() {
 
   console.log(`✅ Created ${trips.length} trips`);
 
-  // Create activities with votes for trip-1
+  // Create activities with votes for trip-1 (test@user.com's trip)
   const activities = await Promise.all([
     prisma.activity.create({
       data: {
@@ -167,12 +169,12 @@ async function seed() {
         location: 'Eiffel Tower, Paris',
         cost: 25,
         category: 'attraction',
-        proposedBy: 'user-1',
+        proposedBy: 'test@user.com',
         votes: {
           create: [
-            { userId: 'user-1', option: 'yes' },
-            { userId: 'user-2', option: 'yes' },
-            { userId: 'user-3', option: 'no' },
+            { userId: 'test@user.com', option: 'yes' },
+            { userId: 'alice@example.com', option: 'yes' },
+            { userId: 'bob@example.com', option: 'no' },
           ],
         },
       },
@@ -186,11 +188,11 @@ async function seed() {
         location: 'Louvre Museum',
         cost: 20,
         category: 'attraction',
-        proposedBy: 'user-2',
+        proposedBy: 'alice@example.com',
         votes: {
           create: [
-            { userId: 'user-1', option: 'yes' },
-            { userId: 'user-2', option: 'yes' },
+            { userId: 'test@user.com', option: 'yes' },
+            { userId: 'alice@example.com', option: 'yes' },
           ],
         },
       },
@@ -204,10 +206,10 @@ async function seed() {
         location: 'Seine River',
         cost: 80,
         category: 'activity',
-        proposedBy: 'user-3',
+        proposedBy: 'bob@example.com',
         votes: {
           create: [
-            { userId: 'user-1', option: 'maybe' },
+            { userId: 'test@user.com', option: 'maybe' },
           ],
         },
       },
@@ -216,13 +218,13 @@ async function seed() {
 
   console.log(`✅ Created ${activities.length} activities with votes`);
 
-  // Create messages with @mentions
+  // Create messages with @mentions for trip-1
   const messages = await Promise.all([
     prisma.tripMessage.create({
       data: {
         id: 'msg-1',
         tripId: 'trip-1',
-        userId: 'user-1',
+        userId: 'test@user.com',
         content: 'Hey @everyone! Should we book the hotel soon?',
       },
     }),
@@ -230,15 +232,15 @@ async function seed() {
       data: {
         id: 'msg-2',
         tripId: 'trip-1',
-        userId: 'user-2',
-        content: 'Yes! @Jane what do you think about the Airbnb I shared?',
+        userId: 'alice@example.com',
+        content: 'Yes! @Carol what do you think about the Airbnb I shared?',
       },
     }),
     prisma.tripMessage.create({
       data: {
         id: 'msg-3',
         tripId: 'trip-1',
-        userId: 'user-3',
+        userId: 'bob@example.com',
         content: "I think it's great! Let's go with it.",
       },
     }),
@@ -246,13 +248,13 @@ async function seed() {
 
   console.log(`✅ Created ${messages.length} messages`);
 
-  // Create expenses with different split types
+  // Create bookings for trips
   const bookings = await Promise.all([
     prisma.booking.create({
       data: {
         id: 'booking-1',
         tripId: 'trip-1',
-        bookedBy: 'user-1',
+        bookedBy: 'test@user.com',
         status: 'CONFIRMED',
         notes: 'Hotel: $500',
       },
@@ -261,7 +263,7 @@ async function seed() {
       data: {
         id: 'booking-2',
         tripId: 'trip-1',
-        bookedBy: 'user-2',
+        bookedBy: 'alice@example.com',
         status: 'CONFIRMED',
         notes: 'Flight: $400',
       },
@@ -270,7 +272,7 @@ async function seed() {
       data: {
         id: 'booking-3',
         tripId: 'trip-2',
-        bookedBy: 'user-2',
+        bookedBy: 'test@user.com',
         status: 'CONFIRMED',
         notes: 'Restaurant: $150',
       },
@@ -279,13 +281,13 @@ async function seed() {
 
   console.log(`✅ Created ${bookings.length} expenses`);
 
-  // Create media items
+  // Create media items for trip-3 (Tokyo)
   const mediaItems = await Promise.all([
     prisma.mediaItem.create({
       data: {
         id: 'media-1',
         tripId: 'trip-3',
-        uploaderId: 'user-1',
+        uploaderId: 'test@user.com',
         type: 'image',
         url: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800',
         caption: 'Tokyo Tower at night',
@@ -295,7 +297,7 @@ async function seed() {
       data: {
         id: 'media-2',
         tripId: 'trip-3',
-        uploaderId: 'user-4',
+        uploaderId: 'david@example.com',
         type: 'image',
         url: 'https://images.unsplash.com/photo-1536098561742-ca998e48cbcc?w=800',
         caption: 'Cherry blossoms',
@@ -305,21 +307,21 @@ async function seed() {
 
   console.log(`✅ Created ${mediaItems.length} media items`);
 
-  // Create notifications
+  // Create notifications for test@user.com
   const notifications = await Promise.all([
     prisma.notification.create({
       data: {
-        userId: 'user-1',
+        userId: 'test@user.com',
         tripId: 'trip-1',
         type: 'vote',
         title: 'New vote on Eiffel Tower',
-        body: 'Bob voted on your activity suggestion',
+        body: 'Bob voted no on your activity suggestion',
         actionUrl: '/trip/trip-1/activities',
       },
     }),
     prisma.notification.create({
       data: {
-        userId: 'user-1',
+        userId: 'test@user.com',
         tripId: 'trip-2',
         type: 'reminder',
         title: 'Trip starts soon!',

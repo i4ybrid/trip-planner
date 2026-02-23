@@ -9,8 +9,8 @@ import { MapPin, DollarSign, ThumbsUp, ThumbsDown, HelpCircle, Plus } from 'luci
 import { CreateActivityInput, ActivityCategory } from '@/types';
 
 const categoryOptions = [
-  { value: 'accommodation', label: 'Accommodation' },
-  { value: 'excursion', label: 'Excursion' },
+  { value: 'hotel', label: 'Hotel' },
+  { value: 'attraction', label: 'Attraction' },
   { value: 'restaurant', label: 'Restaurant' },
   { value: 'transport', label: 'Transport' },
   { value: 'activity', label: 'Activity' },
@@ -33,7 +33,23 @@ export default function TripActivities() {
 
   const handleCreateActivity = async (e: React.FormEvent) => {
     e.preventDefault();
-    await createActivity(tripId, newActivity);
+    
+    const activityData: CreateActivityInput = {
+      title: newActivity.title,
+      category: newActivity.category,
+    };
+
+    if (newActivity.description?.trim()) {
+      activityData.description = newActivity.description.trim();
+    }
+    if (newActivity.location?.trim()) {
+      activityData.location = newActivity.location.trim();
+    }
+    if (newActivity.cost !== undefined && newActivity.cost !== 0 && !isNaN(newActivity.cost)) {
+      activityData.cost = newActivity.cost;
+    }
+
+    await createActivity(tripId, activityData);
     setShowModal(false);
     setNewActivity({ title: '', category: 'activity' });
   };
@@ -51,14 +67,23 @@ export default function TripActivities() {
     };
   };
 
+  const getCurrentUserId = () => {
+    return typeof window !== 'undefined' ? localStorage.getItem('auth_token') : 'user-1';
+  };
+
   const getUserName = (userId: string) => {
+    // Map user IDs to display names
     const names: Record<string, string> = {
-      'user-1': 'You',
+      'user-1': 'User 1',
       'user-2': 'Sarah Chen',
       'user-3': 'Mike Johnson',
       'user-4': 'Emma Wilson',
     };
-    return names[userId] || 'Unknown';
+    // If userId matches auth_token, show "You"
+    if (userId === getCurrentUserId()) {
+      return 'You';
+    }
+    return names[userId] || userId.split('@')[0] || 'Unknown';
   };
 
   return (
@@ -120,7 +145,7 @@ export default function TripActivities() {
                         onClick={() => handleVote(activity.id, 'yes')}
                         className={cn(
                           'flex items-center gap-1 rounded-md px-3 py-1.5 text-sm transition-colors',
-                          (activity.votes || []).some((v) => v.userId === 'user-1' && v.option === 'yes')
+                          (activity.votes || []).some((v) => v.userId === getCurrentUserId() && v.option === 'yes')
                             ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                             : 'bg-secondary hover:bg-secondary/80'
                         )}
@@ -132,7 +157,7 @@ export default function TripActivities() {
                         onClick={() => handleVote(activity.id, 'maybe')}
                         className={cn(
                           'flex items-center gap-1 rounded-md px-3 py-1.5 text-sm transition-colors',
-                          (activity.votes || []).some((v) => v.userId === 'user-1' && v.option === 'maybe')
+                          (activity.votes || []).some((v) => v.userId === getCurrentUserId() && v.option === 'maybe')
                             ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
                             : 'bg-secondary hover:bg-secondary/80'
                         )}
@@ -144,7 +169,7 @@ export default function TripActivities() {
                         onClick={() => handleVote(activity.id, 'no')}
                         className={cn(
                           'flex items-center gap-1 rounded-md px-3 py-1.5 text-sm transition-colors',
-                          (activity.votes || []).some((v) => v.userId === 'user-1' && v.option === 'no')
+                          (activity.votes || []).some((v) => v.userId === getCurrentUserId() && v.option === 'no')
                             ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
                             : 'bg-secondary hover:bg-secondary/80'
                         )}

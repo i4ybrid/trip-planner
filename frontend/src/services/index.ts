@@ -1,4 +1,4 @@
-import { realApi } from './api';
+import { api as realApi } from './api';
 import { mockApi, mockTrip } from './mock-api';
 
 const USE_MOCK_API = process.env.NEXT_PUBLIC_USE_MOCK_API === 'true';

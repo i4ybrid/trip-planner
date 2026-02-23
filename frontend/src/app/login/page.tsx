@@ -1,40 +1,87 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Compass, Mail, Lock, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useAuthStore } from '@/store';
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  
+  const { login, isAuthenticated, error: authError } = useAuthStore();
+  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [callbackUrl, setCallbackUrl] = useState('/dashboard');
+
+  // Prevent hydration mismatch by only rendering after mount
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const params = new URLSearchParams(window.location.search);
+    setCallbackUrl(params.get('callbackUrl') || '/dashboard');
+  }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push(callbackUrl);
+    }
+  }, [isAuthenticated, router, callbackUrl]);
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    setIsSubmitting(true);
     setError('');
 
-    // Mock login - in production, this would call NextAuth
-    setTimeout(() => {
-      setIsLoading(false);
-      router.push('/dashboard');
-    }, 1000);
+    try {
+      localStorage.setItem('auth_token', email);
+      
+      const success = await login(email, password);
+      if (success) {
+        setTimeout(() => {
+          router.push(callbackUrl);
+        }, 100);
+      } else {
+        setError(authError || 'Login failed. Please check your credentials.');
+      }
+
+    } catch (err) {
+      setError('An unexpected error occurred.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleGoogleLogin = () => {
-    setIsLoading(true);
-    // Mock Google login - in production, this would trigger NextAuth Google provider
-    setTimeout(() => {
-      setIsLoading(false);
-      router.push('/dashboard');
+    setIsSubmitting(true);
+    // Mock Google login
+    localStorage.setItem('auth_token', 'test@user.com');
+    setTimeout(async () => {
+      const success = await login('test@user.com', '');
+      if (success) {
+        router.push(callbackUrl);
+      } else {
+        setError('Google login failed');
+        setIsSubmitting(false);
+      }
     }, 1000);
   };
 
+  if (!mounted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
   return (
+
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       {/* Background Pattern */}
       <div className="absolute inset-0 overflow-hidden">
@@ -68,7 +115,7 @@ export default function LoginPage() {
               variant="outline"
               className="w-full h-12 flex items-center justify-center gap-3"
               onClick={handleGoogleLogin}
-              disabled={isLoading}
+              disabled={isSubmitting}
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path
@@ -130,9 +177,8 @@ export default function LoginPage() {
             <Button
               type="submit"
               className="w-full h-12"
-              disabled={isLoading}
             >
-              {isLoading ? (
+              {isSubmitting ? (
                 <span className="flex items-center gap-2">
                   <span className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
                   Signing in...
@@ -169,4 +215,8 @@ export default function LoginPage() {
       </div>
     </div>
   );
+}
+
+export default function LoginPage() {
+  return <LoginForm />;
 }

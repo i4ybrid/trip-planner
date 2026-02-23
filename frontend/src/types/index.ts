@@ -1,4 +1,4 @@
-export type TripStatus = 'IDEA' | 'PLANNING' | 'CONFIRMED' | 'HAPPENING' | 'COMPLETED' | 'CANCELLED';
+export type TripStatus = 'IDEA' | 'PLANNING' | 'CONFIRMED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
 
 export type MemberRole = 'MASTER' | 'ORGANIZER' | 'MEMBER' | 'VIEWER';
 
@@ -12,7 +12,7 @@ export type MessageType = 'TEXT' | 'IMAGE' | 'VIDEO' | 'SYSTEM';
 
 export type NotificationType = 'invite' | 'vote' | 'booking' | 'payment' | 'message' | 'reminder' | 'milestone';
 
-export type ActivityCategory = 'accommodation' | 'excursion' | 'restaurant' | 'transport' | 'activity' | 'other';
+export type ActivityCategory = 'restaurant' | 'hotel' | 'attraction' | 'transport' | 'activity' | 'other';
 
 export type VoteOption = 'yes' | 'no' | 'maybe';
 
@@ -110,6 +110,8 @@ export interface Activity {
   proposedBy: string;
   proposer?: User;
   votes?: Vote[];
+  status?: string;
+  votingEndsAt?: string;
   createdAt: string;
 }
 
@@ -161,19 +163,39 @@ export interface TripMessage {
   userId: string;
   content: string;
   messageType: MessageType;
+  editedAt?: string;
+  parentId?: string;
   createdAt: string;
+  user?: User;
+  reactions?: MessageReaction[];
+  readReceipts?: MessageReadReceipt[];
+}
+
+export interface MessageReaction {
+  id: string;
+  messageId: string;
+  userId: string;
+  emoji: string;
+  user?: User;
+}
+
+export interface MessageReadReceipt {
+  id: string;
+  messageId: string;
+  userId: string;
+  readAt: string;
   user?: User;
 }
 
 export interface MediaItem {
   id: string;
   tripId: string;
-  albumId?: string;
   uploaderId: string;
   type: 'image' | 'video';
   url: string;
   thumbnailUrl?: string;
   caption?: string;
+  activityId?: string;
   createdAt: string;
 }
 
@@ -240,34 +262,6 @@ export interface CreateInviteInput {
 export interface SendMessageInput {
   content: string;
   messageType?: MessageType;
-}
-
-export interface MediaItem {
-  id: string;
-  tripId: string;
-  albumId?: string;
-  uploaderId: string;
-  type: 'image' | 'video';
-  url: string;
-  thumbnailUrl?: string;
-  caption?: string;
-  createdAt: string;
-}
-
-export interface Album {
-  id: string;
-  tripId: string;
-  name: string;
-  description?: string;
-  coverImage?: string;
-  mediaItems: MediaItem[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface CreateAlbumInput {
-  name: string;
-  description?: string;
 }
 
 export interface ApiResponse<T> {

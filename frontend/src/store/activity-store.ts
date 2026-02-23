@@ -37,7 +37,7 @@ export const useActivityStore = create<ActivityState>((set) => ({
   createActivity: async (tripId: string, input: CreateActivityInput) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await api.createActivity(tripId, 'user-1', input);
+      const response = await api.createActivity(tripId, input);
       if (response.error) {
         set({ error: response.error, isLoading: false });
         return null;
@@ -57,7 +57,8 @@ export const useActivityStore = create<ActivityState>((set) => ({
   castVote: async (activityId: string, option: VoteOption) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await api.castVote(activityId, 'user-1', option);
+      const userId = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : 'user-1';
+      const response = await api.castVote(activityId, option);
       if (response.error) {
         set({ error: response.error, isLoading: false });
         return null;
@@ -65,7 +66,7 @@ export const useActivityStore = create<ActivityState>((set) => ({
       set((state) => {
         const activities = state.activities.map((a) => {
           if (a.id === activityId) {
-            const existingVoteIndex = (a.votes || []).findIndex(v => v.userId === 'user-1');
+            const existingVoteIndex = (a.votes || []).findIndex(v => v.userId === userId);
             const newVotes = [...(a.votes || [])];
             if (existingVoteIndex >= 0) {
               newVotes[existingVoteIndex] = response.data!;
@@ -88,10 +89,11 @@ export const useActivityStore = create<ActivityState>((set) => ({
   removeVote: async (activityId: string) => {
     set({ isLoading: true, error: null });
     try {
+      const userId = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : 'user-1';
       set((state) => {
         const activities = state.activities.map((a) => {
           if (a.id === activityId) {
-            return { ...a, votes: (a.votes || []).filter(v => v.userId !== 'user-1') };
+            return { ...a, votes: (a.votes || []).filter(v => v.userId !== userId) };
           }
           return a;
         });

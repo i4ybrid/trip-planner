@@ -35,7 +35,7 @@ describe('MockTrip', () => {
 
   describe('getTrips', () => {
     it('should return seeded trips', async () => {
-      const result = await mock.getTrips();
+      const result = await mock.getTrips('user-1');
       expect(result.data).toHaveLength(5);
     });
 
@@ -43,7 +43,7 @@ describe('MockTrip', () => {
       await mock.createTrip('user-1', { name: 'Trip 1' });
       await mock.createTrip('user-1', { name: 'Trip 2' });
 
-      const result = await mock.getTrips();
+      const result = await mock.getTrips('user-1');
       expect(result.data).toHaveLength(7);
     });
   });

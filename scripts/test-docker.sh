@@ -16,12 +16,10 @@ COMMAND=${1:-all}
 
 check_docker() {
     if ! command -v docker &> /dev/null; then
-        echo -e "${RED}❌ Docker is not installed${NC}"
-        exit 1
+        echo -e "${RED}❌ Docker is not installed${NC}"; exit 1;
     fi
-    if ! command -v docker compose &> /dev/null; then
-        echo -e "${RED}❌ Docker Compose is not installed${NC}"
-        exit 1
+    if ! docker compose version &> /dev/null; then
+        echo -e "${RED}❌ docker compose is not installed. Please install the Docker Compose CLI plugin.${NC}"; exit 1;
     fi
 }
 
@@ -29,7 +27,42 @@ cleanup() {
     echo ""
     echo -e "${YELLOW}🧹 Cleaning up...${NC}"
     docker compose -f docker-compose.test.yml down -v --remove-orphans 2>/dev/null || true
-    echo -e "${GREEN}✅ Database wiped and containers stopped!${NC}"
+    docker compose -f docker-compose.dev.yml down -v --remove-orphans 2>/dev/null || true
+    echo -e "${GREEN}✅ Docker environment stopped!${NC}"
+}
+
+run_deploy() {
+    shift # Remove 'deploy' command
+    services=()
+    while (( "$#" )); do
+        case "$1" in
+            --frontend)
+                services+=("frontend")
+                shift
+                ;;
+            --backend)
+                services+=("backend")
+                shift
+                ;;
+            --db)
+                services+=("db")
+                shift
+                ;;
+            *)
+                echo "Unsupported service: $1" >&2
+                exit 1
+                ;;
+        esac
+    done
+
+    if [ ${#services[@]} -eq 0 ]; then
+        echo "No services specified, deploying all services from docker-compose.yml"
+        docker compose -f docker-compose.yml up --build -d
+    else
+        echo "Deploying services: ${services[*]}"
+        docker compose -f docker-compose.dev.yml up --build -d "${services[@]}"
+    fi
+    echo -e "${GREEN}✅ Deployment complete!${NC}"
 }
 
 run_frontend_tests() {
@@ -61,8 +94,8 @@ run_backend_tests() {
 show_logs() {
     echo -e "${YELLOW}📋 Showing logs...${NC}"
     cd "$PROJECT_DIR"
-    
-    CONTAINER=${1:-frontend-mock}
+
+    CONTAINER=${1:-frontend}
     echo "Showing logs for: $CONTAINER"
     echo "================================"
     docker logs -f "tripplanner-$CONTAINER-1"
@@ -124,16 +157,25 @@ run_e2e_docker() {
     
     echo ""
     echo "Pushing database schema..."
-    docker compose -f docker-compose.test.yml exec -T backend npx prisma db push --accept-data-loss 2>/dev/null || true
+    docker compose -f docker-compose.test.yml exec -T backend npx prisma db push --accept-data-loss
     
-    echo "Seeding database via API..."
-    # Wait for backend to be ready inside container
-    docker compose -f docker-compose.test.yml exec -T backend sh -c 'for i in 1 2 3 4 5 6 7 8 9 10; do curl -s http://localhost:4000/api/health > /dev/null 2>&1 && break || sleep 2; done'
-    # Run seed API script from host
-    cd "$PROJECT_DIR" && ./scripts/seed-api.sh localhost:4000 || \
-        echo "API seed failed, trying prisma seed..." && \
-        docker compose -f docker-compose.test.yml exec -T backend npx tsx prisma/seed.ts 2>/dev/null || \
-        echo "Note: Seed may need adjustment"
+    echo "Seeding database via Prisma seed..."
+    SEED_OUTPUT=$(docker compose -f docker-compose.test.yml exec -T backend npx tsx prisma/seed.ts 2>&1) || true
+    if echo "$SEED_OUTPUT" | grep -q "Seeding complete"; then
+        echo -e "${GREEN}✓ Database seeded successfully${NC}"
+    else
+        echo -e "${YELLOW}⚠ Prisma seed output:${NC}"
+        echo "$SEED_OUTPUT"
+    fi
+    
+    echo ""
+    echo "Verifying test user..."
+    TEST_USER=$(curl -s -H "x-user-id: test@user.com" http://localhost:4000/api/users/me 2>/dev/null | head -c 100)
+    if [ -n "$TEST_USER" ]; then
+        echo -e "${GREEN}✓ Test user verified${NC}"
+    else
+        echo -e "${RED}✗ Test user not found${NC}"
+    fi
     
     echo ""
     echo "Testing API endpoints..."
@@ -220,6 +262,7 @@ if [[ "$COMMAND" == "-h" || "$COMMAND" == "--help" ]]; then
     echo "Usage: $0 [COMMAND] [OPTIONS]"
     echo ""
     echo "Commands:"
+    echo "  deploy        Deploy specified services (--frontend, --backend, --db)"
     echo "  frontend      Run frontend unit tests"
     echo "  backend       Run backend unit tests"
     echo "  e2e           Run E2E Docker test (starts services, seeds DB, tests API)"
@@ -234,10 +277,11 @@ if [[ "$COMMAND" == "-h" || "$COMMAND" == "--help" ]]; then
     echo "  --no-build    Skip Docker build (use existing images)"
     echo ""
     echo "Log containers:"
-    echo "  frontend-mock, frontend-api, backend, db"
+    echo "  frontend, backend, db"
     echo ""
     echo "Examples:"
     echo "  $0                    # Run all unit tests"
+    echo "  $0 deploy --backend --db # Deploy backend and database"
     echo "  $0 frontend           # Run frontend tests only"
     echo "  $0 backend            # Run backend tests only"
     echo "  $0 e2e                # Run E2E Docker environment test"
@@ -248,6 +292,9 @@ if [[ "$COMMAND" == "-h" || "$COMMAND" == "--help" ]]; then
 fi
 
 case $COMMAND in
+    deploy)
+        run_deploy "$@"
+        ;;
     frontend)
         run_frontend_tests
         ;;
@@ -282,9 +329,10 @@ case $COMMAND in
         show_logs "$CONTAINER"
         ;;
     *)
-        echo "Usage: $0 [frontend|backend|e2e|integration|all|build|lint|typecheck|logs|-h|--help]"
+        echo "Usage: $0 [deploy|frontend|backend|e2e|integration|all|build|lint|typecheck|logs|-h|--help]"
         echo ""
         echo "Commands:"
+        echo "  deploy       Deploy specified services (--frontend, --backend, --db)"
         echo "  frontend     Run frontend unit tests"
         echo "  backend      Run backend unit tests"
         echo "  e2e          Run E2E Docker test (starts services, seeds DB, tests API)"

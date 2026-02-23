@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, Button, Input, Label } from '@/components';
 import { LeftSidebar } from '@/components/left-sidebar';
 import { AppHeader } from '@/components/app-header';
+import { useAuthStore } from '@/store';
 import { Mail, Lock, Bell, Wallet, Save, Trash2, Plus, Check, MessageSquare, Smartphone } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -27,6 +28,7 @@ interface PaymentMethod {
 }
 
 export default function SettingsPage() {
+  const { user, updateUser } = useAuthStore();
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -63,26 +65,44 @@ export default function SettingsPage() {
   const [newPaymentType, setNewPaymentType] = useState<'venmo' | 'paypal' | 'zelle' | ''>('');
   const [newPaymentHandle, setNewPaymentHandle] = useState('');
 
+  // Load user data from auth store
+  useEffect(() => {
+    console.log('[Settings] user object:', user);
+    if (user) {
+      console.log('[Settings] Setting profile from user:', {
+        name: user.name || '',
+        email: user.email || '',
+        phone: user.phone || '',
+      });
+      setProfile({
+        name: user.name || '',
+        email: user.email || '',
+        phone: user.phone || '',
+      });
+    }
+  }, [user]);
+
+  // Load mock payment methods
   useEffect(() => {
     if (USE_MOCK) {
-      setProfile({
-        name: 'Test User',
-        email: 'test@example.com',
-        phone: '+1 (555) 123-4567',
-      });
       setPaymentMethods([
         { id: '1', type: 'venmo', handle: 'test-user' },
       ]);
     }
   }, []);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setIsSaving(true);
-    setTimeout(() => {
-      setIsSaving(false);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
-    }, 1000);
+    if (user) {
+      await updateUser({
+        name: profile.name,
+        email: profile.email,
+        phone: profile.phone,
+      });
+    }
+    setIsSaving(false);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
   };
 
   const addPaymentMethod = () => {
@@ -260,7 +280,7 @@ export default function SettingsPage() {
                         >
                           <Mail className="h-6 w-6" />
                           <span className="font-medium">Email</span>
-                          <span className="text-xs text-muted-foreground">test@example.com</span>
+                          <span className="text-xs text-muted-foreground">{profile.email || 'your@email.com'}</span>
                         </button>
                         <button
                           onClick={() => setNotificationChannels({ ...notificationChannels, text: !notificationChannels.text })}
@@ -273,7 +293,7 @@ export default function SettingsPage() {
                         >
                           <Smartphone className="h-6 w-6" />
                           <span className="font-medium">Text</span>
-                          <span className="text-xs text-muted-foreground">+1 (555) 123-4567</span>
+                          <span className="text-xs text-muted-foreground">{profile.phone || '+1 (555) 000-0000'}</span>
                         </button>
                       </div>
                     </CardContent>

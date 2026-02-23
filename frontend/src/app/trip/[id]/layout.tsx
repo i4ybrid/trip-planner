@@ -29,13 +29,25 @@ export default function TripLayout({
 
   useEffect(() => {
     const fetchTrip = async () => {
-      const result = await api.getTrip(tripId);
-      if (result.data) {
-        setTrip(result.data);
+      try {
+        const result = await api.getTrip(tripId);
+        if (result.data) {
+          setTrip(result.data);
+        } else if (result.error) {
+          console.error('Failed to fetch trip:', result.error);
+          // If trip not found, redirect to dashboard
+          router.push('/dashboard');
+        }
+      } catch (err) {
+        console.error('Error fetching trip:', err);
+        router.push('/dashboard');
       }
     };
-    fetchTrip();
-  }, [tripId]);
+    if (tripId) {
+      fetchTrip();
+    }
+  }, [tripId, router]);
+
 
   return (
     <div className="min-h-screen bg-background">

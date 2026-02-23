@@ -5,9 +5,11 @@ import { useRouter, usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { 
   Home, Users, MessageCircle, Settings, Bell, Compass, 
-  Plus, ChevronRight
+  Plus, ChevronRight, LogOut
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuthStore } from '@/store';
+import { Avatar } from '@/components/ui/avatar';
 
 interface NavItem {
   icon: React.ReactNode;
@@ -47,6 +49,7 @@ const navSections: NavSection[] = [
 export function LeftSidebar() {
   const router = useRouter();
   const pathname = usePathname();
+  const { user, logout } = useAuthStore();
   const [isMobile, setIsMobile] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const collapseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -66,6 +69,11 @@ export function LeftSidebar() {
 
   const handleNavClick = (href: string) => {
     router.push(href);
+  };
+
+  const handleLogout = () => {
+    logout();
+    router.push('/login');
   };
 
   const handleMouseEnter = () => {
@@ -170,6 +178,21 @@ export function LeftSidebar() {
             </div>
           ))}
         </nav>
+        {/* User Profile */}
+        <div className="absolute bottom-0 left-0 w-full border-t border-border p-4">
+          <div className="flex items-center gap-3">
+            <Avatar src={user?.avatarUrl} name={user?.name} />
+            {!(isMobile && isCollapsed) && (
+              <div className="flex-1 overflow-hidden">
+                <p className="truncate font-semibold">{user?.name}</p>
+                <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
+              </div>
+            )}
+            <Button variant="ghost" size="icon" onClick={handleLogout} className="shrink-0">
+              <LogOut className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
       </aside>
     </>
   );

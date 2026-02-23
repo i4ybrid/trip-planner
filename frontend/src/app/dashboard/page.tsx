@@ -33,10 +33,22 @@ export default function DashboardPage() {
   const [tripMembers, setTripMembers] = useState<Record<string, (TripMember & { user: User })[]>>({});
 
   useEffect(() => {
+    console.log('====== [Dashboard] Component mounted ======');
+    console.log('[Dashboard] Initial trips from store:', trips);
+    console.log('[Dashboard] Initial isLoading:', isLoading);
+    console.log('[Dashboard] Initial error:', error);
+    console.log('[Dashboard] Calling fetchTrips()');
     fetchTrips();
-  }, [fetchTrips]);
+  }, []);
 
   useEffect(() => {
+    console.log('====== [Dashboard] trips effect triggered ======');
+    console.log('[Dashboard] trips changed:', trips);
+    console.log('[Dashboard] trips count:', trips.length);
+    console.log('[Dashboard] trips[0]:', trips[0]);
+    console.log('[Dashboard] isLoading:', isLoading);
+    console.log('[Dashboard] error:', error);
+
     if (USE_MOCK) {
       import('@/services').then(({ mockTrip }) => {
         const membersMap: Record<string, (TripMember & { user: User })[]> = {};
@@ -47,9 +59,12 @@ export default function DashboardPage() {
       });
     } else {
       const fetchMembers = async () => {
+        console.log('[Dashboard] Fetching members for', trips.length, 'trips');
         const membersMap: Record<string, (TripMember & { user: User })[]> = {};
         for (const trip of trips) {
+          console.log('[Dashboard] Fetching members for trip:', trip.id, trip.name);
           const response = await api.getTripMembers(trip.id);
+          console.log('[Dashboard] getTripMembers response:', response);
           if (response.data) {
             membersMap[trip.id] = response.data.map((m: any) => ({
               ...m,
@@ -57,6 +72,7 @@ export default function DashboardPage() {
             }));
           }
         }
+        console.log('[Dashboard] Setting tripMembers:', membersMap);
         setTripMembers(membersMap);
       };
       if (trips.length > 0) {

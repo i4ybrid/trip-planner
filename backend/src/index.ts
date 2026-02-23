@@ -7,23 +7,34 @@ import path from 'path';
 
 import usersRouter from './routes/users';
 import tripsRouter from './routes/trips';
-import activitiesRouter from './routes/activities';
-import messagesRouter from './routes/messages';
-import paymentsRouter from './routes/payments';
-import mediaRouter from './routes/media';
 import notificationsRouter from './routes/notifications';
-import invitesRouter from './routes/invites';
+import { errorHandler } from './middleware/error-handler';
+import { requestLogger } from './middleware/request-logger';
 
 const logDir = process.env.LOG_DIR || '/logs';
 if (!fs.existsSync(logDir)) {
-  fs.mkdirSync(logDir, { recursive: true });
+  try {
+    fs.mkdirSync(logDir, { recursive: true });
+  } catch (err) {
+    console.error(`Failed to create log directory ${logDir}:`, err);
+  }
 }
 
-const logStream = fs.createWriteStream(path.join(logDir, `backend-${new Date().toISOString().split('T')[0]}.log`), { flags: 'a' });
+let logStream: fs.WriteStream | null = null;
+try {
+  logStream = fs.createWriteStream(path.join(logDir, `backend-${new Date().toISOString().split('T')[0]}.log`), { flags: 'a' });
+  logStream.on('error', (err) => {
+    console.error('Log stream error:', err);
+  });
+} catch (err) {
+  console.error('Failed to create log stream:', err);
+}
 
 function log(...args: unknown[]) {
   const msg = `[${new Date().toISOString()}] ${args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' ')}`;
-  logStream.write(msg + '\n');
+  if (logStream) {
+    logStream.write(msg + '\n');
+  }
   console.log(...args);
 }
 
@@ -41,6 +52,7 @@ app.use(cors({
   credentials: true,
 }));
 app.use(express.json());
+app.use(requestLogger);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -50,12 +62,18 @@ app.get('/api/health', (req, res) => {
 // API Routes
 app.use('/api/users', usersRouter);
 app.use('/api/trips', tripsRouter);
-app.use('/api/activities', activitiesRouter);
-app.use('/api/messages', messagesRouter);
-app.use('/api/payments', paymentsRouter);
-app.use('/api/media', mediaRouter);
 app.use('/api/notifications', notificationsRouter);
-app.use('/api/invites', invitesRouter);
+
+// Frontend logging endpoint
+app.post('/api/logs', (req, res) => {
+  const { level, message, timestamp, ...rest } = req.body;
+  const extra = Object.keys(rest).length > 0 ? JSON.stringify(rest) : '';
+  log(`[FRONTEND][${level || 'INFO'}] ${message} ${extra}`);
+  res.status(204).send();
+});
+
+// Error handler should be last
+app.use(errorHandler);
 
 // Socket.io for real-time features
 interface ConnectedUser {
@@ -115,7 +133,7 @@ io.on('connection', (socket) => {
   });
 });
 
-const PORT = process.env.PORT || 4000;
+const PORT = Number(process.env.PORT) || 4000;
 const HOST = process.env.HOST || '0.0.0.0';
 
 httpServer.listen(PORT, HOST, () => {
@@ -123,3 +141,4 @@ httpServer.listen(PORT, HOST, () => {
 });
 
 export { app, io };
+

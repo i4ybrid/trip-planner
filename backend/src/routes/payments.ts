@@ -1,108 +1,91 @@
 import { Router } from 'express';
 import { PaymentService } from '../services/payment.service';
 import { PrismaClient } from '@prisma/client';
+import { validate, asyncHandler } from '../middleware/error-handler';
+import { createExpenseSchema } from '../lib/validation-schemas';
 
-const router = Router();
+const router = Router({ mergeParams: true });
 const prisma = new PrismaClient();
 const paymentService = new PaymentService(prisma);
 
 // Get all expenses for a trip
-router.get('/trip/:tripId', async (req, res) => {
-  try {
-    const expenses = await paymentService.getTripExpenses(req.params.tripId);
-    res.json(expenses);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to get expenses' });
-  }
-});
+router.get('/', asyncHandler(async (req, res) => {
+  const tripId = req.params.tripId;
+  const expenses = await paymentService.getTripExpenses(tripId);
+  res.json(expenses);
+}));
 
 // Create expense
-router.post('/trip/:tripId', async (req, res) => {
-  try {
-    const userId = req.headers['x-user-id'] as string;
-    if (!userId) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-
-    const result = await paymentService.createExpense({
-      ...req.body,
-      tripId: req.params.tripId,
-      paidById: userId,
-    });
-
-    // Notify trip members
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    await prisma.notification.createMany({
-      data: [
-        {
-          userId,
-          tripId: req.params.tripId,
-          type: 'payment',
-          title: 'Expense added',
-          body: `${user?.name} added an expense: ${req.body.description}`,
-          actionUrl: `/trip/${req.params.tripId}/payments`,
-        },
-      ],
-    });
-
-    res.status(201).json(result);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to create expense' });
+router.post('/', validate(createExpenseSchema), asyncHandler(async (req, res) => {
+  const userId = req.headers['x-user-id'] as string;
+  const tripId = req.params.tripId;
+  
+  if (!userId) {
+    return res.status(401).json({ error: 'Unauthorized' });
   }
-});
+
+  const result = await paymentService.createExpense({
+    ...req.body,
+    tripId,
+    paidById: userId,
+  });
+
+  // Notify trip members
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  await prisma.notification.create({
+    data: {
+      userId,
+      tripId,
+      type: 'payment',
+      title: 'Expense added',
+      body: `${user?.name} added an expense: ${req.body.description}`,
+      actionUrl: `/trip/${tripId}/payments`,
+    },
+  });
+
+  res.status(201).json(result);
+}));
 
 // Calculate splits for an expense (preview)
-router.post('/trip/:tripId/splits', async (req, res) => {
-  try {
-    const splits = await paymentService.calculateSplits({
-      ...req.body,
-      tripId: req.params.tripId,
-    });
-    res.json(splits);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to calculate splits' });
-  }
-});
+router.post('/splits', asyncHandler(async (req, res) => {
+  const tripId = req.params.tripId;
+  const splits = await paymentService.calculateSplits({
+    ...req.body,
+    tripId,
+  });
+  res.json(splits);
+}));
 
 // Get settlements for a trip
-router.get('/trip/:tripId/settlements', async (req, res) => {
-  try {
-    const settlements = await paymentService.calculateSettlements(req.params.tripId);
-    res.json(settlements);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to get settlements' });
-  }
-});
+router.get('/settlements', asyncHandler(async (req, res) => {
+  const tripId = req.params.tripId;
+  const settlements = await paymentService.calculateSettlements(tripId);
+  res.json(settlements);
+}));
 
 // Delete expense
-router.delete('/:id', async (req, res) => {
-  try {
-    const userId = req.headers['x-user-id'] as string;
-    if (!userId) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-
-    await paymentService.deleteExpense(req.params.id, userId);
-    res.status(204).send();
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
+router.delete('/:id', asyncHandler(async (req, res) => {
+  const userId = req.headers['x-user-id'] as string;
+  if (!userId) {
+    return res.status(401).json({ error: 'Unauthorized' });
   }
-});
 
-// Generate payment link
-router.post('/payment-link', async (req, res) => {
-  try {
-    const { userId, amount, method } = req.body;
-    
-    if (!['venmo', 'paypal', 'zelle'].includes(method)) {
-      return res.status(400).json({ error: 'Invalid payment method' });
-    }
+  await paymentService.deleteExpense(req.params.id, userId);
+  res.status(204).send();
+}));
 
-    const link = paymentService.generatePaymentLink(userId, amount, method);
-    res.json({ url: link });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to generate payment link' });
+// Generate payment link (not necessarily nested but okay to keep)
+router.post('/payment-link', asyncHandler(async (req, res) => {
+  const { userId, amount, method } = req.body;
+  
+  if (!['venmo', 'paypal', 'zelle'].includes(method)) {
+    return res.status(400).json({ error: 'Invalid payment method' });
   }
-});
+
+  const link = paymentService.generatePaymentLink(userId, Number(amount), method);
+  res.json({ url: link });
+}));
 
 export default router;
+
+

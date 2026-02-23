@@ -195,6 +195,12 @@ button:hover, .btn-primary:hover {
   );
 }
 
+/* Date input picker styling for dark mode */
+[data-theme="vigilante"] input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+}
+
 /* ===========================
    Custom Components
    =========================== */

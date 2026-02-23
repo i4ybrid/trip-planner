@@ -29,4 +29,6 @@ USER nodejs
 EXPOSE 4000
 ENV PORT=4000
 
-CMD ["node", "dist/index.js"]
+# Try to push the schema on start to ensure tables exist
+CMD ["sh", "-c", "npx prisma db push --accept-data-loss && node dist/index.js"]
+

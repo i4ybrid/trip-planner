@@ -1,105 +1,81 @@
 import { Router } from 'express';
 import { InviteService } from '../services/invite.service';
 import { PrismaClient } from '@prisma/client';
+import { validate, asyncHandler } from '../middleware/error-handler';
+import { inviteSchema } from '../lib/validation-schemas';
 
-const router = Router();
+const router = Router({ mergeParams: true });
 const prisma = new PrismaClient();
 const inviteService = new InviteService(prisma);
 
 // Get invites for a trip
-router.get('/trip/:tripId', async (req, res) => {
-  try {
-    const invites = await inviteService.getTripInvites(req.params.tripId);
-    res.json(invites);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to get invites' });
-  }
-});
+router.get('/', asyncHandler(async (req, res) => {
+  const tripId = req.params.tripId;
+  const invites = await inviteService.getTripInvites(tripId);
+  res.json(invites);
+}));
 
 // Create invite
-router.post('/trip/:tripId', async (req, res) => {
-  try {
-    const userId = req.headers['x-user-id'] as string;
-    if (!userId) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-
-    const { email, phone, expiresInHours } = req.body;
-    
-    const invite = await inviteService.createInvite({
-      tripId: req.params.tripId,
-      email,
-      phone,
-      sentById: userId,
-      expiresInHours,
-    });
-
-    // TODO: Send email/SMS via external service
-
-    res.status(201).json(invite);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to create invite' });
+router.post('/', validate(inviteSchema), asyncHandler(async (req, res) => {
+  const userId = req.headers['x-user-id'] as string;
+  const tripId = req.params.tripId;
+  
+  if (!userId) {
+    return res.status(401).json({ error: 'Unauthorized' });
   }
-});
 
-// Accept invite (public route)
-router.post('/accept', async (req, res) => {
-  try {
-    const userId = req.headers['x-user-id'] as string;
-    if (!userId) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
+  const { email, phone, expiresInHours } = req.body;
+  
+  const invite = await inviteService.createInvite({
+    tripId,
+    email,
+    phone,
+    sentById: userId,
+    expiresInHours,
+  });
 
-    const { token } = req.body;
-    await inviteService.acceptInvite(token, userId);
-    res.status(200).json({ success: true });
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
+  res.status(201).json(invite);
+}));
+
+// Accept invite (public route - not necessarily nested)
+router.post('/accept', asyncHandler(async (req, res) => {
+  const userId = req.headers['x-user-id'] as string;
+  if (!userId) {
+    return res.status(401).json({ error: 'Unauthorized' });
   }
-});
+
+  const { token } = req.body;
+  await inviteService.acceptInvite(token, userId);
+  res.status(200).json({ success: true });
+}));
 
 // Decline invite
-router.post('/decline', async (req, res) => {
-  try {
-    const { token } = req.body;
-    await inviteService.declineInvite(token);
-    res.status(200).json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to decline invite' });
-  }
-});
+router.post('/decline', asyncHandler(async (req, res) => {
+  const { token } = req.body;
+  await inviteService.declineInvite(token);
+  res.status(200).json({ success: true });
+}));
 
 // Revoke invite
-router.delete('/:id', async (req, res) => {
-  try {
-    await inviteService.revokeInvite(req.params.id);
-    res.status(204).send();
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to revoke invite' });
-  }
-});
+router.delete('/:id', asyncHandler(async (req, res) => {
+  await inviteService.revokeInvite(req.params.id);
+  res.status(204).send();
+}));
 
 // Validate invite (public)
-router.get('/validate/:token', async (req, res) => {
-  try {
-    const isValid = await inviteService.isInviteValid(req.params.token);
-    res.json({ valid: isValid });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to validate invite' });
-  }
-});
+router.get('/validate/:token', asyncHandler(async (req, res) => {
+  const isValid = await inviteService.isInviteValid(req.params.token);
+  res.json({ valid: isValid });
+}));
 
 // Get invite by token (public)
-router.get('/token/:token', async (req, res) => {
-  try {
-    const invite = await inviteService.getInviteByToken(req.params.token);
-    if (!invite) {
-      return res.status(404).json({ error: 'Invite not found' });
-    }
-    res.json(invite);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to get invite' });
+router.get('/token/:token', asyncHandler(async (req, res) => {
+  const invite = await inviteService.getInviteByToken(req.params.token);
+  if (!invite) {
+    return res.status(404).json({ error: 'Invite not found' });
   }
-});
+  res.json(invite);
+}));
 
 export default router;
+
