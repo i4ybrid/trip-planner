@@ -5,20 +5,25 @@ import { useParams } from 'next/navigation';
 import { useTripStore } from '@/store';
 import { Card, CardHeader, CardTitle, CardContent, Button, Badge, Select } from '@/components';
 import { formatDateRange, formatCurrency, cn } from '@/lib/utils';
-import { mockApi, mockTrip } from '@/services/mock-api';
+import { api } from '@/services/api';
 import { MapPin, Calendar, Users, DollarSign, Share2, Settings } from 'lucide-react';
+import { TripMember, User } from '@/types';
 
 export default function TripOverview() {
   const params = useParams();
   const tripId = params.id as string;
   
   const { currentTrip, isLoading, fetchTrip, changeStatus } = useTripStore();
-  const [members, setMembers] = useState<{ userId: string; role: string; user: { name: string; email: string } }[]>([]);
+  const [members, setMembers] = useState<(TripMember & { user: User })[]>([]);
 
   useEffect(() => {
     if (tripId) {
       fetchTrip(tripId);
-      setMembers(mockTrip.getTripMembersWithUsers(tripId));
+      api.getTripMembers(tripId).then(result => {
+        if (result.data) {
+          setMembers(result.data.map(m => ({ ...m, user: { id: m.userId, name: 'User', email: '', createdAt: '', updatedAt: '' } })));
+        }
+      });
     }
   }, [tripId, fetchTrip]);
 
@@ -104,10 +109,10 @@ export default function TripOverview() {
                 {members.map((member) => (
                   <div key={member.userId} className="flex items-center gap-3 rounded-lg border border-border p-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 font-medium">
-                      {member.user.name.charAt(0)}
+                      {member.user?.name?.charAt(0) || 'U'}
                     </div>
                     <div>
-                      <p className="font-medium">{member.user.name}</p>
+                      <p className="font-medium">{member.user?.name || 'User'}</p>
                       <p className="text-xs text-muted-foreground">{member.role}</p>
                     </div>
                   </div>

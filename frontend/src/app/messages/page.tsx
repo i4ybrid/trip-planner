@@ -6,59 +6,73 @@ import { MessageCircle, Search, Send, MoreVertical, Phone, Video } from 'lucide-
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { api } from '@/services/api';
+import { DmConversation, Message, User } from '@/types';
 
-interface Conversation {
-  id: string;
-  name: string;
-  lastMessage: string;
-  timestamp: string;
-  unread: number;
-  avatar: string | null;
-}
-
-interface Message {
-  id: string;
-  conversationId: string;
-  senderId: string;
-  content: string;
-  timestamp: string;
+function getOtherParticipant(conversation: DmConversation, currentUserId: string): User | undefined {
+  return conversation.participants?.find(p => p.id !== currentUserId);
 }
 
 export default function MessagesPage() {
-  const [selectedConversation, setSelectedConversation] = useState<string | null>('1');
+  const [conversations, setConversations] = useState<DmConversation[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [currentUserId, setCurrentUserId] = useState<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const conversations: Conversation[] = [
-    { id: '1', name: 'Summer Road Trip 2024', lastMessage: 'Sarah: See you all tomorrow!', timestamp: '2 min ago', unread: 2, avatar: null },
-    { id: '2', name: 'Mike Johnson', lastMessage: 'Thanks for the recommendation!', timestamp: '1 hour ago', unread: 0, avatar: null },
-    { id: '3', name: 'Tokyo Adventure', lastMessage: 'Emily: The restaurant was amazing', timestamp: 'Yesterday', unread: 0, avatar: null },
-    { id: '4', name: 'Emily Davis', lastMessage: 'Sounds good!', timestamp: 'Yesterday', unread: 0, avatar: null },
-  ];
+  useEffect(() => {
+    const loadConversations = async () => {
+      setIsLoading(true);
+      const [userResult, conversationsResult] = await Promise.all([
+        api.getCurrentUser(),
+        api.getDmConversations(),
+      ]);
+      if (userResult.data) {
+        setCurrentUserId(userResult.data.id);
+      }
+      if (conversationsResult.data) {
+        setConversations(conversationsResult.data);
+        if (conversationsResult.data.length > 0) {
+          setSelectedConversation(conversationsResult.data[0].id);
+        }
+      }
+      setIsLoading(false);
+    };
+    loadConversations();
+  }, []);
 
-  const allMessages: Message[] = [
-    { id: '1', conversationId: '1', senderId: 'user-1', content: 'Hey everyone! Just wanted to confirm our plans for tomorrow.', timestamp: '10:30 AM' },
-    { id: '2', conversationId: '1', senderId: 'user-2', content: "I'm so excited! Can't wait!", timestamp: '10:32 AM' },
-    { id: '3', conversationId: '1', senderId: 'user-3', content: 'Same here! Should we meet at the hotel first?', timestamp: '10:35 AM' },
-    { id: '4', conversationId: '1', senderId: 'user-1', content: "Yes, let's meet at 9 AM in the lobby. Then we can head to the beach together.", timestamp: '10:38 AM' },
-    { id: '5', conversationId: '1', senderId: 'user-2', content: "Perfect! I'll bring some snacks for the drive.", timestamp: '10:40 AM' },
-    { id: '6', conversationId: '1', senderId: 'user-3', content: 'See you all tomorrow!', timestamp: '10:45 AM' },
-    { id: '7', conversationId: '2', senderId: 'user-2', content: 'Hey! Thanks for the restaurant recommendation.', timestamp: '2:00 PM' },
-    { id: '8', conversationId: '2', senderId: 'user-1', content: 'No problem! Let me know how it goes.', timestamp: '2:15 PM' },
-    { id: '9', conversationId: '2', senderId: 'user-2', content: 'Thanks for the recommendation!', timestamp: '3:00 PM' },
-    { id: '10', conversationId: '3', senderId: 'user-3', content: 'The restaurant was amazing!', timestamp: 'Yesterday' },
-    { id: '11', conversationId: '3', senderId: 'user-1', content: 'Glad you liked it!', timestamp: 'Yesterday' },
-    { id: '12', conversationId: '4', senderId: 'user-4', content: 'Are we still on for Saturday?', timestamp: 'Yesterday' },
-    { id: '13', conversationId: '4', senderId: 'user-1', content: 'Sounds good!', timestamp: 'Yesterday' },
-  ];
-
-  const messages = allMessages.filter(m => m.conversationId === selectedConversation);
+  useEffect(() => {
+    const loadMessages = async () => {
+      if (!selectedConversation) {
+        setMessages([]);
+        return;
+      }
+      const result = await api.getDmMessages(selectedConversation);
+      if (result.data) {
+        setMessages(result.data);
+      }
+    };
+    loadMessages();
+  }, [selectedConversation]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, selectedConversation]);
 
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !selectedConversation) return;
+    
+    const result = await api.sendDmMessage(selectedConversation, { content: newMessage.trim() });
+    if (result.data) {
+      setMessages(prev => [...prev, result.data!]);
+      setNewMessage('');
+    }
+  };
+
   const selectedConvo = conversations.find(c => c.id === selectedConversation);
+  const otherUser = selectedConvo ? getOtherParticipant(selectedConvo, currentUserId) : undefined;
 
   return (
     <PageLayout title="Messages" className="p-0">
@@ -71,33 +85,37 @@ export default function MessagesPage() {
             </div>
           </div>
           <div className="flex-1 overflow-y-auto space-y-1 p-2">
-                {conversations.map((convo) => (
-                  <button
-                    key={convo.id}
-                    onClick={() => setSelectedConversation(convo.id)}
-                    className={`flex w-full items-center gap-3 rounded-lg p-3 text-left transition-colors ${
-                      selectedConversation === convo.id
-                        ? 'bg-primary/10'
-                        : 'hover:bg-secondary'
-                    }`}
-                  >
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                      <MessageCircle className="h-5 w-5 text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <p className="font-medium truncate">{convo.name}</p>
-                        <span className="text-xs text-muted-foreground">{convo.timestamp}</span>
-                      </div>
-                      <p className="text-sm text-muted-foreground truncate">{convo.lastMessage}</p>
-                    </div>
-                    {convo.unread > 0 && (
-                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
-                        {convo.unread}
-                      </span>
-                    )}
-                  </button>
-                ))}
+                {isLoading ? (
+                  <div className="flex justify-center py-8 text-muted-foreground">Loading...</div>
+                ) : conversations.length === 0 ? (
+                  <div className="flex justify-center py-8 text-muted-foreground">No conversations yet</div>
+                ) : (
+                  conversations.map((convo) => {
+                    const other = getOtherParticipant(convo, currentUserId);
+                    return (
+                      <button
+                        key={convo.id}
+                        onClick={() => setSelectedConversation(convo.id)}
+                        className={`flex w-full items-center gap-3 rounded-lg p-3 text-left transition-colors ${
+                          selectedConversation === convo.id
+                            ? 'bg-primary/10'
+                            : 'hover:bg-secondary'
+                        }`}
+                      >
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                          <MessageCircle className="h-5 w-5 text-primary" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <p className="font-medium truncate">{other?.name || 'Unknown User'}</p>
+                            <span className="text-xs text-muted-foreground">{new Date(convo.lastMessageAt).toLocaleDateString()}</span>
+                          </div>
+                          <p className="text-sm text-muted-foreground truncate">Click to view messages</p>
+                        </div>
+                      </button>
+                    );
+                  })
+                )}
               </div>
           </aside>
 
@@ -110,8 +128,8 @@ export default function MessagesPage() {
                         <MessageCircle className="h-5 w-5 text-primary" />
                       </div>
                       <div>
-                        <p className="font-medium">{selectedConvo.name}</p>
-                        <p className="text-sm text-muted-foreground">3 participants</p>
+                        <p className="font-medium">{otherUser?.name || 'Unknown User'}</p>
+                        <p className="text-sm text-muted-foreground">{selectedConvo.participants?.length || 1} participant(s)</p>
                       </div>
                     </div>
                     <div className="flex gap-2">
@@ -128,29 +146,33 @@ export default function MessagesPage() {
                   </div>
 
                   <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                    {messages.map((message) => (
-                      <div
-                        key={message.id}
-                        className={`flex ${message.senderId === 'user-1' ? 'justify-end' : 'justify-start'}`}
-                      >
+                    {messages.length === 0 ? (
+                      <div className="flex justify-center py-8 text-muted-foreground">No messages yet</div>
+                    ) : (
+                      messages.map((message) => (
                         <div
-                          className={`max-w-[70%] rounded-lg p-3 ${
-                            message.senderId === 'user-1'
-                              ? 'bg-primary text-primary-foreground'
-                              : 'bg-secondary'
-                          }`}
+                          key={message.id}
+                          className={`flex ${message.senderId === currentUserId ? 'justify-end' : 'justify-start'}`}
                         >
-                          <p>{message.content}</p>
-                          <p className={`text-xs mt-1 ${
-                            message.senderId === 'user-1'
-                              ? 'text-primary-foreground/70'
-                              : 'text-muted-foreground'
-                          }`}>
-                            {message.timestamp}
-                          </p>
+                          <div
+                            className={`max-w-[70%] rounded-lg p-3 ${
+                              message.senderId === currentUserId
+                                ? 'bg-primary text-primary-foreground'
+                                : 'bg-secondary'
+                            }`}
+                          >
+                            <p>{message.content}</p>
+                            <p className={`text-xs mt-1 ${
+                              message.senderId === currentUserId
+                                ? 'text-primary-foreground/70'
+                                : 'text-muted-foreground'
+                            }`}>
+                              {new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))
+                    )}
                     <div ref={messagesEndRef} />
                   </div>
 
@@ -162,7 +184,7 @@ export default function MessagesPage() {
                         onChange={(e) => setNewMessage(e.target.value)}
                         className="flex-1"
                       />
-                      <Button size="icon">
+                      <Button size="icon" onClick={handleSendMessage}>
                         <Send className="h-4 w-4" />
                       </Button>
                     </div>

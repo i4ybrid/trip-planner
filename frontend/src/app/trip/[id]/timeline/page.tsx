@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardContent, EmptyState } from '@/components';
-import { mockApi } from '@/services/mock-api';
+import { api } from '@/services/api';
 import { Clock } from 'lucide-react';
+import { TimelineEvent } from '@/types';
 
 const eventTypeIcons: Record<string, string> = {
   trip_created: '🎉',
@@ -24,17 +25,11 @@ export default function TripTimeline() {
   const params = useParams();
   const tripId = params.id as string;
   
-  const [events, setEvents] = useState<{
-    id: string;
-    type: string;
-    description: string;
-    createdAt: string;
-    userId?: string;
-  }[]>([]);
+  const [events, setEvents] = useState<TimelineEvent[]>([]);
 
   useEffect(() => {
     const loadEvents = async () => {
-      const result = await mockApi.getEvents(tripId);
+      const result = await api.getTripTimeline(tripId);
       if (result.data) setEvents(result.data);
     };
     loadEvents();
@@ -85,14 +80,14 @@ export default function TripTimeline() {
                 {events.map((event) => (
                   <div key={event.id} className="relative flex gap-4 pl-8">
                     <div className="absolute left-2 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-background border-2 border-primary">
-                      <span className="text-xs">{eventTypeIcons[event.type] || '📌'}</span>
+                      <span className="text-xs">{eventTypeIcons[event.eventType] || '📌'}</span>
                     </div>
                     <div className="flex-1 rounded-lg border border-border p-4">
                       <div className="flex items-start justify-between">
                         <div>
                           <p className="font-medium">{event.description}</p>
                           <p className="text-sm text-muted-foreground">
-                            {getUserName(event.userId)}
+                            {getUserName(event.createdBy)}
                           </p>
                         </div>
                         <div className="flex items-center gap-1 text-xs text-muted-foreground">

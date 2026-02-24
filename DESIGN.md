@@ -689,9 +689,40 @@ POST   /api/notifications/mark-all-read  Mark all as read
 ### Settings
 ```
 GET    /api/settings               Get user settings
-PATCH  /api/settings              Update settings
+PATCH  /api/settings              Update settings (notifications, friend requests)
 POST   /api/settings/password      Change password
 POST   /api/settings/avatar        Upload profile picture
+```
+
+### Payment Methods
+```
+PATCH  /api/users/me/payment-methods    Update payment handles (Venmo, PayPal, Zelle, CashApp)
+```
+
+### Payment Methods Overview
+
+Users can link their payment accounts to receive payments from trip members. Each payment method is stored as a simple string identifier linked to the user's account:
+
+| Method | Stored As | Example |
+|--------|-----------|---------|
+| Venmo | Username | `@sarah-chen` |
+| PayPal | Email | `sarah@example.com` |
+| Zelle | Phone/Email | `555-123-4567` |
+| CashApp | Username | `$sarahchen` |
+
+**Flow:**
+1. User updates their payment handles in Settings
+2. When a BillSplitMember marks as paid, they select the payment method to use
+3. The app shows the payer their payment handle to send money to
+
+**API Note:** Payment handles are updated via `PATCH /api/users/me` with fields:
+```json
+{
+  "venmo": "@username",
+  "paypal": "email@example.com",
+  "zelle": "phone or email",
+  "cashapp": "$username"
+}
 ```
 
 ---

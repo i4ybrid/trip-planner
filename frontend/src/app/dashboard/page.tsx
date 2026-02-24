@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTripStore } from '@/store';
 import { TripCard, EmptyState, Button } from '@/components';
 import { Plane, Calendar, MapPin } from 'lucide-react';
-import { mockTrip } from '@/services/mock-api';
+import { api } from '@/services/api';
 import { User, TripMember } from '@/types';
 import { LeftSidebar } from '@/components/left-sidebar';
 import { AppHeader } from '@/components/app-header';
@@ -28,13 +28,33 @@ interface TripWithMembers {
 export default function DashboardPage() {
   const router = useRouter();
   const { trips, isLoading, error, fetchTrips } = useTripStore();
+  const [membersMap, setMembersMap] = useState<Record<string, (TripMember & { user: User })[]>>({});
 
   useEffect(() => {
     fetchTrips();
   }, [fetchTrips]);
 
+  useEffect(() => {
+    const loadMembers = async () => {
+      const memberPromises = trips.map(async (trip) => {
+        const result = await api.getTripMembers(trip.id);
+        return {
+          tripId: trip.id,
+          members: result.data?.map(m => ({ ...m, user: { id: m.userId, name: 'User', email: '', createdAt: '', updatedAt: '' } })) || []
+        };
+      });
+      const results = await Promise.all(memberPromises);
+      const map: Record<string, (TripMember & { user: User })[]> = {};
+      results.forEach(r => { map[r.tripId] = r.members; });
+      setMembersMap(map);
+    };
+    if (trips.length > 0) {
+      loadMembers();
+    }
+  }, [trips]);
+
   const getTripMembers = (tripId: string): (TripMember & { user: User })[] => {
-    return mockTrip.getTripMembersWithUsers(tripId);
+    return membersMap[tripId] || [];
   };
 
   const activeTrips = trips.filter(

@@ -6,21 +6,36 @@ export type MemberStatus = 'INVITED' | 'DECLINED' | 'MAYBE' | 'CONFIRMED' | 'REM
 
 export type InviteStatus = 'PENDING' | 'ACCEPTED' | 'EXPIRED' | 'REVOKED';
 
-export type BookingStatus = 'PROPOSED' | 'CONFIRMED' | 'CANCELLED' | 'REFUNDED';
+export type VoteOption = 'YES' | 'NO' | 'MAYBE';
 
 export type MessageType = 'TEXT' | 'IMAGE' | 'VIDEO' | 'SYSTEM';
 
-export type NotificationType = 'invite' | 'vote' | 'booking' | 'payment' | 'message' | 'reminder' | 'milestone';
+export type PaymentStatus = 'PENDING' | 'PARTIAL' | 'PAID' | 'CONFIRMED' | 'CANCELLED';
+
+export type PaymentMethod = 'VENMO' | 'PAYPAL' | 'ZELLE' | 'CASHAPP' | 'CASH' | 'OTHER';
+
+export type SplitType = 'EQUAL' | 'SHARES' | 'PERCENTAGE' | 'MANUAL';
+
+export type FriendRequestStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED';
+
+export type FriendRequestSource = 'ANYONE' | 'TRIP_MEMBERS';
+
+export type NotificationType = 
+  | 'INVITE' 
+  | 'VOTE' 
+  | 'ACTIVITY' 
+  | 'PAYMENT' 
+  | 'MESSAGE' 
+  | 'REMINDER' 
+  | 'MILESTONE' 
+  | 'PAYMENT_DUE' 
+  | 'PAYMENT_RECEIVED' 
+  | 'VOTE_DEADLINE' 
+  | 'TRIP_STARTING' 
+  | 'FRIEND_REQUEST' 
+  | 'DM_MESSAGE';
 
 export type ActivityCategory = 'accommodation' | 'excursion' | 'restaurant' | 'transport' | 'activity' | 'other';
-
-export type VoteOption = 'yes' | 'no' | 'maybe';
-
-export type EventType = 'trip_created' | 'member_joined' | 'member_invited' | 'activity_proposed' | 'activity_booked' | 'vote_cast' | 'payment_received' | 'payment_sent' | 'status_changed' | 'message_sent' | 'photo_shared';
-
-export type SettlementStatus = 'pending' | 'requested' | 'sent' | 'received' | 'cancelled';
-
-export type PaymentLink = 'venmo' | 'paypal' | 'zelle' | 'other';
 
 export type ShareChannel = 'email' | 'whatsapp' | 'sms' | 'messenger' | 'telegram' | 'google_chat' | 'link';
 
@@ -33,39 +48,26 @@ export interface User {
   venmo?: string;
   paypal?: string;
   zelle?: string;
+  cashapp?: string;
+  passwordHash?: string;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface TripEvent {
-  id: string;
-  tripId: string;
-  type: EventType;
-  title: string;
-  description?: string;
-  userId?: string;
-  relatedId?: string;
-  createdAt: string;
-  user?: User;
-}
-
-export interface Settlement {
-  id: string;
-  tripId: string;
-  fromUserId: string;
-  toUserId: string;
-  amount: number;
-  currency: string;
-  description: string;
-  status: SettlementStatus;
-  paymentLink?: PaymentLink;
-  venmoHandle?: string;
-  paypalEmail?: string;
-  zellePhone?: string;
-  settledAt?: string;
-  createdAt: string;
-  fromUser?: User;
-  toUser?: User;
+export interface Settings {
+  userId: string;
+  friendRequestSource: FriendRequestSource;
+  emailTripInvites: boolean;
+  emailPaymentRequests: boolean;
+  emailVotingReminders: boolean;
+  emailTripReminders: boolean;
+  emailMessages: boolean;
+  pushTripInvites: boolean;
+  pushPaymentRequests: boolean;
+  pushVotingReminders: boolean;
+  pushTripReminders: boolean;
+  pushMessages: boolean;
+  inAppAll: boolean;
 }
 
 export interface Trip {
@@ -88,9 +90,6 @@ export interface TripMember {
   userId: string;
   role: MemberRole;
   status: MemberStatus;
-  paymentStatus?: 'pending' | 'partial' | 'paid';
-  paymentAmount?: number;
-  paymentConfirmedAt?: string;
   joinedAt: string;
   user?: User;
   trip?: Trip;
@@ -141,56 +140,107 @@ export interface InviteChannel {
   externalId?: string;
 }
 
-export interface Booking {
+export interface Message {
   id: string;
-  tripId: string;
-  activityId?: string;
-  bookedBy: string;
-  confirmationNum?: string;
-  status: BookingStatus;
-  receiptUrl?: string;
-  notes?: string;
-  activity?: Activity;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface TripMessage {
-  id: string;
-  tripId: string;
-  userId: string;
+  tripId?: string;
+  conversationId?: string;
+  senderId: string;
   content: string;
   messageType: MessageType;
+  mentions?: string[];
+  reactions?: Record<string, string[]>;
+  replyToId?: string;
+  editedAt?: string;
+  deletedAt?: string;
   createdAt: string;
-  user?: User;
+  sender?: User;
+}
+
+export interface MessageReadReceipt {
+  id: string;
+  messageId: string;
+  userId: string;
+  readAt: string;
 }
 
 export interface MediaItem {
   id: string;
   tripId: string;
-  albumId?: string;
   uploaderId: string;
   type: 'image' | 'video';
   url: string;
   thumbnailUrl?: string;
+  activityId?: string;
   caption?: string;
   createdAt: string;
 }
 
-export interface Album {
+export interface TimelineEvent {
   id: string;
   tripId: string;
-  name: string;
-  description?: string;
-  coverImage?: string;
-  mediaItems: MediaItem[];
+  eventType: string;
+  description: string;
   createdAt: string;
-  updatedAt: string;
+  createdBy?: string;
 }
 
-export interface CreateAlbumInput {
-  name: string;
+export interface BillSplit {
+  id: string;
+  tripId: string;
+  activityId?: string;
+  title: string;
   description?: string;
+  amount: number;
+  currency: string;
+  splitType: SplitType;
+  paidBy: string;
+  createdBy: string;
+  status: PaymentStatus;
+  dueDate?: string;
+  createdAt: string;
+  updatedAt: string;
+  members?: BillSplitMember[];
+}
+
+export interface BillSplitMember {
+  id: string;
+  billSplitId: string;
+  userId: string;
+  dollarAmount: number;
+  type: SplitType;
+  status: PaymentStatus;
+  paidAt?: string;
+  paymentMethod?: PaymentMethod;
+  transactionId?: string;
+  user?: User;
+}
+
+export interface Friend {
+  id: string;
+  userId: string;
+  friendId: string;
+  createdAt: string;
+  friend?: User;
+}
+
+export interface FriendRequest {
+  id: string;
+  senderId: string;
+  receiverId: string;
+  status: FriendRequestStatus;
+  createdAt: string;
+  respondedAt?: string;
+  sender?: User;
+  receiver?: User;
+}
+
+export interface DmConversation {
+  id: string;
+  participant1: string;
+  participant2: string;
+  lastMessageAt: string;
+  participants?: User[];
+  messages?: Message[];
 }
 
 export interface Notification {
@@ -200,8 +250,12 @@ export interface Notification {
   type: NotificationType;
   title: string;
   body: string;
+  actionType?: string;
+  actionId?: string;
   actionUrl?: string;
   read: boolean;
+  priority?: string;
+  scheduledFor?: string;
   createdAt: string;
 }
 
@@ -240,34 +294,27 @@ export interface CreateInviteInput {
 export interface SendMessageInput {
   content: string;
   messageType?: MessageType;
+  mentions?: string[];
 }
 
-export interface MediaItem {
-  id: string;
-  tripId: string;
-  albumId?: string;
-  uploaderId: string;
-  type: 'image' | 'video';
-  url: string;
-  thumbnailUrl?: string;
-  caption?: string;
-  createdAt: string;
-}
-
-export interface Album {
-  id: string;
-  tripId: string;
-  name: string;
+export interface CreateBillSplitInput {
+  title: string;
   description?: string;
-  coverImage?: string;
-  mediaItems: MediaItem[];
-  createdAt: string;
-  updatedAt: string;
+  amount: number;
+  currency?: string;
+  splitType: SplitType;
+  activityId?: string;
+  dueDate?: string;
+  members: {
+    userId: string;
+    shares?: number;
+    percentage?: number;
+    dollarAmount?: number;
+  }[];
 }
 
-export interface CreateAlbumInput {
-  name: string;
-  description?: string;
+export interface CreateFriendRequestInput {
+  receiverId: string;
 }
 
 export interface ApiResponse<T> {

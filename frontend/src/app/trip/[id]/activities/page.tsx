@@ -5,7 +5,6 @@ import { useParams } from 'next/navigation';
 import { useActivityStore } from '@/store';
 import { Card, CardHeader, CardTitle, CardContent, Button, Badge, Input, Textarea, Select, Modal, EmptyState } from '@/components';
 import { formatCurrency, cn } from '@/lib/utils';
-import { mockApi } from '@/services/mock-api';
 import { MapPin, DollarSign, ThumbsUp, ThumbsDown, HelpCircle, Plus } from 'lucide-react';
 import { CreateActivityInput, ActivityCategory } from '@/types';
 
@@ -40,15 +39,15 @@ export default function TripActivities() {
   };
 
   const handleVote = async (activityId: string, option: 'yes' | 'no' | 'maybe') => {
-    await castVote(activityId, option);
+    await castVote(activityId, option.toUpperCase() as 'YES' | 'NO' | 'MAYBE');
   };
 
   const getVoteCounts = (activity: typeof activities[0]) => {
     const votes = activity.votes || [];
     return {
-      yes: votes.filter((v) => v.option === 'yes').length,
-      no: votes.filter((v) => v.option === 'no').length,
-      maybe: votes.filter((v) => v.option === 'maybe').length,
+      yes: votes.filter((v) => v.option === 'YES').length,
+      no: votes.filter((v) => v.option === 'NO').length,
+      maybe: votes.filter((v) => v.option === 'MAYBE').length,
     };
   };
 
@@ -121,7 +120,7 @@ export default function TripActivities() {
                         onClick={() => handleVote(activity.id, 'yes')}
                         className={cn(
                           'flex items-center gap-1 rounded-md px-3 py-1.5 text-sm transition-colors',
-                          (activity.votes || []).some((v) => v.userId === 'user-1' && v.option === 'yes')
+                          (activity.votes || []).some((v) => v.option === 'YES')
                             ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                             : 'bg-secondary hover:bg-secondary/80'
                         )}
@@ -133,7 +132,7 @@ export default function TripActivities() {
                         onClick={() => handleVote(activity.id, 'maybe')}
                         className={cn(
                           'flex items-center gap-1 rounded-md px-3 py-1.5 text-sm transition-colors',
-                          (activity.votes || []).some((v) => v.userId === 'user-1' && v.option === 'maybe')
+                          (activity.votes || []).some((v) => v.option === 'MAYBE')
                             ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
                             : 'bg-secondary hover:bg-secondary/80'
                         )}
@@ -145,7 +144,7 @@ export default function TripActivities() {
                         onClick={() => handleVote(activity.id, 'no')}
                         className={cn(
                           'flex items-center gap-1 rounded-md px-3 py-1.5 text-sm transition-colors',
-                          (activity.votes || []).some((v) => v.userId === 'user-1' && v.option === 'no')
+                          (activity.votes || []).some((v) => v.option === 'NO')
                             ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
                             : 'bg-secondary hover:bg-secondary/80'
                         )}

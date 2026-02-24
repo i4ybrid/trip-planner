@@ -1,38 +1,32 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, Button, Input, Label } from '@/components';
 import { LeftSidebar } from '@/components/left-sidebar';
 import { AppHeader } from '@/components/app-header';
 import { Mail, Lock, Bell, Wallet, Save, Trash2, Plus, Check, MessageSquare, Smartphone } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { api } from '@/services/api';
+import { Settings } from '@/types';
 
 type SettingsTab = 'profile' | 'security' | 'notifications' | 'payments';
 
-interface NotificationSettings {
-  tripReminders: boolean;
-  voteAlerts: boolean;
-  paymentRequests: boolean;
-  chatMessages: boolean;
-  friendRequests: boolean;
-  tripUpdates: boolean;
-}
-
 interface PaymentMethod {
   id: string;
-  type: 'venmo' | 'paypal' | 'zelle';
+  type: 'venmo' | 'paypal' | 'zelle' | 'cashapp';
   handle: string;
 }
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
+  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
   const [profile, setProfile] = useState({
-    name: 'Test User',
-    email: 'test@example.com',
-    phone: '+1 (555) 123-4567',
+    name: '',
+    email: '',
+    phone: '',
   });
 
   const [passwords, setPasswords] = useState({
@@ -41,50 +35,143 @@ export default function SettingsPage() {
     confirm: '',
   });
 
-  const [notifications, setNotifications] = useState<NotificationSettings>({
-    tripReminders: true,
-    voteAlerts: true,
-    paymentRequests: true,
-    chatMessages: true,
-    friendRequests: true,
-    tripUpdates: true,
+  const [notifications, setNotifications] = useState<Settings>({
+    userId: '',
+    friendRequestSource: 'ANYONE',
+    emailTripInvites: false,
+    emailPaymentRequests: false,
+    emailVotingReminders: false,
+    emailTripReminders: false,
+    emailMessages: false,
+    pushTripInvites: false,
+    pushPaymentRequests: false,
+    pushVotingReminders: false,
+    pushTripReminders: false,
+    pushMessages: false,
+    inAppAll: false,
   });
 
   const [notificationChannels, setNotificationChannels] = useState({
-    push: true,
-    email: true,
+    push: false,
+    email: false,
     text: false,
   });
 
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([
-    { id: '1', type: 'venmo', handle: 'test-user' },
-  ]);
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
 
-  const [newPaymentType, setNewPaymentType] = useState<'venmo' | 'paypal' | 'zelle' | ''>('');
+  const [newPaymentType, setNewPaymentType] = useState<'venmo' | 'paypal' | 'zelle' | 'cashapp' | ''>('');
   const [newPaymentHandle, setNewPaymentHandle] = useState('');
 
-  const handleSave = () => {
+  useEffect(() => {
+    const loadSettings = async () => {
+      setIsLoading(true);
+      const [userResult, settingsResult] = await Promise.all([
+        api.getCurrentUser(),
+        api.getSettings(),
+      ]);
+      if (userResult.data) {
+        setProfile({
+          name: userResult.data.name || '',
+          email: userResult.data.email || '',
+          phone: userResult.data.phone || '',
+        });
+        const methods: PaymentMethod[] = [];
+        if (userResult.data.venmo) methods.push({ id: 'venmo', type: 'venmo', handle: userResult.data.venmo });
+        if (userResult.data.paypal) methods.push({ id: 'paypal', type: 'paypal', handle: userResult.data.paypal });
+        if (userResult.data.zelle) methods.push({ id: 'zelle', type: 'zelle', handle: userResult.data.zelle });
+        if (userResult.data.cashapp) methods.push({ id: 'cashapp', type: 'cashapp', handle: userResult.data.cashapp });
+        setPaymentMethods(methods);
+      }
+      if (settingsResult.data) {
+        setNotifications(settingsResult.data);
+      }
+      setIsLoading(false);
+    };
+    loadSettings();
+  }, []);
+
+  const handleProfileSave = async () => {
     setIsSaving(true);
-    setTimeout(() => {
-      setIsSaving(false);
+    const result = await api.updateProfile({
+      name: profile.name,
+      email: profile.email,
+      phone: profile.phone,
+    });
+    setIsSaving(false);
+    if (!result.error) {
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
-    }, 1000);
-  };
-
-  const addPaymentMethod = () => {
-    if (newPaymentType && newPaymentHandle) {
-      setPaymentMethods([
-        ...paymentMethods,
-        { id: Date.now().toString(), type: newPaymentType, handle: newPaymentHandle },
-      ]);
-      setNewPaymentType('');
-      setNewPaymentHandle('');
     }
   };
 
-  const removePaymentMethod = (id: string) => {
-    setPaymentMethods(paymentMethods.filter(p => p.id !== id));
+  const handlePasswordSave = async () => {
+    if (passwords.new !== passwords.confirm) {
+      alert('Passwords do not match');
+      return;
+    }
+    setIsSaving(true);
+    const result = await api.changePassword(passwords.current, passwords.new);
+    setIsSaving(false);
+    if (!result.error) {
+      setPasswords({ current: '', new: '', confirm: '' });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    }
+  };
+
+  const handleNotificationSave = async () => {
+    setIsSaving(true);
+    const result = await api.updateSettings(notifications);
+    setIsSaving(false);
+    if (!result.error) {
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    }
+  };
+
+  const addPaymentMethod = async () => {
+    if (newPaymentType && newPaymentHandle) {
+      const updatedMethods = [...paymentMethods, { id: newPaymentType, type: newPaymentType, handle: newPaymentHandle }];
+      setPaymentMethods(updatedMethods);
+      
+      const paymentFields: Record<string, string> = {};
+      updatedMethods.forEach(m => {
+        paymentFields[m.type] = m.handle;
+      });
+      
+      setIsSaving(true);
+      const result = await api.updateProfile(paymentFields);
+      setIsSaving(false);
+      
+      if (!result.error) {
+        setNewPaymentType('');
+        setNewPaymentHandle('');
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+      }
+    }
+  };
+
+  const removePaymentMethod = async (id: string) => {
+    const updatedMethods = paymentMethods.filter(p => p.id !== id);
+    setPaymentMethods(updatedMethods);
+    
+    const paymentFields: Record<string, string | undefined> = {};
+    updatedMethods.forEach(m => {
+      paymentFields[m.type] = m.handle;
+    });
+    ['venmo', 'paypal', 'zelle', 'cashapp'].forEach(type => {
+      if (!paymentFields[type]) paymentFields[type] = undefined;
+    });
+    
+    setIsSaving(true);
+    const result = await api.updateProfile(paymentFields);
+    setIsSaving(false);
+    
+    if (!result.error) {
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    }
   };
 
   const tabs = [
@@ -162,7 +249,7 @@ export default function SettingsPage() {
                         className="mt-1"
                       />
                     </div>
-                    <Button onClick={handleSave} disabled={isSaving}>
+                    <Button onClick={handleProfileSave} disabled={isSaving}>
                       {isSaving ? 'Saving...' : saved ? <><Check className="mr-2 h-4 w-4" /> Saved</> : <><Save className="mr-2 h-4 w-4" /> Save Changes</>}
                     </Button>
                   </CardContent>
@@ -205,7 +292,7 @@ export default function SettingsPage() {
                         className="mt-1"
                       />
                     </div>
-                    <Button onClick={handleSave} disabled={isSaving}>
+                    <Button onClick={handlePasswordSave} disabled={isSaving}>
                       {isSaving ? 'Updating...' : saved ? <><Check className="mr-2 h-4 w-4" /> Updated</> : <><Save className="mr-2 h-4 w-4" /> Update Password</>}
                     </Button>
                   </CardContent>
@@ -272,38 +359,114 @@ export default function SettingsPage() {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-4">
-                        {[
-                          { key: 'tripReminders', label: 'Trip Reminders', desc: 'Get notified before your trips' },
-                          { key: 'voteAlerts', label: 'Vote Alerts', desc: 'When you need to vote on activities' },
-                          { key: 'paymentRequests', label: 'Payment Requests', desc: 'When someone owes you or you owe them' },
-                          { key: 'chatMessages', label: 'Chat Messages', desc: 'When you are tagged in chat' },
-                          { key: 'friendRequests', label: 'Friend Requests', desc: 'When someone adds you as a friend' },
-                          { key: 'tripUpdates', label: 'Trip Updates', desc: 'Activity bookings, status changes, etc.' },
-                        ].map((item) => (
-                          <div key={item.key} className="flex items-center justify-between">
-                            <div>
-                              <p className="font-medium">{item.label}</p>
-                              <p className="text-sm text-muted-foreground">{item.desc}</p>
-                            </div>
-                            <button
-                              onClick={() => setNotifications({ 
-                                ...notifications, 
-                                [item.key]: !notifications[item.key as keyof NotificationSettings] 
-                              })}
-                              className={cn(
-                                "relative h-6 w-11 rounded-full transition-colors",
-                                notifications[item.key as keyof NotificationSettings] 
-                                  ? "bg-primary" 
-                                  : "bg-secondary"
-                              )}
-                            >
-                              <span className={cn(
-                                "absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform",
-                                notifications[item.key as keyof NotificationSettings] && "translate-x-5"
-                              )} />
-                            </button>
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium">Email: Trip Invites</p>
+                            <p className="text-sm text-muted-foreground">Receive email when invited to trips</p>
                           </div>
-                        ))}
+                          <button
+                            onClick={() => setNotifications({ ...notifications, emailTripInvites: !notifications.emailTripInvites })}
+                            className={cn(
+                              "relative h-6 w-11 rounded-full transition-colors",
+                              notifications.emailTripInvites ? "bg-primary" : "bg-secondary"
+                            )}
+                          >
+                            <span className={cn(
+                              "absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform",
+                              notifications.emailTripInvites && "translate-x-5"
+                            )} />
+                          </button>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium">Email: Voting Reminders</p>
+                            <p className="text-sm text-muted-foreground">When you need to vote on activities</p>
+                          </div>
+                          <button
+                            onClick={() => setNotifications({ ...notifications, emailVotingReminders: !notifications.emailVotingReminders })}
+                            className={cn(
+                              "relative h-6 w-11 rounded-full transition-colors",
+                              notifications.emailVotingReminders ? "bg-primary" : "bg-secondary"
+                            )}
+                          >
+                            <span className={cn(
+                              "absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform",
+                              notifications.emailVotingReminders && "translate-x-5"
+                            )} />
+                          </button>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium">Email: Payment Requests</p>
+                            <p className="text-sm text-muted-foreground">When someone owes you or you owe them</p>
+                          </div>
+                          <button
+                            onClick={() => setNotifications({ ...notifications, emailPaymentRequests: !notifications.emailPaymentRequests })}
+                            className={cn(
+                              "relative h-6 w-11 rounded-full transition-colors",
+                              notifications.emailPaymentRequests ? "bg-primary" : "bg-secondary"
+                            )}
+                          >
+                            <span className={cn(
+                              "absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform",
+                              notifications.emailPaymentRequests && "translate-x-5"
+                            )} />
+                          </button>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium">Email: Messages</p>
+                            <p className="text-sm text-muted-foreground">When you receive direct messages</p>
+                          </div>
+                          <button
+                            onClick={() => setNotifications({ ...notifications, emailMessages: !notifications.emailMessages })}
+                            className={cn(
+                              "relative h-6 w-11 rounded-full transition-colors",
+                              notifications.emailMessages ? "bg-primary" : "bg-secondary"
+                            )}
+                          >
+                            <span className={cn(
+                              "absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform",
+                              notifications.emailMessages && "translate-x-5"
+                            )} />
+                          </button>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium">Push: Trip Reminders</p>
+                            <p className="text-sm text-muted-foreground">Get notified before your trips</p>
+                          </div>
+                          <button
+                            onClick={() => setNotifications({ ...notifications, pushTripReminders: !notifications.pushTripReminders })}
+                            className={cn(
+                              "relative h-6 w-11 rounded-full transition-colors",
+                              notifications.pushTripReminders ? "bg-primary" : "bg-secondary"
+                            )}
+                          >
+                            <span className={cn(
+                              "absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform",
+                              notifications.pushTripReminders && "translate-x-5"
+                            )} />
+                          </button>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium">Push: Messages</p>
+                            <p className="text-sm text-muted-foreground">When you receive direct messages</p>
+                          </div>
+                          <button
+                            onClick={() => setNotifications({ ...notifications, pushMessages: !notifications.pushMessages })}
+                            className={cn(
+                              "relative h-6 w-11 rounded-full transition-colors",
+                              notifications.pushMessages ? "bg-primary" : "bg-secondary"
+                            )}
+                          >
+                            <span className={cn(
+                              "absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform",
+                              notifications.pushMessages && "translate-x-5"
+                            )} />
+                          </button>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -338,7 +501,8 @@ export default function SettingsPage() {
                               "flex h-12 w-12 items-center justify-center rounded-xl",
                               method.type === 'venmo' && "bg-[#008CFF] text-white",
                               method.type === 'paypal' && "bg-[#003087] text-white",
-                              method.type === 'zelle' && "bg-[#6D28D9] text-white"
+                              method.type === 'zelle' && "bg-[#6D28D9] text-white",
+                              method.type === 'cashapp' && "bg-black text-white"
                             )}>
                               {method.type === 'venmo' && (
                                 <svg className="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
@@ -354,6 +518,9 @@ export default function SettingsPage() {
                                 <svg className="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
                                   <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
                                 </svg>
+                              )}
+                              {method.type === 'cashapp' && (
+                                <span className="font-bold text-lg">$</span>
                               )}
                             </div>
                             <div>
@@ -378,11 +545,12 @@ export default function SettingsPage() {
                       <CardTitle>Add Payment Method</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      <div className="grid gap-4 md:grid-cols-3">
+                      <div className="grid gap-4 md:grid-cols-4">
                         {[
                           { type: 'venmo' as const, label: 'Venmo', color: 'bg-[#008CFF]', placeholder: '@username or email' },
                           { type: 'paypal' as const, label: 'PayPal', color: 'bg-[#003087]', placeholder: 'email@example.com' },
                           { type: 'zelle' as const, label: 'Zelle', color: 'bg-[#6D28D9]', placeholder: 'email or phone number' },
+                          { type: 'cashapp' as const, label: 'Cash App', color: 'bg-[#000000]', placeholder: '$username' },
                         ].map((option) => (
                           <button
                             key={option.type}
@@ -398,6 +566,7 @@ export default function SettingsPage() {
                               {option.type === 'venmo' && <span className="font-bold">V</span>}
                               {option.type === 'paypal' && <span className="font-bold">P</span>}
                               {option.type === 'zelle' && <span className="font-bold">Z</span>}
+                              {option.type === 'cashapp' && <span className="font-bold">$</span>}
                             </div>
                             <span className="font-medium">{option.label}</span>
                           </button>
@@ -410,7 +579,8 @@ export default function SettingsPage() {
                             placeholder={
                               newPaymentType === 'venmo' ? '@username or email' :
                               newPaymentType === 'paypal' ? 'email@example.com' :
-                              'email or phone number'
+                              newPaymentType === 'zelle' ? 'email or phone number' :
+                              '$username'
                             }
                             value={newPaymentHandle}
                             onChange={(e) => setNewPaymentHandle(e.target.value)}
@@ -422,7 +592,8 @@ export default function SettingsPage() {
                             className={cn(
                               newPaymentType === 'venmo' && "bg-[#008CFF] hover:bg-[#0073D9]",
                               newPaymentType === 'paypal' && "bg-[#003087] hover:bg-[#002266]",
-                              newPaymentType === 'zelle' && "bg-[#6D28D9] hover:bg-[#5B21B6]"
+                              newPaymentType === 'zelle' && "bg-[#6D28D9] hover:bg-[#5B21B6]",
+                              newPaymentType === 'cashapp' && "bg-black hover:bg-gray-800"
                             )}
                           >
                             <Plus className="mr-2 h-4 w-4" />
@@ -433,36 +604,7 @@ export default function SettingsPage() {
                     </CardContent>
                   </Card>
 
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Payment Requests</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium">Auto-share payment details</p>
-                          <p className="text-sm text-muted-foreground">Automatically share your payment handles when you request or receive payments</p>
-                        </div>
-                        <button
-                          className={cn(
-                            "relative h-6 w-11 rounded-full transition-colors",
-                            "bg-primary"
-                          )}
-                        >
-                          <span className="absolute left-0.5 top-0.5 h-5 w-5 translate-x-5 rounded-full bg-white transition-transform" />
-                        </button>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium">Request minimum</p>
-                          <p className="text-sm text-muted-foreground">Only request payments above this amount</p>
-                        </div>
-                        <Input type="number" placeholder="0.00" className="w-24" />
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Button onClick={handleSave} disabled={isSaving} className="w-full">
+                  <Button onClick={handleNotificationSave} disabled={isSaving} className="w-full">
                     {isSaving ? 'Saving...' : saved ? <><Check className="mr-2 h-4 w-4" /> Saved</> : <><Save className="mr-2 h-4 w-4" /> Save Payment Settings</>}
                   </Button>
                 </div>

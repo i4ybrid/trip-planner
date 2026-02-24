@@ -3,28 +3,32 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardContent, Input, Button } from '@/components';
-import { mockApi, mockTrip } from '@/services/mock-api';
+import { api } from '@/services/api';
 import { Send, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Message, TripMember, User } from '@/types';
 
 export default function TripChat() {
   const params = useParams();
   const tripId = params.id as string;
   
-  const [messages, setMessages] = useState<{ id: string; userId: string; content: string; createdAt: string }[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [members, setMembers] = useState<(TripMember & { user: User })[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [showMentions, setShowMentions] = useState(false);
   const [mentionSearch, setMentionSearch] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  
-  const tripMembers = mockTrip.getTripMembersWithUsers(tripId);
 
   useEffect(() => {
-    const loadMessages = async () => {
-      const result = await mockApi.getMessages(tripId);
-      if (result.data) setMessages(result.data);
+    const loadData = async () => {
+      const [messagesResult, membersResult] = await Promise.all([
+        api.getTripMessages(tripId),
+        api.getTripMembers(tripId),
+      ]);
+      if (messagesResult.data) setMessages(messagesResult.data);
+      if (membersResult.data) setMembers(membersResult.data.map(m => ({ ...m, user: { id: m.userId, name: 'User', email: '', createdAt: '', updatedAt: '' } })));
     };
-    loadMessages();
+    loadData();
   }, [tripId]);
 
   const handleMessageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -69,7 +73,7 @@ export default function TripChat() {
     e.preventDefault();
     if (!newMessage.trim()) return;
     
-    const result = await mockApi.sendMessage(tripId, 'user-1', { content: newMessage });
+    const result = await api.sendTripMessage(tripId, { content: newMessage });
     if (result.data) {
       setMessages([...messages, result.data]);
       setNewMessage('');
@@ -79,6 +83,8 @@ export default function TripChat() {
   };
 
   const getUserName = (userId: string) => {
+    const member = members.find(m => m.userId === userId);
+    if (member) return member.user?.name || 'User';
     const names: Record<string, string> = {
       'user-1': 'You',
       'user-2': 'Sarah Chen',
@@ -92,7 +98,7 @@ export default function TripChat() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold">Group Chat</h2>
-        <span className="text-sm text-muted-foreground">{tripMembers.length} members</span>
+        <span className="text-sm text-muted-foreground">{members.length} members</span>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -109,24 +115,24 @@ export default function TripChat() {
                     messages.map((msg) => (
                       <div
                         key={msg.id}
-                        className={cn('flex', msg.userId === 'user-1' ? 'justify-end' : 'justify-start')}
+                        className={cn('flex', msg.senderId === 'user-1' ? 'justify-end' : 'justify-start')}
                       >
                         <div className="flex items-end gap-2">
-                          {msg.userId !== 'user-1' && (
+                          {msg.senderId !== 'user-1' && (
                             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-medium">
-                              {getUserName(msg.userId).charAt(0)}
+                              {getUserName(msg.senderId).charAt(0)}
                             </div>
                           )}
                           <div
                             className={cn(
                               'max-w-[70%] rounded-lg px-4 py-2',
-                              msg.userId === 'user-1'
+                              msg.senderId === 'user-1'
                                 ? 'bg-primary text-primary-foreground'
                                 : 'bg-secondary'
                             )}
                           >
-                            {msg.userId !== 'user-1' && (
-                              <p className="mb-1 text-xs font-medium">{getUserName(msg.userId)}</p>
+                            {msg.senderId !== 'user-1' && (
+                              <p className="mb-1 text-xs font-medium">{getUserName(msg.senderId)}</p>
                             )}
                             <p className="text-sm">{msg.content}</p>
                           </div>
@@ -152,19 +158,19 @@ export default function TripChat() {
                           <span className="font-medium">@everyone</span>
                           <span className="text-xs text-muted-foreground">Notify all</span>
                         </button>
-                        {tripMembers
-                          .filter(m => !mentionSearch || m.user.name.toLowerCase().includes(mentionSearch))
+                        {members
+                          .filter(m => !mentionSearch || m.user?.name?.toLowerCase().includes(mentionSearch))
                           .map((member) => (
                             <button
                               key={member.userId}
                               type="button"
-                              onClick={() => insertMention(member.user.name.split(' ')[0])}
+                              onClick={() => insertMention(member.user?.name?.split(' ')[0] || 'User')}
                               className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm hover:bg-accent"
                             >
                               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
-                                {member.user.name.charAt(0)}
+                                {member.user?.name?.charAt(0) || 'U'}
                               </div>
-                              <span>{member.user.name}</span>
+                              <span>{member.user?.name || 'User'}</span>
                             </button>
                           ))}
                       </div>
@@ -192,20 +198,20 @@ export default function TripChat() {
         <div>
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Members ({tripMembers.length})</CardTitle>
+              <CardTitle className="text-base">Members ({members.length})</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              {tripMembers.map((member) => (
+              {members.map((member) => (
                 <div key={member.userId} className="flex items-center gap-3 rounded-lg p-2 hover:bg-secondary/50">
                   <div className="relative">
                     <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-sm font-medium">
-                      {member.user.name.charAt(0)}
+                      {member.user?.name?.charAt(0) || 'U'}
                     </div>
                     <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-background bg-green-500" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">
-                      {member.userId === 'user-1' ? 'You' : member.user.name}
+                      {member.user?.name || 'User'}
                     </p>
                     <p className="text-xs text-muted-foreground truncate">{member.role}</p>
                   </div>

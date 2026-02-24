@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { useTripStore } from '../store/trip-store';
 import { mockTrip } from '../services/mock-api';
 
-vi.mock('../services/mock-api', () => ({
-  mockApi: {
+vi.mock('../services/api', () => ({
+  api: {
     getTrips: vi.fn(),
     getTrip: vi.fn(),
     createTrip: vi.fn(),
@@ -11,12 +11,9 @@ vi.mock('../services/mock-api', () => ({
     deleteTrip: vi.fn(),
     changeTripStatus: vi.fn(),
   },
-  mockTrip: {
-    reset: vi.fn(),
-  },
 }));
 
-import { mockApi } from '../services/mock-api';
+import { api } from '../services/api';
 
 describe('useTripStore', () => {
   beforeEach(() => {
@@ -54,7 +51,7 @@ describe('useTripStore', () => {
 
   describe('fetchTrips', () => {
     it('should set isLoading true while fetching', async () => {
-      (mockApi.getTrips as any).mockResolvedValue({ data: [] });
+      (api.getTrips as any).mockResolvedValue({ data: [] });
       
       const store = useTripStore.getState();
       const promise = store.fetchTrips();
@@ -66,7 +63,7 @@ describe('useTripStore', () => {
 
     it('should set trips on success', async () => {
       const trips = [{ id: '1', name: 'Trip 1', status: 'IDEA', tripMasterId: 'user-1', createdAt: '', updatedAt: '' }];
-      (mockApi.getTrips as any).mockResolvedValue({ data: trips });
+      (api.getTrips as any).mockResolvedValue({ data: trips });
       
       await useTripStore.getState().fetchTrips();
       
@@ -74,7 +71,7 @@ describe('useTripStore', () => {
     });
 
     it('should set error on failure', async () => {
-      (mockApi.getTrips as any).mockResolvedValue({ error: 'Failed to fetch' });
+      (api.getTrips as any).mockResolvedValue({ error: 'Failed to fetch' });
       
       await useTripStore.getState().fetchTrips();
       
@@ -85,7 +82,7 @@ describe('useTripStore', () => {
   describe('createTrip', () => {
     it('should create a new trip', async () => {
       const newTrip = { id: '1', name: 'New Trip', status: 'IDEA' as const, tripMasterId: 'user-1', createdAt: '', updatedAt: '' };
-      (mockApi.createTrip as any).mockResolvedValue({ data: newTrip });
+      (api.createTrip as any).mockResolvedValue({ data: newTrip });
       
       const result = await useTripStore.getState().createTrip({ name: 'New Trip' });
       
@@ -94,7 +91,7 @@ describe('useTripStore', () => {
     });
 
     it('should return null on error', async () => {
-      (mockApi.createTrip as any).mockResolvedValue({ error: 'Failed to create' });
+      (api.createTrip as any).mockResolvedValue({ error: 'Failed to create' });
       
       const result = await useTripStore.getState().createTrip({ name: 'New Trip' });
       
@@ -109,7 +106,7 @@ describe('useTripStore', () => {
       });
       
       const updated = { id: '1', name: 'Updated', status: 'IDEA' as const, tripMasterId: 'user-1', createdAt: '', updatedAt: '' };
-      (mockApi.updateTrip as any).mockResolvedValue({ data: updated });
+      (api.updateTrip as any).mockResolvedValue({ data: updated });
       
       await useTripStore.getState().updateTrip('1', { name: 'Updated' });
       
@@ -120,7 +117,7 @@ describe('useTripStore', () => {
   describe('deleteTrip', () => {
     it('should remove trip from state', async () => {
       useTripStore.setState({ trips: [{ id: '1', name: 'Trip', status: 'IDEA', tripMasterId: 'user-1', createdAt: '', updatedAt: '' }] });
-      (mockApi.deleteTrip as any).mockResolvedValue({ data: undefined });
+      (api.deleteTrip as any).mockResolvedValue({ data: undefined });
       
       await useTripStore.getState().deleteTrip('1');
       
@@ -134,7 +131,7 @@ describe('useTripStore', () => {
       useTripStore.setState({ trips: [trip], currentTrip: trip });
       
       const updated = { ...trip, status: 'PLANNING' as const };
-      (mockApi.changeTripStatus as any).mockResolvedValue({ data: updated });
+      (api.changeTripStatus as any).mockResolvedValue({ data: updated });
       
       await useTripStore.getState().changeStatus('1', 'PLANNING');
       

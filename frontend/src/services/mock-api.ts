@@ -4,20 +4,24 @@ import {
   Activity,
   Vote,
   Invite,
-  Booking,
-  TripMessage,
+  Message,
   MediaItem,
   Notification,
   User,
+  Settings,
+  TimelineEvent,
+  BillSplit,
+  BillSplitMember,
+  Friend,
+  FriendRequest,
+  DmConversation,
   CreateTripInput,
   UpdateTripInput,
   CreateActivityInput,
   CreateInviteInput,
   SendMessageInput,
-  TripEvent,
-  Settlement,
-  Album,
-  CreateAlbumInput,
+  CreateBillSplitInput,
+  CreateFriendRequestInput,
   ApiResponse,
 } from '@/types';
 
@@ -30,15 +34,41 @@ const SEED_USERS: User[] = [
   { id: 'user-4', email: 'emma@example.com', name: 'Emma Wilson', avatarUrl: undefined, createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-01T00:00:00Z' },
 ];
 
+const SEED_SETTINGS: Settings = {
+  userId: 'user-1',
+  friendRequestSource: 'ANYONE',
+  emailTripInvites: true,
+  emailPaymentRequests: true,
+  emailVotingReminders: true,
+  emailTripReminders: true,
+  emailMessages: true,
+  pushTripInvites: true,
+  pushPaymentRequests: true,
+  pushVotingReminders: true,
+  pushTripReminders: true,
+  pushMessages: true,
+  inAppAll: true,
+};
+
+const SEED_FRIENDS: Friend[] = [
+  { id: 'friend-1', userId: 'user-1', friendId: 'user-2', createdAt: '2026-01-10T00:00:00Z' },
+  { id: 'friend-2', userId: 'user-1', friendId: 'user-3', createdAt: '2026-01-12T00:00:00Z' },
+];
+
+const SEED_FRIEND_REQUESTS: FriendRequest[] = [
+  { id: 'fr-1', senderId: 'user-4', receiverId: 'user-1', status: 'PENDING', createdAt: '2026-02-15T00:00:00Z' },
+];
+
 const SEED_NOTIFICATIONS: Notification[] = [
-  { id: 'notif-1', userId: 'user-1', tripId: 'trip-1', type: 'reminder', title: 'Trip coming up!', body: 'Hawaii Beach Vacation starts in 2 weeks', actionUrl: '/trip/trip-1', read: false, createdAt: '2026-02-15T10:00:00Z' },
-  { id: 'notif-2', userId: 'user-1', tripId: 'trip-1', type: 'vote', title: 'Vote needed', body: 'Vote on Surfing Lessons activity for Hawaii trip', actionUrl: '/trip/trip-1', read: false, createdAt: '2026-02-14T15:00:00Z' },
-  { id: 'notif-3', userId: 'user-1', tripId: 'trip-1', type: 'payment', title: 'Payment needed', body: 'You owe $120 for Luau Dinner - please pay Sarah', actionUrl: '/trip/trip-1', read: false, createdAt: '2026-02-13T09:00:00Z' },
-  { id: 'notif-4', userId: 'user-1', tripId: 'trip-1', type: 'milestone', title: 'Activity booked!', body: 'Hotel: Grand Wailea has been confirmed!', actionUrl: '/trip/trip-1', read: true, createdAt: '2026-02-01T15:00:00Z' },
-  { id: 'notif-5', userId: 'user-1', tripId: 'trip-2', type: 'reminder', title: 'Trip this weekend!', body: 'NYC Birthday Weekend is this weekend - have fun!', actionUrl: '/trip/trip-2', read: true, createdAt: '2026-04-15T10:00:00Z' },
-  { id: 'notif-6', userId: 'user-1', tripId: 'trip-5', type: 'message', title: 'Tagged in chat', body: 'Sarah mentioned you in the Nashville trip chat', actionUrl: '/trip/trip-5', read: false, createdAt: '2026-02-18T20:00:00Z' },
-  { id: 'notif-7', userId: 'user-1', tripId: 'trip-1', type: 'invite', title: 'New member joined', body: 'Emma Wilson joined Hawaii Beach Vacation', actionUrl: '/trip/trip-1', read: true, createdAt: '2026-01-18T09:00:00Z' },
-  { id: 'notif-8', userId: 'user-1', tripId: 'trip-5', type: 'reminder', title: 'Trip happening now!', body: 'Your Nashville trip is happening right now!', actionUrl: '/trip/trip-5', read: false, createdAt: '2026-02-18T08:00:00Z' },
+  { id: 'notif-1', userId: 'user-1', tripId: 'trip-1', type: 'REMINDER', title: 'Trip coming up!', body: 'Hawaii Beach Vacation starts in 2 weeks', actionUrl: '/trip/trip-1', read: false, createdAt: '2026-02-15T10:00:00Z' },
+  { id: 'notif-2', userId: 'user-1', tripId: 'trip-1', type: 'VOTE', title: 'Vote needed', body: 'Vote on Surfing Lessons activity for Hawaii trip', actionUrl: '/trip/trip-1', read: false, createdAt: '2026-02-14T15:00:00Z' },
+  { id: 'notif-3', userId: 'user-1', tripId: 'trip-1', type: 'PAYMENT_DUE', title: 'Payment needed', body: 'You owe $120 for Luau Dinner - please pay Sarah', actionUrl: '/trip/trip-1', read: false, createdAt: '2026-02-13T09:00:00Z' },
+  { id: 'notif-4', userId: 'user-1', tripId: 'trip-1', type: 'ACTIVITY', title: 'Activity confirmed!', body: 'Hotel: Grand Wailea has been confirmed!', actionUrl: '/trip/trip-1', read: true, createdAt: '2026-02-01T15:00:00Z' },
+  { id: 'notif-5', userId: 'user-1', tripId: 'trip-2', type: 'REMINDER', title: 'Trip this weekend!', body: 'NYC Birthday Weekend is this weekend - have fun!', actionUrl: '/trip/trip-2', read: true, createdAt: '2026-04-15T10:00:00Z' },
+  { id: 'notif-6', userId: 'user-1', tripId: 'trip-5', type: 'MESSAGE', title: 'Tagged in chat', body: 'Sarah mentioned you in the Nashville trip chat', actionUrl: '/trip/trip-5', read: false, createdAt: '2026-02-18T20:00:00Z' },
+  { id: 'notif-7', userId: 'user-1', tripId: 'trip-1', type: 'INVITE', title: 'New member joined', body: 'Emma Wilson joined Hawaii Beach Vacation', actionUrl: '/trip/trip-1', read: true, createdAt: '2026-01-18T09:00:00Z' },
+  { id: 'notif-8', userId: 'user-1', tripId: 'trip-5', type: 'TRIP_STARTING', title: 'Trip happening now!', body: 'Your Nashville trip is happening right now!', actionUrl: '/trip/trip-5', read: false, createdAt: '2026-02-18T08:00:00Z' },
+  { id: 'notif-9', userId: 'user-1', type: 'FRIEND_REQUEST', title: 'Friend request', body: 'Emma Wilson sent you a friend request', actionUrl: '/friends', read: false, createdAt: '2026-02-15T00:00:00Z' },
 ];
 
 const SEED_TRIPS: Trip[] = [
@@ -96,7 +126,7 @@ const SEED_TRIPS: Trip[] = [
   },
   {
     id: 'trip-5',
-    name: 'Happening',
+    name: 'Nashville Trip',
     description: 'Trip in progress - adding photos and videos!',
     destination: 'Nashville, Tennessee',
     startDate: '2026-02-18T00:00:00Z',
@@ -110,18 +140,18 @@ const SEED_TRIPS: Trip[] = [
 ];
 
 const SEED_MEMBERS: TripMember[] = [
-  { id: 'm1', tripId: 'trip-1', userId: 'user-1', role: 'MASTER', status: 'CONFIRMED', paymentStatus: 'paid', joinedAt: '2026-01-15T00:00:00Z' },
-  { id: 'm2', tripId: 'trip-1', userId: 'user-2', role: 'MEMBER', status: 'CONFIRMED', paymentStatus: 'pending', joinedAt: '2026-01-16T00:00:00Z' },
-  { id: 'm3', tripId: 'trip-1', userId: 'user-3', role: 'MEMBER', status: 'CONFIRMED', paymentStatus: 'paid', joinedAt: '2026-01-17T00:00:00Z' },
+  { id: 'm1', tripId: 'trip-1', userId: 'user-1', role: 'MASTER', status: 'CONFIRMED', joinedAt: '2026-01-15T00:00:00Z' },
+  { id: 'm2', tripId: 'trip-1', userId: 'user-2', role: 'MEMBER', status: 'CONFIRMED', joinedAt: '2026-01-16T00:00:00Z' },
+  { id: 'm3', tripId: 'trip-1', userId: 'user-3', role: 'MEMBER', status: 'CONFIRMED', joinedAt: '2026-01-17T00:00:00Z' },
   { id: 'm4', tripId: 'trip-1', userId: 'user-4', role: 'MEMBER', status: 'MAYBE', joinedAt: '2026-01-18T00:00:00Z' },
-  { id: 'm5', tripId: 'trip-2', userId: 'user-2', role: 'MASTER', status: 'CONFIRMED', paymentStatus: 'paid', joinedAt: '2026-01-20T00:00:00Z' },
-  { id: 'm6', tripId: 'trip-2', userId: 'user-1', role: 'MEMBER', status: 'CONFIRMED', paymentStatus: 'paid', joinedAt: '2026-01-21T00:00:00Z' },
+  { id: 'm5', tripId: 'trip-2', userId: 'user-2', role: 'MASTER', status: 'CONFIRMED', joinedAt: '2026-01-20T00:00:00Z' },
+  { id: 'm6', tripId: 'trip-2', userId: 'user-1', role: 'MEMBER', status: 'CONFIRMED', joinedAt: '2026-01-21T00:00:00Z' },
   { id: 'm7', tripId: 'trip-3', userId: 'user-1', role: 'MASTER', status: 'CONFIRMED', joinedAt: '2026-02-01T00:00:00Z' },
-  { id: 'm8', tripId: 'trip-4', userId: 'user-3', role: 'MASTER', status: 'CONFIRMED', paymentStatus: 'paid', joinedAt: '2025-10-01T00:00:00Z' },
-  { id: 'm9', tripId: 'trip-4', userId: 'user-1', role: 'MEMBER', status: 'CONFIRMED', paymentStatus: 'paid', joinedAt: '2025-10-02T00:00:00Z' },
-  { id: 'm10', tripId: 'trip-4', userId: 'user-2', role: 'MEMBER', status: 'CONFIRMED', paymentStatus: 'paid', joinedAt: '2025-10-03T00:00:00Z' },
-  { id: 'm11', tripId: 'trip-5', userId: 'user-2', role: 'MASTER', status: 'CONFIRMED', paymentStatus: 'paid', joinedAt: '2026-01-25T10:00:00Z' },
-  { id: 'm12', tripId: 'trip-5', userId: 'user-1', role: 'MEMBER', status: 'CONFIRMED', paymentStatus: 'paid', joinedAt: '2026-01-25T11:00:00Z' },
+  { id: 'm8', tripId: 'trip-4', userId: 'user-3', role: 'MASTER', status: 'CONFIRMED', joinedAt: '2025-10-01T00:00:00Z' },
+  { id: 'm9', tripId: 'trip-4', userId: 'user-1', role: 'MEMBER', status: 'CONFIRMED', joinedAt: '2025-10-02T00:00:00Z' },
+  { id: 'm10', tripId: 'trip-4', userId: 'user-2', role: 'MEMBER', status: 'CONFIRMED', joinedAt: '2025-10-03T00:00:00Z' },
+  { id: 'm11', tripId: 'trip-5', userId: 'user-2', role: 'MASTER', status: 'CONFIRMED', joinedAt: '2026-01-25T10:00:00Z' },
+  { id: 'm12', tripId: 'trip-5', userId: 'user-1', role: 'MEMBER', status: 'CONFIRMED', joinedAt: '2026-01-25T11:00:00Z' },
   { id: 'm13', tripId: 'trip-5', userId: 'user-4', role: 'MEMBER', status: 'CONFIRMED', joinedAt: '2026-01-26T09:00:00Z' },
 ];
 
@@ -137,118 +167,121 @@ const SEED_ACTIVITIES: Activity[] = [
 ];
 
 const SEED_VOTES: Vote[] = [
-  { id: 'v1', activityId: 'act-1', userId: 'user-1', option: 'yes' },
-  { id: 'v2', activityId: 'act-1', userId: 'user-2', option: 'yes' },
-  { id: 'v3', activityId: 'act-1', userId: 'user-3', option: 'maybe' },
-  { id: 'v4', activityId: 'act-2', userId: 'user-1', option: 'yes' },
-  { id: 'v5', activityId: 'act-2', userId: 'user-2', option: 'yes' },
-  { id: 'v6', activityId: 'act-3', userId: 'user-1', option: 'yes' },
-  { id: 'v7', activityId: 'act-3', userId: 'user-2', option: 'no' },
-  { id: 'v8', activityId: 'act-4', userId: 'user-1', option: 'yes' },
-  { id: 'v9', activityId: 'act-4', userId: 'user-2', option: 'yes' },
-  { id: 'v10', activityId: 'act-4', userId: 'user-3', option: 'yes' },
-  { id: 'v11', activityId: 'act-5', userId: 'user-1', option: 'yes' },
-  { id: 'v12', activityId: 'act-5', userId: 'user-2', option: 'yes' },
+  { id: 'v1', activityId: 'act-1', userId: 'user-1', option: 'YES' },
+  { id: 'v2', activityId: 'act-1', userId: 'user-2', option: 'YES' },
+  { id: 'v3', activityId: 'act-1', userId: 'user-3', option: 'MAYBE' },
+  { id: 'v4', activityId: 'act-2', userId: 'user-1', option: 'YES' },
+  { id: 'v5', activityId: 'act-2', userId: 'user-2', option: 'YES' },
+  { id: 'v6', activityId: 'act-3', userId: 'user-1', option: 'YES' },
+  { id: 'v7', activityId: 'act-3', userId: 'user-2', option: 'NO' },
+  { id: 'v8', activityId: 'act-4', userId: 'user-1', option: 'YES' },
+  { id: 'v9', activityId: 'act-4', userId: 'user-2', option: 'YES' },
+  { id: 'v10', activityId: 'act-4', userId: 'user-3', option: 'YES' },
+  { id: 'v11', activityId: 'act-5', userId: 'user-1', option: 'YES' },
+  { id: 'v12', activityId: 'act-5', userId: 'user-2', option: 'YES' },
 ];
 
-const SEED_MESSAGES: TripMessage[] = [
-  { id: 'msg-1', tripId: 'trip-1', userId: 'user-1', content: 'Hey everyone! Excited about this trip! 🏝️', messageType: 'TEXT', createdAt: '2026-01-15T10:00:00Z' },
-  { id: 'msg-2', tripId: 'trip-1', userId: 'user-2', content: 'Me too! I\'ve always wanted to go to Maui!', messageType: 'TEXT', createdAt: '2026-01-15T10:15:00Z' },
-  { id: 'msg-3', tripId: 'trip-1', userId: 'user-3', content: 'Has anyone looked at the surf lessons? I think that would be so fun!', messageType: 'TEXT', createdAt: '2026-01-20T14:30:00Z' },
-  { id: 'msg-4', tripId: 'trip-1', userId: 'user-1', content: 'I added it as an activity - please vote!', messageType: 'TEXT', createdAt: '2026-01-20T15:00:00Z' },
-  { id: 'msg-5', tripId: 'trip-2', userId: 'user-2', content: 'Birthday trip! Can\'t wait! 🎉', messageType: 'TEXT', createdAt: '2026-01-20T09:00:00Z' },
-  { id: 'msg-6', tripId: 'trip-2', userId: 'user-1', content: 'Going to book us tickets to Hamilton!', messageType: 'TEXT', createdAt: '2026-01-25T11:00:00Z' },
+const SEED_MESSAGES: Message[] = [
+  { id: 'msg-1', tripId: 'trip-1', senderId: 'user-1', content: 'Hey everyone! Excited about this trip! 🏝️', messageType: 'TEXT', createdAt: '2026-01-15T10:00:00Z' },
+  { id: 'msg-2', tripId: 'trip-1', senderId: 'user-2', content: 'Me too! I\'ve always wanted to go to Maui!', messageType: 'TEXT', createdAt: '2026-01-15T10:15:00Z' },
+  { id: 'msg-3', tripId: 'trip-1', senderId: 'user-3', content: 'Has anyone looked at the surf lessons? I think that would be so fun!', messageType: 'TEXT', createdAt: '2026-01-20T14:30:00Z' },
+  { id: 'msg-4', tripId: 'trip-1', senderId: 'user-1', content: 'I added it as an activity - please vote!', messageType: 'TEXT', createdAt: '2026-01-20T15:00:00Z' },
+  { id: 'msg-5', tripId: 'trip-2', senderId: 'user-2', content: 'Birthday trip! Can\'t wait! 🎉', messageType: 'TEXT', createdAt: '2026-01-20T09:00:00Z' },
+  { id: 'msg-6', tripId: 'trip-2', senderId: 'user-1', content: 'Going to book us tickets to Hamilton!', messageType: 'TEXT', createdAt: '2026-01-25T11:00:00Z' },
 ];
 
-const SEED_EVENTS: TripEvent[] = [
-  { id: 'evt-1', tripId: 'trip-1', type: 'trip_created', title: 'Trip created', description: 'Hawaii Beach Vacation was created', userId: 'user-1', createdAt: '2026-01-15T10:00:00Z' },
-  { id: 'evt-2', tripId: 'trip-1', type: 'member_invited', title: 'Sarah invited', description: 'Sarah Chen was invited to the trip', userId: 'user-1', createdAt: '2026-01-15T10:05:00Z' },
-  { id: 'evt-3', tripId: 'trip-1', type: 'member_joined', title: 'Sarah joined', description: 'Sarah Chen joined the trip', userId: 'user-2', createdAt: '2026-01-16T09:00:00Z' },
-  { id: 'evt-4', tripId: 'trip-1', type: 'member_invited', title: 'Mike invited', description: 'Mike Johnson was invited to the trip', userId: 'user-1', createdAt: '2026-01-16T10:00:00Z' },
-  { id: 'evt-5', tripId: 'trip-1', type: 'member_joined', title: 'Mike joined', description: 'Mike Johnson joined the trip', userId: 'user-3', createdAt: '2026-01-17T08:30:00Z' },
-  { id: 'evt-6', tripId: 'trip-1', type: 'activity_proposed', title: 'Activity proposed', description: 'Surfing Lessons proposed', userId: 'user-1', relatedId: 'act-1', createdAt: '2026-01-20T14:00:00Z' },
-  { id: 'evt-7', tripId: 'trip-1', type: 'activity_proposed', title: 'Activity proposed', description: 'Hotel: Grand Wailea proposed', userId: 'user-1', relatedId: 'act-4', createdAt: '2026-01-18T11:00:00Z' },
-  { id: 'evt-8', tripId: 'trip-1', type: 'vote_cast', title: 'Vote cast', description: 'Voted yes on Surfing Lessons', userId: 'user-1', createdAt: '2026-01-20T14:05:00Z' },
-  { id: 'evt-9', tripId: 'trip-1', type: 'vote_cast', title: 'Vote cast', description: 'Voted yes on Hotel: Grand Wailea', userId: 'user-2', createdAt: '2026-01-19T10:00:00Z' },
-  { id: 'evt-10', tripId: 'trip-1', type: 'status_changed', title: 'Status changed', description: 'Trip moved to PLANNING', userId: 'user-1', createdAt: '2026-01-19T12:00:00Z' },
-  { id: 'evt-11', tripId: 'trip-1', type: 'activity_booked', title: 'Activity booked', description: 'Hotel: Grand Wailea was booked', userId: 'user-1', relatedId: 'act-4', createdAt: '2026-02-01T15:00:00Z' },
-  { id: 'evt-12', tripId: 'trip-1', type: 'payment_received', title: 'Payment received', description: 'Sarah paid $450 for hotel', userId: 'user-2', createdAt: '2026-02-01T16:00:00Z' },
-  { id: 'evt-13', tripId: 'trip-1', type: 'payment_received', title: 'Payment received', description: 'Mike paid $450 for hotel', userId: 'user-3', createdAt: '2026-02-01T16:30:00Z' },
-  { id: 'evt-14', tripId: 'trip-2', type: 'trip_created', title: 'Trip created', description: 'NYC Birthday Weekend was created', userId: 'user-2', createdAt: '2026-01-20T09:00:00Z' },
-  { id: 'evt-15', tripId: 'trip-2', type: 'member_invited', title: 'Test User invited', description: 'Test User was invited to the trip', userId: 'user-2', createdAt: '2026-01-20T09:05:00Z' },
-  { id: 'evt-16', tripId: 'trip-2', type: 'member_joined', title: 'Test User joined', description: 'Test User joined the trip', userId: 'user-1', createdAt: '2026-01-21T10:00:00Z' },
-  { id: 'evt-17', tripId: 'trip-2', type: 'activity_proposed', title: 'Activity proposed', description: 'Broadway Show proposed', userId: 'user-2', relatedId: 'act-5', createdAt: '2026-01-25T11:00:00Z' },
-  { id: 'evt-18', tripId: 'trip-2', type: 'status_changed', title: 'Status changed', description: 'Trip confirmed! All activities booked.', userId: 'user-2', createdAt: '2026-02-10T14:00:00Z' },
-  { id: 'evt-19', tripId: 'trip-2', type: 'payment_received', title: 'Payment received', description: 'Test User paid $500 for hotel & show', userId: 'user-1', createdAt: '2026-02-10T15:00:00Z' },
-  { id: 'evt-20', tripId: 'trip-3', type: 'trip_created', title: 'Trip created', description: 'European Adventure was created', userId: 'user-1', createdAt: '2026-02-01T10:00:00Z' },
-  { id: 'evt-21', tripId: 'trip-3', type: 'activity_proposed', title: 'Activity proposed', description: 'Eiffel Tower Visit proposed', userId: 'user-1', relatedId: 'act-7', createdAt: '2026-02-01T10:30:00Z' },
-  { id: 'evt-22', tripId: 'trip-4', type: 'trip_created', title: 'Trip created', description: 'Ski Trip 2025 was created', userId: 'user-3', createdAt: '2025-10-01T09:00:00Z' },
-  { id: 'evt-23', tripId: 'trip-4', type: 'member_joined', title: 'Members joined', description: 'Trip members joined', userId: 'user-1', createdAt: '2025-10-02T10:00:00Z' },
-  { id: 'evt-24', tripId: 'trip-4', type: 'status_changed', title: 'Trip in progress', description: 'Trip started', userId: 'user-3', createdAt: '2025-12-20T08:00:00Z' },
-  { id: 'evt-25', tripId: 'trip-4', type: 'status_changed', title: 'Trip completed', description: 'Trip completed successfully', userId: 'user-3', createdAt: '2025-12-23T18:00:00Z' },
-  { id: 'evt-26', tripId: 'trip-5', type: 'trip_created', title: 'Trip created', description: 'Happening Nashville trip was created', userId: 'user-2', createdAt: '2026-01-25T10:00:00Z' },
-  { id: 'evt-27', tripId: 'trip-5', type: 'member_invited', title: 'Members invited', description: 'Test User and Emma invited', userId: 'user-2', createdAt: '2026-01-25T10:05:00Z' },
-  { id: 'evt-28', tripId: 'trip-5', type: 'member_joined', title: 'Test User joined', description: 'Test User joined the trip', userId: 'user-1', createdAt: '2026-01-25T11:00:00Z' },
-  { id: 'evt-29', tripId: 'trip-5', type: 'member_joined', title: 'Emma joined', description: 'Emma Wilson joined the trip', userId: 'user-4', createdAt: '2026-01-26T09:00:00Z' },
-  { id: 'evt-30', tripId: 'trip-5', type: 'status_changed', title: 'Trip started!', description: 'The Nashville adventure begins!', userId: 'user-2', createdAt: '2026-02-18T08:00:00Z' },
-  { id: 'evt-31', tripId: 'trip-5', type: 'photo_shared', title: 'Photo album added', description: 'Downtown Nashville photos added', userId: 'user-2', createdAt: '2026-02-18T14:00:00Z' },
-  { id: 'evt-32', tripId: 'trip-5', type: 'photo_shared', title: 'Video added', description: 'Live music at Broadway added', userId: 'user-1', createdAt: '2026-02-18T22:00:00Z' },
+const SEED_TIMELINE: TimelineEvent[] = [
+  { id: 'evt-1', tripId: 'trip-1', eventType: 'trip_created', description: 'Hawaii Beach Vacation was created', createdAt: '2026-01-15T10:00:00Z', createdBy: 'user-1' },
+  { id: 'evt-2', tripId: 'trip-1', eventType: 'member_joined', description: 'Sarah Chen joined the trip', createdAt: '2026-01-16T09:00:00Z', createdBy: 'user-2' },
+  { id: 'evt-3', tripId: 'trip-1', eventType: 'member_joined', description: 'Mike Johnson joined the trip', createdAt: '2026-01-17T08:30:00Z', createdBy: 'user-3' },
+  { id: 'evt-4', tripId: 'trip-1', eventType: 'activity_proposed', description: 'Surfing Lessons proposed', createdAt: '2026-01-20T14:00:00Z', createdBy: 'user-1' },
+  { id: 'evt-5', tripId: 'trip-1', eventType: 'vote_cast', description: 'Voted YES on Surfing Lessons', createdAt: '2026-01-20T14:05:00Z', createdBy: 'user-1' },
+  { id: 'evt-6', tripId: 'trip-1', eventType: 'activity_proposed', description: 'Hotel: Grand Wailea proposed', createdAt: '2026-01-18T11:00:00Z', createdBy: 'user-1' },
+  { id: 'evt-7', tripId: 'trip-1', eventType: 'vote_cast', description: 'Voted YES on Hotel: Grand Wailea', createdAt: '2026-01-19T10:00:00Z', createdBy: 'user-2' },
+  { id: 'evt-8', tripId: 'trip-1', eventType: 'status_changed', description: 'Trip moved to PLANNING', createdAt: '2026-01-19T12:00:00Z', createdBy: 'user-1' },
+  { id: 'evt-9', tripId: 'trip-5', eventType: 'trip_created', description: 'Nashville Trip was created', createdAt: '2026-01-25T10:00:00Z', createdBy: 'user-2' },
+  { id: 'evt-10', tripId: 'trip-5', eventType: 'status_changed', description: 'Trip started!', createdAt: '2026-02-18T08:00:00Z', createdBy: 'user-2' },
 ];
 
-const SEED_SETTLEMENTS: Settlement[] = [
-  { id: 'set-1', tripId: 'trip-1', fromUserId: 'user-2', toUserId: 'user-1', amount: 450, currency: 'USD', description: 'Hotel: Grand Wailea share', status: 'received', venmoHandle: 'sarah-chen', createdAt: '2026-02-01T16:00:00Z' },
-  { id: 'set-2', tripId: 'trip-1', fromUserId: 'user-3', toUserId: 'user-1', amount: 450, currency: 'USD', description: 'Hotel: Grand Wailea share', status: 'received', venmoHandle: 'mike-j', createdAt: '2026-02-01T16:30:00Z' },
-  { id: 'set-3', tripId: 'trip-1', fromUserId: 'user-4', toUserId: 'user-1', amount: 795, currency: 'USD', description: 'Hotel + Activities share (pending)', status: 'pending', createdAt: '2026-02-10T10:00:00Z' },
-  { id: 'set-4', tripId: 'trip-2', fromUserId: 'user-1', toUserId: 'user-2', amount: 500, currency: 'USD', description: 'Hotel & Broadway tickets', status: 'received', paypalEmail: 'sarah@example.com', createdAt: '2026-02-10T15:00:00Z' },
-  { id: 'set-5', tripId: 'trip-1', fromUserId: 'user-2', toUserId: 'user-3', amount: 37, currency: 'USD', description: 'Surf lessons share', status: 'pending', zellePhone: '555-0123', createdAt: '2026-02-15T10:00:00Z' },
-  { id: 'set-6', tripId: 'trip-1', fromUserId: 'user-2', toUserId: 'user-3', amount: 60, currency: 'USD', description: 'Luau dinner share', status: 'pending', createdAt: '2026-02-15T10:00:00Z' },
-];
-
-const SEED_ALBUMS: Album[] = [
+const SEED_BILL_SPLITS: BillSplit[] = [
   {
-    id: 'album-1',
-    tripId: 'trip-5',
-    name: 'Downtown Nashville',
-    description: 'First day exploring Broadway and downtown',
-    coverImage: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800',
-    mediaItems: [],
-    createdAt: '2026-02-18T14:00:00Z',
-    updatedAt: '2026-02-18T14:00:00Z',
+    id: 'bill-1',
+    tripId: 'trip-1',
+    activityId: 'act-4',
+    title: 'Hotel: Grand Wailea',
+    description: 'Luxury resort for 7 nights',
+    amount: 1800,
+    currency: 'USD',
+    splitType: 'EQUAL',
+    paidBy: 'user-1',
+    createdBy: 'user-1',
+    status: 'PENDING',
+    dueDate: '2026-05-01T00:00:00Z',
+    createdAt: '2026-01-18T00:00:00Z',
+    updatedAt: '2026-01-18T00:00:00Z',
   },
   {
-    id: 'album-2',
-    tripId: 'trip-5',
-    name: 'Music Row',
-    description: 'Recording studios and live music venues',
-    coverImage: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800',
-    mediaItems: [],
-    createdAt: '2026-02-19T10:00:00Z',
-    updatedAt: '2026-02-19T10:00:00Z',
+    id: 'bill-2',
+    tripId: 'trip-1',
+    title: 'Luau Dinner',
+    description: 'Traditional Hawaiian luau',
+    amount: 360,
+    currency: 'USD',
+    splitType: 'EQUAL',
+    paidBy: 'user-3',
+    createdBy: 'user-3',
+    status: 'PAID',
+    createdAt: '2026-01-25T00:00:00Z',
+    updatedAt: '2026-01-25T00:00:00Z',
   },
+];
+
+const SEED_BILL_SPLIT_MEMBERS: BillSplitMember[] = [
+  { id: 'bsm-1', billSplitId: 'bill-1', userId: 'user-1', dollarAmount: 450, type: 'EQUAL', status: 'PAID', paidAt: '2026-02-01T16:00:00Z', paymentMethod: 'VENMO' },
+  { id: 'bsm-2', billSplitId: 'bill-1', userId: 'user-2', dollarAmount: 450, type: 'EQUAL', status: 'PENDING' },
+  { id: 'bsm-3', billSplitId: 'bill-1', userId: 'user-3', dollarAmount: 450, type: 'EQUAL', status: 'PAID', paidAt: '2026-02-01T16:30:00Z', paymentMethod: 'VENMO' },
+  { id: 'bsm-4', billSplitId: 'bill-1', userId: 'user-4', dollarAmount: 450, type: 'EQUAL', status: 'PENDING' },
+  { id: 'bsm-5', billSplitId: 'bill-2', userId: 'user-1', dollarAmount: 90, type: 'EQUAL', status: 'PAID', paidAt: '2026-01-26T10:00:00Z', paymentMethod: 'CASH' },
+  { id: 'bsm-6', billSplitId: 'bill-2', userId: 'user-2', dollarAmount: 90, type: 'EQUAL', status: 'PAID', paidAt: '2026-01-26T11:00:00Z', paymentMethod: 'CASH' },
+  { id: 'bsm-7', billSplitId: 'bill-2', userId: 'user-3', dollarAmount: 90, type: 'EQUAL', status: 'PAID', paidAt: '2026-01-26T12:00:00Z', paymentMethod: 'CASH' },
+  { id: 'bsm-8', billSplitId: 'bill-2', userId: 'user-4', dollarAmount: 90, type: 'EQUAL', status: 'PENDING' },
+];
+
+const SEED_DM_CONVERSATIONS: DmConversation[] = [
+  { id: 'dm-1', participant1: 'user-1', participant2: 'user-2', lastMessageAt: '2026-02-18T20:00:00Z' },
+  { id: 'dm-2', participant1: 'user-1', participant3: 'user-3', lastMessageAt: '2026-02-10T15:00:00Z' },
+];
+
+const SEED_DM_MESSAGES: Message[] = [
+  { id: 'dm-msg-1', conversationId: 'dm-1', senderId: 'user-1', content: 'Hey! Can\'t wait for the trip!', messageType: 'TEXT', createdAt: '2026-02-18T19:00:00Z' },
+  { id: 'dm-msg-2', conversationId: 'dm-1', senderId: 'user-2', content: 'Me neither! Already packed my bags!', messageType: 'TEXT', createdAt: '2026-02-18T20:00:00Z' },
 ];
 
 const SEED_MEDIA: MediaItem[] = [
   { id: 'media-1', tripId: 'trip-5', uploaderId: 'user-2', type: 'image', url: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800', caption: 'Nashville skyline at night', createdAt: '2026-02-18T14:00:00Z' },
   { id: 'media-2', tripId: 'trip-5', uploaderId: 'user-2', type: 'image', url: 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=800', caption: 'Broadway neon lights', createdAt: '2026-02-18T14:05:00Z' },
   { id: 'media-3', tripId: 'trip-5', uploaderId: 'user-1', type: 'image', url: 'https://images.unsplash.com/photo-1544542900-1af4c07e98d8?w=800', caption: 'Guitar shop on Broadway', createdAt: '2026-02-18T16:00:00Z' },
-  { id: 'media-4', tripId: 'trip-5', uploaderId: 'user-2', type: 'image', url: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=800', caption: 'Live music everywhere!', createdAt: '2026-02-18T22:00:00Z' },
-  { id: 'media-5', tripId: 'trip-5', uploaderId: 'user-1', type: 'image', url: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800', caption: 'Studio vibes', createdAt: '2026-02-19T10:00:00Z' },
-  { id: 'media-6', tripId: 'trip-5', uploaderId: 'user-4', type: 'image', url: 'https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=800', caption: 'Honky tonk night', createdAt: '2026-02-19T21:00:00Z' },
 ];
 
-class MockTrip {
+class MockDatabase {
   trips: Map<string, Trip> = new Map();
   members: Map<string, TripMember[]> = new Map();
   activities: Map<string, Activity[]> = new Map();
   votes: Map<string, Vote[]> = new Map();
   invites: Map<string, Invite[]> = new Map();
-  bookings: Map<string, Booking[]> = new Map();
-  messages: Map<string, TripMessage[]> = new Map();
+  messages: Map<string, Message[]> = new Map();
+  dmMessages: Map<string, Message[]> = new Map();
   media: Map<string, MediaItem[]> = new Map();
-  events: Map<string, TripEvent[]> = new Map();
-  settlements: Map<string, Settlement[]> = new Map();
-  albums: Map<string, Album> = new Map();
+  timeline: Map<string, TimelineEvent[]> = new Map();
+  billSplits: Map<string, BillSplit> = new Map();
+  billSplitMembers: Map<string, BillSplitMember[]> = new Map();
   users: Map<string, User> = new Map();
+  friends: Map<string, Friend[]> = new Map();
+  friendRequests: FriendRequest[] = [];
+  dmConversations: Map<string, DmConversation> = new Map();
+  notifications: Notification[] = [];
+  settings: Settings | null = null;
+  currentUserId: string = 'user-1';
 
   constructor(seed: boolean = true) {
     if (seed) {
@@ -274,33 +307,69 @@ class MockTrip {
       this.votes.set(vote.activityId, existing);
     });
     SEED_MESSAGES.forEach(message => {
-      const existing = this.messages.get(message.tripId) || [];
+      const existing = this.messages.get(message.tripId!) || [];
       existing.push(message);
-      this.messages.set(message.tripId, existing);
+      this.messages.set(message.tripId!, existing);
     });
-    SEED_EVENTS.forEach(event => {
-      const existing = this.events.get(event.tripId) || [];
+    SEED_TIMELINE.forEach(event => {
+      const existing = this.timeline.get(event.tripId) || [];
       existing.push(event);
-      this.events.set(event.tripId, existing);
+      this.timeline.set(event.tripId, existing);
     });
-    SEED_SETTLEMENTS.forEach(settlement => {
-      const existing = this.settlements.get(settlement.tripId) || [];
-      existing.push(settlement);
-      this.settlements.set(settlement.tripId, existing);
+    SEED_BILL_SPLITS.forEach(bill => {
+      this.billSplits.set(bill.id, bill);
+      const members = SEED_BILL_SPLIT_MEMBERS.filter(m => m.billSplitId === bill.id);
+      this.billSplitMembers.set(bill.id, members);
     });
     SEED_MEDIA.forEach(media => {
       const existing = this.media.get(media.tripId) || [];
       existing.push(media);
       this.media.set(media.tripId, existing);
     });
+    SEED_DM_CONVERSATIONS.forEach(dm => this.dmConversations.set(dm.id, dm));
+    SEED_DM_MESSAGES.forEach(msg => {
+      const existing = this.dmMessages.get(msg.conversationId!) || [];
+      existing.push(msg);
+      this.dmMessages.set(msg.conversationId!, existing);
+    });
+    SEED_FRIENDS.forEach(friend => {
+      const existing = this.friends.get(friend.userId) || [];
+      existing.push(friend);
+      this.friends.set(friend.userId, existing);
+    });
+    this.friendRequests = [...SEED_FRIEND_REQUESTS];
     SEED_NOTIFICATIONS.forEach(n => this.notifications.push(n));
     SEED_USERS.forEach(user => this.users.set(user.id, user));
+    this.settings = SEED_SETTINGS;
   }
 
-  private notifications: Notification[] = [];
+  reset() {
+    this.trips.clear();
+    this.members.clear();
+    this.activities.clear();
+    this.votes.clear();
+    this.invites.clear();
+    this.messages.clear();
+    this.dmMessages.clear();
+    this.media.clear();
+    this.timeline.clear();
+    this.billSplits.clear();
+    this.billSplitMembers.clear();
+    this.users.clear();
+    this.friends.clear();
+    this.friendRequests = [];
+    this.dmConversations.clear();
+    this.notifications = [];
+    this.settings = null;
+    this.seed();
+  }
 
   getUserById(id: string): User | undefined {
     return this.users.get(id);
+  }
+
+  getCurrentUser(): User | undefined {
+    return this.users.get(this.currentUserId);
   }
 
   getTripMembersWithUsers(tripId: string): (TripMember & { user: User })[] {
@@ -318,55 +387,28 @@ class MockTrip {
       votes: this.votes.get(a.id) || []
     }));
   }
+}
 
-  getEventsInternal(tripId: string): TripEvent[] {
-    const events = this.events.get(tripId) || [];
-    return events.map(e => ({
-      ...e,
-      user: e.userId ? this.users.get(e.userId) : undefined
-    })).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }
+export const mockDb = new MockDatabase(true);
 
-  getSettlementsInternal(tripId: string): Settlement[] {
-    const settlements = this.settlements.get(tripId) || [];
-    return settlements.map(s => ({
-      ...s,
-      fromUser: this.users.get(s.fromUserId),
-      toUser: this.users.get(s.toUserId)
-    }));
-  }
+export const mockTrip = {
+  getTripMembersWithUsers: (tripId: string) => mockDb.getTripMembersWithUsers(tripId),
+  reset: () => mockDb.reset(),
+};
 
-  calculateBalances(tripId: string): { userId: string; balance: number; user?: User }[] {
-    const settlements = this.settlements.get(tripId) || [];
-    const balances: Record<string, number> = {};
-    
-    settlements.forEach(s => {
-      if (s.status === 'received' || s.status === 'sent') {
-        balances[s.fromUserId] = (balances[s.fromUserId] || 0) - s.amount;
-        balances[s.toUserId] = (balances[s.toUserId] || 0) + s.amount;
-      }
-    });
+const CURRENT_USER_ID = 'user-1';
 
-    return Object.entries(balances).map(([userId, balance]) => ({
-      userId,
-      balance,
-      user: this.users.get(userId)
-    }));
-  }
-
-  async getTrips(): Promise<ApiResponse<Trip[]>> {
-    return { data: Array.from(this.trips.values()) };
-  }
-
-  async getTrip(id: string): Promise<ApiResponse<Trip>> {
-    const trip = this.trips.get(id);
-    if (!trip) {
-      return { error: 'Trip not found' };
-    }
-    return { data: trip };
-  }
-
-  async createTrip(userId: string, input: CreateTripInput): Promise<ApiResponse<Trip>> {
+export const mockApi = {
+  // Trips
+  getTrips: (): Promise<ApiResponse<Trip[]>> => 
+    Promise.resolve({ data: Array.from(mockDb.trips.values()) }),
+  
+  getTrip: (id: string): Promise<ApiResponse<Trip>> => {
+    const trip = mockDb.trips.get(id);
+    return trip ? Promise.resolve({ data: trip }) : Promise.resolve({ error: 'Trip not found' });
+  },
+  
+  createTrip: (input: CreateTripInput): Promise<ApiResponse<Trip>> => {
     const trip: Trip = {
       id: generateId(),
       name: input.name,
@@ -375,62 +417,55 @@ class MockTrip {
       startDate: input.startDate,
       endDate: input.endDate,
       status: 'IDEA',
-      tripMasterId: userId,
+      tripMasterId: CURRENT_USER_ID,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
-    this.trips.set(trip.id, trip);
-    
+    mockDb.trips.set(trip.id, trip);
     const member: TripMember = {
       id: generateId(),
       tripId: trip.id,
-      userId,
+      userId: CURRENT_USER_ID,
       role: 'MASTER',
       status: 'CONFIRMED',
       joinedAt: new Date().toISOString(),
     };
-    this.members.set(trip.id, [member]);
-    
-    return { data: trip };
-  }
-
-  async updateTrip(id: string, input: UpdateTripInput): Promise<ApiResponse<Trip>> {
-    const trip = this.trips.get(id);
-    if (!trip) {
-      return { error: 'Trip not found' };
-    }
+    mockDb.members.set(trip.id, [member]);
+    return Promise.resolve({ data: trip });
+  },
+  
+  updateTrip: (id: string, input: UpdateTripInput): Promise<ApiResponse<Trip>> => {
+    const trip = mockDb.trips.get(id);
+    if (!trip) return Promise.resolve({ error: 'Trip not found' });
     const updated = { ...trip, ...input, updatedAt: new Date().toISOString() };
-    this.trips.set(id, updated);
-    return { data: updated };
-  }
-
-  async deleteTrip(id: string): Promise<ApiResponse<void>> {
-    this.trips.delete(id);
-    this.members.delete(id);
-    this.activities.delete(id);
-    this.invites.delete(id);
-    this.bookings.delete(id);
-    this.messages.delete(id);
-    this.media.delete(id);
-    return { data: undefined };
-  }
-
-  async changeTripStatus(id: string, status: string): Promise<ApiResponse<Trip>> {
-    const trip = this.trips.get(id);
-    if (!trip) {
-      return { error: 'Trip not found' };
-    }
+    mockDb.trips.set(id, updated);
+    return Promise.resolve({ data: updated });
+  },
+  
+  deleteTrip: (id: string): Promise<ApiResponse<void>> => {
+    mockDb.trips.delete(id);
+    mockDb.members.delete(id);
+    mockDb.activities.delete(id);
+    mockDb.invites.delete(id);
+    mockDb.messages.delete(id);
+    mockDb.media.delete(id);
+    return Promise.resolve({ data: undefined });
+  },
+  
+  changeTripStatus: (id: string, status: string): Promise<ApiResponse<Trip>> => {
+    const trip = mockDb.trips.get(id);
+    if (!trip) return Promise.resolve({ error: 'Trip not found' });
     const updated = { ...trip, status: status as Trip['status'], updatedAt: new Date().toISOString() };
-    this.trips.set(id, updated);
-    return { data: updated };
-  }
+    mockDb.trips.set(id, updated);
+    return Promise.resolve({ data: updated });
+  },
 
-  async getTripMembers(tripId: string): Promise<ApiResponse<TripMember[]>> {
-    return { data: this.members.get(tripId) || [] };
-  }
-
-  async addTripMember(tripId: string, userId: string): Promise<ApiResponse<TripMember>> {
-    const members = this.members.get(tripId) || [];
+  // Trip Members
+  getTripMembers: (tripId: string): Promise<ApiResponse<TripMember[]>> => 
+    Promise.resolve({ data: mockDb.members.get(tripId) || [] }),
+  
+  addTripMember: (tripId: string, userId: string): Promise<ApiResponse<TripMember>> => {
+    const members = mockDb.members.get(tripId) || [];
     const member: TripMember = {
       id: generateId(),
       tripId,
@@ -440,15 +475,32 @@ class MockTrip {
       joinedAt: new Date().toISOString(),
     };
     members.push(member);
-    this.members.set(tripId, members);
-    return { data: member };
-  }
+    mockDb.members.set(tripId, members);
+    return Promise.resolve({ data: member });
+  },
 
-  async getActivities(tripId: string): Promise<ApiResponse<Activity[]>> {
-    return { data: this.getActivitiesWithVotes(tripId) };
-  }
+  updateTripMember: (tripId: string, userId: string, data: { role?: string; status?: string }): Promise<ApiResponse<TripMember>> => {
+    const members = mockDb.members.get(tripId) || [];
+    const index = members.findIndex(m => m.userId === userId);
+    if (index === -1) return Promise.resolve({ error: 'Member not found' });
+    const updated = { ...members[index], ...data };
+    members[index] = updated;
+    mockDb.members.set(tripId, members);
+    return Promise.resolve({ data: updated });
+  },
 
-  async createActivity(tripId: string, userId: string, input: CreateActivityInput): Promise<ApiResponse<Activity>> {
+  removeTripMember: (tripId: string, userId: string): Promise<ApiResponse<void>> => {
+    const members = mockDb.members.get(tripId) || [];
+    const filtered = members.filter(m => m.userId !== userId);
+    mockDb.members.set(tripId, filtered);
+    return Promise.resolve({ data: undefined });
+  },
+
+  // Activities
+  getActivities: (tripId: string): Promise<ApiResponse<Activity[]>> => 
+    Promise.resolve({ data: mockDb.getActivitiesWithVotes(tripId) }),
+  
+  createActivity: (tripId: string, input: CreateActivityInput): Promise<ApiResponse<Activity>> => {
     const activity: Activity = {
       id: generateId(),
       tripId,
@@ -460,196 +512,393 @@ class MockTrip {
       cost: input.cost,
       currency: 'USD',
       category: input.category,
-      proposedBy: userId,
+      proposedBy: CURRENT_USER_ID,
       votes: [],
       createdAt: new Date().toISOString(),
     };
-    const activities = this.activities.get(tripId) || [];
+    const activities = mockDb.activities.get(tripId) || [];
     activities.push(activity);
-    this.activities.set(tripId, activities);
-    return { data: activity };
-  }
+    mockDb.activities.set(tripId, activities);
+    return Promise.resolve({ data: activity });
+  },
 
-  async castVote(activityId: string, userId: string, option: string): Promise<ApiResponse<Vote>> {
-    const existingVotes = this.votes.get(activityId) || [];
-    const existingIndex = existingVotes.findIndex(v => v.userId === userId);
-    
-    const vote: Vote = {
-      id: generateId(),
-      activityId,
-      userId,
-      option: option as Vote['option'],
-    };
-    
+  updateActivity: (id: string, data: Partial<CreateActivityInput>): Promise<ApiResponse<Activity>> => {
+    for (const [tripId, activities] of mockDb.activities.entries()) {
+      const index = activities.findIndex(a => a.id === id);
+      if (index !== -1) {
+        const updated = { ...activities[index], ...data };
+        activities[index] = updated;
+        mockDb.activities.set(tripId, activities);
+        return Promise.resolve({ data: updated });
+      }
+    }
+    return Promise.resolve({ error: 'Activity not found' });
+  },
+
+  deleteActivity: (id: string): Promise<ApiResponse<void>> => {
+    for (const [tripId, activities] of mockDb.activities.entries()) {
+      const filtered = activities.filter(a => a.id !== id);
+      if (filtered.length !== activities.length) {
+        mockDb.activities.set(tripId, filtered);
+        mockDb.votes.delete(id);
+        return Promise.resolve({ data: undefined });
+      }
+    }
+    return Promise.resolve({ error: 'Activity not found' });
+  },
+
+  // Votes
+  getVotes: (activityId: string): Promise<ApiResponse<Vote[]>> =>
+    Promise.resolve({ data: mockDb.votes.get(activityId) || [] }),
+
+  castVote: (activityId: string, option: string): Promise<ApiResponse<Vote>> => {
+    const existingVotes = mockDb.votes.get(activityId) || [];
+    const existingIndex = existingVotes.findIndex(v => v.userId === CURRENT_USER_ID);
+    const vote: Vote = { id: generateId(), activityId, userId: CURRENT_USER_ID, option: option as Vote['option'] };
     if (existingIndex >= 0) {
       existingVotes[existingIndex] = vote;
     } else {
       existingVotes.push(vote);
     }
-    this.votes.set(activityId, existingVotes);
-    return { data: vote };
-  }
+    mockDb.votes.set(activityId, existingVotes);
+    return Promise.resolve({ data: vote });
+  },
 
-  async getInvites(tripId: string): Promise<ApiResponse<Invite[]>> {
-    return { data: this.invites.get(tripId) || [] };
-  }
+  removeVote: (activityId: string): Promise<ApiResponse<void>> => {
+    const existingVotes = mockDb.votes.get(activityId) || [];
+    const filtered = existingVotes.filter(v => v.userId !== CURRENT_USER_ID);
+    mockDb.votes.set(activityId, filtered);
+    return Promise.resolve({ data: undefined });
+  },
 
-  async createInvite(tripId: string, input: CreateInviteInput): Promise<ApiResponse<Invite>> {
+  // Invites
+  getInvites: (tripId: string): Promise<ApiResponse<Invite[]>> =>
+    Promise.resolve({ data: mockDb.invites.get(tripId) || [] }),
+
+  createInvite: (tripId: string, data: CreateInviteInput): Promise<ApiResponse<Invite>> => {
     const invite: Invite = {
       id: generateId(),
       tripId,
-      token: generateId(),
-      email: input.email,
-      phone: input.phone,
+      email: data.email,
+      phone: data.phone,
       status: 'PENDING',
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-      sentById: 'current-user',
+      sentById: CURRENT_USER_ID,
+      createdAt: new Date().toISOString(),
     };
-    const invites = this.invites.get(tripId) || [];
+    const invites = mockDb.invites.get(tripId) || [];
     invites.push(invite);
-    this.invites.set(tripId, invites);
-    return { data: invite };
-  }
+    mockDb.invites.set(tripId, invites);
+    return Promise.resolve({ data: invite });
+  },
 
-  async getBookings(tripId: string): Promise<ApiResponse<Booking[]>> {
-    return { data: this.bookings.get(tripId) || [] };
-  }
+  acceptInvite: (token: string): Promise<ApiResponse<{ tripId: string }>> => {
+    return Promise.resolve({ data: { tripId: 'trip-1' } });
+  },
 
-  async getMessages(tripId: string): Promise<ApiResponse<TripMessage[]>> {
-    const messages = this.messages.get(tripId) || [];
-    const messagesWithUsers = messages.map(m => ({
-      ...m,
-      user: this.users.get(m.userId)
-    })) as (TripMessage & { user?: User })[];
-    return { data: messages as TripMessage[] };
-  }
+  declineInvite: (token: string): Promise<ApiResponse<void>> => {
+    return Promise.resolve({ data: undefined });
+  },
 
-  async sendMessage(tripId: string, userId: string, input: SendMessageInput): Promise<ApiResponse<TripMessage>> {
-    const message: TripMessage = {
+  // Messages
+  getTripMessages: (tripId: string): Promise<ApiResponse<Message[]>> => 
+    Promise.resolve({ data: mockDb.messages.get(tripId) || [] }),
+  
+  sendTripMessage: (tripId: string, input: SendMessageInput): Promise<ApiResponse<Message>> => {
+    const message: Message = {
       id: generateId(),
       tripId,
-      userId,
+      senderId: CURRENT_USER_ID,
       content: input.content,
       messageType: input.messageType || 'TEXT',
+      mentions: input.mentions,
       createdAt: new Date().toISOString(),
     };
-    const messages = this.messages.get(tripId) || [];
+    const messages = mockDb.messages.get(tripId) || [];
     messages.push(message);
-    this.messages.set(tripId, messages);
-    return { data: message };
-  }
+    mockDb.messages.set(tripId, messages);
+    return Promise.resolve({ data: message });
+  },
 
-  async getMedia(tripId: string): Promise<ApiResponse<MediaItem[]>> {
-    return { data: this.media.get(tripId) || [] };
-  }
-
-  async getEvents(tripId: string): Promise<ApiResponse<TripEvent[]>> {
-    return { data: this.getEventsInternal(tripId) };
-  }
-
-  async getSettlements(tripId: string): Promise<ApiResponse<Settlement[]>> {
-    return { data: this.getSettlementsInternal(tripId) };
-  }
-
-  async getBalances(tripId: string): Promise<ApiResponse<{ userId: string; balance: number; user?: User }[]>> {
-    return { data: this.calculateBalances(tripId) };
-  }
-
-  async getAlbums(tripId: string): Promise<ApiResponse<Album[]>> {
-    const albums = Array.from(this.albums.values()).filter(a => a.tripId === tripId);
-    return { data: albums };
-  }
-
-  async createAlbum(tripId: string, userId: string, input: CreateAlbumInput): Promise<ApiResponse<Album>> {
-    const trip = this.trips.get(tripId);
-    if (!trip) {
-      return { error: 'Trip not found' };
+  editMessage: (messageId: string, data: { mentions?: string[] }): Promise<ApiResponse<Message>> => {
+    for (const [tripId, messages] of mockDb.messages.entries()) {
+      const index = messages.findIndex(m => m.id === messageId);
+      if (index !== -1) {
+        const updated = { ...messages[index], ...data, editedAt: new Date().toISOString() };
+        messages[index] = updated;
+        mockDb.messages.set(tripId, messages);
+        return Promise.resolve({ data: updated });
+      }
     }
-    if (trip.status !== 'HAPPENING' && trip.status !== 'COMPLETED') {
-      return { error: 'Albums can only be added after the trip has started' };
-    }
-    const album: Album = {
-      id: generateId(),
-      tripId,
-      name: input.name,
-      description: input.description,
-      mediaItems: [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    this.albums.set(album.id, album);
-    return { data: album };
-  }
+    return Promise.resolve({ error: 'Message not found' });
+  },
 
-  async addMediaToAlbum(tripId: string, userId: string, type: 'image' | 'video', url: string, caption?: string): Promise<ApiResponse<MediaItem>> {
+  deleteMessage: (messageId: string): Promise<ApiResponse<void>> => {
+    for (const [tripId, messages] of mockDb.messages.entries()) {
+      const filtered = messages.filter(m => m.id !== messageId);
+      if (filtered.length !== messages.length) {
+        mockDb.messages.set(tripId, filtered);
+        return Promise.resolve({ data: undefined });
+      }
+    }
+    return Promise.resolve({ error: 'Message not found' });
+  },
+
+  addReaction: (messageId: string, emoji: string): Promise<ApiResponse<void>> => {
+    return Promise.resolve({ data: undefined });
+  },
+
+  // Media
+  getMedia: (tripId: string): Promise<ApiResponse<MediaItem[]>> =>
+    Promise.resolve({ data: mockDb.media.get(tripId) || [] }),
+
+  uploadMedia: (tripId: string, file: File): Promise<ApiResponse<MediaItem>> => {
     const media: MediaItem = {
       id: generateId(),
       tripId,
-      albumId: undefined,
-      uploaderId: userId,
-      type,
-      url,
-      caption,
+      uploaderId: CURRENT_USER_ID,
+      type: file.type.startsWith('image/') ? 'image' : 'video',
+      url: URL.createObjectURL(file),
       createdAt: new Date().toISOString(),
     };
-    const existing = this.media.get(tripId) || [];
-    existing.push(media);
-    this.media.set(tripId, existing);
-    return { data: media };
-  }
+    const items = mockDb.media.get(tripId) || [];
+    items.push(media);
+    mockDb.media.set(tripId, items);
+    return Promise.resolve({ data: media });
+  },
 
-  reset() {
-    this.trips.clear();
-    this.members.clear();
-    this.activities.clear();
-    this.votes.clear();
-    this.invites.clear();
-    this.bookings.clear();
-    this.messages.clear();
-    this.media.clear();
-    this.events.clear();
-    this.settlements.clear();
-    this.seed();
-  }
-}
+  // Friends
+  getFriends: (): Promise<ApiResponse<Friend[]>> => {
+    const userFriends = mockDb.friends.get(CURRENT_USER_ID) || [];
+    return Promise.resolve({ data: userFriends });
+  },
 
-export const mockTrip = new MockTrip(true);
+  addFriend: (userId: string): Promise<ApiResponse<Friend>> => {
+    const friend: Friend = {
+      id: generateId(),
+      userId: CURRENT_USER_ID,
+      friendId: userId,
+      createdAt: new Date().toISOString(),
+    };
+    const existing = mockDb.friends.get(CURRENT_USER_ID) || [];
+    existing.push(friend);
+    mockDb.friends.set(CURRENT_USER_ID, existing);
+    return Promise.resolve({ data: friend });
+  },
 
-export { MockTrip };
+  removeFriend: (friendId: string): Promise<ApiResponse<void>> => {
+    const existing = mockDb.friends.get(CURRENT_USER_ID) || [];
+    const filtered = existing.filter(f => f.id !== friendId);
+    mockDb.friends.set(CURRENT_USER_ID, filtered);
+    return Promise.resolve({ data: undefined });
+  },
 
-export const mockApi = {
-  getTrips: (): Promise<ApiResponse<Trip[]>> => mockTrip.getTrips(),
-  getTrip: (id: string): Promise<ApiResponse<Trip>> => mockTrip.getTrip(id),
-  createTrip: (userId: string, input: CreateTripInput): Promise<ApiResponse<Trip>> => mockTrip.createTrip(userId, input),
-  updateTrip: (id: string, input: UpdateTripInput): Promise<ApiResponse<Trip>> => mockTrip.updateTrip(id, input),
-  deleteTrip: (id: string): Promise<ApiResponse<void>> => mockTrip.deleteTrip(id),
-  changeTripStatus: (id: string, status: string): Promise<ApiResponse<Trip>> => mockTrip.changeTripStatus(id, status),
-  getTripMembers: (tripId: string): Promise<ApiResponse<TripMember[]>> => mockTrip.getTripMembers(tripId),
-  addTripMember: (tripId: string, userId: string): Promise<ApiResponse<TripMember>> => mockTrip.addTripMember(tripId, userId),
-  getActivities: (tripId: string): Promise<ApiResponse<Activity[]>> => mockTrip.getActivities(tripId),
-  createActivity: (tripId: string, userId: string, input: CreateActivityInput): Promise<ApiResponse<Activity>> => mockTrip.createActivity(tripId, userId, input),
-  castVote: (activityId: string, userId: string, option: string): Promise<ApiResponse<Vote>> => mockTrip.castVote(activityId, userId, option),
-  getInvites: (tripId: string): Promise<ApiResponse<Invite[]>> => mockTrip.getInvites(tripId),
-  createInvite: (tripId: string, input: CreateInviteInput): Promise<ApiResponse<Invite>> => mockTrip.createInvite(tripId, input),
-  getBookings: (tripId: string): Promise<ApiResponse<Booking[]>> => mockTrip.getBookings(tripId),
-  getMessages: (tripId: string): Promise<ApiResponse<TripMessage[]>> => mockTrip.getMessages(tripId),
-  sendMessage: (tripId: string, userId: string, input: SendMessageInput): Promise<ApiResponse<TripMessage>> => mockTrip.sendMessage(tripId, userId, input),
-  getMedia: (tripId: string): Promise<ApiResponse<MediaItem[]>> => mockTrip.getMedia(tripId),
-  getAlbums: (tripId: string): Promise<ApiResponse<Album[]>> => mockTrip.getAlbums(tripId),
-  createAlbum: (tripId: string, userId: string, input: CreateAlbumInput): Promise<ApiResponse<Album>> => mockTrip.createAlbum(tripId, userId, input),
-  addMediaToAlbum: (tripId: string, userId: string, type: 'image' | 'video', url: string, caption?: string): Promise<ApiResponse<MediaItem>> => mockTrip.addMediaToAlbum(tripId, userId, type, url, caption),
+  getFriendRequests: (): Promise<ApiResponse<{ sent: FriendRequest[]; received: FriendRequest[] }>> => {
+    const received = mockDb.friendRequests.filter(fr => fr.receiverId === CURRENT_USER_ID);
+    const sent = mockDb.friendRequests.filter(fr => fr.senderId === CURRENT_USER_ID);
+    return Promise.resolve({ data: { sent, received } });
+  },
+
+  sendFriendRequest: (data: CreateFriendRequestInput): Promise<ApiResponse<FriendRequest>> => {
+    const request: FriendRequest = {
+      id: generateId(),
+      senderId: CURRENT_USER_ID,
+      receiverId: data.userId,
+      status: 'PENDING',
+      createdAt: new Date().toISOString(),
+    };
+    mockDb.friendRequests.push(request);
+    return Promise.resolve({ data: request });
+  },
+
+  respondToFriendRequest: (requestId: string, action: 'ACCEPTED' | 'DECLINED'): Promise<ApiResponse<FriendRequest>> => {
+    const request = mockDb.friendRequests.find(fr => fr.id === requestId);
+    if (!request) return Promise.resolve({ error: 'Request not found' });
+    request.status = action;
+    return Promise.resolve({ data: request });
+  },
+
+  // DMs
+  getDmConversations: (): Promise<ApiResponse<DmConversation[]>> =>
+    Promise.resolve({ data: Array.from(mockDb.dmConversations.values()) }),
+
+  createDmConversation: (participantId: string): Promise<ApiResponse<DmConversation>> => {
+    const conversation: DmConversation = {
+      id: generateId(),
+      participant1: CURRENT_USER_ID,
+      participant2: participantId,
+      lastMessageAt: new Date().toISOString(),
+    };
+    mockDb.dmConversations.set(conversation.id, conversation);
+    return Promise.resolve({ data: conversation });
+  },
+
+  getDmMessages: (conversationId: string): Promise<ApiResponse<Message[]>> =>
+    Promise.resolve({ data: mockDb.dmMessages.get(conversationId) || [] }),
+
+  sendDmMessage: (conversationId: string, input: SendMessageInput): Promise<ApiResponse<Message>> => {
+    const message: Message = {
+      id: generateId(),
+      conversationId,
+      senderId: CURRENT_USER_ID,
+      content: input.content,
+      messageType: input.messageType || 'TEXT',
+      mentions: input.mentions,
+      createdAt: new Date().toISOString(),
+    };
+    const messages = mockDb.dmMessages.get(conversationId) || [];
+    messages.push(message);
+    mockDb.dmMessages.set(conversationId, messages);
+    return Promise.resolve({ data: message });
+  },
+
+  // Bill Splits
+  getBillSplits: (tripId: string): Promise<ApiResponse<BillSplit[]>> => {
+    const bills = Array.from(mockDb.billSplits.values()).filter(b => b.tripId === tripId);
+    return Promise.resolve({ data: bills });
+  },
+
+  createBillSplit: (tripId: string, input: CreateBillSplitInput): Promise<ApiResponse<BillSplit>> => {
+    const bill: BillSplit = {
+      id: generateId(),
+      tripId,
+      activityId: input.activityId,
+      title: input.title,
+      description: input.description,
+      amount: input.amount,
+      currency: input.currency || 'USD',
+      splitType: input.splitType,
+      paidBy: CURRENT_USER_ID,
+      createdBy: CURRENT_USER_ID,
+      status: 'PENDING',
+      dueDate: input.dueDate,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    mockDb.billSplits.set(bill.id, bill);
+    
+    const members: BillSplitMember[] = input.members.map(m => ({
+      id: generateId(),
+      billSplitId: bill.id,
+      userId: m.userId,
+      dollarAmount: m.dollarAmount || 0,
+      type: input.splitType,
+      status: 'PENDING',
+    }));
+    mockDb.billSplitMembers.set(bill.id, members);
+    
+    return Promise.resolve({ data: bill });
+  },
+
+  getBillSplit: (billSplitId: string): Promise<ApiResponse<BillSplit>> => {
+    const bill = mockDb.billSplits.get(billSplitId);
+    return bill ? Promise.resolve({ data: bill }) : Promise.resolve({ error: 'Bill split not found' });
+  },
+
+  updateBillSplit: (billSplitId: string, data: Partial<CreateBillSplitInput>): Promise<ApiResponse<BillSplit>> => {
+    const bill = mockDb.billSplits.get(billSplitId);
+    if (!bill) return Promise.resolve({ error: 'Bill split not found' });
+    const updated = { ...bill, ...data, updatedAt: new Date().toISOString() };
+    mockDb.billSplits.set(billSplitId, updated);
+    return Promise.resolve({ data: updated });
+  },
+
+  deleteBillSplit: (billSplitId: string): Promise<ApiResponse<void>> => {
+    mockDb.billSplits.delete(billSplitId);
+    mockDb.billSplitMembers.delete(billSplitId);
+    return Promise.resolve({ data: undefined });
+  },
+
+  getBillSplitMembers: (billSplitId: string): Promise<ApiResponse<BillSplitMember[]>> =>
+    Promise.resolve({ data: mockDb.billSplitMembers.get(billSplitId) || [] }),
+
+  addBillSplitMember: (billSplitId: string, data: { userId: string; shares?: number; percentage?: number; dollarAmount?: number }): Promise<ApiResponse<BillSplitMember>> => {
+    const members = mockDb.billSplitMembers.get(billSplitId) || [];
+    const member: BillSplitMember = {
+      id: generateId(),
+      billSplitId,
+      userId: data.userId,
+      dollarAmount: data.dollarAmount || 0,
+      type: 'EQUAL',
+      status: 'PENDING',
+    };
+    members.push(member);
+    mockDb.billSplitMembers.set(billSplitId, members);
+    return Promise.resolve({ data: member });
+  },
+
+  markBillSplitMemberPaid: (billSplitId: string, userId: string, paymentMethod: string): Promise<ApiResponse<BillSplitMember>> => {
+    const members = mockDb.billSplitMembers.get(billSplitId) || [];
+    const index = members.findIndex(m => m.userId === userId);
+    if (index === -1) return Promise.resolve({ error: 'Member not found' });
+    const updated = { ...members[index], status: 'PAID' as const, paidAt: new Date().toISOString(), paymentMethod: paymentMethod as any };
+    members[index] = updated;
+    mockDb.billSplitMembers.set(billSplitId, members);
+    return Promise.resolve({ data: updated });
+  },
+
+  removeBillSplitMember: (billSplitId: string, userId: string): Promise<ApiResponse<void>> => {
+    const members = mockDb.billSplitMembers.get(billSplitId) || [];
+    const filtered = members.filter(m => m.userId !== userId);
+    mockDb.billSplitMembers.set(billSplitId, filtered);
+    return Promise.resolve({ data: undefined });
+  },
+
+  // Timeline
+  getTripTimeline: (tripId: string): Promise<ApiResponse<TimelineEvent[]>> => {
+    const events = mockDb.timeline.get(tripId) || [];
+    return Promise.resolve({ data: events.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) });
+  },
+
+  // Notifications
   getNotifications: (): Promise<ApiResponse<Notification[]>> => {
-    const notifications = SEED_NOTIFICATIONS.sort((a, b) => 
+    const notifications = mockDb.notifications.sort((a, b) => 
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
     return Promise.resolve({ data: notifications });
   },
-  markNotificationRead: (id: string): Promise<ApiResponse<void>> => Promise.resolve({ data: undefined }),
-  markAllNotificationsRead: (): Promise<ApiResponse<void>> => Promise.resolve({ data: undefined }),
-  getCurrentUser: (): Promise<ApiResponse<User>> => Promise.resolve({ data: mockTrip.getUserById('user-1')! }),
-  updateProfile: (data?: Partial<User>): Promise<ApiResponse<User>> => Promise.resolve({ data: { ...mockTrip.getUserById('user-1')!, ...data } as User }),
-  getUser: (): Promise<ApiResponse<User>> => Promise.resolve({ data: {} as User }),
-  getEvents: (tripId: string): Promise<ApiResponse<TripEvent[]>> => mockTrip.getEvents(tripId),
-  getSettlements: (tripId: string): Promise<ApiResponse<Settlement[]>> => mockTrip.getSettlements(tripId),
-  getBalances: (tripId: string): Promise<ApiResponse<{ userId: string; balance: number; user?: User }[]>> => mockTrip.getBalances(tripId),
+
+  markNotificationRead: (id: string): Promise<ApiResponse<void>> => {
+    const notif = mockDb.notifications.find(n => n.id === id);
+    if (notif) notif.read = true;
+    return Promise.resolve({ data: undefined });
+  },
+
+  markAllNotificationsRead: (): Promise<ApiResponse<void>> => {
+    mockDb.notifications.forEach(n => n.read = true);
+    return Promise.resolve({ data: undefined });
+  },
+
+  // Settings
+  getSettings: (): Promise<ApiResponse<Settings>> =>
+    Promise.resolve({ data: mockDb.settings! }),
+
+  updateSettings: (data: Partial<Settings>): Promise<ApiResponse<Settings>> => {
+    mockDb.settings = { ...mockDb.settings!, ...data };
+    return Promise.resolve({ data: mockDb.settings! });
+  },
+
+  changePassword: (currentPassword: string, newPassword: string): Promise<ApiResponse<void>> => {
+    return Promise.resolve({ data: undefined });
+  },
+
+  uploadAvatar: (file: File): Promise<ApiResponse<{ avatarUrl: string }>> => {
+    return Promise.resolve({ data: { avatarUrl: URL.createObjectURL(file) } });
+  },
+
+  // User
+  getCurrentUser: (): Promise<ApiResponse<User>> =>
+    Promise.resolve({ data: mockDb.getCurrentUser()! }),
+
+  updateProfile: (data: Partial<User>): Promise<ApiResponse<User>> => {
+    const user = mockDb.getCurrentUser()!;
+    const updated = { ...user, ...data };
+    mockDb.users.set(user.id, updated);
+    return Promise.resolve({ data: updated });
+  },
+
+  getUser: (id: string): Promise<ApiResponse<User>> => {
+    const user = mockDb.getUserById(id);
+    return user ? Promise.resolve({ data: user }) : Promise.resolve({ error: 'User not found' });
+  },
 };

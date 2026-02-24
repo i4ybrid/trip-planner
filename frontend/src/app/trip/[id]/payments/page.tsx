@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardContent, Button, Input, Textarea, Modal, Badge } from '@/components';
 import { formatCurrency, cn } from '@/lib/utils';
-import { mockApi, mockTrip } from '@/services/mock-api';
+import { api } from '@/services/api';
 import { Wallet, CreditCard, Plus, Trash2, DollarSign, Users } from 'lucide-react';
+import { TripMember, User, BillSplit, BillSplitMember } from '@/types';
 
 interface Expense {
   id: string;
@@ -21,15 +22,31 @@ interface Expense {
   notes?: string;
 }
 
+interface MemberWithUser extends TripMember {
+  user: User;
+}
+
 export default function TripPayments() {
   const params = useParams();
   const tripId = params.id as string;
   
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [billSplits, setBillSplits] = useState<BillSplit[]>([]);
+  const [members, setMembers] = useState<MemberWithUser[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
-  
-  const tripMembers = mockTrip.getTripMembersWithUsers(tripId);
+
+  useEffect(() => {
+    const loadData = async () => {
+      const [billSplitsResult, membersResult] = await Promise.all([
+        api.getBillSplits(tripId),
+        api.getTripMembers(tripId),
+      ]);
+      if (billSplitsResult.data) setBillSplits(billSplitsResult.data);
+      if (membersResult.data) setMembers(membersResult.data.map(m => ({ ...m, user: { id: m.userId, name: 'User', email: '', createdAt: '', updatedAt: '' } })));
+    };
+    loadData();
+  }, [tripId]);
 
   const totalExpenses = expenses.reduce((sum, e) => sum + e.amount + e.tax + e.tip, 0);
 
@@ -44,6 +61,8 @@ export default function TripPayments() {
   };
 
   const getUserName = (userId: string) => {
+    const member = members.find(m => m.userId === userId);
+    if (member?.user) return member.user.name;
     const names: Record<string, string> = {
       'user-1': 'You',
       'user-2': 'Sarah Chen',
@@ -65,7 +84,7 @@ export default function TripPayments() {
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-4">
-          {expenses.length === 0 ? (
+          {expenses.length === 0 && billSplits.length === 0 ? (
             <Card>
               <CardContent className="py-12 text-center text-muted-foreground">
                 <Wallet className="mx-auto h-12 w-12 opacity-50" />
@@ -74,44 +93,68 @@ export default function TripPayments() {
               </CardContent>
             </Card>
           ) : (
-            expenses.map((expense) => (
-              <Card key={expense.id}>
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-medium">{expense.description}</h3>
-                        <Badge variant="outline" className="text-xs capitalize">
-                          {expense.category}
-                        </Badge>
+            <>
+              {billSplits.map((bill) => (
+                <Card key={bill.id}>
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-medium">{bill.title}</h3>
+                          <Badge variant="outline" className="text-xs capitalize">
+                            {bill.status.toLowerCase()}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          {bill.description}
+                        </p>
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        Paid by {getUserName(expense.paidBy)} • {expense.date}
-                      </p>
-                      <div className="mt-2 flex items-center gap-4 text-sm text-muted-foreground">
-                        {expense.tax > 0 && <span>Tax: {formatCurrency(expense.tax)}</span>}
-                        {expense.tip > 0 && <span>Tip: {formatCurrency(expense.tip)}</span>}
-                        <span className="capitalize">Split: {expense.splitType}</span>
+                      <div className="text-right">
+                        <p className="text-lg font-bold">{formatCurrency(Number(bill.amount))}</p>
                       </div>
-                      {expense.notes && (
-                        <p className="mt-2 text-sm text-muted-foreground italic">{expense.notes}</p>
-                      )}
                     </div>
-                    <div className="text-right">
-                      <p className="text-lg font-bold">{formatCurrency(expense.amount + expense.tax + expense.tip)}</p>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => deleteExpense(expense.id)}
-                        className="mt-2 text-muted-foreground hover:text-red-500"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                  </CardContent>
+                </Card>
+              ))}
+              {expenses.map((expense) => (
+                <Card key={expense.id}>
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-medium">{expense.description}</h3>
+                          <Badge variant="outline" className="text-xs capitalize">
+                            {expense.category}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Paid by {getUserName(expense.paidBy)} • {expense.date}
+                        </p>
+                        <div className="mt-2 flex items-center gap-4 text-sm text-muted-foreground">
+                          {expense.tax > 0 && <span>Tax: {formatCurrency(expense.tax)}</span>}
+                          {expense.tip > 0 && <span>Tip: {formatCurrency(expense.tip)}</span>}
+                          <span className="capitalize">Split: {expense.splitType}</span>
+                        </div>
+                        {expense.notes && (
+                          <p className="mt-2 text-sm text-muted-foreground italic">{expense.notes}</p>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <p className="text-lg font-bold">{formatCurrency(expense.amount + expense.tax + expense.tip)}</p>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => deleteExpense(expense.id)}
+                          className="mt-2 text-muted-foreground hover:text-red-500"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
+                  </CardContent>
+                </Card>
+              ))}
+            </>
           )}
         </div>
 
@@ -131,7 +174,7 @@ export default function TripPayments() {
               <div className="flex items-center justify-between rounded-lg bg-secondary p-3">
                 <span className="text-sm text-muted-foreground">Per Person</span>
                 <span className="font-semibold">
-                  {tripMembers.length > 0 ? formatCurrency(totalExpenses / tripMembers.length) : formatCurrency(0)}
+                  {members.length > 0 ? formatCurrency(totalExpenses / members.length) : formatCurrency(0)}
                 </span>
               </div>
             </CardContent>
@@ -145,18 +188,18 @@ export default function TripPayments() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              {tripMembers.map((member) => {
+              {members.map((member) => {
                 const paid = expenses.filter(e => e.paidBy === member.userId).reduce((sum, e) => sum + e.amount + e.tax + e.tip, 0);
-                const owes = totalExpenses / tripMembers.length;
+                const owes = totalExpenses / members.length;
                 const balance = paid - owes;
                 
                 return (
                   <div key={member.userId} className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-2">
                       <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs">
-                        {member.user.name.charAt(0)}
+                        {member.user?.name?.charAt(0) || 'U'}
                       </div>
-                      <span>{member.user.name}</span>
+                      <span>{member.user?.name || 'User'}</span>
                     </div>
                     <span className={cn('font-medium', balance > 0 ? 'text-green-600' : balance < 0 ? 'text-red-600' : '')}>
                       {balance > 0 ? '+' : ''}{formatCurrency(balance)}
@@ -173,7 +216,7 @@ export default function TripPayments() {
         isOpen={showModal}
         onClose={() => { setShowModal(false); setEditingExpense(null); }}
         onSubmit={addExpense}
-        members={tripMembers}
+        members={members}
         expense={editingExpense}
       />
     </div>
@@ -184,7 +227,7 @@ interface ExpenseModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (expense: Expense) => void;
-  members: { userId: string; user: { name: string } }[];
+  members: MemberWithUser[];
   expense?: Expense | null;
 }
 
@@ -343,7 +386,7 @@ function ExpenseModal({ isOpen, onClose, onSubmit, members, expense }: ExpenseMo
               className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
             >
               {members.map(m => (
-                <option key={m.userId} value={m.userId}>{m.user.name}</option>
+                <option key={m.userId} value={m.userId}>{m.user?.name || 'User'}</option>
               ))}
             </select>
           </div>
@@ -403,9 +446,9 @@ function ExpenseModal({ isOpen, onClose, onSubmit, members, expense }: ExpenseMo
                 <div key={member.userId} className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs">
-                      {member.user.name.charAt(0)}
+                      {member.user?.name?.charAt(0) || 'U'}
                     </div>
-                    <span className="text-sm">{member.user.name}</span>
+                    <span className="text-sm">{member.user?.name || 'User'}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     {splitType === 'shares' && (

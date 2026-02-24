@@ -4,16 +4,24 @@ import {
   Activity,
   Vote,
   Invite,
-  Booking,
-  TripMessage,
+  Message,
   MediaItem,
   Notification,
   User,
+  Settings,
+  TimelineEvent,
+  BillSplit,
+  BillSplitMember,
+  Friend,
+  FriendRequest,
+  DmConversation,
   CreateTripInput,
   UpdateTripInput,
   CreateActivityInput,
   CreateInviteInput,
   SendMessageInput,
+  CreateBillSplitInput,
+  CreateFriendRequestInput,
   ApiResponse,
 } from '@/types';
 
@@ -100,6 +108,13 @@ export const api = {
     return handleResponse(response);
   },
 
+  async getTripTimeline(tripId: string): Promise<ApiResponse<TimelineEvent[]>> {
+    const response = await fetch(`${API_BASE_URL}/trips/${tripId}/timeline`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(response);
+  },
+
   // Trip Members
   async getTripMembers(tripId: string): Promise<ApiResponse<TripMember[]>> {
     const response = await fetch(`${API_BASE_URL}/trips/${tripId}/members`, {
@@ -117,17 +132,18 @@ export const api = {
     return handleResponse(response);
   },
 
-  async removeTripMember(tripId: string, userId: string): Promise<ApiResponse<void>> {
+  async updateTripMember(tripId: string, userId: string, data: { role?: string; status?: string }): Promise<ApiResponse<TripMember>> {
     const response = await fetch(`${API_BASE_URL}/trips/${tripId}/members/${userId}`, {
-      method: 'DELETE',
+      method: 'PATCH',
       headers: getHeaders(),
+      body: JSON.stringify(data),
     });
     return handleResponse(response);
   },
 
-  async confirmPayment(tripId: string, userId: string): Promise<ApiResponse<TripMember>> {
-    const response = await fetch(`${API_BASE_URL}/trips/${tripId}/members/${userId}/confirm-payment`, {
-      method: 'POST',
+  async removeTripMember(tripId: string, userId: string): Promise<ApiResponse<void>> {
+    const response = await fetch(`${API_BASE_URL}/trips/${tripId}/members/${userId}`, {
+      method: 'DELETE',
       headers: getHeaders(),
     });
     return handleResponse(response);
@@ -225,16 +241,16 @@ export const api = {
     return handleResponse(response);
   },
 
-  // Bookings
-  async getBookings(tripId: string): Promise<ApiResponse<Booking[]>> {
-    const response = await fetch(`${API_BASE_URL}/trips/${tripId}/bookings`, {
+  // Messages (Trip Chat)
+  async getTripMessages(tripId: string): Promise<ApiResponse<Message[]>> {
+    const response = await fetch(`${API_BASE_URL}/trips/${tripId}/messages`, {
       headers: getHeaders(),
     });
     return handleResponse(response);
   },
 
-  async createBooking(tripId: string, data: { activityId?: string; notes?: string }): Promise<ApiResponse<Booking>> {
-    const response = await fetch(`${API_BASE_URL}/trips/${tripId}/bookings`, {
+  async sendTripMessage(tripId: string, data: SendMessageInput): Promise<ApiResponse<Message>> {
+    const response = await fetch(`${API_BASE_URL}/trips/${tripId}/messages`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(data),
@@ -242,8 +258,8 @@ export const api = {
     return handleResponse(response);
   },
 
-  async updateBooking(id: string, data: { status?: string; confirmationNum?: string }): Promise<ApiResponse<Booking>> {
-    const response = await fetch(`${API_BASE_URL}/bookings/${id}`, {
+  async editMessage(messageId: string, data: { mentions?: string[] }): Promise<ApiResponse<Message>> {
+    const response = await fetch(`${API_BASE_URL}/messages/${messageId}`, {
       method: 'PATCH',
       headers: getHeaders(),
       body: JSON.stringify(data),
@@ -251,19 +267,19 @@ export const api = {
     return handleResponse(response);
   },
 
-  // Messages
-  async getMessages(tripId: string): Promise<ApiResponse<TripMessage[]>> {
-    const response = await fetch(`${API_BASE_URL}/trips/${tripId}/messages`, {
+  async deleteMessage(messageId: string): Promise<ApiResponse<void>> {
+    const response = await fetch(`${API_BASE_URL}/messages/${messageId}`, {
+      method: 'DELETE',
       headers: getHeaders(),
     });
     return handleResponse(response);
   },
 
-  async sendMessage(tripId: string, data: SendMessageInput): Promise<ApiResponse<TripMessage>> {
-    const response = await fetch(`${API_BASE_URL}/trips/${tripId}/messages`, {
+  async addReaction(messageId: string, emoji: string): Promise<ApiResponse<void>> {
+    const response = await fetch(`${API_BASE_URL}/messages/${messageId}/reactions`, {
       method: 'POST',
       headers: getHeaders(),
-      body: JSON.stringify(data),
+      body: JSON.stringify({ emoji }),
     });
     return handleResponse(response);
   },
@@ -294,6 +310,163 @@ export const api = {
     return handleResponse(response);
   },
 
+  // Friends
+  async getFriends(): Promise<ApiResponse<Friend[]>> {
+    const response = await fetch(`${API_BASE_URL}/friends`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  async addFriend(userId: string): Promise<ApiResponse<Friend>> {
+    const response = await fetch(`${API_BASE_URL}/friends`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ userId }),
+    });
+    return handleResponse(response);
+  },
+
+  async removeFriend(friendId: string): Promise<ApiResponse<void>> {
+    const response = await fetch(`${API_BASE_URL}/friends/${friendId}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  async getFriendRequests(): Promise<ApiResponse<{ sent: FriendRequest[]; received: FriendRequest[] }>> {
+    const response = await fetch(`${API_BASE_URL}/friend-requests`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  async sendFriendRequest(data: CreateFriendRequestInput): Promise<ApiResponse<FriendRequest>> {
+    const response = await fetch(`${API_BASE_URL}/friend-requests`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(response);
+  },
+
+  async respondToFriendRequest(requestId: string, action: 'ACCEPTED' | 'DECLINED'): Promise<ApiResponse<FriendRequest>> {
+    const response = await fetch(`${API_BASE_URL}/friend-requests/${requestId}`, {
+      method: 'PATCH',
+      headers: getHeaders(),
+      body: JSON.stringify({ status: action }),
+    });
+    return handleResponse(response);
+  },
+
+  // Direct Messages
+  async getDmConversations(): Promise<ApiResponse<DmConversation[]>> {
+    const response = await fetch(`${API_BASE_URL}/dm/conversations`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  async createDmConversation(participantId: string): Promise<ApiResponse<DmConversation>> {
+    const response = await fetch(`${API_BASE_URL}/dm/conversations`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ participantId }),
+    });
+    return handleResponse(response);
+  },
+
+  async getDmMessages(conversationId: string): Promise<ApiResponse<Message[]>> {
+    const response = await fetch(`${API_BASE_URL}/dm/conversations/${conversationId}`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  async sendDmMessage(conversationId: string, data: SendMessageInput): Promise<ApiResponse<Message>> {
+    const response = await fetch(`${API_BASE_URL}/dm/conversations/${conversationId}`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(response);
+  },
+
+  // Bill Splits (Payments)
+  async getBillSplits(tripId: string): Promise<ApiResponse<BillSplit[]>> {
+    const response = await fetch(`${API_BASE_URL}/trips/${tripId}/payments`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  async createBillSplit(tripId: string, data: CreateBillSplitInput): Promise<ApiResponse<BillSplit>> {
+    const response = await fetch(`${API_BASE_URL}/trips/${tripId}/payments`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(response);
+  },
+
+  async getBillSplit(billSplitId: string): Promise<ApiResponse<BillSplit>> {
+    const response = await fetch(`${API_BASE_URL}/payments/${billSplitId}`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  async updateBillSplit(billSplitId: string, data: Partial<CreateBillSplitInput>): Promise<ApiResponse<BillSplit>> {
+    const response = await fetch(`${API_BASE_URL}/payments/${billSplitId}`, {
+      method: 'PATCH',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(response);
+  },
+
+  async deleteBillSplit(billSplitId: string): Promise<ApiResponse<void>> {
+    const response = await fetch(`${API_BASE_URL}/payments/${billSplitId}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  async getBillSplitMembers(billSplitId: string): Promise<ApiResponse<BillSplitMember[]>> {
+    const response = await fetch(`${API_BASE_URL}/payments/${billSplitId}/members`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  async addBillSplitMember(billSplitId: string, data: { userId: string; shares?: number; percentage?: number; dollarAmount?: number }): Promise<ApiResponse<BillSplitMember>> {
+    const response = await fetch(`${API_BASE_URL}/payments/${billSplitId}/members`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(response);
+  },
+
+  async markBillSplitMemberPaid(billSplitId: string, userId: string, paymentMethod: string): Promise<ApiResponse<BillSplitMember>> {
+    const response = await fetch(`${API_BASE_URL}/payments/${billSplitId}/members/${userId}`, {
+      method: 'PATCH',
+      headers: getHeaders(),
+      body: JSON.stringify({ status: 'PAID', paymentMethod }),
+    });
+    return handleResponse(response);
+  },
+
+  async removeBillSplitMember(billSplitId: string, userId: string): Promise<ApiResponse<void>> {
+    const response = await fetch(`${API_BASE_URL}/payments/${billSplitId}/members/${userId}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    return handleResponse(response);
+  },
+
   // Notifications
   async getNotifications(): Promise<ApiResponse<Notification[]>> {
     const response = await fetch(`${API_BASE_URL}/notifications`, {
@@ -315,6 +488,50 @@ export const api = {
     const response = await fetch(`${API_BASE_URL}/notifications/mark-all-read`, {
       method: 'POST',
       headers: getHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  // Settings
+  async getSettings(): Promise<ApiResponse<Settings>> {
+    const response = await fetch(`${API_BASE_URL}/settings`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  async updateSettings(data: Partial<Settings>): Promise<ApiResponse<Settings>> {
+    const response = await fetch(`${API_BASE_URL}/settings`, {
+      method: 'PATCH',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(response);
+  },
+
+  async changePassword(currentPassword: string, newPassword: string): Promise<ApiResponse<void>> {
+    const response = await fetch(`${API_BASE_URL}/settings/password`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+    return handleResponse(response);
+  },
+
+  async uploadAvatar(file: File): Promise<ApiResponse<{ avatarUrl: string }>> {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const headers: HeadersInit = {};
+    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    const response = await fetch(`${API_BASE_URL}/settings/avatar`, {
+      method: 'POST',
+      headers,
+      body: formData,
     });
     return handleResponse(response);
   },

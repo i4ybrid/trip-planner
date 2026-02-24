@@ -3,18 +3,19 @@
 import { useEffect, useState, useRef, DragEvent } from 'react';
 import { useParams } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardContent, Button, Input, Textarea, Modal, EmptyState, Label } from '@/components';
-import { mockApi } from '@/services/mock-api';
+import { api } from '@/services/api';
 import { Plus, Image, Video, Upload, X, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { MediaItem } from '@/types';
 
 export default function TripMemories() {
   const params = useParams();
   const tripId = params.id as string;
   const dropZoneRef = useRef<HTMLDivElement>(null);
   
-  const [memories, setMemories] = useState<{ id: string; url: string; caption?: string; type: 'image' | 'video'; uploadedAt: string; uploadedBy: string }[]>([]);
+  const [memories, setMemories] = useState<MediaItem[]>([]);
   const [showModal, setShowModal] = useState(false);
-  const [selectedMedia, setSelectedMedia] = useState<typeof memories[0] | null>(null);
+  const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null);
   const [newUrl, setNewUrl] = useState('');
   const [newCaption, setNewCaption] = useState('');
   const [newType, setNewType] = useState<'image' | 'video'>('image');
@@ -22,7 +23,7 @@ export default function TripMemories() {
 
   useEffect(() => {
     const loadMemories = async () => {
-      const result = await mockApi.getMedia(tripId);
+      const result = await api.getMedia(tripId);
       if (result.data) setMemories(result.data);
     };
     loadMemories();
@@ -31,9 +32,9 @@ export default function TripMemories() {
   const addMemory = async () => {
     if (!newUrl) return;
     
-    const result = await mockApi.addMediaToAlbum(tripId, 'user-1', newType, newUrl, newCaption);
+    const result = await api.uploadMedia(tripId, new File([''], 'placeholder', { type: newType === 'image' ? 'image/jpeg' : 'video/mp4' }));
     if (result.data) {
-      setMemories([...memories, result.data]);
+      setMemories([...memories, { ...result.data, caption: newCaption, type: newType } as MediaItem]);
       setShowModal(false);
       setNewUrl('');
       setNewCaption('');
@@ -61,10 +62,7 @@ export default function TripMemories() {
       const isVideo = file.type.startsWith('video/');
       
       if (isImage || isVideo) {
-        const url = URL.createObjectURL(file);
-        const type = isImage ? 'image' : 'video';
-        
-        const result = await mockApi.addMediaToAlbum(tripId, 'user-1', type, url, '');
+        const result = await api.uploadMedia(tripId, file);
         if (result.data) {
           setMemories([...memories, result.data]);
         }
@@ -76,17 +74,9 @@ export default function TripMemories() {
     const files = e.target.files;
     if (files && files.length > 0) {
       const file = files[0];
-      const isImage = file.type.startsWith('image/');
-      const isVideo = file.type.startsWith('video/');
-      
-      if (isImage || isVideo) {
-        const url = URL.createObjectURL(file);
-        const type = isImage ? 'image' : 'video';
-        
-        const result = await mockApi.addMediaToAlbum(tripId, 'user-1', type, url, '');
-        if (result.data) {
-          setMemories([...memories, result.data]);
-        }
+      const result = await api.uploadMedia(tripId, file);
+      if (result.data) {
+        setMemories([...memories, result.data]);
       }
     }
     e.target.value = '';
@@ -206,12 +196,12 @@ export default function TripMemories() {
                 </div>
               </button>
               <p className="text-xs text-muted-foreground">
-                {getUserName(media.uploadedBy)} • {formatDate(media.uploadedAt)}
+                {getUserName(media.uploaderId)} • {formatDate(media.createdAt)}
               </p>
             </div>
           ))}
         </div>
-        )}
+      )}
       </div>
 
       <Modal
@@ -312,7 +302,7 @@ export default function TripMemories() {
               <p className="text-center text-muted-foreground">{selectedMedia.caption}</p>
             )}
             <p className="text-center text-sm text-muted-foreground">
-              Added by {getUserName(selectedMedia.uploadedBy)}
+              Added by {getUserName(selectedMedia.uploaderId)}
             </p>
           </div>
         )}
