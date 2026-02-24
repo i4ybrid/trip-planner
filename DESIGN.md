@@ -6,8 +6,8 @@
 
 ### Core Value Proposition
 - Eliminate the chaos of group chat trip planning
-- Centralize all trip details, voting, bookings, and payments in one place
-- Reduce friction in collecting payments and confirming bookings
+- Centralize all trip details, voting, and payments in one place
+- Reduce friction in collecting and splitting payments
 - Create lasting memories through shared photo/video albums
 
 ---
@@ -26,9 +26,7 @@ trip-planner/
 │   │   ├── services/         # API client services
 │   │   ├── store/           # Zustand state management
 │   │   └── types/            # TypeScript types
-│   ├── Dockerfile
-│   ├── Dockerfile.test
-│   └── vitest.config.ts
+│   └── Dockerfile
 │
 ├── backend/                  # Node.js API Server
 │   ├── src/
@@ -38,9 +36,7 @@ trip-planner/
 │   │   ├── middleware/      # Express middleware
 │   │   └── types/           # TypeScript types
 │   ├── prisma/              # Database schema
-│   ├── Dockerfile
-│   ├── Dockerfile.test
-│   └── vitest.config.ts
+│   └── Dockerfile
 │
 ├── docker-compose.yml        # Development environment
 ├── docker-compose.test.yml   # Test environment
@@ -97,64 +93,7 @@ trip-planner/
 
 ## 3. Database Schema
 
-### Entity Relationship Diagram
-
-```
-┌──────────────┐       ┌─────────────────┐       ┌──────────────┐
-│    User     │       │     Trip        │       │   Activity   │
-├──────────────┤       ├─────────────────┤       ├──────────────┤
-│ id           │◄──────│ trip_master_id │◄──────│ id           │
-│ email        │       │ id             │       │ trip_id      │
-│ name         │       │ name           │       │ title        │
-│ avatar_url   │       │ description    │       │ description  │
-│ phone        │       │ destination    │       │ start_time   │
-│ venmo        │       │ start_date     │       │ end_time     │
-│ paypal       │       │ end_date       │       │ location     │
-│ zelle        │       │ status         │       │ cost         │
-│ created_at   │       │ cover_image    │       │ category     │
-└──────┬───────┘       │ created_at     │       │ created_by   │
-       │               └────────┬────────┘       └──────┬───────┘
-       │                        │                        │
-       │                        │                        │
-       ▼                        ▼                        ▼
-┌──────────────┐       ┌─────────────────┐       ┌──────────────────┐
-│  TripMember  │       │     Invite      │       │      Vote       │
-├──────────────┤       ├─────────────────┤       ├──────────────────┤
-│ id           │       │ id              │       │ id               │
-│ trip_id      │       │ trip_id         │       │ activity_id      │
-│ user_id      │       │ token           │       │ user_id          │
-│ role         │       │ email           │       │ option_id        │
-│ status       │       │ status          │       │ created_at       │
-│ joined_at    │       │ expires_at      │       └──────────────────┘
-│ payment_status│      │ created_by      │
-└──────────────┘       └─────────────────┘
-                              │
-                              ▼
-                    ┌─────────────────┐       ┌──────────────────┐
-                    │  InviteChannel  │       │     Booking      │
-                    ├─────────────────┤       ├──────────────────┤
-                    │ id              │       │ id               │
-                    │ invite_id       │       │ trip_id          │
-                    │ channel         │       │ activity_id      │
-                    │ external_id     │       │ booked_by        │
-                    └─────────────────┘       │ confirmation_num │
-                                              │ status          │
-                                              │ receipt_url     │
-                                              └──────────────────┘
-
-┌──────────────────┐       ┌─────────────────┐       ┌────────────────┐
-│  TripMessage    │       │   MediaItem     │       │  Notification  │
-├──────────────────┤       ├─────────────────┤       ├────────────────┤
-│ id               │       │ id              │       │ id             │
-│ trip_id          │       │ trip_id         │       │ user_id        │
-│ user_id          │       │ uploader_id     │       │ trip_id        │
-│ content          │       │ type           │       │ type           │
-│ created_at       │       │ url            │       │ title         │
-│ message_type     │       │ thumbnail_url  │       │ body          │
-└──────────────────┘       │ activity_id     │       │ read          │
-                          │ created_at      │       │ created_at    │
-                          └─────────────────┘       └────────────────┘
-```
+The database schema is defined in Prisma schema format below. See the Detailed Schema section for the complete entity definitions.
 
 ### Detailed Schema (Prisma)
 
@@ -174,16 +113,16 @@ enum TripStatus {
   IDEA        // "Feelers" - gauging interest
   PLANNING    // Active planning & voting
   CONFIRMED   // Trip confirmed, collecting payments
-  IN_PROGRESS // Trip has started
+  HAPPENING   // Trip has started
   COMPLETED   // Trip finished
   CANCELLED   // Trip cancelled
 }
 
 enum MemberRole {
-  MASTER      // Trip master/owner
-  ORGANIZER   // Can make bookings
-  MEMBER      // Standard member
-  VIEWER      // Can view, can't vote/book
+  MASTER      // Trip master/owner - full control
+  ORGANIZER   // Can manage activities and payments
+  MEMBER      // Standard member - can vote
+  VIEWER      // Can view only - can't vote or spend
 }
 
 enum MemberStatus {
@@ -194,18 +133,17 @@ enum MemberStatus {
   REMOVED
 }
 
+enum VoteOption {
+  YES
+  NO
+  MAYBE
+}
+
 enum InviteStatus {
   PENDING
   ACCEPTED
   EXPIRED
   REVOKED
-}
-
-enum BookingStatus {
-  PROPOSED
-  CONFIRMED
-  CANCELLED
-  REFUNDED
 }
 
 enum MessageType {
@@ -215,26 +153,122 @@ enum MessageType {
   SYSTEM  // Automated messages
 }
 
+enum FriendRequestStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+enum FriendRequestSource {
+  ANYONE       // Allow friend requests from anyone
+  TRIP_MEMBERS // Only allow from people in same trip
+}
+
+enum PaymentStatus {
+  PENDING
+  PARTIAL
+  PAID
+  CONFIRMED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  VENMO
+  PAYPAL
+  ZELLE
+  CASHAPP
+  CASH
+  OTHER
+}
+
+enum SplitType {
+  EQUAL      // Split evenly among all members
+  SHARES     // Split by share count (e.g., 2 shares, 1 share)
+  PERCENTAGE // Split by percentage (must sum to 100)
+  MANUAL     // Custom amount per member
+}
+
+enum NotificationType {
+  INVITE
+  VOTE
+  ACTIVITY
+  PAYMENT
+  MESSAGE
+  REMINDER
+  MILESTONE
+  PAYMENT_DUE
+  PAYMENT_RECEIVED
+  VOTE_DEADLINE
+  TRIP_STARTING
+  FRIEND_REQUEST
+  DM_MESSAGE
+}
+
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  name          String
-  avatarUrl     String?
-  phone         String?
-  venmo         String?
-  paypal        String?
-  zelle         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id              String    @id @default(cuid())
+  email           String    @unique
+  name            String
+  avatarUrl       String?
+  phone           String?
+  venmo           String?
+  paypal          String?
+  zelle           String?
+  cashapp         String?
+  passwordHash    String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
   
-  memberships   TripMember[]
-  createdTrips  Trip[]         @relation("TripMaster")
-  activities    Activity[]
-  votes         Vote[]
-  messages      TripMessage[]
-  mediaItems    MediaItem[]
-  notifications Notification[]
-  sentInvites   Invite[]      @relation("InviteSender")
+  memberships     TripMember[]
+  createdTrips    Trip[]         @relation("TripMaster")
+  activities      Activity[]
+  votes           Vote[]
+  messages        Message[]
+  mediaItems      MediaItem[]
+  notifications   Notification[]
+  sentInvites     Invite[]      @relation("InviteSender")
+  
+  // Friends
+  friends         Friend[]       @relation("UserFriends")
+  friendOf        Friend[]       @relation("FriendOf")
+  sentRequests    FriendRequest[] @relation("SentRequests")
+  receivedRequests FriendRequest[] @relation("ReceivedRequests")
+  
+  // User settings
+  settings       Settings?
+  
+  // Payments
+  billSplitsCreated BillSplit[]     @relation("BillSplitCreator")
+  billSplitsPaid    BillSplit[]     @relation("BillSplitPayer")
+  billSplitMembers BillSplitMember[]
+  
+  // DMs
+  dmConversations  DmConversation[] @relation("ConversationParticipants")
+}
+
+model Settings {
+  userId                    String            @id
+  
+  // Friend request settings
+  friendRequestSource       FriendRequestSource @default(ANYONE)
+  
+  // Email notifications
+  emailTripInvites         Boolean            @default(true)
+  emailPaymentRequests     Boolean            @default(true)
+  emailVotingReminders    Boolean            @default(true)
+  emailTripReminders      Boolean            @default(true)
+  emailMessages           Boolean            @default(true)
+  
+  // Push notifications
+  pushTripInvites         Boolean            @default(true)
+  pushPaymentRequests     Boolean            @default(true)
+  pushVotingReminders    Boolean            @default(true)
+  pushTripReminders      Boolean            @default(true)
+  pushMessages            Boolean            @default(true)
+  
+  // In-app notifications
+  inAppAll                Boolean            @default(true)
+  
+  user                     User              @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Trip {
@@ -252,10 +286,11 @@ model Trip {
   members       TripMember[]
   invites       Invite[]
   activities    Activity[]
-  bookings      Booking[]
-  messages      TripMessage[]
+  messages      Message[]
   mediaItems    MediaItem[]
   notifications Notification[]
+  timelineEvents TimelineEvent[]
+  billSplits   BillSplit[]
   
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
@@ -267,9 +302,6 @@ model TripMember {
   userId          String
   role            MemberRole    @default(MEMBER)
   status          MemberStatus @default(INVITED)
-  paymentStatus   String?       // "pending", "partial", "paid"
-  paymentAmount   Decimal?      @db.Decimal(10, 2)
-  paymentConfirmedAt DateTime?
   joinedAt        DateTime      @default(now())
   
   trip            Trip          @relation(fields: [tripId], references: [id], onDelete: Cascade)
@@ -320,52 +352,74 @@ model Activity {
   trip        Trip      @relation(fields: [tripId], references: [id], onDelete: Cascade)
   proposer    User      @relation(fields: [proposedBy], references: [id])
   votes       Vote[]
-  bookings    Booking[]
   mediaItems  MediaItem[]
   
   createdAt   DateTime  @default(now())
 }
 
 model Vote {
-  id          String    @id @default(cuid())
+  id          String      @id @default(cuid())
   activityId  String
   userId      String
-  option      String    // "yes", "no", "maybe"
+  option      VoteOption
   
-  activity    Activity  @relation(fields: [activityId], references: [id], onDelete: Cascade)
-  user        User      @relation(fields: [userId], references: [id])
+  activity    Activity    @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id])
   
   @@unique([activityId, userId])
 }
 
-model Booking {
-  id              String        @id @default(cuid())
-  tripId          String
-  activityId      String?
-  bookedBy        String
-  confirmationNum String?
-  status          BookingStatus @default(PROPOSED)
-  receiptUrl      String?
-  notes           String?
+model Message {
+  id             String        @id @default(cuid())
   
-  trip            Trip          @relation(fields: [tripId], references: [id], onDelete: Cascade)
-  activity        Activity?     @relation(fields: [activityId], references: [id])
+  // Polymorphic: either trip or conversation, not both
+  tripId         String?
+  conversationId String?
   
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  senderId       String
+  content        String
+  messageType    MessageType   @default(TEXT)
+  mentions       String[]       // user IDs tagged
+  reactions      Json?          // {"👍": ["user1", "user2"], "🎉": ["user3"]}
+  replyToId      String?
+  editedAt       DateTime?
+  deletedAt      DateTime?
+  
+  // Relations
+  trip           Trip?          @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  conversation   DmConversation? @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User            @relation(fields: [senderId], references: [id])
+  replyTo        Message?       @relation("MessageReplies", fields: [replyToId], references: [id])
+  replies        Message[]      @relation("MessageReplies")
+  readReceipts   MessageReadReceipt[]
+  
+  createdAt      DateTime       @default(now())
 }
 
-model TripMessage {
-  id            String        @id @default(cuid())
-  tripId        String
-  userId        String
-  content       String
-  messageType   MessageType   @default(TEXT)
+model MessageReadReceipt {
+  id          String       @id @default(cuid())
+  messageId   String
+  userId      String
+  readAt      DateTime     @default(now())
   
-  trip          Trip          @relation(fields: [tripId], references: [id], onDelete: Cascade)
-  user          User          @relation(fields: [userId], references: [id])
+  message     Message      @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user        User         @relation(fields: [userId], references: [id])
   
-  createdAt     DateTime      @default(now())
+  @@unique([messageId, userId])
+}
+
+// TimelineEvent - Audit log for trip history (automatically populated)
+model TimelineEvent {
+  id          String   @id @default(cuid())
+  tripId      String
+  eventType   String   // "activity_added", "member_joined", "payment_made", "vote_cast", etc.
+  description String
+  createdAt   DateTime @default(now())
+  createdBy   String?
+  
+  trip        Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  
+  @@index([tripId, createdAt])
 }
 
 model MediaItem {
@@ -386,19 +440,118 @@ model MediaItem {
 }
 
 model Notification {
-  id          String    @id @default(cuid())
-  userId      String
-  tripId      String?
-  type        String    // "invite", "vote", "booking", "payment", "message", "reminder", "milestone"
-  title       String
-  body        String
-  actionUrl   String?
-  read        Boolean   @default(false)
+  id            String           @id @default(cuid())
+  userId        String
+  tripId        String?
+  type          NotificationType
+  title         String
+  body          String
+  actionType    String?          // "payment", "vote", "trip", "friend_request", "dm"
+  actionId      String?
+  actionUrl     String?
+  read          Boolean          @default(false)
+  priority      String           @default("normal") // "low", "normal", "high", "urgent"
+  scheduledFor  DateTime?
   
-  user        User      @relation(fields: [userId], references: [id])
-  trip        Trip?     @relation(fields: [tripId], references: [id])
+  user          User             @relation(fields: [userId], references: [id])
+  trip          Trip?            @relation(fields: [tripId], references: [id])
   
-  createdAt   DateTime  @default(now())
+  createdAt     DateTime         @default(now())
+}
+
+// Friends
+
+model Friend {
+  id        String   @id @default(cuid())
+  userId    String
+  friendId  String
+  createdAt DateTime @default(now())
+  
+  user      User     @relation("UserFriends", fields: [userId], references: [id])
+  friend    User     @relation("FriendOf", fields: [friendId], references: [id])
+  
+  @@unique([userId, friendId])
+}
+
+model FriendRequest {
+  id          String             @id @default(cuid())
+  senderId    String
+  receiverId  String
+  status      FriendRequestStatus @default(PENDING)
+  createdAt   DateTime           @default(now())
+  respondedAt DateTime?
+  
+  sender      User               @relation("SentRequests", fields: [senderId], references: [id])
+  receiver    User               @relation("ReceivedRequests", fields: [receiverId], references: [id])
+}
+
+// Direct Messages
+
+model DmConversation {
+  id             String   @id @default(cuid())
+  participant1   String
+  participant2  String
+  lastMessageAt DateTime @default(now())
+  
+  participants   User[]   @relation("ConversationParticipants")
+  messages       Message[]
+  
+  @@unique([participant1, participant2])
+}
+
+// Payments - BillSplit is an item (hotel, restaurant, excursion, drinks, etc.)
+
+model BillSplit {
+  id            String        @id @default(cuid())
+  tripId        String
+  activityId    String?       // Optional: linked to an activity
+  
+  title         String        // "Hotel", "Dinner at Nobu", "Uber"
+  description   String?
+  amount        Decimal       @db.Decimal(10, 2)  // Total dollar amount
+  currency      String        @default("USD")
+  
+  splitType     SplitType     @default(EQUAL)
+  
+  paidBy        String        // userId who initially paid
+  createdBy     String
+  
+  status        PaymentStatus @default(PENDING)
+  dueDate       DateTime?
+  
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  
+  // Relations
+  trip          Trip          @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  activity      Activity?     @relation(fields: [activityId], references: [id])
+  payer         User          @relation("BillSplitPayer", fields: [paidBy], references: [id])
+  creator       User          @relation("BillSplitCreator", fields: [createdBy], references: [id])
+  members       BillSplitMember[]
+}
+
+// Each member's share of a BillSplit
+model BillSplitMember {
+  id            String        @id @default(cuid())
+  billSplitId   String
+  userId        String
+  
+  // The literal dollar amount this person owes
+  dollarAmount  Decimal       @db.Decimal(10, 2)
+  
+  // How the amount was determined
+  type          SplitType     // EQUAL, SHARES, PERCENTAGE, MANUAL
+  
+  // Payment status for this member
+  status        PaymentStatus @default(PENDING)
+  paidAt        DateTime?
+  paymentMethod PaymentMethod?
+  transactionId String?
+  
+  billSplit     BillSplit    @relation(fields: [billSplitId], references: [id], onDelete: Cascade)
+  user          User         @relation(fields: [userId], references: [id])
+  
+  @@unique([billSplitId, userId])
 }
 ```
 
@@ -428,6 +581,11 @@ GET    /api/trips/:id             Get trip details
 PATCH  /api/trips/:id             Update trip (name, dates, status)
 DELETE /api/trips/:id             Delete trip
 POST   /api/trips/:id/status      Change trip status
+GET    /api/trips/:id/timeline    Get trip history log
+
+GET    /api/trips/:id/calendar    Get calendar events (from activities)
+GET    /api/trips/:id/calendar.ics  Download iCal file
+POST   /api/trips/:id/calendar/export  Export to external calendar
 ```
 
 ### Trip Members
@@ -436,7 +594,6 @@ GET    /api/trips/:id/members     List trip members
 POST   /api/trips/:id/members      Add member (by user ID)
 PATCH  /api/trips/:id/members/:userId  Update member role/status
 DELETE /api/trips/:id/members/:userId  Remove member
-POST   /api/trips/:id/members/:userId/confirm-payment  Trip master confirms payment
 ```
 
 ### Invites
@@ -452,7 +609,7 @@ DELETE /api/invites/:id           Revoke invite
 ### Activities
 ```
 GET    /api/trips/:id/activities  List activities
-POST   /api/trips/:id/activities  Propose activity
+POST   /api/trips/:id/activities  Propose activity (includes hotels via category="accommodation")
 PATCH  /api/activities/:id        Update activity
 DELETE /api/activities/:id        Remove activity
 ```
@@ -461,36 +618,80 @@ DELETE /api/activities/:id        Remove activity
 ```
 GET    /api/activities/:id/votes  Get votes for activity
 POST   /api/activities/:id/votes  Cast vote
-DELETE /api/activities/:id/votes   Remove vote
+DELETE /api/activities/:id/votes  Remove vote
 ```
 
-### Bookings
+### Messages (Trip Chat & DMs)
 ```
-GET    /api/trips/:id/bookings    List bookings
-POST   /api/trips/:id/bookings    Create booking
-PATCH  /api/bookings/:id          Update booking (confirm/cancel)
-DELETE /api/bookings/:id          Delete booking
-```
-
-### Messages (Chat)
-```
-GET    /api/trips/:id/messages    Get chat history
-POST   /api/trips/:id/messages    Send message
+GET    /api/trips/:id/messages    Get trip chat history
+POST   /api/trips/:id/messages    Send trip message
+PATCH  /api/messages/:id          Edit message (add reactions, mentions)
 DELETE /api/messages/:id          Delete message
+POST   /api/messages/:id/reactions Add/remove emoji reaction
+POST   /api/messages/:id/read     Mark message as read
 ```
 
 ### Media
 ```
 GET    /api/trips/:id/media       List media items
-POST   /api/trips/:id/media       Upload media
+POST   /api/trips/:id/media       Upload media (photos/videos)
 DELETE /api/media/:id             Delete media
+```
+
+### Friends
+```
+GET    /api/friends               List friends
+POST   /api/friends               Add friend (by user ID)
+DELETE /api/friends/:id           Remove friend
+GET    /api/friend-requests       List pending requests (sent & received)
+POST   /api/friend-requests       Send friend request
+PATCH  /api/friend-requests/:id   Accept/decline request
+DELETE /api/friend-requests/:id   Cancel request
+```
+
+### Direct Messages
+```
+GET    /api/dm/conversations         List DM conversations
+POST   /api/dm/conversations         Start new DM conversation
+GET    /api/dm/conversations/:id     Get DM messages
+POST   /api/dm/conversations/:id     Send DM message
+PATCH  /api/dm/messages/:id         Edit DM (reactions, mentions)
+DELETE /api/dm/messages/:id          Delete DM
+POST   /api/dm/messages/:id/reactions  Add/remove emoji reaction
+```
+
+### Payments (BillSplits)
+```
+GET    /api/trips/:id/payments     List bill splits
+POST   /api/trips/:id/payments     Create bill split
+GET    /api/payments/:id           Get bill split details
+PATCH  /api/payments/:id            Update bill split
+DELETE /api/payments/:id            Delete bill split
+
+GET    /api/payments/:id/members   Get members & their split amounts
+POST   /api/payments/:id/members    Add member to bill split
+PATCH  /api/payments/:id/members/:userId  Mark member as paid (with method)
+DELETE /api/payments/:id/members/:userId  Remove member from bill split
+```
+
+### Timeline (Audit Log)
+```
+GET    /api/trips/:id/timeline     Get trip history log (events that happened)
 ```
 
 ### Notifications
 ```
-GET    /api/notifications         List notifications
+GET    /api/notifications          List notifications
 PATCH  /api/notifications/:id     Mark as read
 POST   /api/notifications/mark-all-read  Mark all as read
+```
+
+### Settings
+```
+GET    /api/settings               Get user settings
+PATCH  /api/settings              Update settings
+POST   /api/settings/password      Change password
+POST   /api/settings/avatar        Upload profile picture
 ```
 
 ---
@@ -532,23 +733,34 @@ tripplanner://invite/{token}
 
 ## 6. User Interface Structure
 
+### Trip Timeline
+
+The Trip Timeline is an audit log of all significant events in a trip - when members joined, activities were added, payments were made, votes were cast, etc. It's automatically populated and read-only.
+
+```
+GET /api/trips/:id/timeline  - Get timeline log
+```
+
 ### Page Hierarchy
 ```
 /
 ├── /login                    # Auth pages (handled by NextAuth)
 ├── /dashboard                # Main dashboard
-├── /friends                  # Friends management
-├── /messages                 # Direct messages
-├── /feed                     # Activity feed
-├── /settings                 # App settings
+├── /friends                  # Friends list & requests
+├── /messages                 # Direct messages (DMs)
 ├── /trip/new                 # Create new trip
 ├── /trip/[id]                # Trip detail (tabbed)
 │   ├── /trip/[id]/overview  # Trip overview
-│   ├── /trip/[id]/activities # Activities & voting
+│   ├── /trip/[id]/activities # Activities, hotels & voting
 │   ├── /trip/[id]/timeline  # Event timeline
-│   ├── /trip/[id]/chat     # Group chat
-│   ├── /trip/[id]/payments # Payment tracking
+│   ├── /trip/[id]/chat     # Group chat with emojis & mentions
+│   ├── /trip/[id]/payments # Payment tracking & splits
 │   └── /trip/[id]/memories # Photos & videos
+├── /settings                 # User settings
+│   ├── /settings/profile    # Profile & avatar
+│   ├── /settings/password   # Change password
+│   ├── /settings/payments   # Payment handles (Venmo, PayPal, etc)
+│   └── /settings/notifications # Notification preferences
 └── /invite/[token]         # Public invite acceptance
 ```
 
@@ -599,7 +811,7 @@ Unified header used across all pages:
 
 ### Trip Status Workflow
 ```
-IDEA ──→ PLANNING ──→ CONFIRMED ──→ IN_PROGRESS ──→ COMPLETED
+IDEA ──→ PLANNING ──→ CONFIRMED ──→ HAPPENING ──→ COMPLETED
   │         │              │              │            │
   │         │              │              │            │
   ▼         ▼              ▼              ▼            ▼
@@ -610,25 +822,39 @@ IDEA ──→ PLANNING ──→ CONFIRMED ──→ IN_PROGRESS ──→ COMP
 ### Milestones & Notifications
 | Trigger | Notification | Type |
 |---------|---------------|------|
-| Invite sent | "You've been invited to..." | invite |
-| Vote on activity | "Vote now on..." | vote |
-| Booking confirmed | "Booking confirmed:..." | booking |
-| Payment requested | "Please send $XX via..." | payment |
-| Payment confirmed | "Payment confirmed!" | payment |
-| Trip starting soon | "Trip starts in X days!" | reminder |
-| New message | "New message in..." | message |
-| Photo uploaded | "New photos from..." | milestone |
+| Invite sent | "You've been invited to..." | INVITE |
+| Friend request received | "sent you a friend request" | FRIEND_REQUEST |
+| Friend request accepted | "is now your friend" | FRIEND_REQUEST |
+| Vote on activity | "Vote now on..." | VOTE |
+| Vote deadline approaching | "Voting ends soon on..." | VOTE_DEADLINE |
+| Activity confirmed | "Activity confirmed:..." | ACTIVITY |
+| Payment requested | "Please send $XX via..." | PAYMENT |
+| Payment due reminder | "Payment due for..." | PAYMENT_DUE |
+| Payment received | "Payment confirmed!" | PAYMENT_RECEIVED |
+| Trip starting soon | "Trip starts in X days!" | TRIP_STARTING |
+| New trip message | "New message in..." | MESSAGE |
+| New DM received | "New message from..." | DM_MESSAGE |
+| Photo uploaded | "New photos from..." | MILESTONE |
 
 ### Payment Flow
 ```
-Trip Master creates booking → System calculates shares
+User creates bill split (hotel, restaurant, etc.)
         ↓
-Members see "Pay $XX" → Choose Venmo/PayPal/Zelle
+BillSplit created with members and their amounts
         ↓
-Member sends payment externally → Returns to app
+Members see their owed amount → Choose Venmo/PayPal/Zelle/CashApp
         ↓
-Trip Master confirms receipt → Status updates to "paid"
+Member marks as paid with method → Status "paid"
+        ↓
+Creator confirms receipt → Status "confirmed"
 ```
+
+### Bill Split Options
+- **Equal**: Split total evenly among all members
+- **Shares**: Each member has share count (e.g., 2 shares, 1 share)
+- **Percentage**: Each member has percentage (must sum to 100)
+- **Manual**: Each member has manually set amount
+- **Percentage**: Split by percentage ownership
 
 ### Chat Features
 - Real-time messaging via Socket.io
@@ -637,6 +863,10 @@ Trip Master confirms receipt → Status updates to "paid"
 - System messages for important events
 - Typing indicators
 - Read receipts
+- Emoji reactions on messages
+- @mentions for user tagging
+- Message editing
+- Reply threads
 
 ---
 
@@ -1090,7 +1320,7 @@ describe('TripService', () => {
         .mockResolvedValue({ id: tripId, status: 'IDEA' });
       
       await expect(
-        tripService.changeStatus(tripId, 'IN_PROGRESS')
+        tripService.changeStatus(tripId, 'HAPPENING')
       ).rejects.toThrow('Invalid status transition');
     });
   });
@@ -1874,7 +2104,7 @@ services:
   test-runner:
     build:
       context: .
-      dockerfile: Dockerfile.test
+      dockerfile: Dockerfile
     environment:
       - NODE_ENV=test
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/tripplanner_test
@@ -2128,5 +2358,5 @@ export async function GET() {
 
 ---
 
-*Document Version: 1.1*
+*Document Version: 1.2*
 *Updated: February 2026*
