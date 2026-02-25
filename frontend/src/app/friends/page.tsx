@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSession } from 'next-auth/react';
 import { PageLayout } from '@/components/page-layout';
 import { Users, UserPlus, Search, MoreVertical } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -10,24 +11,47 @@ import { api } from '@/services/api';
 import { Friend, FriendRequest } from '@/types';
 
 export default function FriendsPage() {
+  const { data: session, status } = useSession();
   const [friends, setFriends] = useState<Friend[]>([]);
   const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
+  // Show loading while session is being checked
+  if (status === 'loading') {
+    return (
+      <PageLayout>
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+            <p className="text-sm text-muted-foreground">Loading...</p>
+          </div>
+        </div>
+      </PageLayout>
+    );
+  }
+
   useEffect(() => {
+    // Wait for session to be loaded
+    if (!session) return;
+
     const loadData = async () => {
       setIsLoading(true);
-      const [friendsResult, requestsResult] = await Promise.all([
-        api.getFriends(),
-        api.getFriendRequests(),
-      ]);
-      if (friendsResult.data) setFriends(friendsResult.data);
-      if (requestsResult.data) setFriendRequests(requestsResult.data.received);
+      try {
+        const [friendsResult, requestsResult] = await Promise.all([
+          api.getFriends(),
+          api.getFriendRequests(),
+        ]);
+        if (friendsResult.data) setFriends(friendsResult.data);
+        if (requestsResult.data) setFriendRequests(requestsResult.data.received);
+      } catch (error) {
+        // Error handled by 401 redirect in api.ts
+        console.error('Failed to load data:', error);
+      }
       setIsLoading(false);
     };
     loadData();
-  }, []);
+  }, [session]);
 
   const handleAcceptRequest = async (requestId: string) => {
     const result = await api.respondToFriendRequest(requestId, 'ACCEPTED');
@@ -84,7 +108,7 @@ export default function FriendsPage() {
                         </div>
                       </div>
                       <div className="flex gap-2">
-                        <Button size="sm" variant="default" onClick={() => handleAcceptRequest(request.id)}>Accept</Button>
+                        <Button size="sm" variant="primary" onClick={() => handleAcceptRequest(request.id)}>Accept</Button>
                         <Button size="sm" variant="outline" onClick={() => handleDeclineRequest(request.id)}>Decline</Button>
                       </div>
                     </div>

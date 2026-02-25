@@ -249,7 +249,7 @@ const SEED_BILL_SPLIT_MEMBERS: BillSplitMember[] = [
 
 const SEED_DM_CONVERSATIONS: DmConversation[] = [
   { id: 'dm-1', participant1: 'user-1', participant2: 'user-2', lastMessageAt: '2026-02-18T20:00:00Z' },
-  { id: 'dm-2', participant1: 'user-1', participant3: 'user-3', lastMessageAt: '2026-02-10T15:00:00Z' },
+  { id: 'dm-2', participant1: 'user-1', participant2: 'user-3', lastMessageAt: '2026-02-10T15:00:00Z' },
 ];
 
 const SEED_DM_MESSAGES: Message[] = [
@@ -483,7 +483,7 @@ export const mockApi = {
     const members = mockDb.members.get(tripId) || [];
     const index = members.findIndex(m => m.userId === userId);
     if (index === -1) return Promise.resolve({ error: 'Member not found' });
-    const updated = { ...members[index], ...data };
+    const updated = { ...members[index], ...data } as TripMember;
     members[index] = updated;
     mockDb.members.set(tripId, members);
     return Promise.resolve({ data: updated });
@@ -523,10 +523,11 @@ export const mockApi = {
   },
 
   updateActivity: (id: string, data: Partial<CreateActivityInput>): Promise<ApiResponse<Activity>> => {
-    for (const [tripId, activities] of mockDb.activities.entries()) {
+    for (const entry of Array.from(mockDb.activities.entries())) {
+      const [tripId, activities] = entry;
       const index = activities.findIndex(a => a.id === id);
       if (index !== -1) {
-        const updated = { ...activities[index], ...data };
+        const updated = { ...activities[index], ...data } as Activity;
         activities[index] = updated;
         mockDb.activities.set(tripId, activities);
         return Promise.resolve({ data: updated });
@@ -536,7 +537,8 @@ export const mockApi = {
   },
 
   deleteActivity: (id: string): Promise<ApiResponse<void>> => {
-    for (const [tripId, activities] of mockDb.activities.entries()) {
+    for (const entry of Array.from(mockDb.activities.entries())) {
+      const [tripId, activities] = entry;
       const filtered = activities.filter(a => a.id !== id);
       if (filtered.length !== activities.length) {
         mockDb.activities.set(tripId, filtered);
@@ -579,12 +581,12 @@ export const mockApi = {
     const invite: Invite = {
       id: generateId(),
       tripId,
+      token: generateId(),
       email: data.email,
       phone: data.phone,
       status: 'PENDING',
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       sentById: CURRENT_USER_ID,
-      createdAt: new Date().toISOString(),
     };
     const invites = mockDb.invites.get(tripId) || [];
     invites.push(invite);
@@ -621,10 +623,11 @@ export const mockApi = {
   },
 
   editMessage: (messageId: string, data: { mentions?: string[] }): Promise<ApiResponse<Message>> => {
-    for (const [tripId, messages] of mockDb.messages.entries()) {
+    for (const entry of Array.from(mockDb.messages.entries())) {
+      const [tripId, messages] = entry;
       const index = messages.findIndex(m => m.id === messageId);
       if (index !== -1) {
-        const updated = { ...messages[index], ...data, editedAt: new Date().toISOString() };
+        const updated = { ...messages[index], ...data, editedAt: new Date().toISOString() } as Message;
         messages[index] = updated;
         mockDb.messages.set(tripId, messages);
         return Promise.resolve({ data: updated });
@@ -634,7 +637,8 @@ export const mockApi = {
   },
 
   deleteMessage: (messageId: string): Promise<ApiResponse<void>> => {
-    for (const [tripId, messages] of mockDb.messages.entries()) {
+    for (const entry of Array.from(mockDb.messages.entries())) {
+      const [tripId, messages] = entry;
       const filtered = messages.filter(m => m.id !== messageId);
       if (filtered.length !== messages.length) {
         mockDb.messages.set(tripId, filtered);
@@ -703,7 +707,7 @@ export const mockApi = {
     const request: FriendRequest = {
       id: generateId(),
       senderId: CURRENT_USER_ID,
-      receiverId: data.userId,
+      receiverId: data.receiverId,
       status: 'PENDING',
       createdAt: new Date().toISOString(),
     };
@@ -768,7 +772,7 @@ export const mockApi = {
       amount: input.amount,
       currency: input.currency || 'USD',
       splitType: input.splitType,
-      paidBy: CURRENT_USER_ID,
+      paidBy: input.paidBy,
       createdBy: CURRENT_USER_ID,
       status: 'PENDING',
       dueDate: input.dueDate,
@@ -776,17 +780,7 @@ export const mockApi = {
       updatedAt: new Date().toISOString(),
     };
     mockDb.billSplits.set(bill.id, bill);
-    
-    const members: BillSplitMember[] = input.members.map(m => ({
-      id: generateId(),
-      billSplitId: bill.id,
-      userId: m.userId,
-      dollarAmount: m.dollarAmount || 0,
-      type: input.splitType,
-      status: 'PENDING',
-    }));
-    mockDb.billSplitMembers.set(bill.id, members);
-    
+
     return Promise.resolve({ data: bill });
   },
 
@@ -798,7 +792,7 @@ export const mockApi = {
   updateBillSplit: (billSplitId: string, data: Partial<CreateBillSplitInput>): Promise<ApiResponse<BillSplit>> => {
     const bill = mockDb.billSplits.get(billSplitId);
     if (!bill) return Promise.resolve({ error: 'Bill split not found' });
-    const updated = { ...bill, ...data, updatedAt: new Date().toISOString() };
+    const updated = { ...bill, ...data, updatedAt: new Date().toISOString() } as BillSplit;
     mockDb.billSplits.set(billSplitId, updated);
     return Promise.resolve({ data: updated });
   },

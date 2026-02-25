@@ -3,12 +3,12 @@ import { Calendar, DollarSign, ThumbsUp, MessageSquare, Flag, Bell } from 'lucid
 export type NotificationType = 'reminder' | 'payment' | 'vote' | 'message' | 'milestone' | 'invite';
 
 export const NOTIFICATION_ICONS: Record<NotificationType, React.ReactNode> = {
-  reminder: <Calendar className="h-4 w-4" />,
-  payment: <DollarSign className="h-4 w-4" />,
-  vote: <ThumbsUp className="h-4 w-4" />,
-  message: <MessageSquare className="h-4 w-4" />,
-  milestone: <Flag className="h-4 w-4" />,
-  invite: <Bell className="h-4 w-4" />,
+  reminder: <Calendar className="h-4 w-4 text-current" />,
+  payment: <DollarSign className="h-4 w-4 text-current" />,
+  vote: <ThumbsUp className="h-4 w-4 text-current" />,
+  message: <MessageSquare className="h-4 w-4 text-current" />,
+  milestone: <Flag className="h-4 w-4 text-current" />,
+  invite: <Bell className="h-4 w-4 text-current" />,
 };
 
 export const NOTIFICATION_COLORS: Record<NotificationType, string> = {

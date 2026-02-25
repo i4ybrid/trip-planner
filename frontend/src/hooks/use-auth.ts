@@ -1,0 +1,83 @@
+'use client';
+
+import { signIn, signOut, useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { useAuthStore } from '@/store/auth-store';
+import { useCallback } from 'react';
+
+export function useAuth() {
+  const { data: session, status, update } = useSession();
+  const router = useRouter();
+  const { setUser } = useAuthStore();
+
+  const login = useCallback(async (email: string, password: string) => {
+    try {
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        return { success: false, error: result.error };
+      }
+
+      // Update the session to get the latest data
+      await update();
+      return { success: true };
+    } catch (error: any) {
+      return { success: false, error: error.message || 'Login failed' };
+    }
+  }, [update]);
+
+  const register = useCallback(async (email: string, name: string, password: string) => {
+    try {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, name, password }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: 'Registration failed' }));
+        return { success: false, error: error.error };
+      }
+
+      // Auto-login after registration
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        return { success: false, error: result.error };
+      }
+
+      await update();
+      return { success: true };
+    } catch (error: any) {
+      return { success: false, error: error.message || 'Registration failed' };
+    }
+  }, [update]);
+
+  const logout = useCallback(async () => {
+    await signOut({ redirect: false });
+    setUser(null);
+    router.push('/login');
+  }, [setUser, router]);
+
+  return {
+    user: session?.user ? {
+      id: session.user.id,
+      email: session.user.email!,
+      name: session.user.name!,
+      avatarUrl: session.user.avatarUrl,
+    } : null,
+    isAuthenticated: !!session,
+    isLoading: status === 'loading',
+    login,
+    register,
+    logout,
+  };
+}

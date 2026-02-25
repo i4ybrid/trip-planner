@@ -535,22 +535,26 @@ model BillSplitMember {
   id            String        @id @default(cuid())
   billSplitId   String
   userId        String
-  
+
   // The literal dollar amount this person owes
   dollarAmount  Decimal       @db.Decimal(10, 2)
-  
+
   // How the amount was determined
   type          SplitType     // EQUAL, SHARES, PERCENTAGE, MANUAL
-  
+
+  // Split configuration (for SHARES and PERCENTAGE types)
+  percentage    Decimal?      @db.Decimal(5, 2)  // Percentage (0-100)
+  shares        Int?          // Number of shares
+
   // Payment status for this member
   status        PaymentStatus @default(PENDING)
   paidAt        DateTime?
   paymentMethod PaymentMethod?
   transactionId String?
-  
+
   billSplit     BillSplit    @relation(fields: [billSplitId], references: [id], onDelete: Cascade)
   user          User         @relation(fields: [userId], references: [id])
-  
+
   @@unique([billSplitId, userId])
 }
 ```
@@ -663,15 +667,153 @@ POST   /api/dm/messages/:id/reactions  Add/remove emoji reaction
 ### Payments (BillSplits)
 ```
 GET    /api/trips/:id/payments     List bill splits
-POST   /api/trips/:id/payments     Create bill split
-GET    /api/payments/:id           Get bill split details
-PATCH  /api/payments/:id            Update bill split
-DELETE /api/payments/:id            Delete bill split
+POST   /api/trips/:id/payments     Create bill split (includes members array)
+GET    /api/payments/:id           Get bill split details (includes members array)
+PATCH  /api/payments/:id           Update bill split (title, amount, status, dueDate, members)
+DELETE /api/payments/:id          Delete bill split
 
 GET    /api/payments/:id/members   Get members & their split amounts
-POST   /api/payments/:id/members    Add member to bill split
-PATCH  /api/payments/:id/members/:userId  Mark member as paid (with method)
+POST   /api/payments/:id/members/:userId/paid  Mark member as paid (user marks themselves)
 DELETE /api/payments/:id/members/:userId  Remove member from bill split
+POST   /api/payments/:id/confirm   Confirm payment received (by payer)
+```
+
+#### Create Bill Split
+```
+POST /api/trips/:tripId/payments
+Content-Type: application/json
+Authorization: Bearer <token>
+
+{
+  "title": "Dinner at Nobu",
+  "description": "Amazing sushi dinner",
+  "amount": 250.00,
+  "currency": "USD",
+  "splitType": "EQUAL",           // EQUAL | SHARES | PERCENTAGE | MANUAL
+  "paidBy": "user-123",           // User who paid
+  "dueDate": "2024-03-01T00:00:00Z",
+  "members": [                    // Optional: include member splits on create
+    // For EQUAL/MANUAL: just dollarAmount
+    { "userId": "user-123", "dollarAmount": 125.00 },
+    { "userId": "user-456", "dollarAmount": 125.00 },
+    // For SHARES: include shares
+    { "userId": "user-123", "dollarAmount": 100.00, "shares": 2 },
+    { "userId": "user-456", "dollarAmount": 50.00, "shares": 1 },
+    // For PERCENTAGE: include percentage
+    { "userId": "user-123", "dollarAmount": 150.00, "percentage": 60 },
+    { "userId": "user-456", "dollarAmount": 100.00, "percentage": 40 }
+  ]
+}
+
+Response (201 Created):
+{
+  "data": {
+    "id": "bill-123",
+    "tripId": "trip-456",
+    "title": "Dinner at Nobu",
+    "amount": 250.00,
+    "splitType": "EQUAL",
+    "paidBy": "user-123",
+    "status": "PENDING",
+    "members": [
+      { 
+        "userId": "user-123", 
+        "dollarAmount": 125.00, 
+        "type": "EQUAL",
+        "status": "PENDING" 
+      },
+      { 
+        "userId": "user-456", 
+        "dollarAmount": 125.00, 
+        "type": "EQUAL",
+        "status": "PENDING" 
+      }
+    ]
+  }
+}
+```
+
+#### Update Bill Split
+```
+PATCH /api/payments/:id
+Content-Type: application/json
+Authorization: Bearer <token>
+
+{
+  "title": "Dinner at Nobu - Updated",
+  "amount": 300.00,
+  "paidBy": "user-456",          // Can change who paid
+  "splitType": "SHARES",
+  "members": [                    // Replaces all existing members
+    { "userId": "user-123", "dollarAmount": 100.00, "shares": 1 },
+    { "userId": "user-456", "dollarAmount": 200.00, "shares": 2 }
+  ]
+}
+
+Response (200 OK):
+{
+  "data": {
+    "id": "bill-123",
+    "title": "Dinner at Nobu - Updated",
+    "amount": 300.00,
+    "paidBy": "user-456",
+    "splitType": "SHARES",
+    "members": [
+      { 
+        "userId": "user-123", 
+        "dollarAmount": 100.00, 
+        "type": "SHARES",
+        "shares": 1,
+        "status": "PENDING" 
+      },
+      { 
+        "userId": "user-456", 
+        "dollarAmount": 200.00, 
+        "type": "SHARES",
+        "shares": 2,
+        "status": "PENDING" 
+      }
+    ]
+  }
+}
+```
+
+#### Mark Member as Paid
+```
+POST /api/payments/:id/members/:userId/paid
+Content-Type: application/json
+Authorization: Bearer <token>
+
+{
+  "paymentMethod": "VENMO",       // VENMO | PAYPAL | ZELLE | CASHAPP | CASH | OTHER
+  "transactionId": "abc123"       // Optional
+}
+
+Response (200 OK):
+{
+  "data": {
+    "id": "member-split-789",
+    "userId": "user-456",
+    "dollarAmount": 125.00,
+    "status": "PAID",
+    "paymentMethod": "VENMO",
+    "paidAt": "2024-02-25T10:30:00Z"
+  }
+}
+```
+
+#### Confirm Payment Received
+```
+POST /api/payments/:id/confirm
+Authorization: Bearer <token>
+
+Response (200 OK):
+{
+  "data": {
+    "id": "bill-123",
+    "status": "CONFIRMED"
+  }
+}
 ```
 
 ### Timeline (Audit Log)
@@ -785,7 +927,9 @@ GET /api/trips/:id/timeline  - Get timeline log
 │   ├── /trip/[id]/activities # Activities, hotels & voting
 │   ├── /trip/[id]/timeline  # Event timeline
 │   ├── /trip/[id]/chat     # Group chat with emojis & mentions
-│   ├── /trip/[id]/payments # Payment tracking & splits
+│   ├── /trip/[id]/payments        # Payment list & summary
+│   │   ├── /trip/[id]/payments/add         # Add new expense
+│   │   └── /trip/[id]/payments/edit/[billId] # Edit expense
 │   └── /trip/[id]/memories # Photos & videos
 ├── /settings                 # User settings
 │   ├── /settings/profile    # Profile & avatar
@@ -801,7 +945,7 @@ GET /api/trips/:id/timeline  - Get timeline log
 ```
 ┌─────────────────────────────────────────────────────────┐
 │ ┌─────────┐ ┌─────────────────────────────────────────┐ │
-│ │         │ │ [AppHeader: Title | Theme | Notif]      │ │
+│ │         │ │ [AppHeader: Title | Theme | Notif | 👤]│ │
 │ │  Left   │ ├─────────────────────────────────────────┤ │
 │ │ Sidebar │ │                                         │ │
 │ │         │ │           Main Content Area              │ │
@@ -819,15 +963,6 @@ GET /api/trips/:id/timeline  - Get timeline log
 └─────────────────────────────────────────────────────────┘
 ```
 
-#### Left Sidebar Behavior
-- **Desktop (≥1024px)**: Always expanded (256px width)
-- **Mobile (<1024px)**: 
-  - Starts collapsed (80px width)
-  - Auto-expands on mouse hover
-  - Collapses after 5 seconds when mouse leaves
-- **Navigation Items**: Icon + Label (label hidden when collapsed on mobile)
-- **Logo**: Compass icon + "TripPlanner" text (text hidden when collapsed)
-
 #### AppHeader Component
 Unified header used across all pages:
 - Title (optional, page-specific)
@@ -835,6 +970,10 @@ Unified header used across all pages:
 - Custom actions slot
 - Theme switcher (sun/moon toggle)
 - Notification drawer button
+- User avatar dropdown:
+  - Clicking user avatar opens dropdown menu
+  - Menu items: "Settings", "Logout"
+  - Avatar shows user's profile picture or initials
 
 ---
 
@@ -869,23 +1008,63 @@ IDEA ──→ PLANNING ──→ CONFIRMED ──→ HAPPENING ──→ COMPLE
 
 ### Payment Flow
 ```
-User creates bill split (hotel, restaurant, etc.)
+User creates expense:
+  - Select category (Restaurant, Excursion, House, Other)
+  - Enter description
+  - Enter subtotal + tax + tip
+  - Select who paid (paidBy)
+  - Select split type (Equal, Shares, Percentage, Manual)
+  - Configure member splits
         ↓
-BillSplit created with members and their amounts
+BillSplit created with:
+  - Total amount = subtotal + tax + tip
+  - paidBy = user who paid
+  - members[] = array of member splits with dollarAmounts
         ↓
-Members see their owed amount → Choose Venmo/PayPal/Zelle/CashApp
+Members see their owed amount in trip payments
         ↓
-Member marks as paid with method → Status "paid"
+Member marks self as paid:
+  - Select payment method (Venmo/PayPal/Zelle/CashApp/Cash)
+  - Optional: enter transaction ID
+  - Status → "PAID"
         ↓
-Creator confirms receipt → Status "confirmed"
+Creator (payer) confirms receipt → Status → "CONFIRMED"
 ```
 
+### Editing Expenses
+Bill splits can be edited after creation:
+- **Description/Title**: Can be changed
+- **Amount**: Can change subtotal, tax, tip
+- **Paid By**: Can reassign to different member
+- **Split Type**: Can change (EQUAL → SHARES → PERCENTAGE → MANUAL)
+- **Member Splits**: Completely replaced with new values
+- **Bill Split ID**: Preserved (not changed)
+
+To update, send `PATCH /api/payments/:id` with any combination of:
+- `title`, `description`, `amount`, `paidBy`, `splitType`, `members[]`
+
+The `members` array replaces all existing member splits.
+
 ### Bill Split Options
-- **Equal**: Split total evenly among all members
-- **Shares**: Each member has share count (e.g., 2 shares, 1 share)
-- **Percentage**: Each member has percentage (must sum to 100)
-- **Manual**: Each member has manually set amount
-- **Percentage**: Split by percentage ownership
+- **Equal (EQUAL)**: Split total evenly among all members
+- **Shares (SHARES)**: Each member has share count (e.g., 2 shares, 1 share), amount = (shares/totalShares) * total
+- **Percentage (PERCENTAGE)**: Each member has percentage (e.g., 50%, 30%, 20%)
+- **Manual (MANUAL)**: Each member has manually set dollar amount
+
+### Expense Categories
+When adding an expense, users can select a category:
+- **Restaurant**: 🍽️ Dining and food expenses
+- **Excursion**: 🎯 Activities and tours
+- **House**: 🏠 Accommodation (Note: Hotels are tracked as Activities with category="accommodation")
+- **Other**: 📦 Miscellaneous expenses
+
+### Trip Overview Page
+The Overview tab shows key trip information:
+- **Trip Header**: Name, destination, invite button, settings
+- **Trip Status Card**: Current status (IDEA/PLANNING/CONFIRMED/HAPPENING/COMPLETED/CANCELLED), description, date range
+- **Members Card**: Grid of trip members with avatars and roles (MASTER, ORGANIZER, MEMBER, VIEWER)
+- **Quick Stats Card**: Activity count, member count, memory count
+- **Budget Card**: Total expenses, collected amount, link to Payments page
 
 ### Chat Features
 - Real-time messaging via Socket.io

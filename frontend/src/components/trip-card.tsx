@@ -52,7 +52,7 @@ export const TripCard: React.FC<TripCardProps> = ({
           <div className="flex items-center gap-3 text-sm text-muted-foreground">
             {trip.startDate && (
               <span className="flex items-center gap-1">
-                <Calendar className="h-3 w-3" />
+                <Calendar className="h-3 w-3 text-current" />
                 {formatDateRange(trip.startDate, trip.endDate)}
               </span>
             )}
@@ -66,7 +66,7 @@ export const TripCard: React.FC<TripCardProps> = ({
               ))}
             </AvatarGroup>
             <span className="flex items-center gap-1 text-sm text-muted-foreground">
-              <Users className="h-3 w-3" />
+              <Users className="h-3 w-3 text-current" />
               {members.length}
             </span>
           </div>

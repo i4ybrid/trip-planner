@@ -2,6 +2,7 @@
 
 import { ThemeSwitcher } from '@/components/theme-switcher';
 import { NotificationDrawer } from '@/components/notification-drawer';
+import { UserMenu } from '@/components/user-menu';
 
 interface AppHeaderProps {
   title?: string;
@@ -26,10 +27,11 @@ export function AppHeader({ title, showBack, onBack, actions, className }: AppHe
           )}
           {title && <h1 className="text-lg font-semibold">{title}</h1>}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {actions}
           <ThemeSwitcher />
           <NotificationDrawer />
+          <UserMenu />
         </div>
       </div>
     </header>

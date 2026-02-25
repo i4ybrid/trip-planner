@@ -208,6 +208,8 @@ export interface BillSplitMember {
   userId: string;
   dollarAmount: number;
   type: SplitType;
+  percentage?: number;  // For PERCENTAGE split type (0-100)
+  shares?: number;      // For SHARES split type
   status: PaymentStatus;
   paidAt?: string;
   paymentMethod?: PaymentMethod;
@@ -303,9 +305,27 @@ export interface CreateBillSplitInput {
   amount: number;
   currency?: string;
   splitType: SplitType;
+  paidBy: string;
   activityId?: string;
   dueDate?: string;
-  members: {
+  members?: {
+    userId: string;
+    shares?: number;
+    percentage?: number;
+    dollarAmount?: number;
+  }[];
+}
+
+export interface UpdateBillSplitInput {
+  title?: string;
+  description?: string;
+  amount?: number;
+  currency?: string;
+  splitType?: SplitType;
+  status?: 'PENDING' | 'PARTIAL' | 'PAID' | 'CONFIRMED' | 'CANCELLED';
+  dueDate?: string;
+  paidBy?: string;
+  members?: {
     userId: string;
     shares?: number;
     percentage?: number;

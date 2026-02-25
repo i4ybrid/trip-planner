@@ -98,7 +98,7 @@ export function NotificationDrawer() {
                 onClick={() => setIsOpen(false)}
                 className="h-6 w-6 p-0"
               >
-                <X className="h-4 w-4" />
+                <X className="h-4 w-4 text-current" />
               </Button>
             </div>
           </div>
@@ -120,12 +120,16 @@ export function NotificationDrawer() {
                   <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
                     NOTIFICATION_COLORS[notification.type] || 'bg-gray-100 text-gray-600'
                   }`}>
-                    {notification.type === 'payment' && <span className="text-sm">$</span>}
-                    {notification.type === 'vote' && <span className="text-sm">👍</span>}
-                    {notification.type === 'message' && <span className="text-sm">💬</span>}
-                    {notification.type === 'reminder' && <span className="text-sm">📅</span>}
-                    {notification.type === 'milestone' && <span className="text-sm">🚩</span>}
-                    {notification.type === 'invite' && <span className="text-sm">🔔</span>}
+                    {notification.type === 'PAYMENT' && <span className="text-sm">$</span>}
+                    {notification.type === 'PAYMENT_DUE' && <span className="text-sm">$</span>}
+                    {notification.type === 'PAYMENT_RECEIVED' && <span className="text-sm">$</span>}
+                    {notification.type === 'VOTE' && <span className="text-sm">👍</span>}
+                    {notification.type === 'VOTE_DEADLINE' && <span className="text-sm">👍</span>}
+                    {notification.type === 'MESSAGE' && <span className="text-sm">💬</span>}
+                    {notification.type === 'DM_MESSAGE' && <span className="text-sm">💬</span>}
+                    {notification.type === 'REMINDER' && <span className="text-sm">📅</span>}
+                    {notification.type === 'MILESTONE' && <span className="text-sm">🚩</span>}
+                    {notification.type === 'INVITE' && <span className="text-sm">🔔</span>}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className={`text-sm ${!notification.read ? 'font-semibold' : 'font-medium'}`}>

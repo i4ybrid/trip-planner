@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import { PageLayout } from '@/components/page-layout';
 import { MessageCircle, Search, Send, MoreVertical, Phone, Video } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -14,6 +15,7 @@ function getOtherParticipant(conversation: DmConversation, currentUserId: string
 }
 
 export default function MessagesPage() {
+  const { data: session, status } = useSession();
   const [conversations, setConversations] = useState<DmConversation[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
@@ -22,7 +24,24 @@ export default function MessagesPage() {
   const [currentUserId, setCurrentUserId] = useState<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Show loading while session is being checked
+  if (status === 'loading') {
+    return (
+      <PageLayout>
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+            <p className="text-sm text-muted-foreground">Loading...</p>
+          </div>
+        </div>
+      </PageLayout>
+    );
+  }
+
   useEffect(() => {
+    // Wait for session to be loaded
+    if (!session) return;
+
     const loadConversations = async () => {
       setIsLoading(true);
       const [userResult, conversationsResult] = await Promise.all([
@@ -41,7 +60,7 @@ export default function MessagesPage() {
       setIsLoading(false);
     };
     loadConversations();
-  }, []);
+  }, [session]);
 
   useEffect(() => {
     const loadMessages = async () => {
@@ -51,7 +70,7 @@ export default function MessagesPage() {
       }
       const result = await api.getDmMessages(selectedConversation);
       if (result.data) {
-        setMessages(result.data);
+        setMessages([...result.data].reverse());
       }
     };
     loadMessages();

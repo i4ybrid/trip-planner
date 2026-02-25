@@ -65,13 +65,9 @@ export const useActivityStore = create<ActivityState>((set) => ({
       set((state) => {
         const activities = state.activities.map((a) => {
           if (a.id === activityId) {
-            const newVotes = [...(a.votes || [])];
-            const existingVoteIndex = newVotes.findIndex(v => v.option === option);
-            if (existingVoteIndex >= 0) {
-              newVotes[existingVoteIndex] = response.data!;
-            } else {
-              newVotes.push(response.data!);
-            }
+            // Remove any existing vote by the current user, then add the new vote
+            const newVotes = [...(a.votes || []).filter(v => v.userId !== response.data!.userId)];
+            newVotes.push(response.data!);
             return { ...a, votes: newVotes };
           }
           return a;

@@ -12,12 +12,12 @@ export interface Tab {
 }
 
 const defaultIconMap: Record<string, React.ReactNode> = {
-  overview: <HelpCircle className="h-4 w-4" />,
-  activities: <Star className="h-4 w-4" />,
-  timeline: <Clock className="h-4 w-4" />,
-  chat: <MessageCircle className="h-4 w-4" />,
-  payments: <Wallet className="h-4 w-4" />,
-  memories: <Images className="h-4 w-4" />,
+  overview: <HelpCircle className="h-4 w-4 text-current" />,
+  activities: <Star className="h-4 w-4 text-current" />,
+  timeline: <Clock className="h-4 w-4 text-current" />,
+  chat: <MessageCircle className="h-4 w-4 text-current" />,
+  payments: <Wallet className="h-4 w-4 text-current" />,
+  memories: <Images className="h-4 w-4 text-current" />,
 };
 
 interface TabsProps {

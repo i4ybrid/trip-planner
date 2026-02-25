@@ -13,7 +13,7 @@ export default function TripChat() {
   const tripId = params.id as string;
   
   const [messages, setMessages] = useState<Message[]>([]);
-  const [members, setMembers] = useState<(TripMember & { user: User })[]>([]);
+  const [members, setMembers] = useState<TripMember[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [showMentions, setShowMentions] = useState(false);
   const [mentionSearch, setMentionSearch] = useState('');
@@ -21,12 +21,20 @@ export default function TripChat() {
 
   useEffect(() => {
     const loadData = async () => {
-      const [messagesResult, membersResult] = await Promise.all([
-        api.getTripMessages(tripId),
-        api.getTripMembers(tripId),
-      ]);
-      if (messagesResult.data) setMessages(messagesResult.data);
-      if (membersResult.data) setMembers(membersResult.data.map(m => ({ ...m, user: { id: m.userId, name: 'User', email: '', createdAt: '', updatedAt: '' } })));
+      try {
+        const [messagesResult, membersResult] = await Promise.all([
+          api.getTripMessages(tripId),
+          api.getTripMembers(tripId),
+        ]);
+        if (messagesResult.data) {
+          setMessages([...messagesResult.data].reverse());
+          // Scroll to bottom after messages are loaded
+          setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'auto' }), 100);
+        }
+        if (membersResult.data) setMembers(membersResult.data);
+      } catch (error) {
+        console.error('Failed to load chat data:', error);
+      }
     };
     loadData();
   }, [tripId]);
@@ -55,10 +63,11 @@ export default function TripChat() {
   };
 
   const insertMention = (name: string) => {
-    const cursorPos = document.getElementById('chat-input')?.selectionStart || newMessage.length;
+    const input = document.getElementById('chat-input') as HTMLInputElement | null;
+    const cursorPos = input?.selectionStart || newMessage.length;
     const textBeforeCursor = newMessage.slice(0, cursorPos);
     const lastAtPos = textBeforeCursor.lastIndexOf('@');
-    
+
     if (lastAtPos !== -1) {
       const textAfterCursor = newMessage.slice(cursorPos);
       const textBeforeAt = newMessage.slice(0, lastAtPos);
@@ -66,7 +75,7 @@ export default function TripChat() {
       setNewMessage(newText);
     }
     setShowMentions(false);
-    document.getElementById('chat-input')?.focus();
+    input?.focus();
   };
 
   const handleSendMessage = async (e: React.FormEvent) => {
@@ -84,14 +93,14 @@ export default function TripChat() {
 
   const getUserName = (userId: string) => {
     const member = members.find(m => m.userId === userId);
-    if (member) return member.user?.name || 'User';
-    const names: Record<string, string> = {
-      'user-1': 'You',
-      'user-2': 'Sarah Chen',
-      'user-3': 'Mike Johnson',
-      'user-4': 'Emma Wilson',
-    };
-    return names[userId] || 'Unknown';
+    if (member?.user?.name) return member.user.name;
+    if (userId === 'user-1') return 'You';
+    return 'Unknown User';
+  };
+
+  const getMemberInitial = (userId: string) => {
+    const member = members.find(m => m.userId === userId);
+    return member?.user?.name?.charAt(0) || 'U';
   };
 
   return (
@@ -117,15 +126,15 @@ export default function TripChat() {
                         key={msg.id}
                         className={cn('flex', msg.senderId === 'user-1' ? 'justify-end' : 'justify-start')}
                       >
-                        <div className="flex items-end gap-2">
+                        <div className={cn('flex gap-2 max-w-[70%]', msg.senderId !== 'user-1' ? 'items-end' : 'items-center flex-row-reverse')}>
                           {msg.senderId !== 'user-1' && (
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-medium">
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-medium">
                               {getUserName(msg.senderId).charAt(0)}
                             </div>
                           )}
                           <div
                             className={cn(
-                              'max-w-[70%] rounded-lg px-4 py-2',
+                              'rounded-lg px-4 py-2',
                               msg.senderId === 'user-1'
                                 ? 'bg-primary text-primary-foreground'
                                 : 'bg-secondary'
@@ -134,7 +143,7 @@ export default function TripChat() {
                             {msg.senderId !== 'user-1' && (
                               <p className="mb-1 text-xs font-medium">{getUserName(msg.senderId)}</p>
                             )}
-                            <p className="text-sm">{msg.content}</p>
+                            <p className="text-sm leading-relaxed break-words">{msg.content}</p>
                           </div>
                         </div>
                       </div>
@@ -159,20 +168,23 @@ export default function TripChat() {
                           <span className="text-xs text-muted-foreground">Notify all</span>
                         </button>
                         {members
-                          .filter(m => !mentionSearch || m.user?.name?.toLowerCase().includes(mentionSearch))
-                          .map((member) => (
-                            <button
-                              key={member.userId}
-                              type="button"
-                              onClick={() => insertMention(member.user?.name?.split(' ')[0] || 'User')}
-                              className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm hover:bg-accent"
-                            >
-                              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
-                                {member.user?.name?.charAt(0) || 'U'}
-                              </div>
-                              <span>{member.user?.name || 'User'}</span>
-                            </button>
-                          ))}
+                          .filter(m => !mentionSearch || (m.user?.name || '').toLowerCase().includes(mentionSearch))
+                          .map((member) => {
+                            const name = getUserName(member.userId);
+                            return (
+                              <button
+                                key={member.userId}
+                                type="button"
+                                onClick={() => insertMention(name.split(' ')[0])}
+                                className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm hover:bg-accent"
+                              >
+                                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
+                                  {getMemberInitial(member.userId)}
+                                </div>
+                                <span>{name}</span>
+                              </button>
+                            );
+                          })}
                       </div>
                     )}
                     <form onSubmit={handleSendMessage} className="flex gap-2">
@@ -201,22 +213,25 @@ export default function TripChat() {
               <CardTitle className="text-base">Members ({members.length})</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              {members.map((member) => (
-                <div key={member.userId} className="flex items-center gap-3 rounded-lg p-2 hover:bg-secondary/50">
-                  <div className="relative">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-sm font-medium">
-                      {member.user?.name?.charAt(0) || 'U'}
+              {members.map((member) => {
+                const name = getUserName(member.userId);
+                return (
+                  <div key={member.userId} className="flex items-center gap-3 rounded-lg p-2 hover:bg-secondary/50">
+                    <div className="relative">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-sm font-medium">
+                        {getMemberInitial(member.userId)}
+                      </div>
+                      <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-background bg-green-500" />
                     </div>
-                    <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-background bg-green-500" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">
+                        {name}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">{member.role}</p>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">
-                      {member.user?.name || 'User'}
-                    </p>
-                    <p className="text-xs text-muted-foreground truncate">{member.role}</p>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </CardContent>
           </Card>
         </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import { LeftSidebar } from '@/components/left-sidebar';
 import { AppHeader } from '@/components/app-header';
 import { Bell, Heart, MessageCircle, ThumbsUp, Share2, MapPin, Calendar, DollarSign, Users, Filter } from 'lucide-react';
@@ -10,35 +11,46 @@ import { api } from '@/services/api';
 import { Notification, NotificationType } from '@/types';
 
 const notificationTypeMap: Record<NotificationType, string> = {
-  TRIP_INVITE: 'member',
-  TRIP_UPDATE: 'trip',
+  INVITE: 'member',
   VOTE: 'vote',
+  ACTIVITY: 'trip',
   PAYMENT: 'payment',
   MESSAGE: 'message',
-  MEMBER_JOINED: 'member',
-  MEMBER_REMOVED: 'member',
-  ACTIVITY_ADDED: 'trip',
-  ACTIVITY_VOTE: 'vote',
-  MEMBER_RESPONSE: 'member',
-  SYSTEM: 'trip',
+  REMINDER: 'trip',
+  MILESTONE: 'trip',
+  PAYMENT_DUE: 'payment',
+  PAYMENT_RECEIVED: 'payment',
+  VOTE_DEADLINE: 'vote',
+  TRIP_STARTING: 'trip',
+  FRIEND_REQUEST: 'member',
+  DM_MESSAGE: 'message',
 };
 
 export default function FeedPage() {
+  const { data: session, status } = useSession();
   const [filter, setFilter] = useState('all');
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Wait for session to be loaded
+    if (!session) return;
+
     const loadNotifications = async () => {
       setIsLoading(true);
-      const result = await api.getNotifications();
-      if (result.data) {
-        setNotifications(result.data);
+      try {
+        const result = await api.getNotifications();
+        if (result.data) {
+          setNotifications(result.data);
+        }
+      } catch (error) {
+        // Error handled by 401 redirect in api.ts
+        console.error('Failed to load notifications:', error);
       }
       setIsLoading(false);
     };
     loadNotifications();
-  }, []);
+  }, [session]);
 
   const filteredNotifications = filter === 'all' 
     ? notifications 
@@ -47,13 +59,13 @@ export default function FeedPage() {
   const getActivityIcon = (type: NotificationType) => {
     const mappedType = notificationTypeMap[type] || 'trip';
     switch (mappedType) {
-      case 'vote': return <ThumbsUp className="h-4 w-4" />;
-      case 'message': return <MessageCircle className="h-4 w-4" />;
-      case 'like': return <Heart className="h-4 w-4" />;
-      case 'payment': return <DollarSign className="h-4 w-4" />;
-      case 'trip': return <Calendar className="h-4 w-4" />;
-      case 'member': return <Users className="h-4 w-4" />;
-      default: return <Bell className="h-4 w-4" />;
+      case 'vote': return <ThumbsUp className="h-4 w-4 text-current" />;
+      case 'message': return <MessageCircle className="h-4 w-4 text-current" />;
+      case 'like': return <Heart className="h-4 w-4 text-current" />;
+      case 'payment': return <DollarSign className="h-4 w-4 text-current" />;
+      case 'trip': return <Calendar className="h-4 w-4 text-current" />;
+      case 'member': return <Users className="h-4 w-4 text-current" />;
+      default: return <Bell className="h-4 w-4 text-current" />;
     }
   };
 

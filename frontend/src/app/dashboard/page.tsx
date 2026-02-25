@@ -22,13 +22,13 @@ interface TripWithMembers {
   coverImage?: string;
   createdAt: string;
   updatedAt: string;
-  members: (TripMember & { user: User })[];
+  members: TripMember[];
 }
 
 export default function DashboardPage() {
   const router = useRouter();
   const { trips, isLoading, error, fetchTrips } = useTripStore();
-  const [membersMap, setMembersMap] = useState<Record<string, (TripMember & { user: User })[]>>({});
+  const [membersMap, setMembersMap] = useState<Record<string, TripMember[]>>({});
 
   useEffect(() => {
     fetchTrips();
@@ -37,14 +37,22 @@ export default function DashboardPage() {
   useEffect(() => {
     const loadMembers = async () => {
       const memberPromises = trips.map(async (trip) => {
-        const result = await api.getTripMembers(trip.id);
-        return {
-          tripId: trip.id,
-          members: result.data?.map(m => ({ ...m, user: { id: m.userId, name: 'User', email: '', createdAt: '', updatedAt: '' } })) || []
-        };
+        try {
+          const result = await api.getTripMembers(trip.id);
+          return {
+            tripId: trip.id,
+            members: result.data || []
+          };
+        } catch (error) {
+          console.error(`Failed to load members for trip ${trip.id}:`, error);
+          return {
+            tripId: trip.id,
+            members: []
+          };
+        }
       });
       const results = await Promise.all(memberPromises);
-      const map: Record<string, (TripMember & { user: User })[]> = {};
+      const map: Record<string, TripMember[]> = {};
       results.forEach(r => { map[r.tripId] = r.members; });
       setMembersMap(map);
     };
@@ -53,8 +61,14 @@ export default function DashboardPage() {
     }
   }, [trips]);
 
-  const getTripMembers = (tripId: string): (TripMember & { user: User })[] => {
+  const getTripMembers = (tripId: string): TripMember[] => {
     return membersMap[tripId] || [];
+  };
+
+  const getMemberName = (member: TripMember) => {
+    if (member.user?.name) return member.user.name;
+    if (member.userId === 'user-1') return 'You';
+    return 'Unknown User';
   };
 
   const activeTrips = trips.filter(
@@ -109,7 +123,7 @@ export default function DashboardPage() {
                     <TripCard
                       key={trip.id}
                       trip={trip}
-                      members={members.map(m => m.user?.name || '').filter(Boolean)}
+                      members={members.map(m => getMemberName(m))}
                       onClick={() => handleTripClick(trip.id)}
                     />
                   );
@@ -139,7 +153,7 @@ export default function DashboardPage() {
                     <TripCard
                       key={trip.id}
                       trip={trip}
-                      members={members.map(m => m.user?.name || '').filter(Boolean)}
+                      members={members.map(m => getMemberName(m))}
                       onClick={() => handleTripClick(trip.id)}
                     />
                   );

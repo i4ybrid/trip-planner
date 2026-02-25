@@ -7,21 +7,44 @@ import { Card, CardHeader, CardTitle, CardContent, Button, Badge, Select } from 
 import { formatDateRange, formatCurrency, cn } from '@/lib/utils';
 import { api } from '@/services/api';
 import { MapPin, Calendar, Users, DollarSign, Share2, Settings } from 'lucide-react';
-import { TripMember, User } from '@/types';
+import { TripMember, User, Activity, BillSplit } from '@/types';
 
 export default function TripOverview() {
   const params = useParams();
   const tripId = params.id as string;
-  
+
   const { currentTrip, isLoading, fetchTrip, changeStatus } = useTripStore();
-  const [members, setMembers] = useState<(TripMember & { user: User })[]>([]);
+  const [members, setMembers] = useState<TripMember[]>([]);
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [billSplits, setBillSplits] = useState<BillSplit[]>([]);
+  const [stats, setStats] = useState({ total: 0, collected: 0 });
 
   useEffect(() => {
     if (tripId) {
       fetchTrip(tripId);
-      api.getTripMembers(tripId).then(result => {
-        if (result.data) {
-          setMembers(result.data.map(m => ({ ...m, user: { id: m.userId, name: 'User', email: '', createdAt: '', updatedAt: '' } })));
+      
+      // Load all data in parallel
+      Promise.all([
+        api.getTripMembers(tripId),
+        api.getActivities(tripId),
+        api.getBillSplits(tripId),
+      ]).then(([membersResult, activitiesResult, billSplitsResult]) => {
+        if (membersResult.data) {
+          setMembers(membersResult.data);
+        }
+        if (activitiesResult.data) {
+          setActivities(activitiesResult.data);
+        }
+        if (billSplitsResult.data) {
+          setBillSplits(billSplitsResult.data);
+          
+          // Calculate budget stats
+          const total = billSplitsResult.data.reduce((sum, b) => sum + Number(b.amount), 0);
+          const collected = billSplitsResult.data.reduce((sum, b) => {
+            const paidMembers = b.members?.filter(m => m.status === 'PAID' || m.status === 'CONFIRMED') || [];
+            return sum + paidMembers.reduce((memberSum, m) => memberSum + Number(m.dollarAmount), 0);
+          }, 0);
+          setStats({ total, collected });
         }
       });
     }
@@ -90,7 +113,7 @@ export default function TripOverview() {
               
               {currentTrip.startDate && (
                 <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <Calendar className="h-4 w-4 text-current" />
                   <span>{formatDateRange(currentTrip.startDate, currentTrip.endDate)}</span>
                 </div>
               )}
@@ -130,7 +153,7 @@ export default function TripOverview() {
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between rounded-lg bg-secondary p-3">
                 <span className="text-sm text-muted-foreground">Activities</span>
-                <span className="font-semibold">0</span>
+                <span className="font-semibold">{activities.length}</span>
               </div>
               <div className="flex items-center justify-between rounded-lg bg-secondary p-3">
                 <span className="text-sm text-muted-foreground">Members</span>
@@ -153,13 +176,13 @@ export default function TripOverview() {
             <CardContent className="space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Total</span>
-                <span className="font-semibold">{formatCurrency(0)}</span>
+                <span className="font-semibold">{formatCurrency(stats.total)}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Collected</span>
-                <span className="font-semibold text-green-600">{formatCurrency(0)}</span>
+                <span className="font-semibold text-green-600">{formatCurrency(stats.collected)}</span>
               </div>
-              <Button variant="outline" className="w-full">
+              <Button variant="outline" className="w-full" onClick={() => window.location.href = `/trip/${tripId}/payments`}>
                 View Payments
               </Button>
             </CardContent>
