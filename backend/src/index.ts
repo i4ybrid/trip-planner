@@ -5,15 +5,17 @@ import rateLimit from 'express-rate-limit';
 import { createServer } from 'http';
 import dotenv from 'dotenv';
 
-import { setupSocketIO } from '@/lib/socket';
-import usersRouter from '@/routes/users';
-import tripsRouter from '@/routes/trips';
-import activitiesRouter from '@/routes/activities';
-import invitesRouter from '@/routes/invites';
-import messagesRouter from '@/routes/messages';
-import paymentsRouter from '@/routes/payments';
-import friendsRouter from '@/routes/friends';
-import notificationsRouter from '@/routes/notifications';
+import { setupSocketIO } from './lib/socket';
+import { storageConfig } from './lib/storage';
+import { logger } from './lib/logger';
+import usersRouter from './routes/users';
+import tripsRouter from './routes/trips';
+import activitiesRouter from './routes/activities';
+import invitesRouter from './routes/invites';
+import messagesRouter from './routes/messages';
+import paymentsRouter from './routes/payments';
+import friendsRouter from './routes/friends';
+import notificationsRouter from './routes/notifications';
 
 // Load environment variables
 dotenv.config();
@@ -23,7 +25,14 @@ app.set('strict routing', true); // Treat /trips and /trips/ as different routes
 const PORT = process.env.PORT || 4000;
 
 // Security middleware
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      imgSrc: ["'self'", "data:", "http://localhost:3000", "https://localhost:3000"],
+    },
+  },
+}));
 
 // CORS configuration
 app.use(cors({
@@ -42,6 +51,22 @@ app.use('/api', limiter);
 // Body parsing middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Serve uploaded files (only for local storage)
+if (!storageConfig.isRemote) {
+  logger.debug('[server] Serving static files from:', storageConfig.uploadDir);
+  logger.debug('[server] Static files available at: http://localhost:' + PORT + '/uploads');
+
+  // Add CORS headers for uploaded files and disable restrictive headers
+  app.use('/uploads', (_req, res, next) => {
+    res.header('Access-Control-Allow-Origin', process.env.FRONTEND_URL || 'http://localhost:3000');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Cross-Origin-Resource-Policy', 'cross-origin');
+    next();
+  });
+
+  app.use('/uploads', express.static(storageConfig.uploadDir));
+}
 
 // Health check endpoint
 app.get('/health', (_req, res) => {
@@ -69,7 +94,7 @@ app.use((_req, res) => {
 
 // Error handler
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  console.error('Error:', err);
+  logger.error('Error:', err);
   res.status(500).json({
     error: 'Internal server error',
     message: process.env.NODE_ENV === 'development' ? err.message : undefined,
@@ -84,9 +109,9 @@ const io = setupSocketIO(server);
 
 // Start server
 server.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📡 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🔗 Health check: http://localhost:${PORT}/health`);
+  logger.info(`🚀 Server running on port ${PORT}`);
+  logger.info(`📡 Environment: ${process.env.NODE_ENV || 'development'}`);
+  logger.info(`🔗 Health check: http://localhost:${PORT}/health`);
 });
 
 export { app, server, io };

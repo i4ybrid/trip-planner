@@ -2,6 +2,7 @@ import { Server as HTTPServer } from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '@/middleware/auth';
+import { logger } from './logger';
 
 interface SocketData {
   userId: string;
@@ -36,18 +37,18 @@ export function setupSocketIO(server: HTTPServer) {
 
   io.on('connection', (socket) => {
     const userId = socket.data.userId as string;
-    console.log(`User connected: ${userId}`);
+    logger.trace(`User connected: ${userId}`);
 
     // Join trip room
     socket.on('join-trip', (tripId: string) => {
       socket.join(`trip:${tripId}`);
-      console.log(`User ${userId} joined trip ${tripId}`);
+      logger.trace(`User ${userId} joined trip ${tripId}`);
     });
 
     // Leave trip room
     socket.on('leave-trip', (tripId: string) => {
       socket.leave(`trip:${tripId}`);
-      console.log(`User ${userId} left trip ${tripId}`);
+      logger.trace(`User ${userId} left trip ${tripId}`);
     });
 
     // Send message to trip
@@ -79,7 +80,7 @@ export function setupSocketIO(server: HTTPServer) {
     // Join DM conversation
     socket.on('join-dm', (conversationId: string) => {
       socket.join(`dm:${conversationId}`);
-      console.log(`User ${userId} joined DM ${conversationId}`);
+      logger.trace(`User ${userId} joined DM ${conversationId}`);
     });
 
     // Send DM
@@ -108,7 +109,7 @@ export function setupSocketIO(server: HTTPServer) {
 
     // Disconnect
     socket.on('disconnect', () => {
-      console.log(`User disconnected: ${userId}`);
+      logger.trace(`User disconnected: ${userId}`);
     });
   });
 

@@ -1,7 +1,9 @@
 import { Router } from 'express';
-import { authMiddleware, AuthRequest } from '@/middleware/auth';
-import { notificationService } from '@/services/notification.service';
-import { mediaService } from '@/services/media.service';
+import { authMiddleware, AuthRequest } from '../middleware/auth';
+import { upload } from '../middleware/upload';
+import { storageConfig } from '../lib/storage';
+import { notificationService } from '../services/notification.service';
+import { mediaService } from '../services/media.service';
 
 const router = Router();
 
@@ -93,30 +95,50 @@ router.get('/trips/:tripId/media', async (req: AuthRequest, res) => {
 });
 
 // POST /api/trips/:tripId/media - Upload media
-router.post('/trips/:tripId/media', async (req: AuthRequest, res) => {
+router.post('/trips/:tripId/media', authMiddleware, upload.single('file'), async (req: AuthRequest, res) => {
   try {
     const userId = req.user!.userId;
     const tripId = req.params.tripId;
-    
-    // In a real implementation, this would handle file uploads to S3
-    // For now, we expect the URL to be provided
-    const { type, url, thumbnailUrl, activityId, caption } = req.body;
-    
-    if (!type || !url) {
-      res.status(400).json({ error: 'type and url are required' });
-      return;
+
+    // Handle file upload or URL
+    let url: string;
+    let type: 'image' | 'video';
+
+    if (req.file) {
+      // File was uploaded - get URL from storage config
+      url = storageConfig.getFileUrl(req.file.filename);
+      
+      // For local files, construct full URL with backend host
+      if (!storageConfig.isRemote) {
+        const protocol = req.protocol;
+        const host = req.get('host') || process.env.BACKEND_URL || 'localhost:4000';
+        url = `${protocol}://${host}${url}`;
+      }
+      
+      type = req.file.mimetype.startsWith('image/') ? 'image' : 'video';
+    } else {
+      // URL provided in body
+      const { type: bodyType, url: bodyUrl } = req.body;
+
+      if (!bodyType || !bodyUrl) {
+        res.status(400).json({ error: 'type and url are required, or provide a file' });
+        return;
+      }
+
+      type = bodyType as 'image' | 'video';
+      url = bodyUrl;
     }
-    
+
     const mediaItem = await mediaService.createMediaItem({
       tripId,
       uploaderId: userId,
-      type: type as 'image' | 'video',
+      type,
       url,
-      thumbnailUrl,
-      activityId,
-      caption,
+      caption: req.body.caption,
+      thumbnailUrl: req.body.thumbnailUrl,
+      activityId: req.body.activityId,
     });
-    
+
     res.status(201).json({ data: mediaItem });
   } catch (error: any) {
     res.status(500).json({ error: error.message });

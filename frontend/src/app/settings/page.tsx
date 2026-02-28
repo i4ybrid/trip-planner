@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, Button, Input, Label } from '@/components';
 import { LeftSidebar } from '@/components/left-sidebar';
 import { AppHeader } from '@/components/app-header';
-import { Mail, Lock, Bell, Wallet, Save, Trash2, Plus, Check, MessageSquare, Smartphone } from 'lucide-react';
+import { Mail, Lock, Bell, Wallet, Save, Trash2, Plus, Check, MessageSquare, Smartphone, Camera, Image } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { api } from '@/services/api';
 import { Settings } from '@/types';
@@ -21,12 +21,15 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [saved, setSaved] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [profile, setProfile] = useState({
     name: '',
     email: '',
     phone: '',
+    avatarUrl: '',
   });
 
   const [passwords, setPasswords] = useState({
@@ -74,6 +77,7 @@ export default function SettingsPage() {
           name: userResult.data.name || '',
           email: userResult.data.email || '',
           phone: userResult.data.phone || '',
+          avatarUrl: userResult.data.avatarUrl || '',
         });
         const methods: PaymentMethod[] = [];
         if (userResult.data.venmo) methods.push({ id: 'venmo', type: 'venmo', handle: userResult.data.venmo });
@@ -101,6 +105,58 @@ export default function SettingsPage() {
     if (!result.error) {
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
+    }
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
+    }
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image size must be less than 5MB');
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+    try {
+      const result = await api.uploadAvatar(file);
+      if (result.data) {
+        setProfile({ ...profile, avatarUrl: result.data.avatarUrl });
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+      }
+    } catch (error) {
+      console.error('Failed to upload avatar:', error);
+      alert('Failed to upload avatar. Please try again.');
+    } finally {
+      setIsUploadingAvatar(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    if (!confirm('Are you sure you want to remove your avatar?')) return;
+
+    setIsUploadingAvatar(true);
+    try {
+      await api.removeAvatar();
+      setProfile({ ...profile, avatarUrl: '' });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (error) {
+      console.error('Failed to remove avatar:', error);
+      alert('Failed to remove avatar. Please try again.');
+    } finally {
+      setIsUploadingAvatar(false);
     }
   };
 
@@ -219,39 +275,99 @@ export default function SettingsPage() {
                   <CardHeader>
                     <CardTitle>Profile Settings</CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <Label htmlFor="name">Full Name</Label>
-                      <Input
-                        id="name"
-                        value={profile.name}
-                        onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-                        className="mt-1"
-                      />
+                  <CardContent className="space-y-6">
+                    {/* Avatar Upload */}
+                    <div className="flex items-center gap-6">
+                      <div className="relative h-24 w-24 shrink-0">
+                        {profile.avatarUrl ? (
+                          <div className="relative h-24 w-24 rounded-full overflow-hidden bg-muted">
+                            <img
+                              src={profile.avatarUrl}
+                              alt={profile.name}
+                              className="h-full w-full object-cover"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23ddd" width="100" height="100"/%3E%3Ctext fill="%23999" x="50%25" y="50%25" text-anchor="middle" dy=".3em" font-size="40"%3E' + (profile.name?.charAt(0) || 'U').toUpperCase() + '%3C/text%3E%3C/svg%3E';
+                              }}
+                            />
+                          </div>
+                        ) : (
+                          <div className="flex h-24 w-24 items-center justify-center rounded-full bg-primary/10 text-2xl font-medium text-primary">
+                            {profile.name?.charAt(0)?.toUpperCase() || 'U'}
+                          </div>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <h3 className="font-semibold">Profile Photo</h3>
+                        <p className="text-sm text-muted-foreground">
+                          JPG, GIF or PNG. Max size 5MB.
+                        </p>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={isUploadingAvatar}
+                          >
+                            <Camera className="mr-2 h-4 w-4" />
+                            {isUploadingAvatar ? 'Uploading...' : 'Upload Photo'}
+                          </Button>
+                          {profile.avatarUrl && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-destructive hover:text-destructive"
+                              onClick={handleRemoveAvatar}
+                              disabled={isUploadingAvatar}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Remove
+                            </Button>
+                          )}
+                        </div>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          onChange={handleAvatarUpload}
+                          className="hidden"
+                        />
+                      </div>
                     </div>
-                    <div>
-                      <Label htmlFor="email">Email Address</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={profile.email}
-                        onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                        className="mt-1"
-                      />
+
+                    <div className="border-t border-border pt-4">
+                      <div>
+                        <Label htmlFor="name">Full Name</Label>
+                        <Input
+                          id="name"
+                          value={profile.name}
+                          onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="email">Email Address</Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          value={profile.email}
+                          onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="phone">Phone Number</Label>
+                        <Input
+                          id="phone"
+                          type="tel"
+                          value={profile.phone}
+                          onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+                          className="mt-1"
+                        />
+                      </div>
+                      <Button onClick={handleProfileSave} disabled={isSaving}>
+                        {isSaving ? 'Saving...' : saved ? <><Check className="mr-2 h-4 w-4" /> Saved</> : <><Save className="mr-2 h-4 w-4" /> Save Changes</>}
+                      </Button>
                     </div>
-                    <div>
-                      <Label htmlFor="phone">Phone Number</Label>
-                      <Input
-                        id="phone"
-                        type="tel"
-                        value={profile.phone}
-                        onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-                        className="mt-1"
-                      />
-                    </div>
-                    <Button onClick={handleProfileSave} disabled={isSaving}>
-                      {isSaving ? 'Saving...' : saved ? <><Check className="mr-2 h-4 w-4" /> Saved</> : <><Save className="mr-2 h-4 w-4" /> Save Changes</>}
-                    </Button>
                   </CardContent>
                 </Card>
               )}

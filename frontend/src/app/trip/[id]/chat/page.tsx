@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useParams } from 'next/navigation';
-import { Card, CardHeader, CardTitle, CardContent, Input, Button } from '@/components';
+import { Card, CardHeader, CardTitle, CardContent, Input, Button, Textarea } from '@/components';
 import { api } from '@/services/api';
 import { Send, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -39,18 +39,18 @@ export default function TripChat() {
     loadData();
   }, [tripId]);
 
-  const handleMessageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleMessageInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
     const cursorPos = e.target.selectionStart || 0;
     const textBeforeCursor = value.slice(0, cursorPos);
     const lastAtPos = textBeforeCursor.lastIndexOf('@');
-    
+
     setNewMessage(value);
-    
+
     if (lastAtPos !== -1) {
       const searchText = textBeforeCursor.slice(lastAtPos + 1);
       const isLastAt = !textBeforeCursor.slice(lastAtPos + 1).includes(' ');
-      
+
       if (isLastAt || searchText.length > 0) {
         setShowMentions(true);
         setMentionSearch(searchText.toLowerCase());
@@ -62,8 +62,17 @@ export default function TripChat() {
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // Enter without Shift sends message
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage(e as any);
+    }
+    // Shift+Enter creates new line (default behavior)
+  };
+
   const insertMention = (name: string) => {
-    const input = document.getElementById('chat-input') as HTMLInputElement | null;
+    const input = document.getElementById('chat-input') as HTMLTextAreaElement | null;
     const cursorPos = input?.selectionStart || newMessage.length;
     const textBeforeCursor = newMessage.slice(0, cursorPos);
     const lastAtPos = textBeforeCursor.lastIndexOf('@');
@@ -188,13 +197,15 @@ export default function TripChat() {
                       </div>
                     )}
                     <form onSubmit={handleSendMessage} className="flex gap-2">
-                      <Input
+                      <Textarea
                         id="chat-input"
                         placeholder="Type a message... (@ to mention)"
                         value={newMessage}
                         onChange={handleMessageInputChange}
+                        onKeyDown={handleKeyDown}
                         onBlur={() => setTimeout(() => setShowMentions(false), 200)}
-                        className="flex-1"
+                        className="flex-1 min-h-[44px] max-h-32 resize-y"
+                        rows={1}
                       />
                       <Button type="submit">
                         <Send className="h-4 w-4" />

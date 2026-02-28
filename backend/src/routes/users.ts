@@ -1,5 +1,7 @@
 import { Router } from 'express';
 import { authMiddleware, AuthRequest, generateToken } from '@/middleware/auth';
+import { upload } from '@/middleware/upload';
+import { storageConfig } from '@/lib/storage';
 import { userService } from '@/services/user.service';
 import { createUserSchema, updateUserSchema, updateSettingsSchema } from '@/lib/validations';
 
@@ -96,7 +98,7 @@ router.patch('/users/me', authMiddleware, async (req: AuthRequest, res) => {
   try {
     const userId = req.user!.userId;
     const validatedData = updateUserSchema.parse(req.body);
-    
+
     const user = await userService.updateUser(userId, validatedData);
     res.json({ data: user });
   } catch (error: any) {
@@ -104,6 +106,56 @@ router.patch('/users/me', authMiddleware, async (req: AuthRequest, res) => {
       res.status(400).json({ error: 'Validation error', details: error.errors });
       return;
     }
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/users/me/avatar - Upload avatar
+router.post('/users/me/avatar', authMiddleware, upload.single('file'), async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.userId;
+
+    if (!req.file) {
+      res.status(400).json({ error: 'File is required' });
+      return;
+    }
+
+    // Get URL from storage config
+    let avatarUrl = storageConfig.getFileUrl(req.file.filename);
+
+    // For local files, construct full URL
+    if (!storageConfig.isRemote) {
+      const protocol = req.protocol;
+      const host = req.get('host') || process.env.BACKEND_URL || 'localhost:4000';
+      avatarUrl = `${protocol}://${host}${avatarUrl}`;
+    }
+
+    // Update user with new avatar URL
+    const user = await userService.updateUser(userId, { avatarUrl });
+
+    res.json({ data: { avatarUrl: user.avatarUrl } });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// DELETE /api/users/me/avatar - Remove avatar
+router.delete('/users/me/avatar', authMiddleware, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.userId;
+
+    // Get current user to get avatar URL
+    const user = await userService.getUserById(userId);
+    if (user?.avatarUrl) {
+      // Delete the file from storage
+      await storageConfig.deleteFile(user.avatarUrl);
+    }
+
+    // Update user with null avatar
+    const updatedUser = await userService.updateUser(userId, { avatarUrl: null });
+
+    res.json({ message: 'Avatar removed successfully' });
+  } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 });

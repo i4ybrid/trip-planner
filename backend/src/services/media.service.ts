@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma';
+import { storageConfig } from '@/lib/storage';
 
 export class MediaService {
   async createMediaItem(data: {
@@ -82,6 +83,17 @@ export class MediaService {
   }
 
   async deleteMediaItem(id: string) {
+    // First, get the media item to retrieve the URL
+    const mediaItem = await this.getMediaItem(id);
+    
+    if (!mediaItem) {
+      throw new Error('Media item not found');
+    }
+    
+    // Delete the file from storage
+    await storageConfig.deleteFile(mediaItem.url);
+    
+    // Delete the database record
     return prisma.mediaItem.delete({
       where: { id },
     });

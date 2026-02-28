@@ -313,6 +313,18 @@ export class BillSplitService {
   }
 
   async confirmPayment(billSplitId: string) {
+    // Update all PAID members to CONFIRMED
+    await prisma.billSplitMember.updateMany({
+      where: {
+        billSplitId,
+        status: 'PAID',
+      },
+      data: {
+        status: 'CONFIRMED',
+      },
+    });
+
+    // Update bill split status to CONFIRMED
     return prisma.billSplit.update({
       where: { id: billSplitId },
       data: { status: 'CONFIRMED' },

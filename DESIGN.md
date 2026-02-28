@@ -10,6 +10,14 @@
 - Reduce friction in collecting and splitting payments
 - Create lasting memories through shared photo/video albums
 
+### Recent Updates (Feb 2025)
+- **Logging System**: Custom logger with TRACE/DEBUG/INFO/WARN/ERROR levels
+- **Memories Page**: Dropdown menus, edit captions, loading states, auto-sorted display
+- **Chat Improvements**: Enter to send, Shift+Enter for new line, multi-line textarea
+- **Media Storage**: Auto-creation of uploads directory, CORS-enabled file serving
+- **UI Components**: Reusable HoverDropdown component with click/hover modes
+- **Avatar Upload**: Profile photo upload with preview, remove option, initials fallback
+
 ---
 
 ## 2. System Architecture
@@ -88,6 +96,35 @@ trip-planner/
 | Auth | NextAuth.js (Frontend) + JWT | Social login providers |
 | File Storage | AWS S3 | Photos, videos |
 | Email | SendGrid | Transactional emails |
+| Logging | Custom logger | Structured logging with levels |
+
+### Logging
+
+The backend uses a custom logger utility (`backend/src/lib/logger.ts`) with configurable log levels:
+
+| Level | Purpose | Example Use Cases |
+|-------|---------|-------------------|
+| `TRACE` | Verbose debugging | Socket connections, file operations, upload processing, storage config details |
+| `DEBUG` | Development info | Server startup, static file serving, configuration |
+| `INFO` | Important events | Server running, health checks, environment info |
+| `WARN` | Warnings | Non-critical issues that should be reviewed |
+| `ERROR` | Errors | Unhandled exceptions, failed operations |
+
+**Configuration:**
+- Set via `LOG_LEVEL` environment variable (e.g., `LOG_LEVEL=DEBUG`)
+- Defaults to `DEBUG` in development, `INFO` in production
+- Can be changed at runtime using `setLogLevel()` function
+
+**Usage:**
+```typescript
+import { logger } from './lib/logger';
+
+logger.trace('Detailed debug info');  // Verbose internal operations
+logger.debug('Useful for dev');       // Development debugging
+logger.info('Important event');       // Server startup, health
+logger.warn('Potential issue');       // Non-critical warnings
+logger.error('Something broke');      // Errors and exceptions
+```
 
 ---
 
@@ -574,6 +611,8 @@ POST   /api/auth/signout          Sign out
 ```
 GET    /api/users/me              Get current user profile
 PATCH  /api/users/me              Update profile (name, avatar, payment handles)
+POST   /api/users/me/avatar       Upload profile photo
+DELETE /api/users/me/avatar       Remove profile photo
 GET    /api/users/:id             Get user by ID (public info only)
 ```
 
@@ -641,6 +680,99 @@ GET    /api/trips/:id/media       List media items
 POST   /api/trips/:id/media       Upload media (photos/videos)
 DELETE /api/media/:id             Delete media
 ```
+
+#### Upload Media
+```
+POST /api/trips/:tripId/media
+Content-Type: multipart/form-data
+Authorization: Bearer <token>
+
+Form Data:
+  file: <image/video file>        # Binary file upload
+  caption: string                 # Optional caption
+
+Response (201 Created):
+{
+  "data": {
+    "id": "media-123",
+    "tripId": "trip-456",
+    "uploaderId": "user-789",
+    "type": "image",               // "image" | "video"
+    "url": "http://localhost:4000/uploads/abc-123.jpg",
+    "caption": "Sunset at the beach",
+    "createdAt": "2024-02-25T10:30:00Z"
+  }
+}
+```
+
+**File Storage Configuration:**
+
+Media files are stored based on the `MEDIA_STORAGE_URL` environment variable:
+
+| `MEDIA_STORAGE_URL` | Storage Location | URL Format |
+|---------------------|------------------|------------|
+| `""` (empty/default) | `./uploads` | `http://localhost:4000/uploads/{filename}` |
+| `/absolute/path` | `/absolute/path` | `http://localhost:4000/uploads/{filename}` |
+| `https://cdn.example.com` | `./uploads` (synced) | `https://cdn.example.com/{filename}` |
+
+**Supported File Types:**
+- Images: `image/*` (JPEG, PNG, GIF, WebP, etc.)
+- Videos: `video/*` (MP4, WebM, MOV, etc.)
+
+**File Size Limit:** 50MB per file
+
+### Memories (Trip Media)
+
+**Frontend Features:**
+- Grid layout displaying photos/videos (2 columns mobile, 3-4 on desktop)
+- Drag-and-drop file upload support
+- Click to view full-size with download/delete options
+- Per-item dropdown menu (three-dot) with:
+  - **Edit caption** - Update memory caption
+  - **Delete** - Remove memory (with confirmation)
+- Memories sorted chronologically (oldest first)
+- Hover overlay shows caption and uploader info
+- Loading state while fetching memories
+- Upload progress indicator with disabled state during upload
+
+**UI Components:**
+- `HoverDropdown` - Reusable dropdown menu (supports `hover` and `click` modes)
+- Drop zone for file uploads (drag-and-drop only, no click-to-upload)
+
+**Media Storage:**
+- Local storage: `./uploads` directory (auto-created on startup)
+- Remote storage: Configurable via `MEDIA_STORAGE_URL` environment variable
+- Supported types: Images (`image/*`), Videos (`video/*`)
+- File size limit: 50MB per file
+- CORS-enabled for cross-origin requests
+
+**Backend Services:**
+- `mediaService` - CRUD operations for media items
+- `storageConfig` - File storage configuration and operations
+- Auto-creation of uploads directory if it doesn't exist
+
+### Avatar Upload
+
+**Frontend Features:**
+- Profile photo preview with initials fallback
+- Upload button with file type validation (images only)
+- File size validation (max 5MB)
+- Remove avatar option
+- Loading state during upload
+- Auto-refresh after upload completes
+
+**API Endpoints:**
+- `POST /api/users/me/avatar` - Upload avatar (multipart/form-data)
+- `DELETE /api/users/me/avatar` - Remove avatar
+
+**Storage:**
+- Uses same storage system as media files (`./uploads` or remote)
+- Files stored with unique filenames (UUID)
+- Full URL returned after upload
+
+**Fallback Display:**
+- When no avatar: Show user's initial in colored circle
+- When image fails to load: Show initial as fallback
 
 ### Friends
 ```
@@ -833,7 +965,8 @@ POST   /api/notifications/mark-all-read  Mark all as read
 GET    /api/settings               Get user settings
 PATCH  /api/settings              Update settings (notifications, friend requests)
 POST   /api/settings/password      Change password
-POST   /api/settings/avatar        Upload profile picture
+POST   /api/users/me/avatar        Upload profile picture
+DELETE /api/users/me/avatar        Remove profile picture
 ```
 
 ### Payment Methods
@@ -989,6 +1122,35 @@ IDEA ──→ PLANNING ──→ CONFIRMED ──→ HAPPENING ──→ COMPLE
            & Plan       & Book"
 ```
 
+### Shared UI Components
+
+**HoverDropdown** (`components/hover-dropdown.tsx`)
+- Reusable dropdown menu component
+- Two modes: `hover` (mouse enter/leave) and `click` (toggle on click)
+- Supports left or right alignment
+- Click-outside-to-close functionality
+- Keyboard accessible
+- Customizable trigger and items
+
+```typescript
+<HoverDropdown
+  mode="click"           // 'hover' | 'click'
+  align="right"          // 'left' | 'right'
+  trigger={<Button>...</Button>}
+  items={[
+    { label: 'Edit', icon: <EditIcon />, onClick: () => {...} },
+    { label: 'Delete', icon: <TrashIcon />, onClick: () => {...}, className: 'text-destructive' },
+  ]}
+/>
+```
+
+**Modal** (`components/ui/modal.tsx`)
+- Full-screen overlay with backdrop
+- Escape key to close
+- Click backdrop to close
+- Multiple sizes: sm, md, lg, xl
+- Optional title and description
+
 ### Milestones & Notifications
 | Trigger | Notification | Type |
 |---------|---------------|------|
@@ -1077,6 +1239,24 @@ The Overview tab shows key trip information:
 - @mentions for user tagging
 - Message editing
 - Reply threads
+
+**Input Behavior:**
+- `Enter` - Send message
+- `Shift+Enter` - New line (multi-line support)
+- Multi-line textarea with auto-resize (max 320px height)
+
+**UI Components:**
+- `Textarea` input with dynamic height (min 44px, max 320px)
+- Mention dropdown triggered by `@` character
+- Filterable member list with @everyone option
+- Message bubbles with sender identification
+- Auto-scroll to latest message on load and send
+
+**Mention System:**
+- Type `@` to open mention dropdown
+- Filter members by typing name
+- Click to insert mention at cursor position
+- @everyone notifies all trip members
 
 ---
 

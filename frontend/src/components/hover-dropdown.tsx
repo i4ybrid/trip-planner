@@ -10,6 +10,7 @@ interface DropdownItem {
   icon?: ReactNode;
   disabled?: boolean;
   divider?: boolean;
+  className?: string;
 }
 
 interface HoverDropdownProps {
@@ -18,14 +19,16 @@ interface HoverDropdownProps {
   align?: 'left' | 'right';
   className?: string;
   onOpenChange?: (open: boolean) => void;
+  mode?: 'hover' | 'click';
 }
 
-export function HoverDropdown({ 
-  trigger, 
-  items, 
+export function HoverDropdown({
+  trigger,
+  items,
   align = 'right',
   className,
-  onOpenChange 
+  onOpenChange,
+  mode = 'hover'
 }: HoverDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -42,21 +45,33 @@ export function HoverDropdown({
     onOpenChange?.(false);
   };
 
+  const handleTriggerClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsOpen(!isOpen);
+    onOpenChange?.(!isOpen);
+  };
+
   return (
     <div className={cn("relative", className)} ref={dropdownRef}>
-      <div
-        onMouseEnter={() => {
-          setIsOpen(true);
-          onOpenChange?.(true);
-        }}
-        onMouseLeave={() => {
-          setIsOpen(false);
-          onOpenChange?.(false);
-        }}
-      >
-        {trigger}
-      </div>
-      
+      {mode === 'hover' ? (
+        <div
+          onMouseEnter={() => {
+            setIsOpen(true);
+            onOpenChange?.(true);
+          }}
+          onMouseLeave={() => {
+            setIsOpen(false);
+            onOpenChange?.(false);
+          }}
+        >
+          {trigger}
+        </div>
+      ) : (
+        <div onClick={handleTriggerClick}>
+          {trigger}
+        </div>
+      )}
+
       {isOpen && (
         <div
           className={cn(
@@ -70,13 +85,17 @@ export function HoverDropdown({
             ) : (
               <button
                 key={index}
-                onClick={() => handleItemClick(item)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleItemClick(item);
+                }}
                 disabled={item.disabled}
                 className={cn(
                   "flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors",
                   item.disabled
                     ? "cursor-not-allowed opacity-50"
-                    : "cursor-pointer hover:bg-secondary"
+                    : "cursor-pointer hover:bg-secondary",
+                  item.className
                 )}
               >
                 {item.icon}

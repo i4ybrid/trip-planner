@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { Card, CardHeader, CardTitle, CardContent, Button, Badge } from '@/components';
 import { formatCurrency, cn } from '@/lib/utils';
 import { api } from '@/services/api';
-import { Wallet, CreditCard, Plus, Trash2 } from 'lucide-react';
-import { TripMember, User, BillSplit } from '@/types';
+import { Wallet, CreditCard, Plus, Trash2, CheckCircle2, Circle } from 'lucide-react';
+import { TripMember, User, BillSplit, BillSplitMember, PaymentMethod } from '@/types';
 
 interface Expense {
   id: string;
@@ -26,15 +27,33 @@ interface MemberWithUser extends TripMember {
   user?: User;
 }
 
+interface BillSplitWithMembers extends BillSplit {
+  members: BillSplitMember[];
+}
+
+const PAYMENT_METHODS: { value: PaymentMethod; label: string; icon: string }[] = [
+  { value: 'VENMO', label: 'Venmo', icon: 'V' },
+  { value: 'PAYPAL', label: 'PayPal', icon: 'P' },
+  { value: 'ZELLE', label: 'Zelle', icon: 'Z' },
+  { value: 'CASHAPP', label: 'Cash App', icon: '$' },
+  { value: 'CASH', label: 'Cash', icon: 'C' },
+  { value: 'OTHER', label: 'Other', icon: 'O' },
+];
+
 export default function TripPayments() {
   const params = useParams();
   const router = useRouter();
+  const { data: session } = useSession();
   const tripId = params.id as string;
+  const currentUserId = session?.user?.id;
 
   const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [billSplits, setBillSplits] = useState<BillSplit[]>([]);
+  const [billSplits, setBillSplits] = useState<BillSplitWithMembers[]>([]);
   const [members, setMembers] = useState<MemberWithUser[]>([]);
   const [editingBill, setEditingBill] = useState<BillSplit | null>(null);
+  const [markingPaid, setMarkingPaid] = useState<{ billId: string; userId: string } | null>(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | ''>('');
+  const [confirmingPaymentId, setConfirmingPaymentId] = useState<string | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -43,7 +62,7 @@ export default function TripPayments() {
           api.getBillSplits(tripId),
           api.getTripMembers(tripId),
         ]);
-        if (billSplitsResult.data) setBillSplits(billSplitsResult.data);
+        if (billSplitsResult.data) setBillSplits(billSplitsResult.data as BillSplitWithMembers[]);
         if (membersResult.data) setMembers(membersResult.data);
       } catch (error) {
         console.error('Failed to load payments data:', error);
@@ -62,6 +81,37 @@ export default function TripPayments() {
       setBillSplits(billSplits.filter(b => b.id !== id));
     } catch (error) {
       console.error('Failed to delete bill split:', error);
+    }
+  };
+
+  const handleMarkAsPaid = async (billId: string, userId: string) => {
+    if (!selectedPaymentMethod) {
+      alert('Please select a payment method');
+      return;
+    }
+    try {
+      await api.markBillSplitMemberPaid(billId, userId, selectedPaymentMethod);
+      // Refresh the bill splits to show updated status
+      const result = await api.getBillSplits(tripId);
+      if (result.data) setBillSplits(result.data as BillSplitWithMembers[]);
+      setMarkingPaid(null);
+      setSelectedPaymentMethod('');
+    } catch (error) {
+      console.error('Failed to mark as paid:', error);
+      alert('Failed to mark as paid. Please try again.');
+    }
+  };
+
+  const handleConfirmReceipt = async (billId: string) => {
+    try {
+      await api.confirmBillSplitPayment(billId);
+      // Refresh the bill splits to show updated status
+      const result = await api.getBillSplits(tripId);
+      if (result.data) setBillSplits(result.data as BillSplitWithMembers[]);
+      setConfirmingPaymentId(null);
+    } catch (error) {
+      console.error('Failed to confirm payment:', error);
+      alert('Failed to confirm payment. Please try again.');
     }
   };
 
@@ -115,6 +165,140 @@ export default function TripPayments() {
                         <p className="text-sm text-muted-foreground mt-1">
                           Paid by {getUserName(bill.paidBy)}
                         </p>
+                        
+                        {/* Member payment status */}
+                        <div className="mt-3 space-y-2">
+                          <p className="text-xs font-medium text-muted-foreground">Payment Status:</p>
+                          {bill.members?.map((member) => {
+                            const isCurrentUser = member.userId === currentUserId;
+                            const isPayer = member.userId === bill.paidBy;
+                            const isPaid = member.status === 'PAID' || member.status === 'CONFIRMED';
+                            const isMarkingPaid = markingPaid?.billId === bill.id && markingPaid?.userId === member.userId;
+                            
+                            return (
+                              <div
+                                key={member.id || member.userId}
+                                className="flex items-center justify-between rounded-md bg-secondary/50 px-3 py-2"
+                              >
+                                <div className="flex items-center gap-2">
+                                  {isPaid ? (
+                                    <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                  ) : (
+                                    <Circle className="h-4 w-4 text-muted-foreground" />
+                                  )}
+                                  <span className="text-sm">{getUserName(member.userId)}</span>
+                                  <Badge
+                                    variant="outline"
+                                    className={cn(
+                                      'text-xs',
+                                      member.status === 'CONFIRMED' && 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
+                                      member.status === 'PAID' && 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
+                                      member.status === 'PENDING' && 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300',
+                                      member.status === 'PARTIAL' && 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300',
+                                    )}
+                                  >
+                                    {member.status}
+                                  </Badge>
+                                  <span className="text-xs text-muted-foreground">
+                                    {formatCurrency(member.dollarAmount)}
+                                  </span>
+                                </div>
+                                
+                                {/* Mark as Paid button - only show for current user who is not the payer and hasn't paid */}
+                                {!isPayer && !isPaid && isCurrentUser && (
+                                  <div className="flex items-center gap-2">
+                                    {isMarkingPaid ? (
+                                      <>
+                                        <select
+                                          value={selectedPaymentMethod}
+                                          onChange={(e) => setSelectedPaymentMethod(e.target.value as PaymentMethod)}
+                                          className="rounded-md border border-input bg-background px-2 py-1 text-xs"
+                                          autoFocus
+                                        >
+                                          <option value="">Select method</option>
+                                          {PAYMENT_METHODS.map((method) => (
+                                            <option key={method.value} value={method.value}>
+                                              {method.label}
+                                            </option>
+                                          ))}
+                                        </select>
+                                        <Button
+                                          size="sm"
+                                          onClick={() => handleMarkAsPaid(bill.id, member.userId)}
+                                          className="h-7 text-xs"
+                                        >
+                                          Confirm
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          onClick={() => {
+                                            setMarkingPaid(null);
+                                            setSelectedPaymentMethod('');
+                                          }}
+                                          className="h-7 text-xs"
+                                        >
+                                          Cancel
+                                        </Button>
+                                      </>
+                                    ) : (
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => setMarkingPaid({ billId: bill.id, userId: member.userId })}
+                                        className="h-7 text-xs"
+                                      >
+                                        Mark as Paid
+                                      </Button>
+                                    )}
+                                  </div>
+                                )}
+
+                                {/* Confirm Receipt button - show for payer when member has marked as PAID */}
+                                {!isCurrentUser && isPayer && member.status === 'PAID' && (
+                                  <div className="flex items-center gap-2">
+                                    {confirmingPaymentId === bill.id ? (
+                                      <>
+                                        <Button
+                                          size="sm"
+                                          onClick={() => handleConfirmReceipt(bill.id)}
+                                          className="h-7 text-xs bg-green-600 hover:bg-green-700"
+                                        >
+                                          <CheckCircle2 className="mr-1 h-3 w-3" />
+                                          Yes, Confirm
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          onClick={() => setConfirmingPaymentId(null)}
+                                          className="h-7 text-xs"
+                                        >
+                                          Cancel
+                                        </Button>
+                                      </>
+                                    ) : (
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => setConfirmingPaymentId(bill.id)}
+                                        className="h-7 text-xs border-green-600 text-green-600 hover:bg-green-50"
+                                      >
+                                        Confirm Receipt
+                                      </Button>
+                                    )}
+                                  </div>
+                                )}
+
+                                {/* Show payment method if paid */}
+                                {isPaid && member.paymentMethod && (
+                                  <Badge variant="secondary" className="text-xs">
+                                    {member.paymentMethod}
+                                  </Badge>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
                       <div className="text-right">
                         <p className="text-lg font-bold">{formatCurrency(Number(bill.amount))}</p>

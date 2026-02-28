@@ -52,7 +52,10 @@ export const Modal: React.FC<ModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div
         className="fixed inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={onClose}
+        onClick={(e) => {
+          e.stopPropagation();
+          onClose();
+        }}
       />
       <div
         className={cn(
@@ -60,6 +63,7 @@ export const Modal: React.FC<ModalProps> = ({
           sizes[size],
           className
         )}
+        onClick={(e) => e.stopPropagation()}
       >
         {title && (
           <div className="mb-4 flex items-start justify-between">

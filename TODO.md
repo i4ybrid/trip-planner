@@ -1,13 +1,13 @@
 # TripPlanner TODO
 
-## 1. Payment Settlement UI
+## 1. Payment Settlement UI ✅ COMPLETED
 
-- [ ] **1.1** Add "Mark as Paid" button in payments UI for members who owe money
-- [ ] **1.2** Show payment method selection (Venmo, PayPal, Zelle, CashApp, Cash)
-- [ ] **1.3** Add "Confirm Receipt" button for the payer to confirm payment was received
-- [ ] **1.4** Update BillSplitMember status workflow: PENDING → PAID → CONFIRMED
-- [ ] **1.5** Add visual indicators for payment status in payment cards
-- [ ] **1.6** Handle edge cases (user marking themselves as paid when they're the payer)
+- [x] **1.1** Add "Mark as Paid" button in payments UI for members who owe money
+- [x] **1.2** Show payment method selection (Venmo, PayPal, Zelle, CashApp, Cash)
+- [x] **1.3** Add "Confirm Receipt" button for the payer to confirm payment was received
+- [x] **1.4** Update BillSplitMember status workflow: PENDING → PAID → CONFIRMED
+- [x] **1.5** Add visual indicators for payment status in payment cards
+- [x] **1.6** Handle edge cases (user marking themselves as paid when they're the payer)
 
 ---
 
@@ -24,33 +24,33 @@
 
 ## 3. Fix Images/Videos on Trips
 
-- [ ] **3.1** Investigate why images/videos are not showing up
-- [ ] **3.2** Check media upload functionality
-- [ ] **3.3** Verify media storage (S3 or local)
-- [ ] **3.4** Fix media rendering in memories/chat
-- [ ] **3.5** Add loading states for media
-- [ ] **3.6** Add error handling for failed media loads
+- [x] **3.1** Investigate why images/videos are not showing up (may be CORS/storage issue)
+- [x] **3.2** Check media upload functionality
+- [x] **3.3** Verify media storage (S3 or local) - needs configuration
+- [x] **3.4** Fix media rendering in memories/chat
+- [x] **3.5** Add loading states for media
+- [x] **3.6** Add error handling for failed media loads
 
 ---
 
 ## 4. Avatar Upload
 
-- [ ] **4.1** Create avatar upload component in settings
-- [ ] **4.2** Implement file upload API endpoint
-- [ ] **4.3** Add image compression before upload
-- [ ] **4.4** Update user profile to store avatar URL
+- [x] **4.1** Create avatar upload component in settings
+- [x] **4.2** Implement file upload API endpoint
+- [x] **4.3** Add image compression before upload
+- [x] **4.4** Update user profile to store avatar URL
 - [ ] **4.5** Display avatar in header dropdown
 - [ ] **4.6** Show avatar in trip members list
-- [ ] **4.7** Add fallback to initials when no avatar
+- [x] **4.7** Add fallback to initials when no avatar
 
 ---
 
 ## 5. Chat: Enter to Submit, Shift+Enter for New Line
 
-- [ ] **5.1** Update message input to handle Enter key as submit
-- [ ] **5.2** Add Shift+Enter handling for new line
-- [ ] **5.3** Add visual feedback for message send
-- [ ] **5.4** Handle empty message case
+- [x] **5.1** Update message input to handle Enter key as submit
+- [x] **5.2** Add Shift+Enter handling for new line
+- [x] **5.3** Add visual feedback for message send
+- [x] **5.4** Handle empty message case
 
 ---
 

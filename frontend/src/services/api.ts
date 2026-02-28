@@ -358,6 +358,14 @@ export const api = {
     return handleResponse(response);
   },
 
+  async deleteMedia(mediaId: string): Promise<ApiResponse<void>> {
+    const response = await fetch(`${API_BASE_URL}/media/${mediaId}`, {
+      method: 'DELETE',
+      headers: await getHeaders(),
+    });
+    return handleResponse(response);
+  },
+
   // Friends
   async getFriends(): Promise<ApiResponse<Friend[]>> {
     const response = await fetch(`${API_BASE_URL}/friends`, {
@@ -515,6 +523,14 @@ export const api = {
     return handleResponse(response);
   },
 
+  async confirmBillSplitPayment(billSplitId: string): Promise<ApiResponse<BillSplit>> {
+    const response = await fetch(`${API_BASE_URL}/payments/${billSplitId}/confirm`, {
+      method: 'POST',
+      headers: await getHeaders(),
+    });
+    return handleResponse(response);
+  },
+
   // Notifications
   async getNotifications(): Promise<ApiResponse<Notification[]>> {
     const response = await fetch(`${API_BASE_URL}/notifications`, {
@@ -573,10 +589,18 @@ export const api = {
     const headers = await getHeaders();
     delete (headers as any)['Content-Type']; // Let browser set it for FormData
 
-    const response = await fetch(`${API_BASE_URL}/settings/avatar`, {
+    const response = await fetch(`${API_BASE_URL}/users/me/avatar`, {
       method: 'POST',
       headers,
       body: formData,
+    });
+    return handleResponse(response);
+  },
+
+  async removeAvatar(): Promise<ApiResponse<void>> {
+    const response = await fetch(`${API_BASE_URL}/users/me/avatar`, {
+      method: 'DELETE',
+      headers: await getHeaders(),
     });
     return handleResponse(response);
   },
