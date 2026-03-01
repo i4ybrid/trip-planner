@@ -27,6 +27,64 @@ export default function SettingsPage() {
   const [saved, setSaved] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Compress and resize image using Canvas
+  const compressImage = async (file: File, maxWidth = 800, maxHeight = 800, quality = 0.8): Promise<File> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+
+        // Calculate new dimensions while maintaining aspect ratio
+        if (width > maxWidth || height > maxHeight) {
+          const ratio = Math.min(maxWidth / width, maxHeight / height);
+          width = Math.floor(width * ratio);
+          height = Math.floor(height * ratio);
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(file);
+          return;
+        }
+
+        // Draw image centered on canvas (for square crop if needed)
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Convert to blob with compression
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              // Create new file with same name but .jpg extension
+              const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, '.jpg'), {
+                type: 'image/jpeg',
+              });
+              resolve(compressedFile);
+            } else {
+              resolve(file);
+            }
+          },
+          'image/jpeg',
+          quality
+        );
+      };
+
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        resolve(file);
+      };
+
+      img.src = url;
+    });
+  };
+
   const [profile, setProfile] = useState({
     name: '',
     email: '',
@@ -128,11 +186,14 @@ export default function SettingsPage() {
 
     setIsUploadingAvatar(true);
     try {
-      const result = await api.uploadAvatar(file);
+      // Compress image client-side before upload
+      const compressedFile = await compressImage(file, 800, 800, 0.8);
+      
+      const result = await api.uploadAvatar(compressedFile);
       if (result.data) {
         const newAvatarUrl = result.data.avatarUrl;
         setProfile({ ...profile, avatarUrl: newAvatarUrl });
-        
+
         // Fetch updated user from API and update session
         const userResult = await api.getCurrentUser();
         if (userResult.data) {
@@ -144,7 +205,7 @@ export default function SettingsPage() {
             },
           });
         }
-        
+
         setSaved(true);
         setTimeout(() => setSaved(false), 2000);
       }

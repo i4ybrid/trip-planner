@@ -17,6 +17,8 @@
 - **Media Storage**: Auto-creation of uploads directory, CORS-enabled file serving
 - **UI Components**: Reusable HoverDropdown component with click/hover modes
 - **Avatar System**: Standardized Avatar component used across all pages with profile photo upload, initials fallback (first + middle + last), and automatic session refresh
+- **Chat Pagination**: Load 30 messages initially with "Load earlier messages" button
+- **Image Processing**: Two-stage compression for memories (PWA frontend + backend WebP), avatar center-crop to 400x400 JPEG
 
 ---
 
@@ -739,6 +741,19 @@ Media files are stored based on the `MEDIA_STORAGE_URL` environment variable:
 - `HoverDropdown` - Reusable dropdown menu (supports `hover` and `click` modes)
 - Drop zone for file uploads (drag-and-drop only, no click-to-upload)
 
+**Image Processing (Memory Uploads):**
+- Two-stage compression pipeline for optimal performance and security:
+  1. **Frontend (PWA)** - Canvas API compression:
+     - Resizes images to max 1920px on largest dimension
+     - Compresses to JPEG at 85% quality
+     - Reduces upload bandwidth by ~80-90%
+     - Works offline (PWA-friendly)
+  2. **Backend** - sharp processing:
+     - Security enforcement: verifies and enforces 1920px max (prevents bypass)
+     - Converts to WebP format at 80% quality
+     - Further reduces file size by ~30-50% vs JPEG
+     - All memory images stored as WebP files
+
 **Media Storage:**
 - Local storage: `./uploads` directory (auto-created on startup)
 - Remote storage: Configurable via `MEDIA_STORAGE_URL` environment variable
@@ -761,6 +776,13 @@ Media files are stored based on the `MEDIA_STORAGE_URL` environment variable:
 - Loading state during upload
 - Auto-refresh after upload completes
 - Session updates automatically after avatar change
+
+**Image Processing (Avatar Upload):**
+- Backend processes all avatar uploads with sharp
+- Center crops to square (400x400px)
+- Images smaller than 400x400px are center-cropped without upscaling
+- Converted to JPEG with 85% quality (moderate compression)
+- All avatars stored as uniform 400x400 JPEG files
 
 **API Endpoints:**
 - `POST /api/users/me/avatar` - Upload avatar (multipart/form-data)

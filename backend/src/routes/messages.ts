@@ -15,7 +15,7 @@ router.get('/trips/:tripId/messages', async (req: AuthRequest, res) => {
   try {
     const userId = req.user!.userId;
     const tripId = req.params.tripId;
-    const limit = req.query.limit ? Number(req.query.limit) : 50;
+    const limit = req.query.limit ? Number(req.query.limit) : 30;
     const before = req.query.before ? new Date(req.query.before as string) : undefined;
     
     // Check permission
@@ -165,7 +165,7 @@ router.get('/dm/conversations/:id', async (req: AuthRequest, res) => {
   try {
     const userId = req.user!.userId;
     const conversationId = req.params.id;
-    const limit = req.query.limit ? Number(req.query.limit) : 50;
+    const limit = req.query.limit ? Number(req.query.limit) : 30;
     const before = req.query.before ? new Date(req.query.before as string) : undefined;
     
     // Verify user is participant

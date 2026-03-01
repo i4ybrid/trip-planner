@@ -103,19 +103,61 @@ router.post('/trips/:tripId/media', authMiddleware, upload.single('file'), async
     // Handle file upload or URL
     let url: string;
     let type: 'image' | 'video';
+    let processedFilename = req.file?.filename;
 
     if (req.file) {
-      // File was uploaded - get URL from storage config
-      url = storageConfig.getFileUrl(req.file.filename);
-      
+      // Process image files - ensure max 1920px and convert to WebP
+      if (req.file.mimetype.startsWith('image/')) {
+        const sharp = (await import('sharp')).default;
+        
+        // Get image metadata to check dimensions
+        const metadata = await sharp(req.file.path).metadata();
+        const width = metadata.width || 0;
+        const height = metadata.height || 0;
+        
+        let processedImage;
+        
+        if (width > 1920 || height > 1920) {
+          // Security: enforce max 1920px even if frontend was bypassed
+          processedImage = await sharp(req.file.path)
+            .resize(1920, 1920, {
+              fit: 'inside',
+              withoutEnlargement: true,
+            })
+            .webp({ quality: 80 })
+            .toBuffer();
+        } else {
+          // Image is already within limits, just convert to WebP
+          processedImage = await sharp(req.file.path)
+            .webp({ quality: 80 })
+            .toBuffer();
+        }
+
+        // Write processed image
+        const fs = await import('fs');
+        const path = await import('path');
+        const processedPath = path.join(storageConfig.uploadDir, req.file.filename.replace(/\.[^/.]+$/, '.webp'));
+        fs.writeFileSync(processedPath, processedImage);
+        
+        // Remove original file
+        if (req.file.path !== processedPath) {
+          fs.unlinkSync(req.file.path);
+        }
+        
+        processedFilename = req.file.filename.replace(/\.[^/.]+$/, '.webp');
+      }
+
+      // Get URL from storage config
+      url = storageConfig.getFileUrl(processedFilename || req.file.filename);
+
       // For local files, construct full URL with backend host
       if (!storageConfig.isRemote) {
         const protocol = req.protocol;
         const host = req.get('host') || process.env.BACKEND_URL || 'localhost:4000';
         url = `${protocol}://${host}${url}`;
       }
-      
-      type = req.file.mimetype.startsWith('image/') ? 'image' : 'video';
+
+      type = 'image';
     } else {
       // URL provided in body
       const { type: bodyType, url: bodyUrl } = req.body;

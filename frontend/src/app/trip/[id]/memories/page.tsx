@@ -27,6 +27,68 @@ export default function TripMemories() {
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
 
+  // Compress and resize image using Canvas (PWA-friendly)
+  const compressImage = async (file: File, maxSize = 1920, quality = 0.85): Promise<File> => {
+    return new Promise((resolve) => {
+      // Only process images
+      if (!file.type.startsWith('image/')) {
+        resolve(file);
+        return;
+      }
+
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+
+        // Resize if larger than maxSize on any dimension
+        if (width > maxSize || height > maxSize) {
+          const ratio = maxSize / Math.max(width, height);
+          width = Math.floor(width * ratio);
+          height = Math.floor(height * ratio);
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(file);
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Convert to blob with compression
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, '.jpg'), {
+                type: 'image/jpeg',
+              });
+              resolve(compressedFile);
+            } else {
+              resolve(file);
+            }
+          },
+          'image/jpeg',
+          quality
+        );
+      };
+
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        resolve(file);
+      };
+
+      img.src = url;
+    });
+  };
+
   useEffect(() => {
     const loadMemories = async () => {
       setIsLoading(true);
@@ -48,7 +110,10 @@ export default function TripMemories() {
 
     setIsUploading(true);
     try {
-      const result = await api.uploadMedia(tripId, selectedFile);
+      // Compress image client-side before upload (PWA)
+      const fileToUpload = await compressImage(selectedFile, 1920, 0.85);
+      
+      const result = await api.uploadMedia(tripId, fileToUpload);
       if (result.data) {
         setMemories([...memories, { ...result.data, caption: newCaption } as MediaItem]);
         setShowModal(false);

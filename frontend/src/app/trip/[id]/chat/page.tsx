@@ -11,23 +11,27 @@ import { Message, TripMember, User } from '@/types';
 export default function TripChat() {
   const params = useParams();
   const tripId = params.id as string;
-  
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [members, setMembers] = useState<TripMember[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [showMentions, setShowMentions] = useState(false);
   const [mentionSearch, setMentionSearch] = useState('');
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMoreMessages, setHasMoreMessages] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const loadData = async () => {
       try {
         const [messagesResult, membersResult] = await Promise.all([
-          api.getTripMessages(tripId),
+          api.getTripMessages(tripId, 30),
           api.getTripMembers(tripId),
         ]);
         if (messagesResult.data) {
           setMessages([...messagesResult.data].reverse());
+          setHasMoreMessages(messagesResult.data.length === 30);
           // Scroll to bottom after messages are loaded
           setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'auto' }), 100);
         }
@@ -38,6 +42,41 @@ export default function TripChat() {
     };
     loadData();
   }, [tripId]);
+
+  const loadMoreMessages = async () => {
+    if (isLoadingMore || !hasMoreMessages || messages.length === 0) return;
+
+    setIsLoadingMore(true);
+    try {
+      const oldestMessage = messages[0];
+      const beforeDate = oldestMessage.createdAt;
+      
+      const result = await api.getTripMessages(tripId, 30, beforeDate);
+      if (result.data && result.data.length > 0) {
+        // Preserve current scroll position
+        const container = messagesContainerRef.current;
+        const previousScrollHeight = container?.scrollHeight || 0;
+        
+        // Add older messages to the beginning
+        setMessages(prev => [...result.data.reverse(), ...prev]);
+        setHasMoreMessages(result.data.length === 30);
+        
+        // Restore scroll position
+        setTimeout(() => {
+          if (container) {
+            const newScrollHeight = container.scrollHeight;
+            container.scrollTop = newScrollHeight - previousScrollHeight;
+          }
+        }, 0);
+      } else {
+        setHasMoreMessages(false);
+      }
+    } catch (error) {
+      console.error('Failed to load more messages:', error);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
 
   const handleMessageInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
@@ -124,7 +163,23 @@ export default function TripChat() {
           <Card>
             <CardContent className="p-0">
               <div className="h-[500px] flex flex-col">
-                <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                <div 
+                  ref={messagesContainerRef}
+                  className="flex-1 overflow-y-auto p-4 space-y-4"
+                >
+                  {/* Load More Button */}
+                  {hasMoreMessages && (
+                    <div className="flex justify-center py-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={loadMoreMessages}
+                        disabled={isLoadingMore}
+                      >
+                        {isLoadingMore ? 'Loading...' : 'Load earlier messages'}
+                      </Button>
+                    </div>
+                  )}
                   {messages.length === 0 ? (
                     <div className="flex h-full items-center justify-center text-muted-foreground">
                       No messages yet. Start the conversation!
@@ -231,9 +286,12 @@ export default function TripChat() {
                 return (
                   <div key={member.userId} className="flex items-center gap-3 rounded-lg p-2 hover:bg-secondary/50">
                     <div className="relative">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-sm font-medium">
-                        {getMemberInitial(member.userId)}
-                      </div>
+                      <Avatar
+                        src={member.user?.avatarUrl || undefined}
+                        name={name}
+                        size="sm"
+                        className="h-9 w-9"
+                      />
                       <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-background bg-green-500" />
                     </div>
                     <div className="flex-1 min-w-0">

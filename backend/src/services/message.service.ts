@@ -67,7 +67,7 @@ export class MessageService {
     return message;
   }
 
-  async getTripMessages(tripId: string, limit = 50, before?: Date) {
+  async getTripMessages(tripId: string, limit = 30, before?: Date) {
     return prisma.message.findMany({
       where: {
         tripId,
@@ -99,7 +99,7 @@ export class MessageService {
     });
   }
 
-  async getDmMessages(conversationId: string, limit = 50, before?: Date) {
+  async getDmMessages(conversationId: string, limit = 30, before?: Date) {
     return prisma.message.findMany({
       where: {
         conversationId,

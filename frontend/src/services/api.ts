@@ -293,8 +293,14 @@ export const api = {
   },
 
   // Messages (Trip Chat)
-  async getTripMessages(tripId: string): Promise<ApiResponse<Message[]>> {
-    const response = await fetch(`${API_BASE_URL}/trips/${tripId}/messages`, {
+  async getTripMessages(tripId: string, limit = 30, before?: string): Promise<ApiResponse<Message[]>> {
+    const url = new URL(`${API_BASE_URL}/trips/${tripId}/messages`);
+    url.searchParams.set('limit', limit.toString());
+    if (before) {
+      url.searchParams.set('before', before);
+    }
+    
+    const response = await fetch(url.toString(), {
       headers: await getHeaders(),
     });
     return handleResponse(response);
@@ -433,8 +439,14 @@ export const api = {
     return handleResponse(response);
   },
 
-  async getDmMessages(conversationId: string): Promise<ApiResponse<Message[]>> {
-    const response = await fetch(`${API_BASE_URL}/dm/conversations/${conversationId}`, {
+  async getDmMessages(conversationId: string, limit = 30, before?: string): Promise<ApiResponse<Message[]>> {
+    const url = new URL(`${API_BASE_URL}/dm/conversations/${conversationId}`);
+    url.searchParams.set('limit', limit.toString());
+    if (before) {
+      url.searchParams.set('before', before);
+    }
+    
+    const response = await fetch(url.toString(), {
       headers: await getHeaders(),
     });
     return handleResponse(response);

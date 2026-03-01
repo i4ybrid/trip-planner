@@ -22,7 +22,10 @@ export default function MessagesPage() {
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string>('');
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMoreMessages, setHasMoreMessages] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   // Show loading while session is being checked
   if (status === 'loading') {
@@ -66,15 +69,49 @@ export default function MessagesPage() {
     const loadMessages = async () => {
       if (!selectedConversation) {
         setMessages([]);
+        setHasMoreMessages(true);
         return;
       }
-      const result = await api.getDmMessages(selectedConversation);
+      const result = await api.getDmMessages(selectedConversation, 30);
       if (result.data) {
         setMessages([...result.data].reverse());
+        setHasMoreMessages(result.data.length === 30);
       }
     };
     loadMessages();
   }, [selectedConversation]);
+
+  const loadMoreMessages = async () => {
+    if (isLoadingMore || !hasMoreMessages || messages.length === 0) return;
+
+    setIsLoadingMore(true);
+    try {
+      const oldestMessage = messages[0];
+      const beforeDate = oldestMessage.createdAt;
+      
+      const result = await api.getDmMessages(selectedConversation!, 30, beforeDate);
+      if (result.data && result.data.length > 0) {
+        const container = messagesContainerRef.current;
+        const previousScrollHeight = container?.scrollHeight || 0;
+        
+        setMessages(prev => [...result.data.reverse(), ...prev]);
+        setHasMoreMessages(result.data.length === 30);
+        
+        setTimeout(() => {
+          if (container) {
+            const newScrollHeight = container.scrollHeight;
+            container.scrollTop = newScrollHeight - previousScrollHeight;
+          }
+        }, 0);
+      } else {
+        setHasMoreMessages(false);
+      }
+    } catch (error) {
+      console.error('Failed to load more messages:', error);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -164,7 +201,23 @@ export default function MessagesPage() {
                     </div>
                   </div>
 
-                  <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                  <div 
+                    ref={messagesContainerRef}
+                    className="flex-1 overflow-y-auto p-4 space-y-4"
+                  >
+                    {/* Load More Button */}
+                    {hasMoreMessages && (
+                      <div className="flex justify-center py-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={loadMoreMessages}
+                          disabled={isLoadingMore}
+                        >
+                          {isLoadingMore ? 'Loading...' : 'Load earlier messages'}
+                        </Button>
+                      </div>
+                    )}
                     {messages.length === 0 ? (
                       <div className="flex justify-center py-8 text-muted-foreground">No messages yet</div>
                     ) : (

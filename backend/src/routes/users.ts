@@ -120,8 +120,52 @@ router.post('/users/me/avatar', authMiddleware, upload.single('file'), async (re
       return;
     }
 
+    // Process image with sharp: ensure square 400x400 crop and convert to JPEG
+    const sharp = (await import('sharp')).default;
+    
+    // Get image metadata to check dimensions
+    const metadata = await sharp(req.file.path).metadata();
+    const width = metadata.width || 0;
+    const height = metadata.height || 0;
+    
+    let processedImage;
+    
+    if (width < 400 || height < 400) {
+      // Image is smaller than 400x400, just center crop to square without upscaling
+      const size = Math.min(width, height);
+      processedImage = await sharp(req.file.path)
+        .extract({
+          left: Math.floor((width - size) / 2),
+          top: Math.floor((height - size) / 2),
+          width: size,
+          height: size,
+        })
+        .jpeg({ quality: 85 })
+        .toBuffer();
+    } else {
+      // Image is large enough, resize to 400x400 with center crop
+      processedImage = await sharp(req.file.path)
+        .resize(400, 400, {
+          fit: 'cover',
+          position: 'center',
+        })
+        .jpeg({ quality: 85 })
+        .toBuffer();
+    }
+
+    // Write processed image back to file system
+    const fs = await import('fs');
+    const path = await import('path');
+    const processedPath = path.join(storageConfig.uploadDir, req.file.filename.replace(/\.[^/.]+$/, '.jpg'));
+    fs.writeFileSync(processedPath, processedImage);
+
+    // Remove original file
+    if (req.file.path !== processedPath) {
+      fs.unlinkSync(req.file.path);
+    }
+
     // Get URL from storage config
-    let avatarUrl = storageConfig.getFileUrl(req.file.filename);
+    let avatarUrl = storageConfig.getFileUrl(path.basename(processedPath));
 
     // For local files, construct full URL
     if (!storageConfig.isRemote) {
