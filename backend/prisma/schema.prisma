@@ -299,6 +299,10 @@ model Message {
   readReceipts   MessageReadReceipt[]
 
   createdAt      DateTime       @default(now())
+
+  // Indexes for efficient pagination
+  @@index([tripId, createdAt])
+  @@index([conversationId, createdAt])
 }
 
 model MessageReadReceipt {

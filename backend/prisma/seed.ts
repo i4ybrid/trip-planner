@@ -127,11 +127,77 @@ const SEED_VOTES = [
   { activityId: 'act-5', userId: 'user-2', option: 'YES' as const },
 ];
 
+// Generate 50 messages for trip-1 to test pagination
+const generateTripMessages = (): { tripId: string; senderId: string; content: string; messageType: 'TEXT'; createdAt: Date }[] => {
+  const messages: { tripId: string; senderId: string; content: string; messageType: 'TEXT'; createdAt: Date }[] = [];
+  const tripMessages = [
+    { senderId: 'user-1', content: 'Hey everyone! Excited about this trip! 🏝️' },
+    { senderId: 'user-2', content: 'Me too! I\'ve always wanted to go to Maui!' },
+    { senderId: 'user-3', content: 'Has anyone looked at the surf lessons? I think that would be so fun!' },
+    { senderId: 'user-1', content: 'I added it as an activity - please vote!' },
+    { senderId: 'user-4', content: 'Just voted! Can\'t wait!' },
+    { senderId: 'user-2', content: 'Should we rent a car or use Uber?' },
+    { senderId: 'user-1', content: 'I think renting a car makes more sense for the Road to Hana' },
+    { senderId: 'user-3', content: 'Agreed, plus we can explore at our own pace' },
+    { senderId: 'user-4', content: 'I found a good deal on a convertible!' },
+    { senderId: 'user-2', content: 'Nice! What\'s the daily rate?' },
+    { senderId: 'user-4', content: 'About $80/day including insurance' },
+    { senderId: 'user-1', content: 'That\'s pretty good for Maui' },
+    { senderId: 'user-3', content: 'Should we split the car rental 4 ways?' },
+    { senderId: 'user-2', content: 'Yeah that makes sense' },
+    { senderId: 'user-1', content: 'I\'ll create a bill split for it' },
+    { senderId: 'user-4', content: 'Has anyone been to the Grand Wailea before?' },
+    { senderId: 'user-2', content: 'I heard the pools are amazing!' },
+    { senderId: 'user-1', content: 'Yes! They have a water elevator between pools' },
+    { senderId: 'user-3', content: 'That sounds incredible' },
+    { senderId: 'user-4', content: 'I\'m booking the spa package' },
+    { senderId: 'user-1', content: 'The luau is going to be on night 3' },
+    { senderId: 'user-2', content: 'Perfect! I\'ll bring my camera' },
+    { senderId: 'user-3', content: 'Don\'t forget sunscreen!' },
+    { senderId: 'user-4', content: 'Already packed reef-safe sunscreen' },
+    { senderId: 'user-1', content: 'Good call, Hawaii requires reef-safe now' },
+    { senderId: 'user-2', content: 'What about hiking shoes?' },
+    { senderId: 'user-3', content: 'I\'m bringing both sneakers and sandals' },
+    { senderId: 'user-4', content: 'Same here' },
+    { senderId: 'user-1', content: 'Anyone want to do the zipline activity?' },
+    { senderId: 'user-2', content: 'That sounds scary but fun!' },
+    { senderId: 'user-3', content: 'I\'m in if everyone else is' },
+    { senderId: 'user-4', content: 'Let\'s add it to the activities list' },
+    { senderId: 'user-1', content: 'Done! Go vote on it' },
+    { senderId: 'user-2', content: 'Voted yes!' },
+    { senderId: 'user-3', content: 'Yes from me too' },
+    { senderId: 'user-4', content: 'This is going to be the best trip ever!' },
+    { senderId: 'user-1', content: 'Flight prices are looking good btw' },
+    { senderId: 'user-2', content: 'I set up price alerts, will let you know if they drop' },
+    { senderId: 'user-3', content: 'Thanks Sarah!' },
+    { senderId: 'user-4', content: 'Should we plan a group dinner the first night?' },
+    { senderId: 'user-1', content: 'Great idea! There\'s a great seafood place near the hotel' },
+    { senderId: 'user-2', content: 'I\'ll make a reservation' },
+    { senderId: 'user-3', content: 'Anyone have dietary restrictions?' },
+    { senderId: 'user-4', content: 'I\'m vegetarian but I eat fish' },
+    { senderId: 'user-1', content: 'No restrictions here' },
+    { senderId: 'user-2', content: 'Same, I\'ll find a place with good options' },
+    { senderId: 'user-3', content: 'Can\'t wait to try the poke!' },
+    { senderId: 'user-4', content: 'Poke is a must!' },
+    { senderId: 'user-1', content: 'Alright team, 3 months to go! 🎉' },
+    { senderId: 'user-2', content: 'Time flies! See you all in paradise!' },
+  ];
+
+  tripMessages.forEach((msg, index) => {
+    messages.push({
+      tripId: 'trip-1',
+      senderId: msg.senderId,
+      content: msg.content,
+      messageType: 'TEXT' as const,
+      createdAt: new Date(Date.now() - (tripMessages.length - index) * 3600000), // 1 hour apart
+    });
+  });
+
+  return messages;
+};
+
 const SEED_MESSAGES = [
-  { tripId: 'trip-1', senderId: 'user-1', content: 'Hey everyone! Excited about this trip! 🏝️', messageType: 'TEXT' as const },
-  { tripId: 'trip-1', senderId: 'user-2', content: 'Me too! I\'ve always wanted to go to Maui!', messageType: 'TEXT' as const },
-  { tripId: 'trip-1', senderId: 'user-3', content: 'Has anyone looked at the surf lessons? I think that would be so fun!', messageType: 'TEXT' as const },
-  { tripId: 'trip-1', senderId: 'user-1', content: 'I added it as an activity - please vote!', messageType: 'TEXT' as const },
+  ...generateTripMessages(),
   { tripId: 'trip-2', senderId: 'user-2', content: 'Birthday trip! Can\'t wait! 🎉', messageType: 'TEXT' as const },
   { tripId: 'trip-2', senderId: 'user-1', content: 'Going to book us tickets to Hamilton!', messageType: 'TEXT' as const },
 ];
@@ -430,7 +496,7 @@ async function main() {
   console.log(`   - ${SEED_MEMBERS.length} trip members`);
   console.log(`   - ${SEED_ACTIVITIES.length} activities`);
   console.log(`   - ${SEED_VOTES.length} votes`);
-  console.log(`   - ${SEED_MESSAGES.length} trip messages`);
+  console.log(`   - ${SEED_MESSAGES.length} trip messages (${SEED_MESSAGES.length - 2} for trip-1, 2 for trip-2)`);
   console.log(`   - ${SEED_TIMELINE.length} timeline events`);
   console.log(`   - ${SEED_BILL_SPLITS.length} bill splits`);
   console.log(`   - ${SEED_BILL_SPLIT_MEMBERS.length} bill split members`);

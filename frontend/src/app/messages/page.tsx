@@ -113,6 +113,16 @@ export default function MessagesPage() {
     }
   };
 
+  const handleScroll = () => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+    
+    // Load more when scrolled to top (within 50px)
+    if (container.scrollTop < 50 && !isLoadingMore && hasMoreMessages) {
+      loadMoreMessages();
+    }
+  };
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, selectedConversation]);
@@ -204,6 +214,7 @@ export default function MessagesPage() {
                   <div 
                     ref={messagesContainerRef}
                     className="flex-1 overflow-y-auto p-4 space-y-4"
+                    onScroll={handleScroll}
                   >
                     {/* Load More Button */}
                     {hasMoreMessages && (

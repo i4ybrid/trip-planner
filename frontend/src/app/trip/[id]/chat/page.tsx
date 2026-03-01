@@ -53,15 +53,12 @@ export default function TripChat() {
       
       const result = await api.getTripMessages(tripId, 30, beforeDate);
       if (result.data && result.data.length > 0) {
-        // Preserve current scroll position
         const container = messagesContainerRef.current;
         const previousScrollHeight = container?.scrollHeight || 0;
         
-        // Add older messages to the beginning
         setMessages(prev => [...result.data.reverse(), ...prev]);
         setHasMoreMessages(result.data.length === 30);
         
-        // Restore scroll position
         setTimeout(() => {
           if (container) {
             const newScrollHeight = container.scrollHeight;
@@ -75,6 +72,16 @@ export default function TripChat() {
       console.error('Failed to load more messages:', error);
     } finally {
       setIsLoadingMore(false);
+    }
+  };
+
+  const handleScroll = () => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+    
+    // Load more when scrolled to top (within 50px)
+    if (container.scrollTop < 50 && !isLoadingMore && hasMoreMessages) {
+      loadMoreMessages();
     }
   };
 
@@ -166,6 +173,7 @@ export default function TripChat() {
                 <div 
                   ref={messagesContainerRef}
                   className="flex-1 overflow-y-auto p-4 space-y-4"
+                  onScroll={handleScroll}
                 >
                   {/* Load More Button */}
                   {hasMoreMessages && (

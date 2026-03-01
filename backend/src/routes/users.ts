@@ -196,7 +196,7 @@ router.delete('/users/me/avatar', authMiddleware, async (req: AuthRequest, res) 
     }
 
     // Update user with null avatar
-    const updatedUser = await userService.updateUser(userId, { avatarUrl: null });
+    await userService.updateUser(userId, { avatarUrl: undefined });
 
     res.json({ message: 'Avatar removed successfully' });
   } catch (error: any) {

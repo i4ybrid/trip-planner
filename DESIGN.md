@@ -17,8 +17,9 @@
 - **Media Storage**: Auto-creation of uploads directory, CORS-enabled file serving
 - **UI Components**: Reusable HoverDropdown component with click/hover modes
 - **Avatar System**: Standardized Avatar component used across all pages with profile photo upload, initials fallback (first + middle + last), and automatic session refresh
-- **Chat Pagination**: Load 30 messages initially with "Load earlier messages" button
+- **Chat Pagination**: Load 30 messages initially with infinite scroll and "Load earlier messages" button
 - **Image Processing**: Two-stage compression for memories (PWA frontend + backend WebP), avatar center-crop to 400x400 JPEG
+- **Database Optimization**: Composite indexes on Message table for efficient chat pagination
 
 ---
 
@@ -667,14 +668,67 @@ DELETE /api/activities/:id/votes  Remove vote
 ```
 
 ### Messages (Trip Chat & DMs)
+
+**Trip Messages:**
 ```
-GET    /api/trips/:id/messages    Get trip chat history
-POST   /api/trips/:id/messages    Send trip message
-PATCH  /api/messages/:id          Edit message (add reactions, mentions)
-DELETE /api/messages/:id          Delete message
-POST   /api/messages/:id/reactions Add/remove emoji reaction
-POST   /api/messages/:id/read     Mark message as read
+GET    /api/trips/:id/messages           Get trip chat history (paginated)
+POST   /api/trips/:id/messages           Send trip message
+PATCH  /api/messages/:id                 Edit message (add reactions, mentions)
+DELETE /api/messages/:id                 Delete message (soft delete)
+POST   /api/messages/:id/reactions       Add/remove emoji reaction
+POST   /api/messages/:id/read            Mark message as read
 ```
+
+**DM Messages:**
+```
+GET    /api/dm/conversations             List DM conversations
+POST   /api/dm/conversations             Start new DM conversation
+GET    /api/dm/conversations/:id         Get DM messages (paginated)
+POST   /api/dm/conversations/:id/messages Send DM message
+```
+
+**Pagination Parameters (GET endpoints):**
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `limit` | integer | 30 | Number of messages to return (max recommended: 100) |
+| `before` | ISO 8601 datetime | - | Fetch messages older than this timestamp |
+
+**Example: Paginated Trip Messages Request**
+```
+GET /api/trips/:id/messages?limit=30&before=2025-02-28T12:00:00Z
+```
+
+**Response Format:**
+```json
+{
+  "data": [
+    {
+      "id": "msg-123",
+      "tripId": "trip-456",
+      "senderId": "user-789",
+      "content": "Hello everyone!",
+      "messageType": "TEXT",
+      "mentions": [],
+      "reactions": {"👍": ["user-1", "user-2"]},
+      "sender": {
+        "id": "user-789",
+        "name": "John Doe",
+        "avatarUrl": "http://localhost:4000/uploads/avatar.jpg"
+      },
+      "createdAt": "2025-02-28T10:30:00Z"
+    }
+    // ... more messages (newest first)
+  ]
+}
+```
+
+**Pagination Behavior:**
+- Messages returned in **descending order** (newest first)
+- Use the `createdAt` of the oldest message as `before` parameter to load older messages
+- Empty array returned when no more messages exist
+- Deleted messages are excluded from results
+
+---
 
 ### Media
 ```
@@ -1305,6 +1359,20 @@ The Overview tab shows key trip information:
 - Filter members by typing name
 - Click to insert mention at cursor position
 - @everyone notifies all trip members
+
+**Pagination (Chat Messages):**
+- **Initial Load**: First 30 messages (newest first)
+- **Infinite Scroll**: Auto-load older messages when scrolling to top
+- **Manual Load**: "Load earlier messages" button at top
+- **Cursor-based**: Uses `createdAt` timestamp for pagination
+- **Edge Case Handling**: Button hides when no more messages
+
+**Technical Implementation:**
+- Messages sorted by `createdAt DESC`
+- `before` parameter fetches messages older than timestamp
+- `hasMoreMessages` state tracks pagination end
+- Scroll position preserved when loading older messages
+- Database indexes on `(tripId, createdAt)` and `(conversationId, createdAt)` for performance
 
 ---
 
@@ -2775,8 +2843,8 @@ export async function GET() {
 - [ ] Invite system with links
 
 ### Phase 2: Planning (Month 3-4)
-- [ ] Activity proposals
-- [ ] Voting system
+- [X] Activity proposals
+- [X] Voting system
 - [ ] Basic bookings
 
 ### Phase 3: Payments (Month 4-5)
@@ -2784,8 +2852,9 @@ export async function GET() {
 - [ ] Payment confirmation workflow
 
 ### Phase 4: Social (Month 5-6)
-- [ ] Real-time chat
-- [ ] Photo/video uploads
+- [X] Real-time chat
+- [X] Photo uploads
+- [ ] Video uploads
 - [ ] Push notifications
 
 ### Post-MVP

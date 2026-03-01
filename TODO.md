@@ -62,17 +62,21 @@
 
 ## 6. Chat Pagination - Initial Load (First 30 Messages)
 
-- [ ] **6.1** Update API to return first 30 messages by default
-- [ ] **6.2** Update frontend to load initial 30 messages on chat open
-- [ ] **6.3** Create cache/queue for first 30 messages per conversation
-- [ ] **6.4** Implement "load more" for older messages
+- [x] **6.1** Update API to return first 30 messages by default
+- [x] **6.2** Update frontend to load initial 30 messages on chat open
+- [x] **6.3** Create cache/queue for first 30 messages per conversation
+- [x] **6.4** Implement "load more" for older messages
+- [x] **6.5** Add tests for chat pagination API and UI
+- [x] **6.6** Update seed data to have more than 30 messages for testing
 
 ---
 
 ## 7. Chat Pagination - Load Older Messages by ID
 
-- [ ] **7.1** Create API endpoint to fetch messages older than a given message ID
-- [ ] **7.2** Add pagination UI in chat (infinite scroll or "Load More" button)
-- [ ] **7.3** Track message IDs for pagination
-- [ ] **7.4** Handle edge case when no more messages to load
-- [ ] **7.5** Optimize query to use index on createdAt or message ID
+- [x] **7.1** Create API endpoint to fetch messages older than a given message ID
+- [x] **7.2** Add pagination UI in chat (infinite scroll or "Load More" button)
+- [x] **7.3** Track message IDs for pagination
+- [x] **7.4** Handle edge case when no more messages to load
+- [x] **7.5** Optimize query to use index on createdAt or message ID
+
+---
