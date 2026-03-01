@@ -39,9 +39,15 @@
 - [x] **4.2** Implement file upload API endpoint
 - [x] **4.3** Add image compression before upload
 - [x] **4.4** Update user profile to store avatar URL
-- [ ] **4.5** Display avatar in header dropdown
-- [ ] **4.6** Show avatar in trip members list
+- [X] **4.5** Display avatar in header dropdown
+- [x] **4.6** Show avatar in trip members list
 - [x] **4.7** Add fallback to initials when no avatar
+- [x] **4.8** Standardize avatar display across all pages using Avatar component
+  - [x] **4.8.1** Chat page - message sender avatars
+  - [x] **4.8.2** Payments page - member balance avatars
+  - [x] **4.8.3** Add payment member selection avatars
+  - [x] **4.8.4** Edit payment member selection avatars
+  - [x] **4.8.5** Settings page - avatar preview fallback
 
 ---
 

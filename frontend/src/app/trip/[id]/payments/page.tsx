@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { Card, CardHeader, CardTitle, CardContent, Button, Badge } from '@/components';
+import { Card, CardHeader, CardTitle, CardContent, Button, Badge, Avatar } from '@/components';
 import { formatCurrency, cn } from '@/lib/utils';
 import { api } from '@/services/api';
 import { Wallet, CreditCard, Plus, Trash2, CheckCircle2, Circle } from 'lucide-react';
@@ -419,9 +419,11 @@ export default function TripPayments() {
                 return (
                   <div key={member.userId} className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-2">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs">
-                        {member.user?.name?.charAt(0) || 'U'}
-                      </div>
+                      <Avatar
+                        src={member.user?.avatarUrl || undefined}
+                        name={member.user?.name || 'User'}
+                        size="sm"
+                      />
                       <span>{member.user?.name || 'User'}</span>
                     </div>
                     <span className={cn('font-medium', balance > 0 ? 'text-green-600' : balance < 0 ? 'text-red-600' : '')}>

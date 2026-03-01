@@ -44,6 +44,7 @@ export interface User {
   email: string;
   name: string;
   avatarUrl?: string;
+  image?: string | null;  // For NextAuth compatibility
   phone?: string;
   venmo?: string;
   paypal?: string;

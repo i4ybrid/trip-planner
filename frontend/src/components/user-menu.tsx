@@ -1,20 +1,42 @@
 'use client';
 
-import { useState } from 'react';
-import { useAuth } from '@/hooks/use-auth';
+import { useState, useEffect } from 'react';
+import { useSession, signOut } from 'next-auth/react';
 import { Avatar } from '@/components/ui/avatar';
 import { Settings, LogOut, User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { api } from '@/services/api';
+import { User as UserType } from '@/types';
 
 export function UserMenu() {
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { data: session, update: updateSession } = useSession();
   const [isOpen, setIsOpen] = useState(false);
+  const [user, setUser] = useState<UserType | null>(null);
 
-  if (!user) return null;
+  // Fetch fresh user data from API on mount and when session changes
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const result = await api.getCurrentUser();
+        if (result.data) {
+          setUser(result.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch user:', error);
+      }
+    };
+    
+    if (session) {
+      fetchUser();
+    }
+  }, [session]);
+
+  if (!user || !session) return null;
 
   const handleLogout = async () => {
-    await logout();
+    await signOut({ redirect: false });
+    router.push('/login');
   };
 
   const handleSettings = () => {

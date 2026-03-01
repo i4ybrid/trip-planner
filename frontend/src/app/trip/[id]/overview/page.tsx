@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useTripStore } from '@/store';
-import { Card, CardHeader, CardTitle, CardContent, Button, Badge, Select } from '@/components';
+import { Card, CardHeader, CardTitle, CardContent, Button, Badge, Select, Avatar } from '@/components';
 import { formatDateRange, formatCurrency, cn } from '@/lib/utils';
 import { api } from '@/services/api';
 import { MapPin, Calendar, Users, DollarSign, Share2, Settings } from 'lucide-react';
@@ -131,9 +131,11 @@ export default function TripOverview() {
               <div className="grid gap-3 sm:grid-cols-2">
                 {members.map((member) => (
                   <div key={member.userId} className="flex items-center gap-3 rounded-lg border border-border p-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 font-medium">
-                      {member.user?.name?.charAt(0) || 'U'}
-                    </div>
+                    <Avatar
+                      src={member.user?.avatarUrl || undefined}
+                      name={member.user?.name || 'User'}
+                      size="md"
+                    />
                     <div>
                       <p className="font-medium">{member.user?.name || 'User'}</p>
                       <p className="text-xs text-muted-foreground">{member.role}</p>

@@ -16,7 +16,7 @@
 - **Chat Improvements**: Enter to send, Shift+Enter for new line, multi-line textarea
 - **Media Storage**: Auto-creation of uploads directory, CORS-enabled file serving
 - **UI Components**: Reusable HoverDropdown component with click/hover modes
-- **Avatar Upload**: Profile photo upload with preview, remove option, initials fallback
+- **Avatar System**: Standardized Avatar component used across all pages with profile photo upload, initials fallback (first + middle + last), and automatic session refresh
 
 ---
 
@@ -760,6 +760,7 @@ Media files are stored based on the `MEDIA_STORAGE_URL` environment variable:
 - Remove avatar option
 - Loading state during upload
 - Auto-refresh after upload completes
+- Session updates automatically after avatar change
 
 **API Endpoints:**
 - `POST /api/users/me/avatar` - Upload avatar (multipart/form-data)
@@ -770,9 +771,26 @@ Media files are stored based on the `MEDIA_STORAGE_URL` environment variable:
 - Files stored with unique filenames (UUID)
 - Full URL returned after upload
 
-**Fallback Display:**
-- When no avatar: Show user's initial in colored circle
-- When image fails to load: Show initial as fallback
+**Avatar Component (`components/ui/avatar.tsx`):**
+- Reusable component for displaying user avatars throughout the application
+- Shows profile photo if available
+- Falls back to initials when no photo:
+  - 1 initial for single names (e.g., "John" → "J")
+  - 2 initials for first + last (e.g., "John Doe" → "JD")
+  - 3 initials for names with middle (e.g., "John Michael Doe" → "JMD")
+- Supports multiple sizes: `sm`, `md`, `lg`, `xl`
+- Used consistently across all pages:
+  - **Header/User Menu** - Top-right user dropdown
+  - **Dashboard** - Trip member avatars in TripCard
+  - **Trip Overview** - Members list
+  - **Chat** - Message sender avatars
+  - **Payments** - Member balance display and split selection
+  - **Settings** - Profile photo preview
+
+**Session Management:**
+- After avatar upload/removal, session is updated via `updateSession()`
+- UserMenu component fetches fresh user data from `/api/users/me` on mount and session change
+- Ensures avatar displays are always in sync with database
 
 ### Friends
 ```
@@ -1103,10 +1121,12 @@ Unified header used across all pages:
 - Custom actions slot
 - Theme switcher (sun/moon toggle)
 - Notification drawer button
-- User avatar dropdown:
+- User menu (`components/user-menu.tsx`):
   - Clicking user avatar opens dropdown menu
-  - Menu items: "Settings", "Logout"
-  - Avatar shows user's profile picture or initials
+  - Menu items: "Settings", "Profile", "Logout"
+  - Avatar uses `Avatar` component showing profile picture or initials
+  - Fetches fresh user data from API on mount and session change
+  - Session updates automatically after avatar changes
 
 ---
 
@@ -1123,6 +1143,12 @@ IDEA ──→ PLANNING ──→ CONFIRMED ──→ HAPPENING ──→ COMPLE
 ```
 
 ### Shared UI Components
+
+**Avatar** (`components/ui/avatar.tsx`)
+- Standardized component for displaying user avatars
+- Props: `src` (optional image URL), `name` (for initials fallback), `size` (sm|md|lg|xl)
+- Automatically handles image loading errors with fallback to initials
+- Uses `getInitials()` utility for generating initials from names
 
 **HoverDropdown** (`components/hover-dropdown.tsx`)
 - Reusable dropdown menu component

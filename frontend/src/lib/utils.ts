@@ -39,12 +39,26 @@ export function formatCurrency(amount?: number, currency: string = 'USD'): strin
 }
 
 export function getInitials(name: string): string {
-  return name
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  
+  // Take first letter from first name
+  const initials = [parts[0][0].toUpperCase()];
+  
+  // If there are 3+ parts, include middle initial(s)
+  if (parts.length >= 3) {
+    // Add middle initial(s) - all parts between first and last
+    for (let i = 1; i < parts.length - 1; i++) {
+      initials.push(parts[i][0].toUpperCase());
+    }
+  }
+  
+  // Add last initial if there's more than just the first name
+  if (parts.length >= 2) {
+    initials.push(parts[parts.length - 1][0].toUpperCase());
+  }
+  
+  return initials.join('').slice(0, 3); // Max 3 initials
 }
 
 export function getStatusColor(status: string): string {

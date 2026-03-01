@@ -6,9 +6,14 @@ import { Avatar, AvatarGroup } from './ui/avatar';
 import { formatDateRange, cn } from '@/lib/utils';
 import { MapPin, Calendar, Users } from 'lucide-react';
 
+interface MemberInfo {
+  name: string;
+  avatarUrl?: string;
+}
+
 interface TripCardProps {
   trip: Trip;
-  members?: string[];
+  members?: string[] | MemberInfo[];
   onClick?: () => void;
   className?: string;
 }
@@ -61,9 +66,13 @@ export const TripCard: React.FC<TripCardProps> = ({
         {members.length > 0 && (
           <div className="mt-3 flex items-center justify-between">
             <AvatarGroup max={4} size="sm">
-              {members.map((name, i) => (
-                <Avatar key={i} name={name} size="sm" />
-              ))}
+              {members.map((member, i) => {
+                const name = typeof member === 'string' ? member : member.name;
+                const avatarUrl = typeof member === 'string' ? undefined : member.avatarUrl;
+                return (
+                  <Avatar key={i} src={avatarUrl} name={name} size="sm" />
+                );
+              })}
             </AvatarGroup>
             <span className="flex items-center gap-1 text-sm text-muted-foreground">
               <Users className="h-3 w-3 text-current" />

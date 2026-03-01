@@ -25,6 +25,11 @@ interface TripWithMembers {
   members: TripMember[];
 }
 
+interface MemberInfo {
+  name: string;
+  avatarUrl?: string;
+}
+
 export default function DashboardPage() {
   const router = useRouter();
   const { trips, isLoading, error, fetchTrips } = useTripStore();
@@ -69,6 +74,14 @@ export default function DashboardPage() {
     if (member.user?.name) return member.user.name;
     if (member.userId === 'user-1') return 'You';
     return 'Unknown User';
+  };
+
+  const getMemberInfo = (member: TripMember): MemberInfo => {
+    const name = getMemberName(member);
+    return {
+      name,
+      avatarUrl: member.user?.avatarUrl || undefined,
+    };
   };
 
   const activeTrips = trips.filter(
@@ -123,7 +136,7 @@ export default function DashboardPage() {
                     <TripCard
                       key={trip.id}
                       trip={trip}
-                      members={members.map(m => getMemberName(m))}
+                      members={members.map(m => getMemberInfo(m))}
                       onClick={() => handleTripClick(trip.id)}
                     />
                   );
@@ -153,7 +166,7 @@ export default function DashboardPage() {
                     <TripCard
                       key={trip.id}
                       trip={trip}
-                      members={members.map(m => getMemberName(m))}
+                      members={members.map(m => getMemberInfo(m))}
                       onClick={() => handleTripClick(trip.id)}
                     />
                   );

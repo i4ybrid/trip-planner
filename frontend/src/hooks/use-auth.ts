@@ -69,10 +69,10 @@ export function useAuth() {
 
   return {
     user: session?.user ? {
-      id: session.user.id,
+      id: (session.user as any).id || session.user.id,
       email: session.user.email!,
       name: session.user.name!,
-      avatarUrl: session.user.avatarUrl,
+      avatarUrl: session.user.image,
     } : null,
     isAuthenticated: !!session,
     isLoading: status === 'loading',

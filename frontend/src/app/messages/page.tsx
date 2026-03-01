@@ -180,7 +180,7 @@ export default function MessagesPage() {
                                 : 'bg-secondary'
                             }`}
                           >
-                            <p>{message.content}</p>
+                            <p className="whitespace-pre-wrap">{message.content}</p>
                             <p className={`text-xs mt-1 ${
                               message.senderId === currentUserId
                                 ? 'text-primary-foreground/70'

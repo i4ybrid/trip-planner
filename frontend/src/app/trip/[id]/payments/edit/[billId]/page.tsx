@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Card, CardHeader, CardTitle, CardContent, Button, Input, Textarea, Badge } from '@/components';
+import { Card, CardHeader, CardTitle, CardContent, Button, Input, Textarea, Badge, Avatar } from '@/components';
 import { formatCurrency, cn } from '@/lib/utils';
 import { api } from '@/services/api';
 import { DollarSign } from 'lucide-react';
@@ -375,9 +375,11 @@ export default function EditExpense() {
                   return (
                     <div key={member.userId} className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs">
-                          {member.user?.name?.charAt(0) || 'U'}
-                        </div>
+                        <Avatar
+                          src={member.user?.avatarUrl || undefined}
+                          name={member.user?.name || 'User'}
+                          size="sm"
+                        />
                         <span className="text-sm">{member.user?.name || 'User'}</span>
                       </div>
                       <div className="flex items-center gap-2">

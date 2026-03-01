@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, Button, Input, Label } from '@/components';
+import { useSession } from 'next-auth/react';
+import { Card, CardHeader, CardTitle, CardContent, Button, Input, Label, Avatar } from '@/components';
 import { LeftSidebar } from '@/components/left-sidebar';
 import { AppHeader } from '@/components/app-header';
 import { Mail, Lock, Bell, Wallet, Save, Trash2, Plus, Check, MessageSquare, Smartphone, Camera, Image } from 'lucide-react';
@@ -18,6 +19,7 @@ interface PaymentMethod {
 }
 
 export default function SettingsPage() {
+  const { data: session, update: updateSession } = useSession();
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -128,7 +130,21 @@ export default function SettingsPage() {
     try {
       const result = await api.uploadAvatar(file);
       if (result.data) {
-        setProfile({ ...profile, avatarUrl: result.data.avatarUrl });
+        const newAvatarUrl = result.data.avatarUrl;
+        setProfile({ ...profile, avatarUrl: newAvatarUrl });
+        
+        // Fetch updated user from API and update session
+        const userResult = await api.getCurrentUser();
+        if (userResult.data) {
+          await updateSession({
+            ...session,
+            user: {
+              ...session?.user,
+              image: userResult.data.avatarUrl,
+            },
+          });
+        }
+        
         setSaved(true);
         setTimeout(() => setSaved(false), 2000);
       }
@@ -150,6 +166,19 @@ export default function SettingsPage() {
     try {
       await api.removeAvatar();
       setProfile({ ...profile, avatarUrl: '' });
+      
+      // Fetch updated user from API and update session
+      const userResult = await api.getCurrentUser();
+      if (userResult.data) {
+        await updateSession({
+          ...session,
+          user: {
+            ...session?.user,
+            image: userResult.data.avatarUrl || null,
+          },
+        });
+      }
+      
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch (error) {
@@ -279,22 +308,12 @@ export default function SettingsPage() {
                     {/* Avatar Upload */}
                     <div className="flex items-center gap-6">
                       <div className="relative h-24 w-24 shrink-0">
-                        {profile.avatarUrl ? (
-                          <div className="relative h-24 w-24 rounded-full overflow-hidden bg-muted">
-                            <img
-                              src={profile.avatarUrl}
-                              alt={profile.name}
-                              className="h-full w-full object-cover"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23ddd" width="100" height="100"/%3E%3Ctext fill="%23999" x="50%25" y="50%25" text-anchor="middle" dy=".3em" font-size="40"%3E' + (profile.name?.charAt(0) || 'U').toUpperCase() + '%3C/text%3E%3C/svg%3E';
-                              }}
-                            />
-                          </div>
-                        ) : (
-                          <div className="flex h-24 w-24 items-center justify-center rounded-full bg-primary/10 text-2xl font-medium text-primary">
-                            {profile.name?.charAt(0)?.toUpperCase() || 'U'}
-                          </div>
-                        )}
+                        <Avatar
+                          src={profile.avatarUrl || undefined}
+                          name={profile.name || 'User'}
+                          size="xl"
+                          className="h-24 w-24"
+                        />
                       </div>
                       <div className="space-y-2">
                         <h3 className="font-semibold">Profile Photo</h3>

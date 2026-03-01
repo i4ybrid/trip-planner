@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useParams } from 'next/navigation';
-import { Card, CardHeader, CardTitle, CardContent, Input, Button, Textarea } from '@/components';
+import { Card, CardHeader, CardTitle, CardContent, Input, Button, Textarea, Avatar } from '@/components';
 import { api } from '@/services/api';
 import { Send, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -107,9 +107,9 @@ export default function TripChat() {
     return 'Unknown User';
   };
 
-  const getMemberInitial = (userId: string) => {
+  const getUserAvatar = (userId: string) => {
     const member = members.find(m => m.userId === userId);
-    return member?.user?.name?.charAt(0) || 'U';
+    return member?.user?.avatarUrl || undefined;
   };
 
   return (
@@ -137,9 +137,11 @@ export default function TripChat() {
                       >
                         <div className={cn('flex gap-2 max-w-[70%]', msg.senderId !== 'user-1' ? 'items-end' : 'items-center flex-row-reverse')}>
                           {msg.senderId !== 'user-1' && (
-                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-medium">
-                              {getUserName(msg.senderId).charAt(0)}
-                            </div>
+                            <Avatar
+                              src={getUserAvatar(msg.senderId)}
+                              name={getUserName(msg.senderId)}
+                              size="sm"
+                            />
                           )}
                           <div
                             className={cn(
@@ -152,7 +154,7 @@ export default function TripChat() {
                             {msg.senderId !== 'user-1' && (
                               <p className="mb-1 text-xs font-medium">{getUserName(msg.senderId)}</p>
                             )}
-                            <p className="text-sm leading-relaxed break-words">{msg.content}</p>
+                            <p className="text-sm leading-relaxed break-words whitespace-pre-wrap">{msg.content}</p>
                           </div>
                         </div>
                       </div>
