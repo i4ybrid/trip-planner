@@ -8,6 +8,7 @@ import path from 'path';
 import usersRouter from './routes/users';
 import tripsRouter from './routes/trips';
 import notificationsRouter from './routes/notifications';
+import directMessagesRouter from './routes/direct-messages';
 import { errorHandler } from './middleware/error-handler';
 import { requestLogger } from './middleware/request-logger';
 
@@ -63,6 +64,7 @@ app.get('/api/health', (req, res) => {
 app.use('/api/users', usersRouter);
 app.use('/api/trips', tripsRouter);
 app.use('/api/notifications', notificationsRouter);
+app.use('/api/messages', directMessagesRouter);
 
 // Frontend logging endpoint
 app.post('/api/logs', (req, res) => {

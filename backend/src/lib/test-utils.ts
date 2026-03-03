@@ -61,12 +61,16 @@ export async function createTestActivity(tripId: string, proposerId: string, ove
 }
 
 export async function createTestMessage(tripId: string, userId: string, overrides = {}) {
-  return prisma.tripMessage.create({
+  return prisma.message.create({
     data: {
-      tripId,
-      userId,
+      senderId: userId,
       content: 'Test message',
       messageType: 'TEXT',
+      tripMessage: {
+        create: {
+          tripId
+        }
+      },
       ...overrides,
     },
   });
@@ -76,6 +80,8 @@ export async function cleanupTestData() {
   await prisma.messageReaction.deleteMany();
   await prisma.messageReadReceipt.deleteMany();
   await prisma.tripMessage.deleteMany();
+  await prisma.directMessage.deleteMany();
+  await prisma.message.deleteMany();
   await prisma.vote.deleteMany();
   await prisma.activity.deleteMany();
   await prisma.booking.deleteMany();

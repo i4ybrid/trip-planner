@@ -171,6 +171,18 @@ export interface TripMessage {
   readReceipts?: MessageReadReceipt[];
 }
 
+export interface DirectMessage {
+  id: string;
+  senderId: string;
+  receiverId: string;
+  content: string;
+  messageType: MessageType;
+  createdAt: string;
+  updatedAt: string;
+  sender?: User;
+  receiver?: User;
+}
+
 export interface MessageReaction {
   id: string;
   messageId: string;

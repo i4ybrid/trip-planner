@@ -53,6 +53,50 @@ enum MessageType {
   SYSTEM
 }
 
+model Message {
+  id            String        @id @default(cuid())
+  senderId      String
+  content       String
+  messageType   MessageType   @default(TEXT)
+  editedAt      DateTime?
+  parentId      String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  sender        User          @relation("SentMessages", fields: [senderId], references: [id])
+  parent        Message?      @relation("MessageEdits", fields: [parentId], references: [id])
+  edits         Message[]     @relation("MessageEdits")
+  
+  tripMessage   TripMessage?
+  directMessage DirectMessage?
+  reactions     MessageReaction[]
+  readReceipts  MessageReadReceipt[]
+
+  @@index([senderId])
+}
+
+model TripMessage {
+  id        String  @id @default(cuid())
+  tripId    String
+  messageId String  @unique
+  
+  trip      Trip    @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  message   Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([tripId])
+}
+
+model DirectMessage {
+  id          String  @id @default(cuid())
+  receiverId  String
+  messageId   String  @unique
+  
+  receiver    User    @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  message     Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([receiverId])
+}
+
 model User {
   id            String    @id @default(cuid())
   email         String    @unique
@@ -69,7 +113,8 @@ model User {
   createdTrips  Trip[]         @relation("TripMaster")
   activities    Activity[]
   votes         Vote[]
-  messages      TripMessage[]
+  sentMessages     Message[]       @relation("SentMessages")
+  receivedMessages DirectMessage[] @relation("ReceivedMessages")
   mediaItems    MediaItem[]
   notifications Notification[]
   sentInvites   Invite[]      @relation("InviteSender")
@@ -198,32 +243,13 @@ model Booking {
   updatedAt       DateTime      @updatedAt
 }
 
-model TripMessage {
-  id            String        @id @default(cuid())
-  tripId        String
-  userId        String
-  content       String
-  messageType   MessageType   @default(TEXT)
-  editedAt      DateTime?
-  parentId      String?
-  
-  trip          Trip          @relation(fields: [tripId], references: [id], onDelete: Cascade)
-  user          User          @relation(fields: [userId], references: [id])
-  parent        TripMessage?  @relation("MessageEdits", fields: [parentId], references: [id])
-  edits         TripMessage[] @relation("MessageEdits")
-  reactions     MessageReaction[]
-  readReceipts  MessageReadReceipt[]
-  
-  createdAt     DateTime      @default(now())
-}
-
 model MessageReaction {
   id          String      @id @default(cuid())
   messageId   String
   userId      String
   emoji       String
   
-  message     TripMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  message     Message     @relation(fields: [messageId], references: [id], onDelete: Cascade)
   user        User        @relation(fields: [userId], references: [id])
   
   @@unique([messageId, userId, emoji])
@@ -235,7 +261,7 @@ model MessageReadReceipt {
   userId      String
   readAt      DateTime    @default(now())
   
-  message     TripMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  message     Message     @relation(fields: [messageId], references: [id], onDelete: Cascade)
   user        User        @relation(fields: [userId], references: [id])
   
   @@unique([messageId, userId])

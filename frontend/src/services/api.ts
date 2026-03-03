@@ -154,232 +154,193 @@ function getHeaders(): HeadersInit {
 }
 
 
-export const api = {
+export class ApiService {
+  protected async request<T>(path: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
+    const url = `${API_BASE_URL}${path}`;
+    const response = await fetchWithLogging(url, {
+      ...options,
+      headers: {
+        ...getHeaders() as Record<string, string>,
+        ...options.headers as Record<string, string>,
+      },
+    });
+    return handleResponse(response);
+  }
+
   // Trips
-  async getTrips(): Promise<ApiResponse<(TripMember & { trip: Trip })[]>> {
-    const response = await fetchWithLogging(`${API_BASE_URL}/trips`, {
-      headers: getHeaders(),
-    });
-    return handleResponse(response);
-  },
+  getTrips() {
+    return this.request<(TripMember & { trip: Trip })[]>('/trips');
+  }
 
-  async getTrip(id: string): Promise<ApiResponse<Trip>> {
-    const response = await fetchWithLogging(`${API_BASE_URL}/trips/${id}`, {
-      headers: getHeaders(),
-    });
-    return handleResponse(response);
-  },
+  getTrip(id: string) {
+    return this.request<Trip>(`/trips/${id}`);
+  }
 
-  async createTrip(data: CreateTripInput): Promise<ApiResponse<Trip>> {
-    const response = await fetchWithLogging(`${API_BASE_URL}/trips`, {
+  createTrip(data: CreateTripInput) {
+    return this.request<Trip>('/trips', {
       method: 'POST',
-      headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    return handleResponse(response);
-  },
+  }
 
-  async updateTrip(id: string, data: UpdateTripInput): Promise<ApiResponse<Trip>> {
-    const response = await fetchWithLogging(`${API_BASE_URL}/trips/${id}`, {
+  updateTrip(id: string, data: UpdateTripInput) {
+    return this.request<Trip>(`/trips/${id}`, {
       method: 'PATCH',
-      headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    return handleResponse(response);
-  },
+  }
 
-  async deleteTrip(id: string): Promise<ApiResponse<void>> {
-    const response = await fetchWithLogging(`${API_BASE_URL}/trips/${id}`, {
+  deleteTrip(id: string) {
+    return this.request<void>(`/trips/${id}`, {
       method: 'DELETE',
-      headers: getHeaders(),
     });
-    return handleResponse(response);
-  },
+  }
 
-  async changeTripStatus(id: string, status: string): Promise<ApiResponse<Trip>> {
-    const response = await fetchWithLogging(`${API_BASE_URL}/trips/${id}/status`, {
+  changeTripStatus(id: string, status: string) {
+    return this.request<Trip>(`/trips/${id}/status`, {
       method: 'POST',
-      headers: getHeaders(),
       body: JSON.stringify({ status }),
     });
-    return handleResponse(response);
-  },
+  }
 
   // Trip Members
-  async getTripMembers(tripId: string): Promise<ApiResponse<TripMember[]>> {
-    const response = await fetchWithLogging(`${API_BASE_URL}/trips/${tripId}/members`, {
-      headers: getHeaders(),
-    });
-    return handleResponse(response);
-  },
+  getTripMembers(tripId: string) {
+    return this.request<TripMember[]>(`/trips/${tripId}/members`);
+  }
 
-  async addTripMember(tripId: string, userId: string): Promise<ApiResponse<TripMember>> {
-    const response = await fetchWithLogging(`${API_BASE_URL}/trips/${tripId}/members`, {
+  addTripMember(tripId: string, userId: string) {
+    return this.request<TripMember>(`/trips/${tripId}/members`, {
       method: 'POST',
-      headers: getHeaders(),
       body: JSON.stringify({ userId }),
     });
-    return handleResponse(response);
-  },
+  }
 
-  async removeTripMember(tripId: string, userId: string): Promise<ApiResponse<void>> {
-    const response = await fetchWithLogging(`${API_BASE_URL}/trips/${tripId}/members/${userId}`, {
+  removeTripMember(tripId: string, userId: string) {
+    return this.request<void>(`/trips/${tripId}/members/${userId}`, {
       method: 'DELETE',
-      headers: getHeaders(),
     });
-    return handleResponse(response);
-  },
+  }
 
-  async confirmPayment(tripId: string, userId: string): Promise<ApiResponse<TripMember>> {
-    const response = await fetchWithLogging(`${API_BASE_URL}/trips/${tripId}/members/${userId}/confirm-payment`, {
+  confirmPayment(tripId: string, userId: string) {
+    return this.request<TripMember>(`/trips/${tripId}/members/${userId}/confirm-payment`, {
       method: 'POST',
-      headers: getHeaders(),
     });
-    return handleResponse(response);
-  },
+  }
 
   // Activities
-  async getActivities(tripId: string): Promise<ApiResponse<Activity[]>> {
-    const response = await fetchWithLogging(`${API_BASE_URL}/trips/${tripId}/activities`, {
-      headers: getHeaders(),
-    });
-    return handleResponse(response);
-  },
+  getActivities(tripId: string) {
+    return this.request<Activity[]>(`/trips/${tripId}/activities`);
+  }
 
-  async createActivity(tripId: string, data: CreateActivityInput): Promise<ApiResponse<Activity>> {
-    const response = await fetchWithLogging(`${API_BASE_URL}/trips/${tripId}/activities`, {
+  createActivity(tripId: string, data: CreateActivityInput) {
+    return this.request<Activity>(`/trips/${tripId}/activities`, {
       method: 'POST',
-      headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    return handleResponse(response);
-  },
+  }
 
-  async updateActivity(id: string, data: Partial<CreateActivityInput>): Promise<ApiResponse<Activity>> {
-    const response = await fetchWithLogging(`${API_BASE_URL}/activities/${id}`, {
+  updateActivity(id: string, data: Partial<CreateActivityInput>) {
+    return this.request<Activity>(`/activities/${id}`, {
       method: 'PATCH',
-      headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    return handleResponse(response);
-  },
+  }
 
-  async deleteActivity(id: string): Promise<ApiResponse<void>> {
-    const response = await fetchWithLogging(`${API_BASE_URL}/activities/${id}`, {
+  deleteActivity(id: string) {
+    return this.request<void>(`/activities/${id}`, {
       method: 'DELETE',
-      headers: getHeaders(),
     });
-    return handleResponse(response);
-  },
+  }
 
   // Votes
-  async getVotes(activityId: string): Promise<ApiResponse<Vote[]>> {
-    const response = await fetchWithLogging(`${API_BASE_URL}/activities/${activityId}/votes`, {
-      headers: getHeaders(),
-    });
-    return handleResponse(response);
-  },
+  getVotes(activityId: string) {
+    return this.request<Vote[]>(`/activities/${activityId}/votes`);
+  }
 
-  async castVote(activityId: string, option: string): Promise<ApiResponse<Vote>> {
-    const response = await fetchWithLogging(`${API_BASE_URL}/activities/${activityId}/votes`, {
+  castVote(activityId: string, option: string) {
+    return this.request<Vote>(`/activities/${activityId}/votes`, {
       method: 'POST',
-      headers: getHeaders(),
       body: JSON.stringify({ option }),
     });
-    return handleResponse(response);
-  },
+  }
 
-  async removeVote(activityId: string): Promise<ApiResponse<void>> {
-    const response = await fetchWithLogging(`${API_BASE_URL}/activities/${activityId}/votes`, {
+  removeVote(activityId: string) {
+    return this.request<void>(`/activities/${activityId}/votes`, {
       method: 'DELETE',
-      headers: getHeaders(),
     });
-    return handleResponse(response);
-  },
+  }
 
   // Invites
-  async getInvites(tripId: string): Promise<ApiResponse<Invite[]>> {
-    const response = await fetchWithLogging(`${API_BASE_URL}/trips/${tripId}/invites`, {
-      headers: getHeaders(),
-    });
-    return handleResponse(response);
-  },
+  getInvites(tripId: string) {
+    return this.request<Invite[]>(`/trips/${tripId}/invites`);
+  }
 
-  async createInvite(tripId: string, data: CreateInviteInput): Promise<ApiResponse<Invite>> {
-    const response = await fetchWithLogging(`${API_BASE_URL}/trips/${tripId}/invites`, {
+  createInvite(tripId: string, data: CreateInviteInput) {
+    return this.request<Invite>(`/trips/${tripId}/invites`, {
       method: 'POST',
-      headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    return handleResponse(response);
-  },
+  }
 
-  async acceptInvite(token: string): Promise<ApiResponse<{ tripId: string }>> {
-    const response = await fetchWithLogging(`${API_BASE_URL}/invites/${token}/accept`, {
+  acceptInvite(token: string) {
+    return this.request<{ tripId: string }>(`/invites/${token}/accept`, {
       method: 'POST',
-      headers: getHeaders(),
     });
-    return handleResponse(response);
-  },
+  }
 
-  async declineInvite(token: string): Promise<ApiResponse<void>> {
-    const response = await fetchWithLogging(`${API_BASE_URL}/invites/${token}/decline`, {
+  declineInvite(token: string) {
+    return this.request<void>(`/invites/${token}/decline`, {
       method: 'POST',
-      headers: getHeaders(),
     });
-    return handleResponse(response);
-  },
+  }
 
   // Bookings
-  async getBookings(tripId: string): Promise<ApiResponse<Booking[]>> {
-    const response = await fetchWithLogging(`${API_BASE_URL}/trips/${tripId}/bookings`, {
-      headers: getHeaders(),
-    });
-    return handleResponse(response);
-  },
+  getBookings(tripId: string) {
+    return this.request<Booking[]>(`/trips/${tripId}/bookings`);
+  }
 
-  async createBooking(tripId: string, data: { activityId?: string; notes?: string }): Promise<ApiResponse<Booking>> {
-    const response = await fetchWithLogging(`${API_BASE_URL}/trips/${tripId}/bookings`, {
+  createBooking(tripId: string, data: { activityId?: string; notes?: string }) {
+    return this.request<Booking>(`/trips/${tripId}/bookings`, {
       method: 'POST',
-      headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    return handleResponse(response);
-  },
+  }
 
-  async updateBooking(id: string, data: { status?: string; confirmationNum?: string }): Promise<ApiResponse<Booking>> {
-    const response = await fetchWithLogging(`${API_BASE_URL}/bookings/${id}`, {
+  updateBooking(id: string, data: { status?: string; confirmationNum?: string }) {
+    return this.request<Booking>(`/bookings/${id}`, {
       method: 'PATCH',
-      headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    return handleResponse(response);
-  },
+  }
 
   // Messages
-  async getMessages(tripId: string): Promise<ApiResponse<TripMessage[]>> {
-    const response = await fetchWithLogging(`${API_BASE_URL}/trips/${tripId}/messages`, {
-      headers: getHeaders(),
-    });
-    return handleResponse(response);
-  },
+  getMessages(tripId: string) {
+    return this.request<TripMessage[]>(`/trips/${tripId}/messages`);
+  }
 
-  async sendMessage(tripId: string, data: SendMessageInput): Promise<ApiResponse<TripMessage>> {
-    const response = await fetchWithLogging(`${API_BASE_URL}/trips/${tripId}/messages`, {
+  sendMessage(tripId: string, data: SendMessageInput) {
+    return this.request<TripMessage>(`/trips/${tripId}/messages`, {
       method: 'POST',
-      headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    return handleResponse(response);
-  },
+  }
+
+  // Direct Messages
+  getDirectMessages(userId: string) {
+    return this.request<DirectMessage[]>(`/messages/${userId}`);
+  }
+
+  sendDirectMessage(userId: string, data: SendMessageInput) {
+    return this.request<DirectMessage>(`/messages/${userId}`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
 
   // Media
-  async getMedia(tripId: string): Promise<ApiResponse<MediaItem[]>> {
-    const response = await fetchWithLogging(`${API_BASE_URL}/trips/${tripId}/media`, {
-      headers: getHeaders(),
-    });
-    return handleResponse(response);
-  },
+  getMedia(tripId: string) {
+    return this.request<MediaItem[]>(`/trips/${tripId}/media`);
+  }
 
   async uploadMedia(tripId: string, file: File): Promise<ApiResponse<MediaItem>> {
     const formData = new FormData();
@@ -391,63 +352,49 @@ export const api = {
       headers['x-user-id'] = token;
     }
 
-    
     const response = await fetchWithLogging(`${API_BASE_URL}/trips/${tripId}/media`, {
       method: 'POST',
       headers,
       body: formData,
     });
     return handleResponse(response);
-  },
+  }
 
   // Notifications
-  async getNotifications(): Promise<ApiResponse<Notification[]>> {
-    const response = await fetchWithLogging(`${API_BASE_URL}/notifications`, {
-      headers: getHeaders(),
-    });
-    return handleResponse(response);
-  },
+  getNotifications() {
+    return this.request<Notification[]>('/notifications');
+  }
 
-  async markNotificationRead(id: string): Promise<ApiResponse<void>> {
-    const response = await fetchWithLogging(`${API_BASE_URL}/notifications/${id}`, {
+  markNotificationRead(id: string) {
+    return this.request<void>(`/notifications/${id}`, {
       method: 'PATCH',
-      headers: getHeaders(),
       body: JSON.stringify({ read: true }),
     });
-    return handleResponse(response);
-  },
+  }
 
-  async markAllNotificationsRead(): Promise<ApiResponse<void>> {
-    const response = await fetchWithLogging(`${API_BASE_URL}/notifications/mark-all-read`, {
+  markAllNotificationsRead() {
+    return this.request<void>('/notifications/mark-all-read', {
       method: 'POST',
-      headers: getHeaders(),
     });
-    return handleResponse(response);
-  },
+  }
 
   // User
-  async getCurrentUser(): Promise<ApiResponse<User>> {
-    const response = await fetchWithLogging(`${API_BASE_URL}/users/me`, {
-      headers: getHeaders(),
-    });
-    return handleResponse(response);
-  },
+  getCurrentUser() {
+    return this.request<User>('/users/me');
+  }
 
-  async updateProfile(data: Partial<User>): Promise<ApiResponse<User>> {
-    const response = await fetchWithLogging(`${API_BASE_URL}/users/me`, {
+  updateProfile(data: Partial<User>) {
+    return this.request<User>('/users/me', {
       method: 'PATCH',
-      headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    return handleResponse(response);
-  },
+  }
 
-  async getUser(id: string): Promise<ApiResponse<User>> {
-    const response = await fetchWithLogging(`${API_BASE_URL}/users/${id}`, {
-      headers: getHeaders(),
-    });
-    return handleResponse(response);
-  },
-};
+  getUser(id: string) {
+    return this.request<User>(`/users/${id}`);
+  }
+}
+
+export const api = new ApiService();
 
 export { ApiError };

@@ -208,7 +208,7 @@ describe('POST /api/messages', () => {
 
   it('should send a message', async () => {
     const response = await request(app)
-      .post(`/api/messages/trip/${testTrip.id}`)
+      .post(`/api/trips/${testTrip.id}/messages`)
       .set('x-user-id', testUser.id)
       .send({
         content: 'Hello everyone!',
@@ -220,7 +220,7 @@ describe('POST /api/messages', () => {
 
   it('should parse @mentions', async () => {
     const response = await request(app)
-      .post(`/api/messages/trip/${testTrip.id}`)
+      .post(`/api/trips/${testTrip.id}/messages`)
       .set('x-user-id', testUser.id)
       .send({
         content: 'Hey @everyone!',
@@ -233,7 +233,7 @@ describe('POST /api/messages', () => {
 
   it('should return 400 for empty content', async () => {
     const response = await request(app)
-      .post(`/api/messages/trip/${testTrip.id}`)
+      .post(`/api/trips/${testTrip.id}/messages`)
       .set('x-user-id', testUser.id)
       .send({
         content: '',
@@ -243,7 +243,7 @@ describe('POST /api/messages', () => {
   });
 });
 
-describe('GET /api/messages/trip/:tripId', () => {
+describe('GET /api/trips/:tripId/messages', () => {
   let app: any;
   let testUser: any;
   let testTrip: any;
@@ -254,13 +254,9 @@ describe('GET /api/messages/trip/:tripId', () => {
     testTrip = await createTestTrip(testUser.id, { name: 'Message Get Test Trip' });
     await createTestTripMember(testTrip.id, testUser.id);
     
-    await prisma.tripMessage.createMany({
-      data: [
-        { tripId: testTrip.id, userId: testUser.id, content: 'First message' },
-        { tripId: testTrip.id, userId: testUser.id, content: 'Second message' },
-        { tripId: testTrip.id, userId: testUser.id, content: 'Third message' },
-      ],
-    });
+    await createTestMessage(testTrip.id, testUser.id, { content: 'First message' });
+    await createTestMessage(testTrip.id, testUser.id, { content: 'Second message' });
+    await createTestMessage(testTrip.id, testUser.id, { content: 'Third message' });
   });
 
   afterAll(async () => {
@@ -270,7 +266,7 @@ describe('GET /api/messages/trip/:tripId', () => {
 
   it('should get messages for trip', async () => {
     const response = await request(app)
-      .get(`/api/messages/trip/${testTrip.id}`);
+      .get(`/api/trips/${testTrip.id}/messages`);
 
     expect(response.status).toBe(200);
     expect(response.body).toHaveLength(3);
@@ -278,7 +274,7 @@ describe('GET /api/messages/trip/:tripId', () => {
 
   it('should respect limit parameter', async () => {
     const response = await request(app)
-      .get(`/api/messages/trip/${testTrip.id}?limit=2`);
+      .get(`/api/trips/${testTrip.id}/messages?limit=2`);
 
     expect(response.status).toBe(200);
     expect(response.body).toHaveLength(2);

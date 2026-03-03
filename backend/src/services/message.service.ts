@@ -1,10 +1,17 @@
-import { PrismaClient, TripMessage, MessageReaction, MessageReadReceipt } from '@prisma/client';
+import { PrismaClient, Message, TripMessage, DirectMessage, MessageReaction, MessageReadReceipt } from '@prisma/client';
 
-export type { TripMessage, MessageReaction, MessageReadReceipt };
+export type { Message, TripMessage, DirectMessage, MessageReaction, MessageReadReceipt };
 
 export interface CreateMessageInput {
   tripId: string;
   userId: string;
+  content: string;
+  messageType?: 'TEXT' | 'IMAGE' | 'VIDEO' | 'SYSTEM';
+}
+
+export interface CreateDirectMessageInput {
+  senderId: string;
+  receiverId: string;
   content: string;
   messageType?: 'TEXT' | 'IMAGE' | 'VIDEO' | 'SYSTEM';
 }
@@ -54,7 +61,7 @@ export class MessageService {
     return mentions;
   }
 
-  async createMessage(data: CreateMessageInput): Promise<TripMessage & { mentions: ParsedMention[] }> {
+  async createMessage(data: CreateMessageInput): Promise<Message & { mentions: ParsedMention[] }> {
     const tripMembers = await this.prisma.tripMember.findMany({
       where: { tripId: data.tripId },
       include: { user: true },
@@ -62,26 +69,37 @@ export class MessageService {
 
     const mentions = this.parseMentions(data.content, tripMembers);
 
-    const message = await this.prisma.tripMessage.create({
+    const message = await this.prisma.message.create({
       data: {
-        tripId: data.tripId,
-        userId: data.userId,
+        senderId: data.userId,
         content: data.content,
         messageType: data.messageType || 'TEXT',
+        tripMessage: {
+          create: {
+            tripId: data.tripId,
+          },
+        },
+      },
+      include: {
+        sender: {
+          select: { id: true, name: true, avatarUrl: true },
+        },
       },
     });
 
     return { ...message, mentions };
   }
 
-  async getTripMessages(tripId: string, limit = 50, beforeId?: string): Promise<TripMessage[]> {
-    return this.prisma.tripMessage.findMany({
+  async getTripMessages(tripId: string, limit = 50, beforeId?: string): Promise<Message[]> {
+    return this.prisma.message.findMany({
       where: {
-        tripId,
+        tripMessage: {
+          tripId,
+        },
         ...(beforeId ? { id: { lt: beforeId } } : {}),
       },
       include: {
-        user: {
+        sender: {
           select: { id: true, name: true, avatarUrl: true },
         },
         reactions: true,
@@ -94,11 +112,11 @@ export class MessageService {
     });
   }
 
-  async getMessageById(messageId: string): Promise<TripMessage | null> {
-    return this.prisma.tripMessage.findUnique({
+  async getMessageById(messageId: string): Promise<Message | null> {
+    return this.prisma.message.findUnique({
       where: { id: messageId },
       include: {
-        user: {
+        sender: {
           select: { id: true, name: true, avatarUrl: true },
         },
         reactions: true,
@@ -106,30 +124,42 @@ export class MessageService {
     });
   }
 
-  async editMessage(messageId: string, userId: string, newContent: string): Promise<TripMessage> {
-    const message = await this.prisma.tripMessage.findUnique({
+  async editMessage(messageId: string, userId: string, newContent: string): Promise<Message> {
+    const message = await this.prisma.message.findUnique({
       where: { id: messageId },
+      include: { tripMessage: true, directMessage: true },
     });
 
     if (!message) {
       throw new Error('Message not found');
     }
 
-    if (message.userId !== userId) {
+    if (message.senderId !== userId) {
       throw new Error('Not authorized to edit this message');
     }
 
-    const editedMessage = await this.prisma.tripMessage.create({
+    // Create new message as an edit
+    const editedMessage = await this.prisma.message.create({
       data: {
-        tripId: message.tripId,
-        userId: message.userId,
+        senderId: message.senderId,
         content: newContent,
         messageType: message.messageType,
         parentId: messageId,
+        // Reuse original container if applicable
+        ...(message.tripMessage ? {
+          tripMessage: {
+            create: { tripId: message.tripMessage.tripId }
+          }
+        } : {}),
+        ...(message.directMessage ? {
+          directMessage: {
+            create: { receiverId: message.directMessage.receiverId }
+          }
+        } : {}),
       },
     });
 
-    await this.prisma.tripMessage.update({
+    await this.prisma.message.update({
       where: { id: messageId },
       data: { editedAt: new Date() },
     });
@@ -138,7 +168,7 @@ export class MessageService {
   }
 
   async deleteMessage(messageId: string, userId: string): Promise<void> {
-    const message = await this.prisma.tripMessage.findUnique({
+    const message = await this.prisma.message.findUnique({
       where: { id: messageId },
     });
 
@@ -146,11 +176,11 @@ export class MessageService {
       throw new Error('Message not found');
     }
 
-    if (message.userId !== userId) {
+    if (message.senderId !== userId) {
       throw new Error('Not authorized to delete this message');
     }
 
-    await this.prisma.tripMessage.delete({
+    await this.prisma.message.delete({
       where: { id: messageId },
     });
   }
@@ -216,8 +246,8 @@ export class MessageService {
   }
 
   async markAllAsRead(tripId: string, userId: string): Promise<number> {
-    const messages = await this.prisma.tripMessage.findMany({
-      where: { tripId },
+    const messages = await this.prisma.message.findMany({
+      where: { tripMessage: { tripId } },
       select: { id: true },
     });
 
@@ -249,13 +279,13 @@ export class MessageService {
   }
 
   async getUnreadCount(tripId: string, userId: string): Promise<number> {
-    const totalMessages = await this.prisma.tripMessage.count({
-      where: { tripId },
+    const totalMessages = await this.prisma.message.count({
+      where: { tripMessage: { tripId } },
     });
 
     const readCount = await this.prisma.messageReadReceipt.count({
       where: {
-        message: { tripId },
+        message: { tripMessage: { tripId } },
         userId,
       },
     });
@@ -263,13 +293,15 @@ export class MessageService {
     return totalMessages - readCount;
   }
 
-  async createSystemMessage(tripId: string, content: string): Promise<TripMessage> {
-    return this.prisma.tripMessage.create({
+  async createSystemMessage(tripId: string, content: string): Promise<Message> {
+    return this.prisma.message.create({
       data: {
-        tripId,
-        userId: 'system',
+        senderId: 'system',
         content,
         messageType: 'SYSTEM',
+        tripMessage: {
+          create: { tripId }
+        }
       },
     });
   }
@@ -288,5 +320,59 @@ export class MessageService {
       userId: m.user.id,
       name: m.user.name,
     }));
+  }
+
+  // Direct Messages (using containers)
+  async getDirectMessages(user1Id: string, user2Id: string, limit = 50): Promise<Message[]> {
+    return this.prisma.message.findMany({
+      where: {
+        OR: [
+          { senderId: user1Id, directMessage: { receiverId: user2Id } },
+          { senderId: user2Id, directMessage: { receiverId: user1Id } },
+        ],
+      },
+      include: {
+        sender: {
+          select: { id: true, name: true, avatarUrl: true },
+        },
+        directMessage: {
+          include: {
+            receiver: {
+              select: { id: true, name: true, avatarUrl: true },
+            }
+          }
+        },
+        reactions: true,
+      },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    });
+  }
+
+  async sendDirectMessage(data: CreateDirectMessageInput): Promise<Message> {
+    return this.prisma.message.create({
+      data: {
+        senderId: data.senderId,
+        content: data.content,
+        messageType: data.messageType || 'TEXT',
+        directMessage: {
+          create: {
+            receiverId: data.receiverId
+          }
+        }
+      },
+      include: {
+        sender: {
+          select: { id: true, name: true, avatarUrl: true },
+        },
+        directMessage: {
+          include: {
+            receiver: {
+              select: { id: true, name: true, avatarUrl: true },
+            }
+          }
+        },
+      },
+    });
   }
 }

@@ -6,6 +6,7 @@ import {
   Invite,
   Booking,
   TripMessage,
+  DirectMessage,
   MediaItem,
   Notification,
   User,
@@ -20,6 +21,7 @@ import {
   CreateAlbumInput,
   ApiResponse,
 } from '@/types';
+import { ApiService } from './api';
 
 const generateId = () => crypto.randomUUID();
 
@@ -148,92 +150,24 @@ const SEED_VOTES: Vote[] = [
   { id: 'v9', activityId: 'act-4', userId: 'user-2', option: 'yes' },
   { id: 'v10', activityId: 'act-4', userId: 'user-3', option: 'yes' },
   { id: 'v11', activityId: 'act-5', userId: 'user-1', option: 'yes' },
-  { id: 'v12', activityId: 'act-5', userId: 'user-2', option: 'yes' },
 ];
 
 const SEED_MESSAGES: TripMessage[] = [
-  { id: 'msg-1', tripId: 'trip-1', userId: 'user-1', content: 'Hey everyone! Excited about this trip! 🏝️', messageType: 'TEXT', createdAt: '2026-01-15T10:00:00Z' },
-  { id: 'msg-2', tripId: 'trip-1', userId: 'user-2', content: 'Me too! I\'ve always wanted to go to Maui!', messageType: 'TEXT', createdAt: '2026-01-15T10:15:00Z' },
-  { id: 'msg-3', tripId: 'trip-1', userId: 'user-3', content: 'Has anyone looked at the surf lessons? I think that would be so fun!', messageType: 'TEXT', createdAt: '2026-01-20T14:30:00Z' },
-  { id: 'msg-4', tripId: 'trip-1', userId: 'user-1', content: 'I added it as an activity - please vote!', messageType: 'TEXT', createdAt: '2026-01-20T15:00:00Z' },
-  { id: 'msg-5', tripId: 'trip-2', userId: 'user-2', content: 'Birthday trip! Can\'t wait! 🎉', messageType: 'TEXT', createdAt: '2026-01-20T09:00:00Z' },
-  { id: 'msg-6', tripId: 'trip-2', userId: 'user-1', content: 'Going to book us tickets to Hamilton!', messageType: 'TEXT', createdAt: '2026-01-25T11:00:00Z' },
+  { id: 'msg-1', tripId: 'trip-1', userId: 'user-1', content: 'Hey everyone, looking forward to Hawaii!', messageType: 'TEXT', createdAt: '2026-01-15T10:00:00Z' },
+  { id: 'msg-2', tripId: 'trip-1', userId: 'user-2', content: 'Same here! I just added some surfing lessons.', messageType: 'TEXT', createdAt: '2026-01-15T11:00:00Z' },
 ];
 
 const SEED_EVENTS: TripEvent[] = [
-  { id: 'evt-1', tripId: 'trip-1', type: 'trip_created', title: 'Trip created', description: 'Hawaii Beach Vacation was created', userId: 'user-1', createdAt: '2026-01-15T10:00:00Z' },
-  { id: 'evt-2', tripId: 'trip-1', type: 'member_invited', title: 'Sarah invited', description: 'Sarah Chen was invited to the trip', userId: 'user-1', createdAt: '2026-01-15T10:05:00Z' },
-  { id: 'evt-3', tripId: 'trip-1', type: 'member_joined', title: 'Sarah joined', description: 'Sarah Chen joined the trip', userId: 'user-2', createdAt: '2026-01-16T09:00:00Z' },
-  { id: 'evt-4', tripId: 'trip-1', type: 'member_invited', title: 'Mike invited', description: 'Mike Johnson was invited to the trip', userId: 'user-1', createdAt: '2026-01-16T10:00:00Z' },
-  { id: 'evt-5', tripId: 'trip-1', type: 'member_joined', title: 'Mike joined', description: 'Mike Johnson joined the trip', userId: 'user-3', createdAt: '2026-01-17T08:30:00Z' },
-  { id: 'evt-6', tripId: 'trip-1', type: 'activity_proposed', title: 'Activity proposed', description: 'Surfing Lessons proposed', userId: 'user-1', relatedId: 'act-1', createdAt: '2026-01-20T14:00:00Z' },
-  { id: 'evt-7', tripId: 'trip-1', type: 'activity_proposed', title: 'Activity proposed', description: 'Hotel: Grand Wailea proposed', userId: 'user-1', relatedId: 'act-4', createdAt: '2026-01-18T11:00:00Z' },
-  { id: 'evt-8', tripId: 'trip-1', type: 'vote_cast', title: 'Vote cast', description: 'Voted yes on Surfing Lessons', userId: 'user-1', createdAt: '2026-01-20T14:05:00Z' },
-  { id: 'evt-9', tripId: 'trip-1', type: 'vote_cast', title: 'Vote cast', description: 'Voted yes on Hotel: Grand Wailea', userId: 'user-2', createdAt: '2026-01-19T10:00:00Z' },
-  { id: 'evt-10', tripId: 'trip-1', type: 'status_changed', title: 'Status changed', description: 'Trip moved to PLANNING', userId: 'user-1', createdAt: '2026-01-19T12:00:00Z' },
-  { id: 'evt-11', tripId: 'trip-1', type: 'activity_booked', title: 'Activity booked', description: 'Hotel: Grand Wailea was booked', userId: 'user-1', relatedId: 'act-4', createdAt: '2026-02-01T15:00:00Z' },
-  { id: 'evt-12', tripId: 'trip-1', type: 'payment_received', title: 'Payment received', description: 'Sarah paid $450 for hotel', userId: 'user-2', createdAt: '2026-02-01T16:00:00Z' },
-  { id: 'evt-13', tripId: 'trip-1', type: 'payment_received', title: 'Payment received', description: 'Mike paid $450 for hotel', userId: 'user-3', createdAt: '2026-02-01T16:30:00Z' },
-  { id: 'evt-14', tripId: 'trip-2', type: 'trip_created', title: 'Trip created', description: 'NYC Birthday Weekend was created', userId: 'user-2', createdAt: '2026-01-20T09:00:00Z' },
-  { id: 'evt-15', tripId: 'trip-2', type: 'member_invited', title: 'Test User invited', description: 'Test User was invited to the trip', userId: 'user-2', createdAt: '2026-01-20T09:05:00Z' },
-  { id: 'evt-16', tripId: 'trip-2', type: 'member_joined', title: 'Test User joined', description: 'Test User joined the trip', userId: 'user-1', createdAt: '2026-01-21T10:00:00Z' },
-  { id: 'evt-17', tripId: 'trip-2', type: 'activity_proposed', title: 'Activity proposed', description: 'Broadway Show proposed', userId: 'user-2', relatedId: 'act-5', createdAt: '2026-01-25T11:00:00Z' },
-  { id: 'evt-18', tripId: 'trip-2', type: 'status_changed', title: 'Status changed', description: 'Trip confirmed! All activities booked.', userId: 'user-2', createdAt: '2026-02-10T14:00:00Z' },
-  { id: 'evt-19', tripId: 'trip-2', type: 'payment_received', title: 'Payment received', description: 'Test User paid $500 for hotel & show', userId: 'user-1', createdAt: '2026-02-10T15:00:00Z' },
-  { id: 'evt-20', tripId: 'trip-3', type: 'trip_created', title: 'Trip created', description: 'European Adventure was created', userId: 'user-1', createdAt: '2026-02-01T10:00:00Z' },
-  { id: 'evt-21', tripId: 'trip-3', type: 'activity_proposed', title: 'Activity proposed', description: 'Eiffel Tower Visit proposed', userId: 'user-1', relatedId: 'act-7', createdAt: '2026-02-01T10:30:00Z' },
-  { id: 'evt-22', tripId: 'trip-4', type: 'trip_created', title: 'Trip created', description: 'Ski Trip 2025 was created', userId: 'user-3', createdAt: '2025-10-01T09:00:00Z' },
-  { id: 'evt-23', tripId: 'trip-4', type: 'member_joined', title: 'Members joined', description: 'Trip members joined', userId: 'user-1', createdAt: '2025-10-02T10:00:00Z' },
-  { id: 'evt-24', tripId: 'trip-4', type: 'status_changed', title: 'Trip in progress', description: 'Trip started', userId: 'user-3', createdAt: '2025-12-20T08:00:00Z' },
-  { id: 'evt-25', tripId: 'trip-4', type: 'status_changed', title: 'Trip completed', description: 'Trip completed successfully', userId: 'user-3', createdAt: '2025-12-23T18:00:00Z' },
-  { id: 'evt-26', tripId: 'trip-5', type: 'trip_created', title: 'Trip created', description: 'Happening Nashville trip was created', userId: 'user-2', createdAt: '2026-01-25T10:00:00Z' },
-  { id: 'evt-27', tripId: 'trip-5', type: 'member_invited', title: 'Members invited', description: 'Test User and Emma invited', userId: 'user-2', createdAt: '2026-01-25T10:05:00Z' },
-  { id: 'evt-28', tripId: 'trip-5', type: 'member_joined', title: 'Test User joined', description: 'Test User joined the trip', userId: 'user-1', createdAt: '2026-01-25T11:00:00Z' },
-  { id: 'evt-29', tripId: 'trip-5', type: 'member_joined', title: 'Emma joined', description: 'Emma Wilson joined the trip', userId: 'user-4', createdAt: '2026-01-26T09:00:00Z' },
-  { id: 'evt-30', tripId: 'trip-5', type: 'status_changed', title: 'Trip started!', description: 'The Nashville adventure begins!', userId: 'user-2', createdAt: '2026-02-18T08:00:00Z' },
-  { id: 'evt-31', tripId: 'trip-5', type: 'photo_shared', title: 'Photo album added', description: 'Downtown Nashville photos added', userId: 'user-2', createdAt: '2026-02-18T14:00:00Z' },
-  { id: 'evt-32', tripId: 'trip-5', type: 'photo_shared', title: 'Video added', description: 'Live music at Broadway added', userId: 'user-1', createdAt: '2026-02-18T22:00:00Z' },
+  { id: 'e1', tripId: 'trip-1', userId: 'user-1', type: 'TRIP_CREATED', description: 'created the trip', createdAt: '2026-01-15T00:00:00Z' },
+  { id: 'e2', tripId: 'trip-1', userId: 'user-2', type: 'MEMBER_JOINED', description: 'joined the trip', createdAt: '2026-01-16T00:00:00Z' },
 ];
 
 const SEED_SETTLEMENTS: Settlement[] = [
-  { id: 'set-1', tripId: 'trip-1', fromUserId: 'user-2', toUserId: 'user-1', amount: 450, currency: 'USD', description: 'Hotel: Grand Wailea share', status: 'received', venmoHandle: 'sarah-chen', createdAt: '2026-02-01T16:00:00Z' },
-  { id: 'set-2', tripId: 'trip-1', fromUserId: 'user-3', toUserId: 'user-1', amount: 450, currency: 'USD', description: 'Hotel: Grand Wailea share', status: 'received', venmoHandle: 'mike-j', createdAt: '2026-02-01T16:30:00Z' },
-  { id: 'set-3', tripId: 'trip-1', fromUserId: 'user-4', toUserId: 'user-1', amount: 795, currency: 'USD', description: 'Hotel + Activities share (pending)', status: 'pending', createdAt: '2026-02-10T10:00:00Z' },
-  { id: 'set-4', tripId: 'trip-2', fromUserId: 'user-1', toUserId: 'user-2', amount: 500, currency: 'USD', description: 'Hotel & Broadway tickets', status: 'received', paypalEmail: 'sarah@example.com', createdAt: '2026-02-10T15:00:00Z' },
-  { id: 'set-5', tripId: 'trip-1', fromUserId: 'user-2', toUserId: 'user-3', amount: 37, currency: 'USD', description: 'Surf lessons share', status: 'pending', zellePhone: '555-0123', createdAt: '2026-02-15T10:00:00Z' },
-  { id: 'set-6', tripId: 'trip-1', fromUserId: 'user-2', toUserId: 'user-3', amount: 60, currency: 'USD', description: 'Luau dinner share', status: 'pending', createdAt: '2026-02-15T10:00:00Z' },
-];
-
-const SEED_ALBUMS: Album[] = [
-  {
-    id: 'album-1',
-    tripId: 'trip-5',
-    name: 'Downtown Nashville',
-    description: 'First day exploring Broadway and downtown',
-    coverImage: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800',
-    mediaItems: [],
-    createdAt: '2026-02-18T14:00:00Z',
-    updatedAt: '2026-02-18T14:00:00Z',
-  },
-  {
-    id: 'album-2',
-    tripId: 'trip-5',
-    name: 'Music Row',
-    description: 'Recording studios and live music venues',
-    coverImage: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800',
-    mediaItems: [],
-    createdAt: '2026-02-19T10:00:00Z',
-    updatedAt: '2026-02-19T10:00:00Z',
-  },
+  { id: 's1', tripId: 'trip-1', fromUserId: 'user-2', toUserId: 'user-1', amount: 150, currency: 'USD', description: 'Hotel share', status: 'pending', createdAt: '2026-02-01T00:00:00Z' },
 ];
 
 const SEED_MEDIA: MediaItem[] = [
-  { id: 'media-1', tripId: 'trip-5', uploaderId: 'user-2', type: 'image', url: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800', caption: 'Nashville skyline at night', createdAt: '2026-02-18T14:00:00Z' },
-  { id: 'media-2', tripId: 'trip-5', uploaderId: 'user-2', type: 'image', url: 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=800', caption: 'Broadway neon lights', createdAt: '2026-02-18T14:05:00Z' },
-  { id: 'media-3', tripId: 'trip-5', uploaderId: 'user-1', type: 'image', url: 'https://images.unsplash.com/photo-1544542900-1af4c07e98d8?w=800', caption: 'Guitar shop on Broadway', createdAt: '2026-02-18T16:00:00Z' },
-  { id: 'media-4', tripId: 'trip-5', uploaderId: 'user-2', type: 'image', url: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=800', caption: 'Live music everywhere!', createdAt: '2026-02-18T22:00:00Z' },
-  { id: 'media-5', tripId: 'trip-5', uploaderId: 'user-1', type: 'image', url: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800', caption: 'Studio vibes', createdAt: '2026-02-19T10:00:00Z' },
-  { id: 'media-6', tripId: 'trip-5', uploaderId: 'user-4', type: 'image', url: 'https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=800', caption: 'Honky tonk night', createdAt: '2026-02-19T21:00:00Z' },
+  { id: 'med-1', tripId: 'trip-5', uploaderId: 'user-2', type: 'image', url: 'https://images.unsplash.com/photo-1541194577141-f7a3b724ef8e?w=800', caption: 'Nashville view!', createdAt: '2026-02-18T10:00:00Z' },
 ];
 
 class MockTrip {
@@ -244,6 +178,7 @@ class MockTrip {
   invites: Map<string, Invite[]> = new Map();
   bookings: Map<string, Booking[]> = new Map();
   messages: Map<string, TripMessage[]> = new Map();
+  directMessages: Map<string, DirectMessage[]> = new Map();
   media: Map<string, MediaItem[]> = new Map();
   events: Map<string, TripEvent[]> = new Map();
   settlements: Map<string, Settlement[]> = new Map();
@@ -355,15 +290,12 @@ class MockTrip {
   }
 
   async getTrips(userIdInput?: string): Promise<ApiResponse<(TripMember & { trip: Trip })[]>> {
-    // Get the current user ID from localStorage or argument
     const userId = userIdInput || (typeof window !== 'undefined' ? localStorage.getItem('auth_token') || 'user-1' : 'user-1');
 
-    // If user doesn't exist, return empty trips (like backend would)
     if (!this.getUserById(userId)) {
       return { data: [] };
     }
 
-    // Return TripMember objects with embedded trip objects (like backend)
     const tripMembers: (TripMember & { trip: Trip })[] = [];
     for (const [tripId, members] of this.members.entries()) {
       const trip = this.trips.get(tripId);
@@ -563,11 +495,7 @@ class MockTrip {
 
   async getMessages(tripId: string): Promise<ApiResponse<TripMessage[]>> {
     const messages = this.messages.get(tripId) || [];
-    const messagesWithUsers = messages.map(m => ({
-      ...m,
-      user: this.users.get(m.userId)
-    })) as (TripMessage & { user?: User })[];
-    return { data: messages as TripMessage[] };
+    return { data: messages };
   }
 
   async sendMessage(tripId: string, userId: string, input: SendMessageInput): Promise<ApiResponse<TripMessage>> {
@@ -601,18 +529,46 @@ class MockTrip {
     return { data: this.calculateBalances(tripId) };
   }
 
+  // Direct Messages
+  private getConversationKey(u1: string, u2: string) {
+    return [u1, u2].sort().join(':');
+  }
+
+  async getDirectMessages(u1: string, u2: string): Promise<ApiResponse<DirectMessage[]>> {
+    const key = this.getConversationKey(u1, u2);
+    const messages = this.directMessages.get(key) || [];
+    return { data: messages.map(m => ({
+      ...m,
+      sender: this.users.get(m.senderId),
+      receiver: this.users.get(m.receiverId)
+    })) };
+  }
+
+  async sendDirectMessage(senderId: string, receiverId: string, input: SendMessageInput): Promise<ApiResponse<DirectMessage>> {
+    const message: DirectMessage = {
+      id: generateId(),
+      senderId,
+      receiverId,
+      content: input.content,
+      messageType: input.messageType || 'TEXT',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    const key = this.getConversationKey(senderId, receiverId);
+    const messages = this.directMessages.get(key) || [];
+    messages.push(message);
+    this.directMessages.set(key, messages);
+    return { data: message };
+  }
+
   async getAlbums(tripId: string): Promise<ApiResponse<Album[]>> {
-    const albums = Array.from(this.albums.values()).filter(a => a.tripId === tripId);
-    return { data: albums };
+    return { data: Array.from(this.albums.values()).filter(t => t.tripId === tripId) };
   }
 
   async createAlbum(tripId: string, userId: string, input: CreateAlbumInput): Promise<ApiResponse<Album>> {
     const trip = this.trips.get(tripId);
     if (!trip) {
       return { error: 'Trip not found' };
-    }
-    if (trip.status !== 'HAPPENING' && trip.status !== 'COMPLETED') {
-      return { error: 'Albums can only be added after the trip has started' };
     }
     const album: Album = {
       id: generateId(),
@@ -652,6 +608,7 @@ class MockTrip {
     this.invites.clear();
     this.bookings.clear();
     this.messages.clear();
+    this.directMessages.clear();
     this.media.clear();
     this.events.clear();
     this.settlements.clear();
@@ -663,71 +620,129 @@ export const mockTrip = new MockTrip(true);
 
 export { MockTrip };
 
-export const mockApi = {
-  getTrips: (userId?: string): Promise<ApiResponse<(TripMember & { trip: Trip })[]>> => mockTrip.getTrips(userId),
-  getTrip: (id: string): Promise<ApiResponse<Trip>> => mockTrip.getTrip(id),
-  createTrip: (input: CreateTripInput): Promise<ApiResponse<Trip>> => {
+export class MockApiService extends ApiService {
+  getTrips(userId?: string): Promise<ApiResponse<(TripMember & { trip: Trip })[]>> {
+    return mockTrip.getTrips(userId);
+  }
+
+  getTrip(id: string): Promise<ApiResponse<Trip>> {
+    return mockTrip.getTrip(id);
+  }
+
+  createTrip(input: CreateTripInput): Promise<ApiResponse<Trip>> {
     const userId = typeof window !== 'undefined' ? localStorage.getItem('auth_token') || 'user-1' : 'user-1';
     return mockTrip.createTrip(userId, input);
-  },
-  updateTrip: (id: string, input: UpdateTripInput): Promise<ApiResponse<Trip>> => mockTrip.updateTrip(id, input),
-  deleteTrip: (id: string): Promise<ApiResponse<void>> => mockTrip.deleteTrip(id),
-  changeTripStatus: (id: string, status: string): Promise<ApiResponse<Trip>> => mockTrip.changeTripStatus(id, status),
-  getTripMembers: (tripId: string): Promise<ApiResponse<TripMember[]>> => mockTrip.getTripMembers(tripId),
-  addTripMember: (tripId: string, userId: string): Promise<ApiResponse<TripMember>> => mockTrip.addTripMember(tripId, userId),
-  getActivities: (tripId: string): Promise<ApiResponse<Activity[]>> => mockTrip.getActivities(tripId),
-  createActivity: (tripId: string, userIdOrInput: string | CreateActivityInput, input?: CreateActivityInput): Promise<ApiResponse<Activity>> => mockTrip.createActivity(tripId, userIdOrInput, input),
-  castVote: (activityId: string, userIdOrOption: string, option?: string): Promise<ApiResponse<Vote>> => mockTrip.castVote(activityId, userIdOrOption, option),
-  getInvites: (tripId: string): Promise<ApiResponse<Invite[]>> => mockTrip.getInvites(tripId),
-  createInvite: (tripId: string, input: CreateInviteInput): Promise<ApiResponse<Invite>> => mockTrip.createInvite(tripId, input),
-  getBookings: (tripId: string): Promise<ApiResponse<Booking[]>> => mockTrip.getBookings(tripId),
-  getMessages: (tripId: string): Promise<ApiResponse<TripMessage[]>> => mockTrip.getMessages(tripId),
-  sendMessage: (tripId: string, input: SendMessageInput): Promise<ApiResponse<TripMessage>> => {
+  }
+
+  updateTrip(id: string, input: UpdateTripInput): Promise<ApiResponse<Trip>> {
+    return mockTrip.updateTrip(id, input);
+  }
+
+  deleteTrip(id: string): Promise<ApiResponse<void>> {
+    return mockTrip.deleteTrip(id);
+  }
+
+  changeTripStatus(id: string, status: string): Promise<ApiResponse<Trip>> {
+    return mockTrip.changeTripStatus(id, status);
+  }
+
+  getTripMembers(tripId: string): Promise<ApiResponse<TripMember[]>> {
+    return mockTrip.getTripMembers(tripId);
+  }
+
+  addTripMember(tripId: string, userId: string): Promise<ApiResponse<TripMember>> {
+    return mockTrip.addTripMember(tripId, userId);
+  }
+
+  getActivities(tripId: string): Promise<ApiResponse<Activity[]>> {
+    return mockTrip.getActivities(tripId);
+  }
+
+  createActivity(tripId: string, userIdOrInput: string | CreateActivityInput, input?: CreateActivityInput): Promise<ApiResponse<Activity>> {
+    return mockTrip.createActivity(tripId, userIdOrInput, input);
+  }
+
+  castVote(activityId: string, userIdOrOption: string, option?: string): Promise<ApiResponse<Vote>> {
+    return mockTrip.castVote(activityId, userIdOrOption, option);
+  }
+
+  getInvites(tripId: string): Promise<ApiResponse<Invite[]>> {
+    return mockTrip.getInvites(tripId);
+  }
+
+  createInvite(tripId: string, input: CreateInviteInput): Promise<ApiResponse<Invite>> {
+    return mockTrip.createInvite(tripId, input);
+  }
+
+  getBookings(tripId: string): Promise<ApiResponse<Booking[]>> {
+    return mockTrip.getBookings(tripId);
+  }
+
+  getMessages(tripId: string): Promise<ApiResponse<TripMessage[]>> {
+    return mockTrip.getMessages(tripId);
+  }
+
+  sendMessage(tripId: string, input: SendMessageInput): Promise<ApiResponse<TripMessage>> {
     const userId = typeof window !== 'undefined' ? localStorage.getItem('auth_token') || 'user-1' : 'user-1';
     return mockTrip.sendMessage(tripId, userId, input);
-  },
-  getMedia: (tripId: string): Promise<ApiResponse<MediaItem[]>> => mockTrip.getMedia(tripId),
-  getAlbums: (tripId: string): Promise<ApiResponse<Album[]>> => mockTrip.getAlbums(tripId),
-  createAlbum: (tripId: string, input: CreateAlbumInput): Promise<ApiResponse<Album>> => {
+  }
+
+  getDirectMessages(userId: string): Promise<ApiResponse<DirectMessage[]>> {
+    const currentUserId = typeof window !== 'undefined' ? localStorage.getItem('auth_token') || 'user-1' : 'user-1';
+    return mockTrip.getDirectMessages(currentUserId, userId);
+  }
+
+  sendDirectMessage(userId: string, input: SendMessageInput): Promise<ApiResponse<DirectMessage>> {
+    const currentUserId = typeof window !== 'undefined' ? localStorage.getItem('auth_token') || 'user-1' : 'user-1';
+    return mockTrip.sendDirectMessage(currentUserId, userId, input);
+  }
+
+  getMedia(tripId: string): Promise<ApiResponse<MediaItem[]>> {
+    return mockTrip.getMedia(tripId);
+  }
+
+  getAlbums(tripId: string): Promise<ApiResponse<Album[]>> {
+    return mockTrip.getAlbums(tripId);
+  }
+
+  createAlbum(input: CreateAlbumInput): Promise<ApiResponse<Album>> {
     const userId = typeof window !== 'undefined' ? localStorage.getItem('auth_token') || 'user-1' : 'user-1';
-    return mockTrip.createAlbum(tripId, userId, input);
-  },
-  addMediaToAlbum: (tripId: string, type: 'image' | 'video', url: string, caption?: string): Promise<ApiResponse<MediaItem>> => {
-    const userId = typeof window !== 'undefined' ? localStorage.getItem('auth_token') || 'user-1' : 'user-1';
-    return mockTrip.addMediaToAlbum(tripId, userId, type, url, caption);
-  },
-  getNotifications: (): Promise<ApiResponse<Notification[]>> => Promise.resolve({ data: [] }),
-  markNotificationRead: (id: string): Promise<ApiResponse<void>> => Promise.resolve({ data: undefined }),
-  markAllNotificationsRead: (): Promise<ApiResponse<void>> => Promise.resolve({ data: undefined }),
-  getCurrentUser: (): Promise<ApiResponse<User>> => {
+    // Requires a tripId which is not in CreateAlbumInput
+    return Promise.resolve({ error: 'Trip context required for album creation' });
+  }
+
+  getNotifications(): Promise<ApiResponse<Notification[]>> {
+    return Promise.resolve({ data: [] });
+  }
+
+  markNotificationRead(id: string): Promise<ApiResponse<void>> {
+    return Promise.resolve({ data: undefined });
+  }
+
+  markAllNotificationsRead(): Promise<ApiResponse<void>> {
+    return Promise.resolve({ data: undefined });
+  }
+
+  getCurrentUser(): Promise<ApiResponse<User>> {
     const userId = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
-    console.log('[MockAPI getCurrentUser] Called with userId:', userId);
     
     if (!userId) {
-      console.log('[MockAPI getCurrentUser] No userId, returning error');
       return Promise.resolve({ error: 'Not authenticated' });
     }
 
-    // Try to get existing user
     let user = mockTrip.getUserById(userId);
-    console.log('[MockAPI getCurrentUser] Found existing user:', user);
 
-    // If user doesn't exist, create them dynamically (like backend would after auth)
     if (!user) {
-      console.log('[MockAPI getCurrentUser] Creating new user for:', userId);
       user = {
         id: userId,
         email: userId,
-        name: userId.split('@')[0], // Use email prefix as name
+        name: userId.split('@')[0],
         avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${userId}`,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
-      // Add user to the mock database
       mockTrip.users.set(userId, user);
-      console.log('[MockAPI getCurrentUser] Created and stored user:', user);
 
-      // Add user as member to trips where they should be a member (for test@user.com)
       if (userId === 'test@user.com') {
         const members = mockTrip.members.get('trip-1') || [];
         if (!members.some(m => m.userId === userId)) {
@@ -737,36 +752,29 @@ export const mockApi = {
             userId,
             role: 'MEMBER',
             status: 'CONFIRMED',
-            paymentStatus: 'pending',
             joinedAt: new Date().toISOString(),
           });
           mockTrip.members.set('trip-1', members);
-          console.log('[MockAPI getCurrentUser] Added user to trip-1 members');
         }
       }
     }
 
-    const result = { data: user };
-    console.log('[MockAPI getCurrentUser] Returning:', JSON.stringify(result, null, 2));
-    return Promise.resolve(result);
-  },
-  updateProfile: (data?: Partial<User>): Promise<ApiResponse<User>> => {
+    return Promise.resolve({ data: user });
+  }
+
+  updateProfile(data: Partial<User>): Promise<ApiResponse<User>> {
     const userId = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
     if (!userId) {
       return Promise.resolve({ error: 'Not authenticated' });
     }
-    
-    const currentUser = mockTrip.getUserById(userId);
-    if (!currentUser) {
+    const user = mockTrip.getUserById(userId);
+    if (!user) {
       return Promise.resolve({ error: 'User not found' });
     }
-    
-    const updated = { ...currentUser, ...data };
+    const updated = { ...user, ...data, updatedAt: new Date().toISOString() };
     mockTrip.users.set(userId, updated);
     return Promise.resolve({ data: updated });
-  },
-  getUser: (): Promise<ApiResponse<User>> => Promise.resolve({ data: {} as User }),
-  getEvents: (tripId: string): Promise<ApiResponse<TripEvent[]>> => mockTrip.getEvents(tripId),
-  getSettlements: (tripId: string): Promise<ApiResponse<Settlement[]>> => mockTrip.getSettlements(tripId),
-  getBalances: (tripId: string): Promise<ApiResponse<{ userId: string; balance: number; user?: User }[]>> => mockTrip.getBalances(tripId),
-};
+  }
+}
+
+export const mockApi = new MockApiService();
