@@ -10,13 +10,13 @@ export function ThemeSwitcher() {
     return <div className="w-11 h-6" />;
   }
 
-  const isDark = theme === 'vigilante';
+  const isDark = theme === 'dark';
 
   return (
     <button
-      onClick={() => setTheme(isDark ? 'bright' : 'vigilante')}
+      onClick={() => setTheme(isDark ? 'light' : 'dark')}
       className="relative h-6 w-11 rounded-full bg-secondary transition-colors"
-      title={isDark ? 'Switch to Bright theme' : 'Switch to Dark theme'}
+      title={isDark ? 'Switch to Light mode' : 'Switch to Dark mode'}
     >
       <div
         className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-background shadow-sm transition-transform flex items-center justify-center ${
