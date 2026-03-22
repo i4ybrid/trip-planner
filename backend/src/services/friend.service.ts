@@ -19,8 +19,51 @@ export class FriendService {
     return friends;
   }
 
+  async getRelationship(userId: string, otherUserId: string): Promise<string> {
+    const [friendship, pendingSent, pendingReceived, blockedByMe, blockedByThem] = await Promise.all([
+      prisma.friend.findFirst({
+        where: {
+          OR: [
+            { userId, friendId: otherUserId },
+            { userId: otherUserId, friendId: userId },
+          ],
+        },
+      }),
+      prisma.friendRequest.findFirst({
+        where: { senderId: userId, receiverId: otherUserId, status: 'PENDING' },
+      }),
+      prisma.friendRequest.findFirst({
+        where: { senderId: otherUserId, receiverId: userId, status: 'PENDING' },
+      }),
+      prisma.blockedUser.findUnique({
+        where: { userId_blockedId: { userId, blockedId: otherUserId } },
+      }),
+      prisma.blockedUser.findUnique({
+        where: { userId_blockedId: { userId: otherUserId, blockedId: userId } },
+      }),
+    ]);
+
+    if (friendship) return 'friends';
+    if (pendingSent) return 'request_sent';
+    if (pendingReceived) return 'request_received';
+    if (blockedByMe || blockedByThem) return 'blocked';
+    return 'none';
+  }
+
   async sendFriendRequest(senderId: string, receiverId: string) {
-    // Check if already friends
+    const existingBlock = await prisma.blockedUser.findFirst({
+      where: {
+        OR: [
+          { userId: senderId, blockedId: receiverId },
+          { userId: receiverId, blockedId: senderId },
+        ],
+      },
+    });
+
+    if (existingBlock) {
+      throw new Error('Unable to send friend request');
+    }
+
     const existingFriend = await prisma.friend.findFirst({
       where: {
         OR: [
@@ -34,7 +77,6 @@ export class FriendService {
       throw new Error('Already friends with this user');
     }
 
-    // Check if request already exists
     const existingRequest = await prisma.friendRequest.findFirst({
       where: {
         OR: [
@@ -49,14 +91,12 @@ export class FriendService {
       throw new Error('Friend request already exists');
     }
 
-    // Check user settings for friend request permissions
     const receiverSettings = await prisma.settings.findUnique({
       where: { userId: receiverId },
       select: { friendRequestSource: true },
     });
 
     if (receiverSettings?.friendRequestSource === 'TRIP_MEMBERS') {
-      // Check if they share a trip
       const sharedTrip = await prisma.tripMember.findFirst({
         where: {
           userId: senderId,
@@ -75,7 +115,12 @@ export class FriendService {
       }
     }
 
-    return prisma.friendRequest.create({
+    const sender = await prisma.user.findUnique({
+      where: { id: senderId },
+      select: { name: true, avatarUrl: true },
+    });
+
+    const request = await prisma.friendRequest.create({
       data: {
         senderId,
         receiverId,
@@ -90,6 +135,22 @@ export class FriendService {
         },
       },
     });
+
+    await prisma.notification.create({
+      data: {
+        userId: receiverId,
+        type: 'FRIEND_REQUEST',
+        title: 'New Friend Request',
+        body: `${sender?.name} sent you a friend request`,
+        actionType: 'friend_request',
+        actionId: request.id,
+        actionUrl: '/friends?tab=pending',
+        read: false,
+        priority: 'normal',
+      },
+    });
+
+    return request;
   }
 
   async getFriendRequests(userId: string) {
@@ -126,6 +187,10 @@ export class FriendService {
   async acceptFriendRequest(requestId: string) {
     const request = await prisma.friendRequest.findUnique({
       where: { id: requestId },
+      include: {
+        sender: true,
+        receiver: true,
+      },
     });
 
     if (!request) {
@@ -136,39 +201,89 @@ export class FriendService {
       throw new Error('Friend request has already been responded to');
     }
 
-    // Create friendship (bidirectional)
-    await prisma.friend.create({
-      data: {
-        userId: request.senderId,
-        friendId: request.receiverId,
-      },
-    });
+    await prisma.$transaction([
+      prisma.friend.create({
+        data: {
+          userId: request.senderId,
+          friendId: request.receiverId,
+        },
+      }),
+      prisma.friend.create({
+        data: {
+          userId: request.receiverId,
+          friendId: request.senderId,
+        },
+      }),
+      prisma.friendRequest.update({
+        where: { id: requestId },
+        data: {
+          status: 'ACCEPTED',
+          respondedAt: new Date(),
+        },
+      }),
+      prisma.notification.create({
+        data: {
+          userId: request.senderId,
+          type: 'FRIEND_REQUEST',
+          title: 'Friend Request Accepted',
+          body: `${request.receiver.name} accepted your friend request`,
+          actionType: 'friend_accepted',
+          actionId: requestId,
+          actionUrl: '/friends',
+          read: false,
+          priority: 'normal',
+        },
+      }),
+    ]);
 
-    await prisma.friend.create({
-      data: {
-        userId: request.receiverId,
-        friendId: request.senderId,
-      },
-    });
-
-    // Update request status
-    return prisma.friendRequest.update({
+    return prisma.friendRequest.findUnique({
       where: { id: requestId },
-      data: {
-        status: 'ACCEPTED',
-        respondedAt: new Date(),
+      include: {
+        sender: {
+          select: { id: true, name: true, avatarUrl: true },
+        },
+        receiver: {
+          select: { id: true, name: true, avatarUrl: true },
+        },
       },
     });
   }
 
   async declineFriendRequest(requestId: string) {
-    return prisma.friendRequest.update({
+    const request = await prisma.friendRequest.findUnique({
+      where: { id: requestId },
+      include: {
+        sender: true,
+        receiver: true,
+      },
+    });
+
+    if (!request) {
+      throw new Error('Friend request not found');
+    }
+
+    const updated = await prisma.friendRequest.update({
       where: { id: requestId },
       data: {
         status: 'DECLINED',
         respondedAt: new Date(),
       },
     });
+
+    await prisma.notification.create({
+      data: {
+        userId: request.senderId,
+        type: 'FRIEND_REQUEST',
+        title: 'Friend Request Declined',
+        body: `${request.receiver.name} declined your friend request`,
+        actionType: 'friend_declined',
+        actionId: requestId,
+        read: false,
+        priority: 'low',
+      },
+    });
+
+    return updated;
   }
 
   async cancelFriendRequest(requestId: string) {

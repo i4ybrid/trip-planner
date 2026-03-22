@@ -16,6 +16,9 @@ import messagesRouter from './routes/messages';
 import paymentsRouter from './routes/payments';
 import friendsRouter from './routes/friends';
 import notificationsRouter from './routes/notifications';
+import blockedRouter from './routes/blocked';
+import inviteCodesRouter from './routes/invite-codes';
+import emailInviteRouter from './routes/email-invite';
 
 // Load environment variables
 dotenv.config();
@@ -86,6 +89,9 @@ app.use('/api', messagesRouter);
 app.use('/api', paymentsRouter);
 app.use('/api', friendsRouter);
 app.use('/api', notificationsRouter);
+app.use('/api', blockedRouter);
+app.use('/api', inviteCodesRouter);
+app.use('/api', emailInviteRouter);
 
 // 404 handler
 app.use((_req, res) => {

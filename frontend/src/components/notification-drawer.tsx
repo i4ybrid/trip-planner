@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useNotificationStore } from '@/store';
 import { Button } from '@/components/ui/button';
-import { Bell, X, CheckCheck } from 'lucide-react';
+import { Bell, X, CheckCheck, UserPlus, Check, Loader2 } from 'lucide-react';
 import { useClickOutside } from '@/hooks/use-click-outside';
+import { api } from '@/services/api';
 
 const NOTIFICATION_COLORS: Record<string, string> = {
   payment: 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400',
@@ -14,6 +15,7 @@ const NOTIFICATION_COLORS: Record<string, string> = {
   message: 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400',
   milestone: 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400',
   invite: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
+  friend_request: 'bg-pink-100 text-pink-600 dark:bg-pink-900/30 dark:text-pink-400',
 };
 
 function formatTimeAgo(dateString: string): string {
@@ -41,6 +43,7 @@ export function NotificationDrawer() {
   const router = useRouter();
   const drawerRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const [processingRequest, setProcessingRequest] = useState<string | null>(null);
   const { notifications, unreadCount, fetchNotifications, markAsRead, markAllAsRead } = useNotificationStore();
 
   useClickOutside(drawerRef, () => setIsOpen(false));
@@ -48,6 +51,32 @@ export function NotificationDrawer() {
   useEffect(() => {
     fetchNotifications();
   }, [fetchNotifications]);
+
+  const handleAcceptRequest = useCallback(async (notification: typeof notifications[0], e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!notification.actionId) return;
+    setProcessingRequest(notification.actionId);
+    try {
+      await api.respondToFriendRequest(notification.actionId, 'ACCEPTED');
+      markAsRead(notification.id);
+      fetchNotifications();
+    } finally {
+      setProcessingRequest(null);
+    }
+  }, [markAsRead, fetchNotifications]);
+
+  const handleDeclineRequest = useCallback(async (notification: typeof notifications[0], e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!notification.actionId) return;
+    setProcessingRequest(notification.actionId);
+    try {
+      await api.respondToFriendRequest(notification.actionId, 'DECLINED');
+      markAsRead(notification.id);
+      fetchNotifications();
+    } finally {
+      setProcessingRequest(null);
+    }
+  }, [markAsRead, fetchNotifications]);
 
   const handleNotificationClick = (notification: typeof notifications[0]) => {
     if (!notification.read) {
@@ -130,6 +159,13 @@ export function NotificationDrawer() {
                     {notification.type === 'REMINDER' && <span className="text-sm">📅</span>}
                     {notification.type === 'MILESTONE' && <span className="text-sm">🚩</span>}
                     {notification.type === 'INVITE' && <span className="text-sm">🔔</span>}
+                    {notification.type === 'FRIEND_REQUEST' && (
+                      notification.actionType === 'friend_request' ? (
+                        <UserPlus className="h-4 w-4" />
+                      ) : (
+                        <Check className="h-4 w-4" />
+                      )
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className={`text-sm ${!notification.read ? 'font-semibold' : 'font-medium'}`}>
@@ -141,6 +177,35 @@ export function NotificationDrawer() {
                     <p className="mt-1 text-xs text-muted-foreground">
                       {formatTimeAgo(notification.createdAt)}
                     </p>
+                    {notification.type === 'FRIEND_REQUEST' && notification.actionType === 'friend_request' && (
+                      <div className="mt-2 flex gap-2" onClick={(e) => e.stopPropagation()}>
+                        <Button
+                          size="sm"
+                          variant="primary"
+                          className="h-7 text-xs"
+                          onClick={(e) => handleAcceptRequest(notification, e)}
+                          disabled={processingRequest === notification.actionId}
+                        >
+                          {processingRequest === notification.actionId ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <>
+                              <Check className="mr-1 h-3 w-3" />
+                              Accept
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-xs"
+                          onClick={(e) => handleDeclineRequest(notification, e)}
+                          disabled={processingRequest === notification.actionId}
+                        >
+                          Decline
+                        </Button>
+                      </div>
+                    )}
                   </div>
                   {!notification.read && (
                     <div className="h-2 w-2 rounded-full bg-primary" />

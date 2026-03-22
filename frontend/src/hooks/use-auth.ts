@@ -30,7 +30,7 @@ export function useAuth() {
     }
   }, [update]);
 
-  const register = useCallback(async (email: string, name: string, password: string) => {
+  const register = useCallback(async (email: string, name: string, password: string, inviteCode?: string) => {
     try {
       const response = await fetch('/api/auth/register', {
         method: 'POST',
@@ -52,6 +52,27 @@ export function useAuth() {
 
       if (result?.error) {
         return { success: false, error: result.error };
+      }
+
+      // If there's an invite code, use it after registration
+      // Note: The session will have the token after update(), so we refresh the session first
+      if (inviteCode) {
+        await update();
+        try {
+          const session = await fetch('/api/auth/session').then(r => r.json());
+          await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/invite-codes/${inviteCode}/use`,
+            {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${session?.accessToken || ''}`,
+                'Content-Type': 'application/json',
+              },
+            }
+          );
+        } catch {
+          // Ignore invite code errors - they can still sign up
+        }
       }
 
       await update();

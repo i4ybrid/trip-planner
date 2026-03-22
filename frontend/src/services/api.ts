@@ -22,6 +22,9 @@ import {
   SendMessageInput,
   CreateBillSplitInput,
   CreateFriendRequestInput,
+  BlockedUser,
+  InviteCode,
+  UserSearchResult,
   ApiResponse,
 } from '@/types';
 
@@ -414,10 +417,83 @@ export const api = {
   },
 
   async respondToFriendRequest(requestId: string, action: 'ACCEPTED' | 'DECLINED'): Promise<ApiResponse<FriendRequest>> {
+    const actionMap = { ACCEPTED: 'accept', DECLINED: 'decline' } as const;
     const response = await fetch(`${API_BASE_URL}/friend-requests/${requestId}`, {
       method: 'PATCH',
       headers: await getHeaders(),
-      body: JSON.stringify({ status: action }),
+      body: JSON.stringify({ action: actionMap[action] }),
+    });
+    return handleResponse(response);
+  },
+
+  async searchUsersByEmail(email: string): Promise<ApiResponse<UserSearchResult>> {
+    const response = await fetch(`${API_BASE_URL}/friends/search?email=${encodeURIComponent(email)}`, {
+      headers: await getHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  async getBlockedUsers(): Promise<ApiResponse<BlockedUser[]>> {
+    const response = await fetch(`${API_BASE_URL}/blocked`, {
+      headers: await getHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  async blockUser(userId: string): Promise<ApiResponse<BlockedUser>> {
+    const response = await fetch(`${API_BASE_URL}/blocked`, {
+      method: 'POST',
+      headers: await getHeaders(),
+      body: JSON.stringify({ blockedId: userId }),
+    });
+    return handleResponse(response);
+  },
+
+  async unblockUser(userId: string): Promise<ApiResponse<void>> {
+    const response = await fetch(`${API_BASE_URL}/blocked/${userId}`, {
+      method: 'DELETE',
+      headers: await getHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  async getInviteCodes(): Promise<ApiResponse<InviteCode[]>> {
+    const response = await fetch(`${API_BASE_URL}/invite-codes`, {
+      headers: await getHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  async generateInviteCode(daysUntilExpiry?: number): Promise<ApiResponse<InviteCode>> {
+    const response = await fetch(`${API_BASE_URL}/invite-codes`, {
+      method: 'POST',
+      headers: await getHeaders(),
+      body: JSON.stringify({ daysUntilExpiry }),
+    });
+    return handleResponse(response);
+  },
+
+  async useInviteCode(code: string): Promise<ApiResponse<{ friendId: string; friendshipCreated: boolean }>> {
+    const response = await fetch(`${API_BASE_URL}/invite-codes/${code}/use`, {
+      method: 'POST',
+      headers: await getHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  async revokeInviteCode(codeId: string): Promise<ApiResponse<void>> {
+    const response = await fetch(`${API_BASE_URL}/invite-codes/${codeId}`, {
+      method: 'DELETE',
+      headers: await getHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  async sendEmailInvite(email: string, message?: string): Promise<ApiResponse<{ success: boolean }>> {
+    const response = await fetch(`${API_BASE_URL}/invites/email`, {
+      method: 'POST',
+      headers: await getHeaders(),
+      body: JSON.stringify({ email, message }),
     });
     return handleResponse(response);
   },

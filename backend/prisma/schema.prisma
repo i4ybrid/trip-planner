@@ -134,6 +134,13 @@ model User {
   sentRequests    FriendRequest[] @relation("SentRequests")
   receivedRequests FriendRequest[] @relation("ReceivedRequests")
 
+  // Blocked Users
+  blockedUsers    BlockedUser[]   @relation("UserBlocks")
+  blockedByUsers  BlockedUser[]   @relation("UserBlockedBy")
+
+  // Invite Codes
+  createdInviteCodes InviteCode[] @relation("InviteCodeCreator")
+
   // User settings
   settings       Settings?
 
@@ -369,6 +376,30 @@ model Notification {
 }
 
 // Friends
+
+model BlockedUser {
+  id        String   @id @default(cuid())
+  userId    String
+  blockedId String
+  createdAt DateTime @default(now())
+
+  user      User     @relation("UserBlocks", fields: [userId], references: [id], onDelete: Cascade)
+  blocked   User     @relation("UserBlockedBy", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, blockedId])
+}
+
+model InviteCode {
+  id        String    @id @default(cuid())
+  code      String    @unique
+  createdBy String
+  expiresAt DateTime
+  usedAt    DateTime?
+  usedBy    String?
+  createdAt DateTime  @default(now())
+
+  creator   User      @relation("InviteCodeCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+}
 
 model Friend {
   id        String   @id @default(cuid())

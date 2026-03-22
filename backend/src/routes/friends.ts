@@ -1,13 +1,12 @@
 import { Router } from 'express';
 import { authMiddleware, AuthRequest } from '@/middleware/auth';
 import { friendService } from '@/services/friend.service';
+import prisma from '@/lib/prisma';
 
 const router = Router();
 
-// All routes require authentication
 router.use(authMiddleware);
 
-// GET /api/friends - List friends
 router.get('/friends', async (req: AuthRequest, res) => {
   try {
     const userId = req.user!.userId;
@@ -18,7 +17,44 @@ router.get('/friends', async (req: AuthRequest, res) => {
   }
 });
 
-// POST /api/friends - Add friend (send friend request)
+router.get('/friends/search', async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.userId;
+    const { email } = req.query;
+
+    if (!email || typeof email !== 'string') {
+      res.status(400).json({ error: 'email query parameter is required' });
+      return;
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { email: email.toLowerCase() },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        avatarUrl: true,
+      },
+    });
+
+    if (!user) {
+      res.json({ data: { found: false } });
+      return;
+    }
+
+    if (user.id === userId) {
+      res.json({ data: { found: true, user, relationship: 'self' } });
+      return;
+    }
+
+    const relationship = await friendService.getRelationship(userId, user.id);
+
+    res.json({ data: { found: true, user, relationship } });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 router.post('/friends', async (req: AuthRequest, res) => {
   try {
     const userId = req.user!.userId;
@@ -41,7 +77,6 @@ router.post('/friends', async (req: AuthRequest, res) => {
   }
 });
 
-// DELETE /api/friends/:id - Remove friend
 router.delete('/friends/:id', async (req: AuthRequest, res) => {
   try {
     const userId = req.user!.userId;

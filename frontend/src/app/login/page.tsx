@@ -1,19 +1,28 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
-import { Compass, Mail, Lock, User, ArrowRight } from 'lucide-react';
+import { Compass, Mail, Lock, User, ArrowRight, UserPlus, Gift } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login, register, isLoading } = useAuth();
+
+  const inviteCode = searchParams.get('invite');
 
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (inviteCode) {
+      setIsLogin(false);
+    }
+  }, [inviteCode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,7 +36,7 @@ export default function LoginPage() {
         setError(result.error || 'Login failed');
       }
     } else {
-      const result = await register(email, name, password);
+      const result = await register(email, name, password, inviteCode || undefined);
       if (result.success) {
         router.push('/dashboard');
       } else {
@@ -96,6 +105,14 @@ export default function LoginPage() {
             <p className="text-gray-600">
               {isLogin ? 'Sign in to continue planning your trips' : 'Start planning your next adventure'}
             </p>
+            {inviteCode && (
+              <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-2">
+                <Gift className="h-4 w-4 text-amber-600" />
+                <span className="text-sm text-amber-800">
+                  You've been invited! You'll become friends after signing up.
+                </span>
+              </div>
+            )}
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">

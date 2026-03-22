@@ -237,6 +237,32 @@ export interface FriendRequest {
   receiver?: User;
 }
 
+export interface BlockedUser {
+  id: string;
+  userId: string;
+  blockedId: string;
+  createdAt: string;
+  blocked?: User;
+}
+
+export interface InviteCode {
+  id: string;
+  code: string;
+  createdBy: string;
+  expiresAt: string;
+  usedAt?: string;
+  usedBy?: string;
+  createdAt: string;
+}
+
+export type UserRelationship = 'none' | 'friends' | 'request_sent' | 'request_received' | 'blocked';
+
+export interface UserSearchResult {
+  found: boolean;
+  user?: User;
+  relationship?: UserRelationship;
+}
+
 export interface DmConversation {
   id: string;
   participant1: string;
