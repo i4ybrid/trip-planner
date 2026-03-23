@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
+import { useSearchParams } from 'next/navigation';
 import { PageLayout } from '@/components/page-layout';
-import { MessageCircle, Search, Send, MoreVertical, Phone, Video } from 'lucide-react';
+import { MessageCircle, Search, Send, MoreVertical, Phone, Video, Plus, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { NewConversationModal } from '@/components/messages/new-conversation-modal';
 import { api } from '@/services/api';
 import { DmConversation, Message, User } from '@/types';
 
@@ -15,7 +17,24 @@ function getOtherParticipant(conversation: DmConversation, currentUserId: string
 }
 
 export default function MessagesPage() {
+  return (
+    <Suspense fallback={
+      <PageLayout title="Messages">
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </PageLayout>
+    }>
+      <MessagesPageContent />
+    </Suspense>
+  );
+}
+
+function MessagesPageContent() {
   const { data: session, status } = useSession();
+  const searchParams = useSearchParams();
+  const friendParam = searchParams.get('friend');
+
   const [conversations, setConversations] = useState<DmConversation[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
@@ -24,25 +43,22 @@ export default function MessagesPage() {
   const [currentUserId, setCurrentUserId] = useState<string>('');
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMoreMessages, setHasMoreMessages] = useState(true);
+  const [showNewMessageModal, setShowNewMessageModal] = useState(false);
+  const [hasInitialized, setHasInitialized] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
-  // Show loading while session is being checked
   if (status === 'loading') {
     return (
-      <PageLayout>
+      <PageLayout title="Messages">
         <div className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-            <p className="text-sm text-muted-foreground">Loading...</p>
-          </div>
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       </PageLayout>
     );
   }
 
   useEffect(() => {
-    // Wait for session to be loaded
     if (!session) return;
 
     const loadConversations = async () => {
@@ -56,14 +72,44 @@ export default function MessagesPage() {
       }
       if (conversationsResult.data) {
         setConversations(conversationsResult.data);
-        if (conversationsResult.data.length > 0) {
-          setSelectedConversation(conversationsResult.data[0].id);
-        }
       }
       setIsLoading(false);
+      setHasInitialized(true);
     };
     loadConversations();
   }, [session]);
+
+  useEffect(() => {
+    if (!hasInitialized) return;
+    if (!friendParam || !currentUserId || conversations.length === 0) return;
+
+    const handleFriendParam = () => {
+      const existingConversation = conversations.find((c) => {
+        const other = getOtherParticipant(c, currentUserId);
+        return other?.id === friendParam;
+      });
+
+      if (existingConversation) {
+        setSelectedConversation(existingConversation.id);
+      } else {
+        api.createDmConversation(friendParam).then((result) => {
+          if (result.data) {
+            setConversations((prev) => {
+              if (prev.find(c => c.id === result.data!.id)) {
+                return prev;
+              }
+              return [result.data!, ...prev];
+            });
+            setSelectedConversation(result.data.id);
+          }
+        });
+      }
+    };
+
+    if (conversations.length > 0) {
+      handleFriendParam();
+    }
+  }, [friendParam, currentUserId, conversations.length, hasInitialized]);
 
   useEffect(() => {
     const loadMessages = async () => {
@@ -94,7 +140,7 @@ export default function MessagesPage() {
         const container = messagesContainerRef.current;
         const previousScrollHeight = container?.scrollHeight || 0;
         
-        setMessages(prev => [...result.data.reverse(), ...prev]);
+        setMessages(prev => [...result.data!.reverse(), ...prev]);
         setHasMoreMessages(result.data.length === 30);
         
         setTimeout(() => {
@@ -140,15 +186,33 @@ export default function MessagesPage() {
   const selectedConvo = conversations.find(c => c.id === selectedConversation);
   const otherUser = selectedConvo ? getOtherParticipant(selectedConvo, currentUserId) : undefined;
 
+  const handleConversationCreated = (conversation: DmConversation) => {
+    setConversations((prev) => {
+      if (prev.find(c => c.id === conversation.id)) {
+        return prev;
+      }
+      return [conversation, ...prev];
+    });
+    setSelectedConversation(conversation.id);
+  };
+
   return (
     <PageLayout title="Messages" className="p-0">
       <div className="flex h-[calc(100vh-4.5rem)] w-full">
         <aside className="w-80 border-r border-border shrink-0 flex flex-col">
-          <div className="p-4 border-b border-border">
-            <div className="relative">
+          <div className="p-4 border-b border-border flex items-center justify-between">
+            <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input placeholder="Search messages..." className="pl-10" />
             </div>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="ml-2 shrink-0"
+              onClick={() => setShowNewMessageModal(true)}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
           </div>
           <div className="flex-1 overflow-y-auto space-y-1 p-2">
                 {isLoading ? (
@@ -181,8 +245,8 @@ export default function MessagesPage() {
                       </button>
                     );
                   })
-                )}
-              </div>
+              )}
+            </div>
           </aside>
 
             <div className="flex-1 flex flex-col min-w-0">
@@ -216,7 +280,6 @@ export default function MessagesPage() {
                     className="flex-1 overflow-y-auto p-4 space-y-4"
                     onScroll={handleScroll}
                   >
-                    {/* Load More Button */}
                     {hasMoreMessages && (
                       <div className="flex justify-center py-2">
                         <Button
@@ -278,11 +341,26 @@ export default function MessagesPage() {
                   <div className="text-center">
                     <MessageCircle className="mx-auto h-12 w-12 text-muted-foreground" />
                     <p className="mt-2 text-muted-foreground">Select a conversation to start messaging</p>
+                    <Button 
+                      variant="outline" 
+                      className="mt-4"
+                      onClick={() => setShowNewMessageModal(true)}
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      New Message
+                    </Button>
                   </div>
                 </div>
               )}
             </div>
       </div>
+
+      <NewConversationModal
+        isOpen={showNewMessageModal}
+        onClose={() => setShowNewMessageModal(false)}
+        onConversationCreated={handleConversationCreated}
+        currentUserId={currentUserId}
+      />
     </PageLayout>
   );
 }
