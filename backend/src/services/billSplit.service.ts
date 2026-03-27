@@ -102,6 +102,40 @@ export class BillSplitService {
       },
     });
 
+    // Reset settlement milestone completions for all members in this new bill split.
+    // When a new charge is added, members who were previously settled now owe money again,
+    // so their SETTLEMENT_DUE and SETTLEMENT_COMPLETE milestones must be reset to PENDING.
+    const newMemberUserIds = memberAmounts.map((m) => m.userId);
+
+    // Find SETTLEMENT_DUE and SETTLEMENT_COMPLETE milestones for this trip
+    const settlementDueMilestone = await prisma.milestone.findFirst({
+      where: { tripId: data.tripId, type: 'SETTLEMENT_DUE' },
+    });
+
+    const settlementCompleteMilestone = await prisma.milestone.findFirst({
+      where: { tripId: data.tripId, type: 'SETTLEMENT_COMPLETE' },
+    });
+
+    // Reset SETTLEMENT_DUE completions for affected members
+    if (settlementDueMilestone) {
+      await prisma.milestoneCompletion.deleteMany({
+        where: {
+          milestoneId: settlementDueMilestone.id,
+          userId: { in: newMemberUserIds },
+        },
+      });
+    }
+
+    // Reset SETTLEMENT_COMPLETE completions for affected members
+    if (settlementCompleteMilestone) {
+      await prisma.milestoneCompletion.deleteMany({
+        where: {
+          milestoneId: settlementCompleteMilestone.id,
+          userId: { in: newMemberUserIds },
+        },
+      });
+    }
+
     return billSplit;
   }
 
@@ -188,12 +222,21 @@ export class BillSplitService {
   }) {
     const existingBill = await prisma.billSplit.findUnique({
       where: { id },
-      select: { tripId: true },
+      include: {
+        members: { select: { userId: true } },
+      },
     });
 
     if (!existingBill) {
       throw new Error('Bill split not found');
     }
+
+    // Determine which members are affected by this update
+    const membersChanged = !!data.members;
+    const amountChanged = data.amount !== undefined;
+    const affectedUserIds = data.members
+      ? data.members.map((m) => m.userId)
+      : existingBill.members.map((m) => m.userId);
 
     // Build update data
     const updateData: any = { ...data };
@@ -217,7 +260,7 @@ export class BillSplitService {
       };
     }
 
-    return prisma.billSplit.update({
+    const updatedBill = await prisma.billSplit.update({
       where: { id },
       data: updateData,
       include: {
@@ -240,6 +283,39 @@ export class BillSplitService {
         },
       },
     });
+
+    // Reset settlement milestones when members or amount are updated.
+    // A changed amount or member list means previously settled members may now owe more,
+    // so SETTLEMENT_DUE and SETTLEMENT_COMPLETE completions must be reset to PENDING.
+    if (membersChanged || amountChanged) {
+      const settlementDueMilestone = await prisma.milestone.findFirst({
+        where: { tripId: existingBill.tripId, type: 'SETTLEMENT_DUE' },
+      });
+
+      const settlementCompleteMilestone = await prisma.milestone.findFirst({
+        where: { tripId: existingBill.tripId, type: 'SETTLEMENT_COMPLETE' },
+      });
+
+      if (settlementDueMilestone) {
+        await prisma.milestoneCompletion.deleteMany({
+          where: {
+            milestoneId: settlementDueMilestone.id,
+            userId: { in: affectedUserIds },
+          },
+        });
+      }
+
+      if (settlementCompleteMilestone) {
+        await prisma.milestoneCompletion.deleteMany({
+          where: {
+            milestoneId: settlementCompleteMilestone.id,
+            userId: { in: affectedUserIds },
+          },
+        });
+      }
+    }
+
+    return updatedBill;
   }
 
   async deleteBillSplit(id: string) {
