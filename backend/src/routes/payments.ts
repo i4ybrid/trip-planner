@@ -4,6 +4,7 @@ import { billSplitService } from '@/services/billSplit.service';
 import { debtSimplifierService } from '@/services/debtSimplifier.service';
 import { createBillSplitSchema, updateBillSplitSchema } from '@/lib/validations';
 import { tripService } from '@/services/trip.service';
+import { checkAndUpdateSettlementMilestones, getSettlementStatus } from '@/services/settlement.service';
 
 const router = Router();
 
@@ -58,6 +59,9 @@ router.post('/trips/:tripId/payments', async (req: AuthRequest, res) => {
       dueDate: validatedData.dueDate ? new Date(validatedData.dueDate) : undefined,
       members: validatedData.members,
     });
+
+    // Auto-check settlement milestones after creating a bill split
+    await checkAndUpdateSettlementMilestones(tripId);
 
     res.status(201).json({ data: billSplit });
   } catch (error: any) {
@@ -123,6 +127,9 @@ router.patch('/payments/:id', async (req: AuthRequest, res) => {
       paidBy: validatedData.paidBy,
       members: validatedData.members,
     });
+
+    // Auto-check settlement milestones after updating a bill split
+    await checkAndUpdateSettlementMilestones(billSplit.tripId);
 
     res.json({ data: updated });
   } catch (error: any) {
@@ -217,6 +224,9 @@ router.post('/payments/:id/members/:userId/paid', async (req: AuthRequest, res) 
       transactionId
     );
     
+    // Auto-check settlement milestones after member marks themselves as paid
+    await checkAndUpdateSettlementMilestones(billSplit.tripId);
+
     res.json({ data: updated });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -244,6 +254,10 @@ router.delete('/payments/:id/members/:userId', async (req: AuthRequest, res) => 
     }
     
     await billSplitService.removeMemberFromBillSplit(billSplitId, targetUserId);
+
+    // Auto-check settlement milestones after removing a member
+    await checkAndUpdateSettlementMilestones(billSplit.tripId);
+
     res.json({ message: 'Member removed from bill split' });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -269,7 +283,31 @@ router.post('/payments/:id/confirm', async (req: AuthRequest, res) => {
     }
     
     const updated = await billSplitService.confirmPayment(billSplitId);
+
+    // Auto-check settlement milestones after payer confirms payment
+    await checkAndUpdateSettlementMilestones(billSplit.tripId);
+
     res.json({ data: updated });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/trips/:tripId/settlement-status - Get per-member settlement status
+router.get('/trips/:tripId/settlement-status', async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.userId;
+    const tripId = req.params.tripId;
+
+    // Check permission
+    const permission = await tripService.checkMemberPermission(tripId, userId);
+    if (!permission.hasPermission) {
+      res.status(403).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    const status = await getSettlementStatus(tripId);
+    res.json({ data: status });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }

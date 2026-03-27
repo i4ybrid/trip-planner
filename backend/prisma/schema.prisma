@@ -108,6 +108,29 @@ enum NotificationType {
   TRIP_STARTING
   FRIEND_REQUEST
   DM_MESSAGE
+  PAYMENT_REQUEST
+  SETTLEMENT_REMINDER
+}
+
+enum MilestoneType {
+  COMMITMENT_REQUEST
+  COMMITMENT_DEADLINE
+  FINAL_PAYMENT_DUE
+  SETTLEMENT_DUE
+  SETTLEMENT_COMPLETE
+  CUSTOM
+}
+
+enum MilestoneActionType {
+  PAYMENT_REQUEST
+  SETTLEMENT_REMINDER
+}
+
+enum MilestoneStatus {
+  PENDING
+  COMPLETED
+  SKIPPED
+  OVERDUE
 }
 
 model User {
@@ -154,6 +177,10 @@ model User {
   billSplitsCreated BillSplit[]     @relation("BillSplitCreator")
   billSplitsPaid    BillSplit[]     @relation("BillSplitPayer")
   billSplitMembers BillSplitMember[]
+
+  // Milestones
+  milestoneCompletions MilestoneCompletion[]
+  milestoneActionsSent MilestoneAction[]    @relation("MilestoneActionSender")
 
   // DMs
   dmConversations  DmConversation[] @relation("ConversationParticipants")
@@ -209,6 +236,9 @@ model Trip {
   notifications Notification[]
   timelineEvents TimelineEvent[]
   billSplits   BillSplit[]
+  milestones    Milestone[]
+  milestoneActions MilestoneAction[]
+  autoMilestonesGenerated Boolean @default(false)
 
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
@@ -478,6 +508,8 @@ model BillSplit {
   payer         User          @relation("BillSplitPayer", fields: [paidBy], references: [id])
   creator       User          @relation("BillSplitCreator", fields: [createdBy], references: [id])
   members       BillSplitMember[]
+
+  @@index([tripId, status])
 }
 
 // Each member's share of a BillSplit
@@ -506,4 +538,50 @@ model BillSplitMember {
   user          User         @relation(fields: [userId], references: [id])
 
   @@unique([billSplitId, userId])
+}
+
+// Milestones - Trip payment/settlement deadlines
+model Milestone {
+  id                String         @id @default(cuid())
+  tripId            String
+  type              MilestoneType
+  name              String
+  dueDate           DateTime
+  isManualOverride  Boolean        @default(false)
+  isSkipped         Boolean        @default(false)
+  isLocked          Boolean        @default(false)
+  isHard            Boolean        @default(true)
+  priority          Int            @default(0)
+  trip              Trip           @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  completions       MilestoneCompletion[]
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+}
+
+// Per-member milestone completion status
+model MilestoneCompletion {
+  id           String         @id @default(cuid())
+  milestoneId  String
+  userId       String
+  status       MilestoneStatus @default(PENDING)
+  completedAt  DateTime?
+  note         String?
+  milestone    Milestone      @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+  user         User           @relation(fields: [userId], references: [id])
+  createdAt    DateTime       @default(now())
+
+  @@unique([milestoneId, userId])
+}
+
+// Milestone action log (payment requests, settlement reminders sent)
+model MilestoneAction {
+  id            String            @id @default(cuid())
+  tripId        String
+  actionType    MilestoneActionType
+  sentById      String
+  message       String?
+  recipientIds   String[]
+  trip          Trip             @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  sentBy        User             @relation("MilestoneActionSender", fields: [sentById], references: [id])
+  sentAt        DateTime         @default(now())
 }

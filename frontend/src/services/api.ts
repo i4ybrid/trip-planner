@@ -27,7 +27,13 @@ import {
   InviteCode,
   UserSearchResult,
   ApiResponse,
+  Milestone,
+  MilestoneCompletion,
+  MilestoneProgress,
+  MilestoneActionType,
+  MilestoneStatus,
 } from '@/types';
+import { logger } from '@/lib/logger';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
 
@@ -156,13 +162,25 @@ async function handleResponse<T>(response: Response): Promise<T> {
   return response.json();
 }
 
+// Cache for the NextAuth session token to avoid fetching on every API call
+let cachedSessionToken: string | null = null;
+let sessionCacheTime: number = 0;
+const SESSION_CACHE_TTL = 5000; // 5 seconds
+
 async function getHeaders(): Promise<HeadersInit> {
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
   };
 
-  // Try to get token from NextAuth session
+  // Try to get token from NextAuth session (with caching)
   if (typeof window !== 'undefined') {
+    const now = Date.now();
+    // Use cached token if still valid
+    if (cachedSessionToken && (now - sessionCacheTime) < SESSION_CACHE_TTL) {
+      headers['Authorization'] = `Bearer ${cachedSessionToken}`;
+      return headers;
+    }
+    
     try {
       const res = await fetch('/api/auth/session', {
         credentials: 'same-origin',
@@ -170,16 +188,27 @@ async function getHeaders(): Promise<HeadersInit> {
       if (res.ok) {
         const session = await res.json();
         if (session?.accessToken) {
+          cachedSessionToken = session.accessToken;
+          sessionCacheTime = now;
           headers['Authorization'] = `Bearer ${session.accessToken}`;
+        } else {
+          // No token means not authenticated - clear cache
+          cachedSessionToken = null;
         }
       }
     } catch (error) {
       // Session fetch failed, continue without auth
-      console.warn('Failed to fetch session:', error);
+      logger.warn('Failed to fetch session:', error);
     }
   }
 
   return headers;
+}
+
+// Export function to clear session cache (call after login/logout)
+export function clearSessionCache(): void {
+  cachedSessionToken = null;
+  sessionCacheTime = 0;
 }
 
 export const api = {
@@ -462,7 +491,7 @@ export const api = {
     return handleResponse(response);
   },
 
-  async acceptInvite(token: string): Promise<ApiResponse<{ tripId: string }>> {
+  async acceptInvite(token: string): Promise<ApiResponse<{ tripId: string; memberStatus?: string }>> {
     const response = await fetch(`${API_BASE_URL}/invites/${token}/accept`, {
       method: 'POST',
       headers: await getHeaders(),
@@ -473,6 +502,13 @@ export const api = {
   async declineInvite(token: string): Promise<ApiResponse<void>> {
     const response = await fetch(`${API_BASE_URL}/invites/${token}/decline`, {
       method: 'POST',
+      headers: await getHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  async getPendingInvites(): Promise<ApiResponse<Invite[]>> {
+    const response = await fetch(`${API_BASE_URL}/invites/pending`, {
       headers: await getHeaders(),
     });
     return handleResponse(response);
@@ -736,6 +772,22 @@ export const api = {
     });
   },
 
+  // Settlement Status
+  async getSettlementStatus(tripId: string): Promise<ApiResponse<{ members: { userId: string; isSettled: boolean }[]; allSettled: boolean }>> {
+    const cacheKey = `trip:${tripId}:settlement-status`;
+    const cached = getCached<ApiResponse<{ members: { userId: string; isSettled: boolean }[]; allSettled: boolean }>>(cacheKey);
+    if (cached) return cached;
+    
+    return deduplicatedFetch<ApiResponse<{ members: { userId: string; isSettled: boolean }[]; allSettled: boolean }>>(cacheKey, async () => {
+      const response = await fetch(`${API_BASE_URL}/trips/${tripId}/settlement-status`, {
+        headers: await getHeaders(),
+      });
+      const result = await handleResponse<ApiResponse<{ members: { userId: string; isSettled: boolean }[]; allSettled: boolean }>>(response);
+      setCache(cacheKey, result);
+      return result;
+    });
+  },
+
   async createBillSplit(tripId: string, data: CreateBillSplitInput): Promise<ApiResponse<BillSplit>> {
     const response = await fetch(`${API_BASE_URL}/trips/${tripId}/payments`, {
       method: 'POST',
@@ -982,6 +1034,73 @@ export const api = {
 
   async getUser(id: string): Promise<ApiResponse<User>> {
     const response = await fetch(`${API_BASE_URL}/users/${id}`, {
+      headers: await getHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  // Milestones
+  async getMilestones(tripId: string): Promise<ApiResponse<Milestone[]>> {
+    const response = await fetch(`${API_BASE_URL}/trips/${tripId}/milestones`, {
+      headers: await getHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  async createMilestone(tripId: string, data: { name: string; type: string; dueDate: string; isHard?: boolean; priority?: number }): Promise<ApiResponse<Milestone>> {
+    const response = await fetch(`${API_BASE_URL}/trips/${tripId}/milestones`, {
+      method: 'POST',
+      headers: await getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(response);
+  },
+
+  async updateMilestone(milestoneId: string, data: { dueDate?: string; isLocked?: boolean; isSkipped?: boolean; isHard?: boolean; name?: string }): Promise<ApiResponse<Milestone>> {
+    const response = await fetch(`${API_BASE_URL}/milestones/${milestoneId}`, {
+      method: 'PATCH',
+      headers: await getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(response);
+  },
+
+  async triggerMilestoneAction(tripId: string, actionType: MilestoneActionType, recipientIds: string[], message?: string): Promise<ApiResponse<void>> {
+    const response = await fetch(`${API_BASE_URL}/trips/${tripId}/milestones/actions`, {
+      method: 'POST',
+      headers: await getHeaders(),
+      body: JSON.stringify({ actionType, recipientIds, message }),
+    });
+    return handleResponse(response);
+  },
+
+  async getMilestoneProgress(tripId: string): Promise<ApiResponse<MilestoneProgress>> {
+    const response = await fetch(`${API_BASE_URL}/trips/${tripId}/milestones/progress`, {
+      headers: await getHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  async updateMilestoneCompletion(milestoneId: string, userId: string, status: MilestoneStatus, note?: string): Promise<ApiResponse<MilestoneCompletion>> {
+    const response = await fetch(`${API_BASE_URL}/milestones/${milestoneId}/completions/${userId}`, {
+      method: 'PATCH',
+      headers: await getHeaders(),
+      body: JSON.stringify({ status, note }),
+    });
+    return handleResponse(response);
+  },
+
+  async regenerateMilestones(tripId: string): Promise<ApiResponse<Milestone[]>> {
+    const response = await fetch(`${API_BASE_URL}/trips/${tripId}/milestones/regenerate`, {
+      method: 'POST',
+      headers: await getHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  async generateDefaultMilestones(tripId: string): Promise<ApiResponse<Milestone[]>> {
+    const response = await fetch(`${API_BASE_URL}/trips/${tripId}/milestones/generate-default`, {
+      method: 'POST',
       headers: await getHeaders(),
     });
     return handleResponse(response);
