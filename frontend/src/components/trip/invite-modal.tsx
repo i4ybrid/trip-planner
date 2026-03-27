@@ -6,7 +6,7 @@ import { Button, Input, Avatar, Badge } from '@/components';
 import { api } from '@/services/api';
 import { User, TripMember, TripStyle, Friend } from '@/types';
 import { Search, Users, Link, Mail, Copy, Check, X, Loader2 } from 'lucide-react';
-import { useAuthStore } from '@/store';
+import { useAuth } from '@/hooks/use-auth';
 
 interface InviteModalProps {
   isOpen: boolean;
@@ -27,7 +27,7 @@ export function InviteModal({ isOpen, onClose, tripId, tripStyle, onMemberAdded 
   const [copied, setCopied] = useState(false);
   const [emailInput, setEmailInput] = useState('');
   const [emailStatus, setEmailStatus] = useState<{ success: boolean; message: string } | null>(null);
-  const { user } = useAuthStore();
+  const { user } = useAuth();
 
   useEffect(() => {
     if (isOpen) {

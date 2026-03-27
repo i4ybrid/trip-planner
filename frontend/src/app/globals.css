@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap');
+
 /* Fallback styles - always load these first as a baseline */
 *, *::before, *::after {
   box-sizing: border-box;
@@ -31,8 +33,6 @@ button, .btn-primary {
 button:hover, .btn-primary:hover {
   opacity: 0.9;
 }
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -193,6 +193,28 @@ button:hover, .btn-primary:hover {
     hsl(25 25% 13%) 50%, 
     hsl(25 60% 45% / 0.08) 100%
   );
+}
+
+/* ===========================
+   Date input calendar icon - dark mode
+   =========================== */
+[data-theme="dark"] input[type="date"],
+[data-theme="dark"] input[type="datetime-local"],
+[data-theme="dark"] input[type="time"] {
+  color-scheme: dark;
+}
+
+[data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator,
+[data-theme="dark"] input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+[data-theme="dark"] input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.7);
+  cursor: pointer;
+}
+
+[data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator:hover,
+[data-theme="dark"] input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover,
+[data-theme="dark"] input[type="time"]::-webkit-calendar-picker-indicator:hover {
+  filter: invert(0.85);
 }
 
 /* ===========================

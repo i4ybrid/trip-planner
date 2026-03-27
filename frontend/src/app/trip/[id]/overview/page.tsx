@@ -1,27 +1,33 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { useTripStore } from '@/store';
 import { Card, CardHeader, CardTitle, CardContent, Button, Badge, Select, Avatar } from '@/components';
 import { InviteModal } from '@/components/trip/invite-modal';
+import { TripSettingsModal } from '@/components/trip/settings-modal';
 import { formatDateRange, formatCurrency, cn } from '@/lib/utils';
 import { api } from '@/services/api';
 import { MapPin, Calendar, Users, DollarSign, Share2, Settings, MoreVertical, Shield, Trash2 } from 'lucide-react';
 import { TripMember, User, Activity, BillSplit, MemberRole, TripStyle } from '@/types';
-import { useAuthStore } from '@/store';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function TripOverview() {
   const params = useParams();
   const tripId = params.id as string;
 
   const { currentTrip, isLoading, fetchTrip, changeStatus } = useTripStore();
-  const { user } = useAuthStore();
+  const { user } = useAuth();
   const [members, setMembers] = useState<TripMember[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [billSplits, setBillSplits] = useState<BillSplit[]>([]);
   const [stats, setStats] = useState({ total: 0, collected: 0 });
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  
+  // Track if data has been loaded to prevent redundant fetches
+  const hasLoadedRef = useRef(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const currentUserMember = members.find(m => m.userId === user?.id);
   const canInvite = !!(currentUserMember && (
@@ -30,40 +36,62 @@ export default function TripOverview() {
   ));
   const isMaster = currentUserMember?.role === 'MASTER';
 
-  useEffect(() => {
-    if (tripId) {
-      fetchTrip(tripId);
-      
-      Promise.all([
-        api.getTripMembers(tripId),
-        api.getActivities(tripId),
-        api.getBillSplits(tripId),
-      ]).then(([membersResult, activitiesResult, billSplitsResult]) => {
-        if (membersResult.data) {
-          setMembers(membersResult.data);
-        }
-        if (activitiesResult.data) {
-          setActivities(activitiesResult.data);
-        }
-        if (billSplitsResult.data) {
-          setBillSplits(billSplitsResult.data);
-          
-          const total = billSplitsResult.data.reduce((sum, b) => sum + Number(b.amount), 0);
-          const collected = billSplitsResult.data.reduce((sum, b) => {
-            const paidMembers = b.members?.filter(m => m.status === 'PAID' || m.status === 'CONFIRMED') || [];
-            return sum + paidMembers.reduce((memberSum, m) => memberSum + Number(m.dollarAmount), 0);
-          }, 0);
-          setStats({ total, collected });
-        }
-      });
+  const loadTripData = useCallback(async () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
+    
+    try {
+      await Promise.all([
+        fetchTrip(tripId),
+        api.getTripMembers(tripId).then(result => {
+          if (result.data) setMembers(result.data);
+        }),
+        api.getActivities(tripId).then(result => {
+          if (result.data) setActivities(result.data);
+        }),
+        api.getBillSplits(tripId).then(result => {
+          if (result.data) {
+            setBillSplits(result.data);
+            const total = result.data.reduce((sum, b) => sum + Number(b.amount), 0);
+            const collected = result.data.reduce((sum, b) => {
+              const paidMembers = b.members?.filter(m => m.status === 'PAID' || m.status === 'CONFIRMED') || [];
+              return sum + paidMembers.reduce((memberSum, m) => memberSum + Number(m.dollarAmount), 0);
+            }, 0);
+            setStats({ total, collected });
+          }
+        }),
+      ]);
+      hasLoadedRef.current = true;
+    } catch (error) {
+      if ((error as Error).name !== 'AbortError') {
+        console.error('Failed to load trip data:', error);
+      }
     }
   }, [tripId, fetchTrip]);
 
-  const handleMemberAdded = () => {
+  useEffect(() => {
+    if (tripId && !hasLoadedRef.current) {
+      loadTripData();
+    }
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, [tripId, loadTripData]);
+
+  const handleMemberAdded = useCallback(() => {
+    // With caching, this will be fast if recently loaded
     api.getTripMembers(tripId).then(result => {
       if (result.data) setMembers(result.data);
     });
-  };
+  }, [tripId]);
+
+  const handleTripUpdated = useCallback(() => {
+    fetchTrip(tripId);
+  }, [tripId, fetchTrip]);
 
   const handlePromoteToOrganizer = async (userId: string) => {
     await api.updateTripMember(tripId, userId, { role: 'ORGANIZER' });
@@ -141,9 +169,11 @@ export default function TripOverview() {
               Invite
             </Button>
           )}
-          <Button variant="outline">
-            <Settings className="h-4 w-4" />
-          </Button>
+          {isMaster && (
+            <Button variant="outline" onClick={() => setShowSettingsModal(true)}>
+              <Settings className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </div>
 
@@ -153,6 +183,13 @@ export default function TripOverview() {
         tripId={tripId}
         tripStyle={currentTrip.style}
         onMemberAdded={handleMemberAdded}
+      />
+
+      <TripSettingsModal
+        isOpen={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
+        trip={currentTrip}
+        onTripUpdated={handleTripUpdated}
       />
 
       <div className="grid gap-6 lg:grid-cols-3">

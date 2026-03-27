@@ -406,6 +406,15 @@ export class TripService {
       throw new Error('User is already a member of this trip');
     }
 
+    // Check trip style to determine initial status
+    const trip = await prisma.trip.findUnique({
+      where: { id: tripId },
+      select: { style: true },
+    });
+
+    // OPEN trips auto-confirm members, MANAGED trips require approval
+    const memberStatus = trip?.style === 'OPEN' ? 'CONFIRMED' : 'INVITED';
+
     const member = await prisma.tripMember.upsert({
       where: {
         tripId_userId: {
@@ -415,14 +424,14 @@ export class TripService {
       },
       update: {
         role: role as any,
-        status: 'CONFIRMED',
+        status: memberStatus,
         invitedById,
       },
       create: {
         tripId,
         userId,
         role: role as any,
-        status: 'CONFIRMED',
+        status: memberStatus,
         invitedById,
       },
       include: {
@@ -441,7 +450,9 @@ export class TripService {
       data: {
         tripId,
         eventType: 'member_joined',
-        description: `${member.user.name} joined the trip`,
+        description: memberStatus === 'CONFIRMED' 
+          ? `${member.user.name} joined the trip`
+          : `${member.user.name} requested to join the trip`,
         createdBy: userId,
       },
     });

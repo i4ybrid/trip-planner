@@ -85,7 +85,7 @@ export function UserMenu() {
         className="flex items-center gap-2 rounded-full border border-border bg-background/80 p-1 pr-3 hover:bg-accent transition-colors"
       >
         <Avatar
-          src={displayUser?.avatarUrl || displayUser?.image || undefined}
+          src={(displayUser as any)?.avatarUrl || (displayUser as any)?.image || undefined}
           name={displayUser?.name || 'User'}
           size="sm"
         />

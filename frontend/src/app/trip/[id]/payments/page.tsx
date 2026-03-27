@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { Card, CardHeader, CardTitle, CardContent, Button, Badge, Avatar } from '@/components';
@@ -55,24 +55,45 @@ export default function TripPayments() {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | ''>('');
   const [confirmingPaymentId, setConfirmingPaymentId] = useState<string | null>(null);
   const [simplifiedDebts, setSimplifiedDebts] = useState<{ balances: { userId: string; name: string; balance: number }[]; settlements: { from: string; fromName: string; to: string; toName: string; amount: number }[] } | null>(null);
+  
+  // Track if we've loaded data to prevent redundant fetches
+  const hasLoadedRef = useRef(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const [billSplitsResult, membersResult, debtsResult] = await Promise.all([
-          api.getBillSplits(tripId),
-          api.getTripMembers(tripId),
-          api.getSimplifiedDebts(tripId),
-        ]);
-        if (billSplitsResult.data) setBillSplits(billSplitsResult.data as BillSplitWithMembers[]);
-        if (membersResult.data) setMembers(membersResult.data);
-        if (debtsResult.data) setSimplifiedDebts(debtsResult.data);
-      } catch (error) {
+  const loadData = useCallback(async () => {
+    // Cancel any in-progress request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
+    
+    try {
+      const [billSplitsResult, membersResult, debtsResult] = await Promise.all([
+        api.getBillSplits(tripId),
+        api.getTripMembers(tripId),
+        api.getSimplifiedDebts(tripId),
+      ]);
+      if (billSplitsResult.data) setBillSplits(billSplitsResult.data as BillSplitWithMembers[]);
+      if (membersResult.data) setMembers(membersResult.data);
+      if (debtsResult.data) setSimplifiedDebts(debtsResult.data);
+      hasLoadedRef.current = true;
+    } catch (error) {
+      if ((error as Error).name !== 'AbortError') {
         console.error('Failed to load payments data:', error);
       }
-    };
-    loadData();
+    }
   }, [tripId]);
+
+  useEffect(() => {
+    if (tripId && !hasLoadedRef.current) {
+      loadData();
+    }
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, [tripId, loadData]);
 
   const totalExpenses = expenses.reduce((sum, e) => sum + e.amount + e.tax + e.tip, 0) + 
     billSplits.reduce((sum, b) => sum + Number(b.amount), 0);
@@ -93,27 +114,60 @@ export default function TripPayments() {
       return;
     }
     try {
-      await api.markBillSplitMemberPaid(billId, userId, selectedPaymentMethod);
-      // Refresh the bill splits to show updated status
-      const result = await api.getBillSplits(tripId);
-      if (result.data) setBillSplits(result.data as BillSplitWithMembers[]);
+      // Optimistic update: find the bill and member, update status to PAID
+      setBillSplits(prev => prev.map(bill => {
+        if (bill.id !== billId) return bill;
+        return {
+          ...bill,
+          members: bill.members?.map(member => {
+            if (member.userId !== userId) return member;
+            return {
+              ...member,
+              status: 'PAID' as const,
+              paymentMethod: selectedPaymentMethod,
+            };
+          }),
+        };
+      }));
       setMarkingPaid(null);
       setSelectedPaymentMethod('');
+      
+      // Call API
+      await api.markBillSplitMemberPaid(billId, userId, selectedPaymentMethod);
     } catch (error) {
       console.error('Failed to mark as paid:', error);
+      // Revoke optimistic update on error by re-fetching
+      const result = await api.getBillSplits(tripId);
+      if (result.data) setBillSplits(result.data as BillSplitWithMembers[]);
       alert('Failed to mark as paid. Please try again.');
     }
   };
 
   const handleConfirmReceipt = async (billId: string) => {
     try {
-      await api.confirmBillSplitPayment(billId);
-      // Refresh the bill splits to show updated status
-      const result = await api.getBillSplits(tripId);
-      if (result.data) setBillSplits(result.data as BillSplitWithMembers[]);
+      // Optimistic update: find the bill and all members with PAID status, update to CONFIRMED
+      setBillSplits(prev => prev.map(bill => {
+        if (bill.id !== billId) return bill;
+        return {
+          ...bill,
+          members: bill.members?.map(member => {
+            if (member.status !== 'PAID') return member;
+            return {
+              ...member,
+              status: 'CONFIRMED' as const,
+            };
+          }),
+        };
+      }));
       setConfirmingPaymentId(null);
+      
+      // Call API
+      await api.confirmBillSplitPayment(billId);
     } catch (error) {
       console.error('Failed to confirm payment:', error);
+      // Revoke optimistic update on error by re-fetching
+      const result = await api.getBillSplits(tripId);
+      if (result.data) setBillSplits(result.data as BillSplitWithMembers[]);
       alert('Failed to confirm payment. Please try again.');
     }
   };

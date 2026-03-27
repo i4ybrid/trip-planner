@@ -3,12 +3,31 @@
 import { signIn, signOut, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth-store';
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 
 export function useAuth() {
   const { data: session, status, update } = useSession();
   const router = useRouter();
-  const { setUser } = useAuthStore();
+  const { user: storeUser, setUser } = useAuthStore();
+
+  // Sync session user to auth store whenever session changes
+  useEffect(() => {
+    if (session?.user) {
+      const sessionUser = {
+        id: (session.user as any).id || session.user.id,
+        email: session.user.email!,
+        name: session.user.name!,
+        avatarUrl: session.user.image || undefined,
+      };
+      // Only update if different to avoid infinite loops
+      if (!storeUser || storeUser.id !== sessionUser.id) {
+        setUser(sessionUser);
+      }
+    } else if (!session && storeUser) {
+      // Session cleared, clear store
+      setUser(null);
+    }
+  }, [session, storeUser, setUser]);
 
   const login = useCallback(async (email: string, password: string) => {
     try {

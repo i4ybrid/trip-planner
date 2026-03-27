@@ -90,6 +90,12 @@ export interface Trip {
   tripMasterId: string;
   createdAt: string;
   updatedAt: string;
+  _count?: {
+    members: number;
+    activities?: number;
+    messages?: number;
+    mediaItems?: number;
+  };
 }
 
 export interface TripMember {

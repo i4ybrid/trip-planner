@@ -111,6 +111,10 @@ router.post('/invites/code/use', async (req: AuthRequest, res) => {
       return;
     }
 
+    // Determine status based on trip style
+    // OPEN trips auto-confirm members, MANAGED trips require approval
+    const newMemberStatus = invite.trip.style === 'OPEN' ? 'CONFIRMED' : 'INVITED';
+
     await prisma.tripMember.upsert({
       where: {
         tripId_userId: {
@@ -120,14 +124,14 @@ router.post('/invites/code/use', async (req: AuthRequest, res) => {
       },
       update: {
         role: 'MEMBER',
-        status: 'CONFIRMED',
+        status: newMemberStatus,
         invitedById: invite.sentById,
       },
       create: {
         tripId: invite.tripId,
         userId,
         role: 'MEMBER',
-        status: 'CONFIRMED',
+        status: newMemberStatus,
         invitedById: invite.sentById,
       },
       include: {
@@ -151,7 +155,9 @@ router.post('/invites/code/use', async (req: AuthRequest, res) => {
       data: {
         tripId: invite.tripId,
         eventType: 'member_joined',
-        description: 'A new member joined via invite code',
+        description: newMemberStatus === 'CONFIRMED' 
+          ? 'A new member joined via invite code'
+          : 'A new member request is pending approval',
         createdBy: userId,
       },
     });
@@ -160,7 +166,7 @@ router.post('/invites/code/use', async (req: AuthRequest, res) => {
       data: {
         tripId: invite.tripId,
         tripName: invite.trip.name,
-        status: 'CONFIRMED',
+        status: newMemberStatus,
       },
     });
   } catch (error: any) {

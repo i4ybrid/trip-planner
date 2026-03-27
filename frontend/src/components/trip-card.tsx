@@ -14,6 +14,7 @@ interface MemberInfo {
 interface TripCardProps {
   trip: Trip;
   members?: string[] | MemberInfo[];
+  memberCount?: number;
   onClick?: () => void;
   className?: string;
 }
@@ -21,6 +22,7 @@ interface TripCardProps {
 export const TripCard: React.FC<TripCardProps> = ({
   trip,
   members = [],
+  memberCount,
   onClick,
   className,
 }) => {
@@ -63,7 +65,14 @@ export const TripCard: React.FC<TripCardProps> = ({
             )}
           </div>
         </div>
-        {members.length > 0 && (
+        {memberCount !== undefined ? (
+          <div className="mt-3 flex items-center justify-between">
+            <span className="flex items-center gap-1 text-sm text-muted-foreground">
+              <Users className="h-3 w-3 text-current" />
+              {memberCount} member{memberCount !== 1 ? 's' : ''}
+            </span>
+          </div>
+        ) : members.length > 0 && (
           <div className="mt-3 flex items-center justify-between">
             <AvatarGroup max={4} size="sm">
               {members.map((member, i) => {

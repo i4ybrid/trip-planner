@@ -31,6 +31,100 @@ import {
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
 
+// ============================================================================
+// CACHING LAYER
+// ============================================================================
+const CACHE_TTL = 30000; // 30 seconds default TTL
+const cache = new Map<string, { data: any; timestamp: number }>();
+
+interface CacheEntry {
+  data: any;
+  timestamp: number;
+}
+
+export function getCached<T>(key: string): T | null {
+  const entry = cache.get(key);
+  if (entry && Date.now() - entry.timestamp < CACHE_TTL) {
+    return entry.data as T;
+  }
+  cache.delete(key);
+  return null;
+}
+
+export function setCache(key: string, data: any, ttl?: number): void {
+  const actualTTL = ttl ?? CACHE_TTL;
+  // For mutable data like arrays/objects, store a clone to prevent mutations
+  cache.set(key, { data: JSON.parse(JSON.stringify(data)), timestamp: Date.now() + actualTTL - CACHE_TTL });
+}
+
+export function invalidateCache(pattern?: string): void {
+  if (!pattern) {
+    cache.clear();
+    return;
+  }
+  // Invalidate keys matching pattern (e.g., 'trip:' to invalidate all trip-related cache)
+  Array.from(cache.keys()).forEach(key => {
+    if (key.includes(pattern)) {
+      cache.delete(key);
+    }
+  });
+}
+
+export function invalidateCacheByPrefix(prefix: string): void {
+  Array.from(cache.keys()).forEach(key => {
+    if (key.startsWith(prefix)) {
+      cache.delete(key);
+    }
+  });
+}
+
+export function getCacheStats(): { size: number; keys: string[] } {
+  return {
+    size: cache.size,
+    keys: Array.from(cache.keys()),
+  };
+}
+
+// ============================================================================
+// REQUEST DEDUPLICATION
+// ============================================================================
+const inFlightRequests = new Map<string, Promise<any>>();
+
+export async function deduplicatedFetch<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
+  // If there's an in-flight request for this key, wait for it instead of starting a new one
+  if (inFlightRequests.has(key)) {
+    return inFlightRequests.get(key) as Promise<T>;
+  }
+  
+  const promise = fetcher()
+    .finally(() => {
+      // Delay deletion slightly to handle rapid concurrent calls
+      setTimeout(() => inFlightRequests.delete(key), 0);
+    });
+  
+  inFlightRequests.set(key, promise);
+  return promise;
+}
+
+// ============================================================================
+// ABORT CONTROLLER HELPERS
+// ============================================================================
+export function createAbortableFetch<T>(
+  url: string,
+  options?: RequestInit
+): { promise: Promise<T>; controller: AbortController } {
+  const controller = new AbortController();
+  const promise = fetch(url, { ...options, signal: controller.signal })
+    .then(handleResponse<T>)
+    .finally(() => inFlightRequests.delete(url));
+  
+  return { promise, controller };
+}
+
+// ============================================================================
+// HTTP HELPERS
+// ============================================================================
+
 class ApiError extends Error {
   constructor(public status: number, message: string) {
     super(message);
@@ -115,17 +209,33 @@ export const api = {
   },
   // Trips
   async getTrips(): Promise<ApiResponse<Trip[]>> {
-    const response = await fetch(`${API_BASE_URL}/trips`, {
-      headers: await getHeaders(),
+    const cacheKey = 'trips:list';
+    const cached = getCached<ApiResponse<Trip[]>>(cacheKey);
+    if (cached) return cached;
+    
+    return deduplicatedFetch<ApiResponse<Trip[]>>(cacheKey, async () => {
+      const response = await fetch(`${API_BASE_URL}/trips`, {
+        headers: await getHeaders(),
+      });
+      const result = await handleResponse<ApiResponse<Trip[]>>(response);
+      setCache(cacheKey, result);
+      return result;
     });
-    return handleResponse(response);
   },
 
   async getTrip(id: string): Promise<ApiResponse<Trip>> {
-    const response = await fetch(`${API_BASE_URL}/trips/${id}`, {
-      headers: await getHeaders(),
+    const cacheKey = `trip:${id}`;
+    const cached = getCached<ApiResponse<Trip>>(cacheKey);
+    if (cached) return cached;
+    
+    return deduplicatedFetch<ApiResponse<Trip>>(cacheKey, async () => {
+      const response = await fetch(`${API_BASE_URL}/trips/${id}`, {
+        headers: await getHeaders(),
+      });
+      const result = await handleResponse<ApiResponse<Trip>>(response);
+      setCache(cacheKey, result);
+      return result;
     });
-    return handleResponse(response);
   },
 
   async createTrip(data: CreateTripInput): Promise<ApiResponse<Trip>> {
@@ -134,7 +244,10 @@ export const api = {
       headers: await getHeaders(),
       body: JSON.stringify(data),
     });
-    return handleResponse(response);
+    const result = await handleResponse<ApiResponse<Trip>>(response);
+    // Invalidate trips list cache since we added a new one
+    invalidateCacheByPrefix('trips:');
+    return result;
   },
 
   async updateTrip(id: string, data: UpdateTripInput & { style?: TripStyle }): Promise<ApiResponse<Trip>> {
@@ -143,7 +256,11 @@ export const api = {
       headers: await getHeaders(),
       body: JSON.stringify(data),
     });
-    return handleResponse(response);
+    const result = await handleResponse<ApiResponse<Trip>>(response);
+    // Invalidate caches since data changed
+    invalidateCacheByPrefix(`trip:${id}`);
+    invalidateCacheByPrefix('trips:');
+    return result;
   },
 
   async deleteTrip(id: string): Promise<ApiResponse<void>> {
@@ -151,7 +268,11 @@ export const api = {
       method: 'DELETE',
       headers: await getHeaders(),
     });
-    return handleResponse(response);
+    const result = await handleResponse<ApiResponse<void>>(response);
+    // Invalidate caches
+    invalidateCacheByPrefix(`trip:${id}`);
+    invalidateCacheByPrefix('trips:');
+    return result;
   },
 
   async changeTripStatus(id: string, status: string): Promise<ApiResponse<Trip>> {
@@ -160,22 +281,42 @@ export const api = {
       headers: await getHeaders(),
       body: JSON.stringify({ status }),
     });
-    return handleResponse(response);
+    const result = await handleResponse<ApiResponse<Trip>>(response);
+    // Invalidate caches
+    invalidateCacheByPrefix(`trip:${id}`);
+    invalidateCacheByPrefix('trips:');
+    return result;
   },
 
   async getTripTimeline(tripId: string): Promise<ApiResponse<TimelineEvent[]>> {
-    const response = await fetch(`${API_BASE_URL}/trips/${tripId}/timeline`, {
-      headers: await getHeaders(),
+    const cacheKey = `trip:${tripId}:timeline`;
+    const cached = getCached<ApiResponse<TimelineEvent[]>>(cacheKey);
+    if (cached) return cached;
+    
+    return deduplicatedFetch<ApiResponse<TimelineEvent[]>>(cacheKey, async () => {
+      const response = await fetch(`${API_BASE_URL}/trips/${tripId}/timeline`, {
+        headers: await getHeaders(),
+      });
+      const result = await handleResponse<ApiResponse<TimelineEvent[]>>(response);
+      setCache(cacheKey, result);
+      return result;
     });
-    return handleResponse(response);
   },
 
   // Trip Members
   async getTripMembers(tripId: string): Promise<ApiResponse<TripMember[]>> {
-    const response = await fetch(`${API_BASE_URL}/trips/${tripId}/members`, {
-      headers: await getHeaders(),
+    const cacheKey = `trip:${tripId}:members`;
+    const cached = getCached<ApiResponse<TripMember[]>>(cacheKey);
+    if (cached) return cached;
+    
+    return deduplicatedFetch<ApiResponse<TripMember[]>>(cacheKey, async () => {
+      const response = await fetch(`${API_BASE_URL}/trips/${tripId}/members`, {
+        headers: await getHeaders(),
+      });
+      const result = await handleResponse<ApiResponse<TripMember[]>>(response);
+      setCache(cacheKey, result);
+      return result;
     });
-    return handleResponse(response);
   },
 
   async addTripMember(tripId: string, userId: string): Promise<ApiResponse<TripMember>> {
@@ -184,7 +325,9 @@ export const api = {
       headers: await getHeaders(),
       body: JSON.stringify({ userId }),
     });
-    return handleResponse(response);
+    const result = await handleResponse<ApiResponse<TripMember>>(response);
+    invalidateCacheByPrefix(`trip:${tripId}:members`);
+    return result;
   },
 
   async updateTripMember(tripId: string, userId: string, data: { role?: string; status?: string }): Promise<ApiResponse<TripMember>> {
@@ -193,7 +336,9 @@ export const api = {
       headers: await getHeaders(),
       body: JSON.stringify(data),
     });
-    return handleResponse(response);
+    const result = await handleResponse<ApiResponse<TripMember>>(response);
+    invalidateCacheByPrefix(`trip:${tripId}:members`);
+    return result;
   },
 
   async removeTripMember(tripId: string, userId: string): Promise<ApiResponse<void>> {
@@ -201,7 +346,9 @@ export const api = {
       method: 'DELETE',
       headers: await getHeaders(),
     });
-    return handleResponse(response);
+    const result = await handleResponse<ApiResponse<void>>(response);
+    invalidateCacheByPrefix(`trip:${tripId}:members`);
+    return result;
   },
 
   // Trip Invite Codes
@@ -233,10 +380,18 @@ export const api = {
 
   // Activities
   async getActivities(tripId: string): Promise<ApiResponse<Activity[]>> {
-    const response = await fetch(`${API_BASE_URL}/trips/${tripId}/activities`, {
-      headers: await getHeaders(),
+    const cacheKey = `trip:${tripId}:activities`;
+    const cached = getCached<ApiResponse<Activity[]>>(cacheKey);
+    if (cached) return cached;
+    
+    return deduplicatedFetch<ApiResponse<Activity[]>>(cacheKey, async () => {
+      const response = await fetch(`${API_BASE_URL}/trips/${tripId}/activities`, {
+        headers: await getHeaders(),
+      });
+      const result = await handleResponse<ApiResponse<Activity[]>>(response);
+      setCache(cacheKey, result);
+      return result;
     });
-    return handleResponse(response);
   },
 
   async createActivity(tripId: string, data: CreateActivityInput): Promise<ApiResponse<Activity>> {
@@ -567,10 +722,18 @@ export const api = {
 
   // Bill Splits (Payments)
   async getBillSplits(tripId: string): Promise<ApiResponse<BillSplit[]>> {
-    const response = await fetch(`${API_BASE_URL}/trips/${tripId}/payments`, {
-      headers: await getHeaders(),
+    const cacheKey = `trip:${tripId}:billsplits`;
+    const cached = getCached<ApiResponse<BillSplit[]>>(cacheKey);
+    if (cached) return cached;
+    
+    return deduplicatedFetch<ApiResponse<BillSplit[]>>(cacheKey, async () => {
+      const response = await fetch(`${API_BASE_URL}/trips/${tripId}/payments`, {
+        headers: await getHeaders(),
+      });
+      const result = await handleResponse<ApiResponse<BillSplit[]>>(response);
+      setCache(cacheKey, result);
+      return result;
     });
-    return handleResponse(response);
   },
 
   async createBillSplit(tripId: string, data: CreateBillSplitInput): Promise<ApiResponse<BillSplit>> {
@@ -579,7 +742,11 @@ export const api = {
       headers: await getHeaders(),
       body: JSON.stringify(data),
     });
-    return handleResponse(response);
+    const result = await handleResponse<ApiResponse<BillSplit>>(response);
+    // Invalidate related caches
+    invalidateCacheByPrefix(`trip:${tripId}:billsplits`);
+    invalidateCacheByPrefix(`trip:${tripId}:debts`);
+    return result;
   },
 
   async getBillSplit(billSplitId: string): Promise<ApiResponse<BillSplit>> {
@@ -595,7 +762,12 @@ export const api = {
       headers: await getHeaders(),
       body: JSON.stringify(data),
     });
-    return handleResponse(response);
+    const result = await handleResponse<ApiResponse<BillSplit>>(response);
+    // Invalidate caches - we need to find the tripId from the billSplitId
+    // For simplicity, invalidate all bill split and debt caches
+    invalidateCacheByPrefix('billsplits');
+    invalidateCacheByPrefix('debts');
+    return result;
   },
 
   async deleteBillSplit(billSplitId: string): Promise<ApiResponse<void>> {
@@ -603,7 +775,10 @@ export const api = {
       method: 'DELETE',
       headers: await getHeaders(),
     });
-    return handleResponse(response);
+    const result = await handleResponse<ApiResponse<void>>(response);
+    invalidateCacheByPrefix('billsplits');
+    invalidateCacheByPrefix('debts');
+    return result;
   },
 
   async getBillSplitMembers(billSplitId: string): Promise<ApiResponse<BillSplitMember[]>> {
@@ -628,7 +803,10 @@ export const api = {
       headers: await getHeaders(),
       body: JSON.stringify({ status: 'PAID', paymentMethod }),
     });
-    return handleResponse(response);
+    const result = await handleResponse<ApiResponse<BillSplitMember>>(response);
+    invalidateCacheByPrefix('billsplits');
+    invalidateCacheByPrefix('debts');
+    return result;
   },
 
   async removeBillSplitMember(billSplitId: string, userId: string): Promise<ApiResponse<void>> {
@@ -644,23 +822,42 @@ export const api = {
       method: 'POST',
       headers: await getHeaders(),
     });
-    return handleResponse(response);
+    const result = await handleResponse<ApiResponse<BillSplit>>(response);
+    invalidateCacheByPrefix('billsplits');
+    invalidateCacheByPrefix('debts');
+    return result;
   },
 
   // Debt Simplification
   async getSimplifiedDebts(tripId: string): Promise<ApiResponse<{ balances: { userId: string; name: string; balance: number }[]; settlements: { from: string; fromName: string; to: string; toName: string; amount: number }[] }>> {
-    const response = await fetch(`${API_BASE_URL}/trips/${tripId}/debt-simplify`, {
-      headers: await getHeaders(),
+    const cacheKey = `trip:${tripId}:debts`;
+    const cached = getCached<ApiResponse<any>>(cacheKey);
+    if (cached) return cached;
+    
+    return deduplicatedFetch<ApiResponse<any>>(cacheKey, async () => {
+      const response = await fetch(`${API_BASE_URL}/trips/${tripId}/debt-simplify`, {
+        headers: await getHeaders(),
+      });
+      const result = await handleResponse<ApiResponse<any>>(response);
+      setCache(cacheKey, result);
+      return result;
     });
-    return handleResponse(response);
   },
 
   // Notifications
   async getNotifications(): Promise<ApiResponse<Notification[]>> {
-    const response = await fetch(`${API_BASE_URL}/notifications`, {
-      headers: await getHeaders(),
+    const cacheKey = 'notifications:list';
+    const cached = getCached<ApiResponse<Notification[]>>(cacheKey);
+    if (cached) return cached;
+    
+    return deduplicatedFetch<ApiResponse<Notification[]>>(cacheKey, async () => {
+      const response = await fetch(`${API_BASE_URL}/notifications`, {
+        headers: await getHeaders(),
+      });
+      const result = await handleResponse<ApiResponse<Notification[]>>(response);
+      setCache(cacheKey, result);
+      return result;
     });
-    return handleResponse(response);
   },
 
   async markNotificationRead(id: string): Promise<ApiResponse<void>> {

@@ -9,3 +9,4 @@ export * from './ui/badge';
 
 export { TripCard } from './trip-card';
 export { InviteModal } from './trip/invite-modal';
+export { TripSettingsModal } from './trip/settings-modal';

@@ -1,88 +1,20 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTripStore } from '@/store';
 import { TripCard, EmptyState, Button } from '@/components';
-import { Plane, Calendar, MapPin } from 'lucide-react';
-import { api } from '@/services/api';
-import { User, TripMember } from '@/types';
+import { Plane } from 'lucide-react';
 import { LeftSidebar } from '@/components/left-sidebar';
 import { AppHeader } from '@/components/app-header';
-
-interface TripWithMembers {
-  id: string;
-  name: string;
-  description?: string;
-  destination?: string;
-  startDate?: string;
-  endDate?: string;
-  status: string;
-  tripMasterId: string;
-  coverImage?: string;
-  createdAt: string;
-  updatedAt: string;
-  members: TripMember[];
-}
-
-interface MemberInfo {
-  name: string;
-  avatarUrl?: string;
-}
 
 export default function DashboardPage() {
   const router = useRouter();
   const { trips, isLoading, error, fetchTrips } = useTripStore();
-  const [membersMap, setMembersMap] = useState<Record<string, TripMember[]>>({});
 
   useEffect(() => {
     fetchTrips();
   }, [fetchTrips]);
-
-  useEffect(() => {
-    const loadMembers = async () => {
-      const memberPromises = trips.map(async (trip) => {
-        try {
-          const result = await api.getTripMembers(trip.id);
-          return {
-            tripId: trip.id,
-            members: result.data || []
-          };
-        } catch (error) {
-          console.error(`Failed to load members for trip ${trip.id}:`, error);
-          return {
-            tripId: trip.id,
-            members: []
-          };
-        }
-      });
-      const results = await Promise.all(memberPromises);
-      const map: Record<string, TripMember[]> = {};
-      results.forEach(r => { map[r.tripId] = r.members; });
-      setMembersMap(map);
-    };
-    if (trips.length > 0) {
-      loadMembers();
-    }
-  }, [trips]);
-
-  const getTripMembers = (tripId: string): TripMember[] => {
-    return membersMap[tripId] || [];
-  };
-
-  const getMemberName = (member: TripMember) => {
-    if (member.user?.name) return member.user.name;
-    if (member.userId === 'user-1') return 'You';
-    return 'Unknown User';
-  };
-
-  const getMemberInfo = (member: TripMember): MemberInfo => {
-    const name = getMemberName(member);
-    return {
-      name,
-      avatarUrl: member.user?.avatarUrl || undefined,
-    };
-  };
 
   const activeTrips = trips.filter(
     (t) => !['COMPLETED', 'CANCELLED'].includes(t.status)
@@ -130,17 +62,14 @@ export default function DashboardPage() {
               />
             ) : (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {activeTrips.map((trip) => {
-                  const members = getTripMembers(trip.id);
-                  return (
-                    <TripCard
-                      key={trip.id}
-                      trip={trip}
-                      members={members.map(m => getMemberInfo(m))}
-                      onClick={() => handleTripClick(trip.id)}
-                    />
-                  );
-                })}
+                {activeTrips.map((trip) => (
+                  <TripCard
+                    key={trip.id}
+                    trip={trip}
+                    memberCount={trip._count?.members}
+                    onClick={() => handleTripClick(trip.id)}
+                  />
+                ))}
                 <div
                   className="flex cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-border p-6 transition-all duration-200 hover:border-primary hover:bg-primary/5 card-hover"
                   onClick={() => router.push('/trip/new')}
@@ -160,17 +89,14 @@ export default function DashboardPage() {
             <section>
               <h2 className="mb-4 text-xl font-semibold text-muted-foreground">Past Trips</h2>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {pastTrips.map((trip) => {
-                  const members = getTripMembers(trip.id);
-                  return (
-                    <TripCard
-                      key={trip.id}
-                      trip={trip}
-                      members={members.map(m => getMemberInfo(m))}
-                      onClick={() => handleTripClick(trip.id)}
-                    />
-                  );
-                })}
+                {pastTrips.map((trip) => (
+                  <TripCard
+                    key={trip.id}
+                    trip={trip}
+                    memberCount={trip._count?.members}
+                    onClick={() => handleTripClick(trip.id)}
+                  />
+                ))}
               </div>
             </section>
           )}
