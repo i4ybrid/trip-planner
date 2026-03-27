@@ -28,8 +28,8 @@ export const createTripSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),
   destination: z.string().optional(),
-  startDate: z.string().datetime().optional(),
-  endDate: z.string().datetime().optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
   coverImage: z.string().url().optional(),
 });
 
@@ -37,10 +37,11 @@ export const updateTripSchema = z.object({
   name: z.string().min(1).optional(),
   description: z.string().optional(),
   destination: z.string().optional(),
-  startDate: z.string().datetime().optional(),
-  endDate: z.string().datetime().optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
   coverImage: z.string().url().optional(),
   status: z.enum(['IDEA', 'PLANNING', 'CONFIRMED', 'HAPPENING', 'COMPLETED', 'CANCELLED']).optional(),
+  style: z.enum(['OPEN', 'MANAGED']).optional(),
 });
 
 // Activity schemas

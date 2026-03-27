@@ -1,5 +1,7 @@
 export type TripStatus = 'IDEA' | 'PLANNING' | 'CONFIRMED' | 'HAPPENING' | 'COMPLETED' | 'CANCELLED';
 
+export type TripStyle = 'OPEN' | 'MANAGED';
+
 export type MemberRole = 'MASTER' | 'ORGANIZER' | 'MEMBER' | 'VIEWER';
 
 export type MemberStatus = 'INVITED' | 'DECLINED' | 'MAYBE' | 'CONFIRMED' | 'REMOVED';
@@ -63,12 +65,16 @@ export interface Settings {
   emailVotingReminders: boolean;
   emailTripReminders: boolean;
   emailMessages: boolean;
+  emailFriendRequests: boolean;
   pushTripInvites: boolean;
   pushPaymentRequests: boolean;
   pushVotingReminders: boolean;
   pushTripReminders: boolean;
   pushMessages: boolean;
   inAppAll: boolean;
+  quietHoursStart?: string;
+  quietHoursEnd?: string;
+  timezone?: string;
 }
 
 export interface Trip {
@@ -80,6 +86,7 @@ export interface Trip {
   endDate?: string;
   coverImage?: string;
   status: TripStatus;
+  style: TripStyle;
   tripMasterId: string;
   createdAt: string;
   updatedAt: string;
@@ -91,9 +98,11 @@ export interface TripMember {
   userId: string;
   role: MemberRole;
   status: MemberStatus;
+  invitedById?: string;
   joinedAt: string;
   user?: User;
   trip?: Trip;
+  invitedBy?: User;
 }
 
 export interface Activity {
@@ -125,11 +134,13 @@ export interface Invite {
   id: string;
   tripId: string;
   token: string;
+  code?: string;
   email?: string;
   phone?: string;
   status: InviteStatus;
   expiresAt: string;
   sentById: string;
+  inviteUrl?: string;
   channels?: InviteChannel[];
   trip?: Trip;
 }
@@ -294,6 +305,7 @@ export interface CreateTripInput {
   destination?: string;
   startDate?: string;
   endDate?: string;
+  style?: TripStyle;
 }
 
 export interface UpdateTripInput {

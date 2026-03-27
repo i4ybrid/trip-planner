@@ -33,6 +33,16 @@ export interface TripUpdateInput {
   endDate?: Date;
   coverImage?: string;
   status?: 'IDEA' | 'PLANNING' | 'CONFIRMED' | 'HAPPENING' | 'COMPLETED' | 'CANCELLED';
+  style?: 'OPEN' | 'MANAGED';
+}
+
+export interface MemberRoleUpdateInput {
+  role?: 'MASTER' | 'ORGANIZER' | 'MEMBER' | 'VIEWER';
+  status?: 'INVITED' | 'DECLINED' | 'MAYBE' | 'CONFIRMED' | 'REMOVED';
+}
+
+export interface MemberInviteInput {
+  userId: string;  // Existing user to invite
 }
 
 // Activity types

@@ -81,6 +81,7 @@ router.patch('/trips/:id', async (req: AuthRequest, res) => {
       endDate: validatedData.endDate ? new Date(validatedData.endDate) : undefined,
       coverImage: validatedData.coverImage,
       status: validatedData.status,
+      style: validatedData.style,
     });
 
     res.json({ data: trip });
@@ -180,28 +181,38 @@ router.get('/trips/:id/members', async (req: AuthRequest, res) => {
   }
 });
 
-// POST /api/trips/:id/members - Add member to trip
+// POST /api/trips/:id/members - Add member to trip (invite existing user)
 router.post('/trips/:id/members', async (req: AuthRequest, res) => {
   try {
     const userId = req.user!.userId;
     const tripId = req.params.id;
-    const { userId: newMemberId, role } = req.body;
+    const { userId: newMemberId } = req.body;
 
-    // Check permission
-    const permission = await tripService.checkMemberPermission(tripId, userId, ['MASTER', 'ORGANIZER']);
-    if (!permission.hasPermission) {
-      res.status(403).json({ error: 'Unauthorized' });
+    if (!newMemberId) {
+      res.status(400).json({ error: 'userId is required' });
       return;
     }
 
-    const member = await tripService.addTripMember(tripId, newMemberId, role as string || 'MEMBER');
+    const trip = await tripService.getTripById(tripId);
+    if (!trip) {
+      res.status(404).json({ error: 'Trip not found' });
+      return;
+    }
+
+    const canInvite = await tripService.canInvite(tripId, userId);
+    if (!canInvite.canInvite) {
+      res.status(403).json({ error: canInvite.reason });
+      return;
+    }
+
+    const member = await tripService.addTripMember(tripId, newMemberId, userId);
     res.status(201).json({ data: member });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// PATCH /api/trips/:id/members/:userId - Update member role/status
+// PATCH /api/trips/:id/members/:userId - Update member role/status (promote/demote)
 router.patch('/trips/:id/members/:userId', async (req: AuthRequest, res) => {
   try {
     const userId = req.user!.userId;
@@ -209,10 +220,23 @@ router.patch('/trips/:id/members/:userId', async (req: AuthRequest, res) => {
     const targetUserId = req.params.userId;
     const { role, status } = req.body;
 
-    // Check permission
-    const permission = await tripService.checkMemberPermission(tripId, userId, ['MASTER', 'ORGANIZER']);
-    if (!permission.hasPermission) {
-      res.status(403).json({ error: 'Unauthorized' });
+    const trip = await tripService.getTripById(tripId);
+    if (!trip) {
+      res.status(404).json({ error: 'Trip not found' });
+      return;
+    }
+
+    if (role === 'ORGANIZER') {
+      const canPromote = await tripService.canPromoteToOrganizer(userId, tripId);
+      if (!canPromote.canPromote) {
+        res.status(403).json({ error: canPromote.reason });
+        return;
+      }
+    }
+
+    const canManage = await tripService.canManageMember(userId, targetUserId, tripId);
+    if (!canManage.canManage) {
+      res.status(403).json({ error: canManage.reason });
       return;
     }
 
@@ -233,10 +257,20 @@ router.delete('/trips/:id/members/:userId', async (req: AuthRequest, res) => {
     const tripId = req.params.id;
     const targetUserId = req.params.userId;
     
-    // Check permission (only MASTER can remove, or users can remove themselves)
-    const permission = await tripService.checkMemberPermission(tripId, userId, ['MASTER', 'ORGANIZER']);
-    if (!permission.hasPermission && userId !== targetUserId) {
-      res.status(403).json({ error: 'Unauthorized' });
+    if (userId === targetUserId) {
+      res.status(400).json({ error: 'Cannot remove yourself from the trip' });
+      return;
+    }
+
+    const trip = await tripService.getTripById(tripId);
+    if (!trip) {
+      res.status(404).json({ error: 'Trip not found' });
+      return;
+    }
+
+    const canManage = await tripService.canManageMember(userId, targetUserId, tripId);
+    if (!canManage.canManage) {
+      res.status(403).json({ error: canManage.reason });
       return;
     }
     

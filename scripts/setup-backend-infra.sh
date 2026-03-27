@@ -15,7 +15,7 @@ fi
 cd "$PROJECT_ROOT"
 
 echo "🐳 Starting PostgreSQL, Redis, and Mailhog containers..."
-docker-compose up -d db redis mailhog
+docker compose up -d db redis mailhog
 
 echo "⏳ Waiting for PostgreSQL to be ready..."
 for i in {1..30}; do

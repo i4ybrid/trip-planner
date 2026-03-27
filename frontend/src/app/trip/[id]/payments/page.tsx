@@ -54,16 +54,19 @@ export default function TripPayments() {
   const [markingPaid, setMarkingPaid] = useState<{ billId: string; userId: string } | null>(null);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | ''>('');
   const [confirmingPaymentId, setConfirmingPaymentId] = useState<string | null>(null);
+  const [simplifiedDebts, setSimplifiedDebts] = useState<{ balances: { userId: string; name: string; balance: number }[]; settlements: { from: string; fromName: string; to: string; toName: string; amount: number }[] } | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [billSplitsResult, membersResult] = await Promise.all([
+        const [billSplitsResult, membersResult, debtsResult] = await Promise.all([
           api.getBillSplits(tripId),
           api.getTripMembers(tripId),
+          api.getSimplifiedDebts(tripId),
         ]);
         if (billSplitsResult.data) setBillSplits(billSplitsResult.data as BillSplitWithMembers[]);
         if (membersResult.data) setMembers(membersResult.data);
+        if (debtsResult.data) setSimplifiedDebts(debtsResult.data);
       } catch (error) {
         console.error('Failed to load payments data:', error);
       }
@@ -434,6 +437,69 @@ export default function TripPayments() {
               })}
             </CardContent>
           </Card>
+
+          {simplifiedDebts && simplifiedDebts.settlements.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                  </svg>
+                  Simplified Settlements
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <p className="text-xs text-muted-foreground">
+                  Optimized payment plan to settle all debts with the fewest transactions
+                </p>
+                {simplifiedDebts.settlements.map((settlement, idx) => {
+                  const isCurrentUserPayer = settlement.from === currentUserId;
+                  const isCurrentUserRecipient = settlement.to === currentUserId;
+                  return (
+                    <div
+                      key={idx}
+                      className={cn(
+                        'flex items-center justify-between rounded-lg p-3',
+                        isCurrentUserPayer && 'bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900',
+                        isCurrentUserRecipient && 'bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900',
+                        !isCurrentUserPayer && !isCurrentUserRecipient && 'bg-secondary/50'
+                      )}
+                    >
+                      <div className="flex items-center gap-2">
+                        {isCurrentUserPayer && <span className="text-xs font-medium text-red-600">You pay</span>}
+                        {isCurrentUserRecipient && <span className="text-xs font-medium text-green-600">You receive</span>}
+                        {!isCurrentUserPayer && !isCurrentUserRecipient && (
+                          <>
+                            <span className="text-sm font-medium">{settlement.fromName}</span>
+                            <span className="text-muted-foreground">→</span>
+                            <span className="text-sm font-medium">{settlement.toName}</span>
+                          </>
+                        )}
+                        {isCurrentUserPayer && (
+                          <>
+                            <span className="text-sm font-medium">{settlement.toName}</span>
+                          </>
+                        )}
+                        {isCurrentUserRecipient && (
+                          <>
+                            <span className="text-sm font-medium">from {settlement.fromName}</span>
+                          </>
+                        )}
+                      </div>
+                      <span className={cn(
+                        'font-semibold',
+                        isCurrentUserPayer && 'text-red-600',
+                        isCurrentUserRecipient && 'text-green-600',
+                        !isCurrentUserPayer && !isCurrentUserRecipient && ''
+                      )}>
+                        {formatCurrency(settlement.amount)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>

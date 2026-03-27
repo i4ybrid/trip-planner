@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { authMiddleware, AuthRequest } from '@/middleware/auth';
 import { billSplitService } from '@/services/billSplit.service';
+import { debtSimplifierService } from '@/services/debtSimplifier.service';
 import { createBillSplitSchema, updateBillSplitSchema } from '@/lib/validations';
 import { tripService } from '@/services/trip.service';
 
@@ -269,6 +270,26 @@ router.post('/payments/:id/confirm', async (req: AuthRequest, res) => {
     
     const updated = await billSplitService.confirmPayment(billSplitId);
     res.json({ data: updated });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/trips/:tripId/debt-simplify - Get simplified debt settlement
+router.get('/trips/:tripId/debt-simplify', async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.userId;
+    const tripId = req.params.tripId;
+
+    // Check permission
+    const permission = await tripService.checkMemberPermission(tripId, userId);
+    if (!permission.hasPermission) {
+      res.status(403).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    const result = await debtSimplifierService.getSimplifiedDebts(tripId);
+    res.json({ data: result });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }

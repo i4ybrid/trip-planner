@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardContent, Input, Button, Textarea, Avatar } from '@/components';
 import { api } from '@/services/api';
 import { Send, Users } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, getInitials } from '@/lib/utils';
 import { Message, TripMember, User } from '@/types';
 
 export default function TripChat() {
@@ -55,9 +55,10 @@ export default function TripChat() {
       if (result.data && result.data.length > 0) {
         const container = messagesContainerRef.current;
         const previousScrollHeight = container?.scrollHeight || 0;
+        const data = result.data;
         
-        setMessages(prev => [...result.data.reverse(), ...prev]);
-        setHasMoreMessages(result.data.length === 30);
+        setMessages(prev => [...data.reverse(), ...prev]);
+        setHasMoreMessages(data.length === 30);
         
         setTimeout(() => {
           if (container) {
@@ -253,7 +254,7 @@ export default function TripChat() {
                                 className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm hover:bg-accent"
                               >
                                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
-                                  {getMemberInitial(member.userId)}
+                                  {getInitials(name)}
                                 </div>
                                 <span>{name}</span>
                               </button>

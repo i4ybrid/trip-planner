@@ -1,0 +1,59 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Environment variables (except examples)
+.env
+.env.prod
+.env.*
+!.env.example
+
+# Build and Output
+dist/
+build/
+.next/
+out/
+.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Testing
+coverage/
+.nyc_output/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.history/
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Database and Cache
+*.db
+*.sqlite
+.eslintcache
+.stylelintcache
+.parcel-cache
+.cache/
+
+# Project specific
+backend/uploads/

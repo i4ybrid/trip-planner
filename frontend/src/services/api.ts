@@ -1,6 +1,7 @@
 import {
   Trip,
   TripMember,
+  TripStyle,
   Activity,
   Vote,
   Invite,
@@ -136,7 +137,7 @@ export const api = {
     return handleResponse(response);
   },
 
-  async updateTrip(id: string, data: UpdateTripInput): Promise<ApiResponse<Trip>> {
+  async updateTrip(id: string, data: UpdateTripInput & { style?: TripStyle }): Promise<ApiResponse<Trip>> {
     const response = await fetch(`${API_BASE_URL}/trips/${id}`, {
       method: 'PATCH',
       headers: await getHeaders(),
@@ -199,6 +200,33 @@ export const api = {
     const response = await fetch(`${API_BASE_URL}/trips/${tripId}/members/${userId}`, {
       method: 'DELETE',
       headers: await getHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  // Trip Invite Codes
+  async generateTripInviteCode(tripId: string): Promise<ApiResponse<Invite>> {
+    const response = await fetch(`${API_BASE_URL}/trips/${tripId}/invites`, {
+      method: 'POST',
+      headers: await getHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  async useTripInviteCode(code: string): Promise<ApiResponse<{ tripId: string; tripName: string; status: string }>> {
+    const response = await fetch(`${API_BASE_URL}/invites/code/use`, {
+      method: 'POST',
+      headers: await getHeaders(),
+      body: JSON.stringify({ code }),
+    });
+    return handleResponse(response);
+  },
+
+  async sendTripEmailInvite(tripId: string, email: string): Promise<ApiResponse<{ success: boolean; message: string; existingUserNotified: boolean }>> {
+    const response = await fetch(`${API_BASE_URL}/trips/${tripId}/invites/email`, {
+      method: 'POST',
+      headers: await getHeaders(),
+      body: JSON.stringify({ email }),
     });
     return handleResponse(response);
   },
@@ -619,6 +647,14 @@ export const api = {
     return handleResponse(response);
   },
 
+  // Debt Simplification
+  async getSimplifiedDebts(tripId: string): Promise<ApiResponse<{ balances: { userId: string; name: string; balance: number }[]; settlements: { from: string; fromName: string; to: string; toName: string; amount: number }[] }>> {
+    const response = await fetch(`${API_BASE_URL}/trips/${tripId}/debt-simplify`, {
+      headers: await getHeaders(),
+    });
+    return handleResponse(response);
+  },
+
   // Notifications
   async getNotifications(): Promise<ApiResponse<Notification[]>> {
     const response = await fetch(`${API_BASE_URL}/notifications`, {
@@ -639,6 +675,43 @@ export const api = {
   async markAllNotificationsRead(): Promise<ApiResponse<void>> {
     const response = await fetch(`${API_BASE_URL}/notifications/mark-all-read`, {
       method: 'POST',
+      headers: await getHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  async getUnreadNotificationCount(): Promise<ApiResponse<number>> {
+    const response = await fetch(`${API_BASE_URL}/notifications/unread-count`, {
+      headers: await getHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  async deleteNotification(id: string): Promise<ApiResponse<void>> {
+    const response = await fetch(`${API_BASE_URL}/notifications/${id}`, {
+      method: 'DELETE',
+      headers: await getHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  // Calendar Export
+  async getCalendarEvents(tripId: string): Promise<ApiResponse<any[]>> {
+    const response = await fetch(`${API_BASE_URL}/trips/${tripId}/calendar`, {
+      headers: await getHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  async getCalendarGoogleUrl(tripId: string): Promise<ApiResponse<{ url: string; eventCount: number }>> {
+    const response = await fetch(`${API_BASE_URL}/trips/${tripId}/calendar/google`, {
+      headers: await getHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  async getCalendarOutlookUrl(tripId: string): Promise<ApiResponse<{ url: string; eventCount: number }>> {
+    const response = await fetch(`${API_BASE_URL}/trips/${tripId}/calendar/outlook`, {
       headers: await getHeaders(),
     });
     return handleResponse(response);

@@ -209,7 +209,7 @@ export class TripService {
     });
   }
 
-  async addTripMember(tripId: string, userId: string, role = 'MEMBER') {
+  async addTripMemberByInvite(tripId: string, userId: string, role = 'MEMBER') {
     return prisma.tripMember.create({
       data: {
         tripId,
@@ -236,14 +236,35 @@ export class TripService {
   }
 
   async removeTripMember(tripId: string, userId: string) {
-    return prisma.tripMember.delete({
+    const member = await prisma.tripMember.update({
       where: {
         tripId_userId: {
           tripId,
           userId,
         },
       },
+      data: {
+        status: 'REMOVED',
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
     });
+
+    await prisma.timelineEvent.create({
+      data: {
+        tripId,
+        eventType: 'member_removed',
+        description: `${member.user.name} was removed from the trip`,
+      },
+    });
+
+    return member;
   }
 
   async checkMemberPermission(tripId: string, userId: string, requiredRoles: string[] = []) {
@@ -269,6 +290,163 @@ export class TripService {
     }
 
     return { hasPermission: true, role: member.role };
+  }
+
+  async canInvite(tripId: string, userId: string): Promise<{ canInvite: boolean; reason?: string }> {
+    const trip = await prisma.trip.findUnique({
+      where: { id: tripId },
+      select: { style: true },
+    });
+
+    if (!trip) {
+      return { canInvite: false, reason: 'Trip not found' };
+    }
+
+    const member = await prisma.tripMember.findUnique({
+      where: {
+        tripId_userId: {
+          tripId,
+          userId,
+        },
+      },
+    });
+
+    if (!member || member.status !== 'CONFIRMED') {
+      return { canInvite: false, reason: 'You are not a member of this trip' };
+    }
+
+    if (member.role === 'MASTER') {
+      return { canInvite: true };
+    }
+
+    if (trip.style === 'OPEN' && (member.role === 'ORGANIZER' || member.role === 'MEMBER')) {
+      return { canInvite: true };
+    }
+
+    if (trip.style === 'MANAGED') {
+      return { canInvite: false, reason: 'Only organizers can invite members to this trip' };
+    }
+
+    return { canInvite: false, reason: 'You do not have permission to invite members' };
+  }
+
+  async canManageMember(requesterId: string, targetId: string, tripId: string): Promise<{ canManage: boolean; reason?: string }> {
+    const requester = await prisma.tripMember.findUnique({
+      where: {
+        tripId_userId: {
+          tripId,
+          userId: requesterId,
+        },
+      },
+    });
+
+    const target = await prisma.tripMember.findUnique({
+      where: {
+        tripId_userId: {
+          tripId,
+          userId: targetId,
+        },
+      },
+    });
+
+    if (!requester || requester.status !== 'CONFIRMED') {
+      return { canManage: false, reason: 'You are not a member of this trip' };
+    }
+
+    if (!target || target.status === 'REMOVED') {
+      return { canManage: false, reason: 'Target member not found' };
+    }
+
+    if (requester.role === 'MASTER') {
+      return { canManage: true };
+    }
+
+    if (requester.role === 'ORGANIZER') {
+      if (target.role === 'MASTER' || target.role === 'ORGANIZER') {
+        return { canManage: false, reason: 'Organizers cannot manage other organizers or the master' };
+      }
+      return { canManage: true };
+    }
+
+    return { canManage: false, reason: 'You do not have permission to manage members' };
+  }
+
+  async canPromoteToOrganizer(requesterId: string, tripId: string): Promise<{ canPromote: boolean; reason?: string }> {
+    const requester = await prisma.tripMember.findUnique({
+      where: {
+        tripId_userId: {
+          tripId,
+          userId: requesterId,
+        },
+      },
+    });
+
+    if (!requester || requester.status !== 'CONFIRMED') {
+      return { canPromote: false, reason: 'You are not a member of this trip' };
+    }
+
+    if (requester.role !== 'MASTER') {
+      return { canPromote: false, reason: 'Only the trip master can promote members to organizers' };
+    }
+
+    return { canPromote: true };
+  }
+
+  async addTripMember(tripId: string, userId: string, invitedById: string, role = 'MEMBER') {
+    const existingMember = await prisma.tripMember.findUnique({
+      where: {
+        tripId_userId: {
+          tripId,
+          userId,
+        },
+      },
+    });
+
+    if (existingMember && existingMember.status !== 'REMOVED') {
+      throw new Error('User is already a member of this trip');
+    }
+
+    const member = await prisma.tripMember.upsert({
+      where: {
+        tripId_userId: {
+          tripId,
+          userId,
+        },
+      },
+      update: {
+        role: role as any,
+        status: 'CONFIRMED',
+        invitedById,
+      },
+      create: {
+        tripId,
+        userId,
+        role: role as any,
+        status: 'CONFIRMED',
+        invitedById,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatarUrl: true,
+          },
+        },
+      },
+    });
+
+    await prisma.timelineEvent.create({
+      data: {
+        tripId,
+        eventType: 'member_joined',
+        description: `${member.user.name} joined the trip`,
+        createdBy: userId,
+      },
+    });
+
+    return member;
   }
 }
 

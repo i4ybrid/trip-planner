@@ -10,6 +10,7 @@ import { storageConfig } from './lib/storage';
 import { logger } from './lib/logger';
 import usersRouter from './routes/users';
 import tripsRouter from './routes/trips';
+import tripInvitesRouter from './routes/trip-invites';
 import activitiesRouter from './routes/activities';
 import invitesRouter from './routes/invites';
 import messagesRouter from './routes/messages';
@@ -83,6 +84,7 @@ app.get('/health', (_req, res) => {
 // API routes - auth routes must be first (public)
 app.use('/api', usersRouter); // Contains /auth/login, /auth/register (public) and /users/*, /settings (protected)
 app.use('/api', tripsRouter);
+app.use('/api', tripInvitesRouter);
 app.use('/api', activitiesRouter);
 app.use('/api', invitesRouter);
 app.use('/api', messagesRouter);

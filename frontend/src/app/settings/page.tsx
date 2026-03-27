@@ -30,7 +30,7 @@ export default function SettingsPage() {
   // Compress and resize image using Canvas
   const compressImage = async (file: File, maxWidth = 800, maxHeight = 800, quality = 0.8): Promise<File> => {
     return new Promise((resolve) => {
-      const img = new Image();
+      const img = document.createElement('img');
       const url = URL.createObjectURL(file);
       
       img.onload = () => {
@@ -106,6 +106,7 @@ export default function SettingsPage() {
     emailVotingReminders: false,
     emailTripReminders: false,
     emailMessages: false,
+    emailFriendRequests: false,
     pushTripInvites: false,
     pushPaymentRequests: false,
     pushVotingReminders: false,

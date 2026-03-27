@@ -115,6 +115,7 @@ describe('MockDatabase', () => {
         title: 'Test Bill',
         amount: 100,
         splitType: 'EQUAL',
+        paidBy: 'user-1',
         members: [
           { userId: 'user-1', dollarAmount: 50 },
           { userId: 'user-2', dollarAmount: 50 },

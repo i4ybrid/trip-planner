@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useTripStore } from '../store/trip-store';
 import { mockTrip } from '../services/mock-api';
 
@@ -62,7 +62,7 @@ describe('useTripStore', () => {
     });
 
     it('should set trips on success', async () => {
-      const trips = [{ id: '1', name: 'Trip 1', status: 'IDEA', tripMasterId: 'user-1', createdAt: '', updatedAt: '' }];
+      const trips = [{ id: '1', name: 'Trip 1', status: 'IDEA', style: 'OPEN' as const, tripMasterId: 'user-1', createdAt: '', updatedAt: '' }];
       (api.getTrips as any).mockResolvedValue({ data: trips });
       
       await useTripStore.getState().fetchTrips();
@@ -81,7 +81,7 @@ describe('useTripStore', () => {
 
   describe('createTrip', () => {
     it('should create a new trip', async () => {
-      const newTrip = { id: '1', name: 'New Trip', status: 'IDEA' as const, tripMasterId: 'user-1', createdAt: '', updatedAt: '' };
+      const newTrip = { id: '1', name: 'New Trip', status: 'IDEA' as const, style: 'OPEN' as const, tripMasterId: 'user-1', createdAt: '', updatedAt: '' };
       (api.createTrip as any).mockResolvedValue({ data: newTrip });
       
       const result = await useTripStore.getState().createTrip({ name: 'New Trip' });
@@ -102,10 +102,10 @@ describe('useTripStore', () => {
   describe('updateTrip', () => {
     it('should update trip in state', async () => {
       useTripStore.setState({
-        trips: [{ id: '1', name: 'Trip', status: 'IDEA', tripMasterId: 'user-1', createdAt: '', updatedAt: '' }],
+        trips: [{ id: '1', name: 'Trip', status: 'IDEA', style: 'OPEN' as const, tripMasterId: 'user-1', createdAt: '', updatedAt: '' }],
       });
       
-      const updated = { id: '1', name: 'Updated', status: 'IDEA' as const, tripMasterId: 'user-1', createdAt: '', updatedAt: '' };
+      const updated = { id: '1', name: 'Updated', status: 'IDEA' as const, style: 'OPEN' as const, tripMasterId: 'user-1', createdAt: '', updatedAt: '' };
       (api.updateTrip as any).mockResolvedValue({ data: updated });
       
       await useTripStore.getState().updateTrip('1', { name: 'Updated' });
@@ -116,7 +116,7 @@ describe('useTripStore', () => {
 
   describe('deleteTrip', () => {
     it('should remove trip from state', async () => {
-      useTripStore.setState({ trips: [{ id: '1', name: 'Trip', status: 'IDEA', tripMasterId: 'user-1', createdAt: '', updatedAt: '' }] });
+      useTripStore.setState({ trips: [{ id: '1', name: 'Trip', status: 'IDEA', style: 'OPEN' as const, tripMasterId: 'user-1', createdAt: '', updatedAt: '' }] });
       (api.deleteTrip as any).mockResolvedValue({ data: undefined });
       
       await useTripStore.getState().deleteTrip('1');
@@ -127,7 +127,7 @@ describe('useTripStore', () => {
 
   describe('changeStatus', () => {
     it('should update trip status', async () => {
-      const trip = { id: '1', name: 'Trip', status: 'IDEA' as const, tripMasterId: 'user-1', createdAt: '', updatedAt: '' };
+      const trip = { id: '1', name: 'Trip', status: 'IDEA' as const, style: 'OPEN' as const, tripMasterId: 'user-1', createdAt: '', updatedAt: '' };
       useTripStore.setState({ trips: [trip], currentTrip: trip });
       
       const updated = { ...trip, status: 'PLANNING' as const };
@@ -142,7 +142,7 @@ describe('useTripStore', () => {
 
   describe('setCurrentTrip', () => {
     it('should set currentTrip', () => {
-      const trip = { id: '1', name: 'Trip', status: 'IDEA' as const, tripMasterId: 'user-1', createdAt: '', updatedAt: '' };
+      const trip = { id: '1', name: 'Trip', status: 'IDEA' as const, style: 'OPEN' as const, tripMasterId: 'user-1', createdAt: '', updatedAt: '' };
       
       useTripStore.getState().setCurrentTrip(trip);
       

@@ -19,6 +19,11 @@ enum TripStatus {
   CANCELLED   // Trip cancelled
 }
 
+enum TripStyle {
+  OPEN     // Anyone can invite
+  MANAGED  // Only organizers can invite
+}
+
 enum MemberRole {
   MASTER      // Trip master/owner - full control
   ORGANIZER   // Can manage activities and payments
@@ -120,6 +125,7 @@ model User {
   updatedAt       DateTime  @updatedAt
 
   memberships     TripMember[]
+  tripInvitesSent TripMember[]  @relation("TripInviteSender")
   createdTrips    Trip[]         @relation("TripMaster")
   activities      Activity[]
   votes           Vote[]
@@ -192,6 +198,7 @@ model Trip {
   coverImage    String?
   status        TripStatus  @default(IDEA)
   tripMasterId  String
+  style         TripStyle   @default(OPEN)
 
   tripMaster    User        @relation("TripMaster", fields: [tripMasterId], references: [id])
   members       TripMember[]
@@ -214,9 +221,11 @@ model TripMember {
   role            MemberRole    @default(MEMBER)
   status          MemberStatus @default(INVITED)
   joinedAt        DateTime      @default(now())
+  invitedById     String?
 
   trip            Trip          @relation(fields: [tripId], references: [id], onDelete: Cascade)
   user            User          @relation(fields: [userId], references: [id])
+  invitedBy       User?         @relation("TripInviteSender", fields: [invitedById], references: [id])
 
   @@unique([tripId, userId])
 }
@@ -224,7 +233,8 @@ model TripMember {
 model Invite {
   id            String        @id @default(cuid())
   tripId        String
-  token         String        @unique
+  token         String?       @unique @default(uuid())
+  code          String?       @unique  // For shareable codes (e.g., ABC123XY)
   email         String?
   phone         String?
   status        InviteStatus @default(PENDING)

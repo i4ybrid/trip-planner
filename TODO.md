@@ -11,14 +11,20 @@
 
 ---
 
-## 2. Simplify Debt Algorithm
+## 2. Simplify Debt Algorithm ✅ COMPLETED
 
-- [ ] **2.1** Research and implement debt simplification algorithm (similar to Splitwise)
-- [ ] **2.2** Create backend endpoint to calculate optimized settlement
-- [ ] **2.3** Display simplified debts in the payments overview
-- [ ] **2.4** Show who pays whom and how much
-- [ ] **2.5** Handle cases where A owes B and B owes C (chain settlements)
-- [ ] **2.6** Test with various debt scenarios
+- [x] **2.1** Research and implement debt simplification algorithm (similar to Splitwise)
+- [x] **2.2** Create backend endpoint to calculate optimized settlement
+- [x] **2.3** Display simplified debts in the payments overview
+- [x] **2.4** Show who pays whom and how much
+- [x] **2.5** Handle cases where A owes B and B owes C (chain settlements)
+- [x] **2.6** Test with various debt scenarios
+
+**Implementation:**
+- `backend/src/services/debtSimplifier.service.ts` - Core algorithm
+- `backend/src/services/debtSimplifier.service.test.ts` - Unit tests
+- `GET /api/trips/:tripId/debt-simplify` - API endpoint
+- Frontend payments page shows optimized settlements
 
 ---
 
