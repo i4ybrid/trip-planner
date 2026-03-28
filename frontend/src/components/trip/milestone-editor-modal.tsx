@@ -8,6 +8,7 @@ import { Milestone } from '@/types';
 import { api } from '@/services/api';
 import { format } from 'date-fns';
 import { logger } from '@/lib/logger';
+import { Loader2 } from 'lucide-react';
 
 interface MilestoneEditorModalProps {
   isOpen: boolean;
@@ -28,6 +29,7 @@ export function MilestoneEditorModal({
   const [isSkipped, setIsSkipped] = useState(false);
   const [isHard, setIsHard] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (milestone) {
@@ -43,16 +45,17 @@ export function MilestoneEditorModal({
     if (!milestone) return;
 
     if (!name.trim()) {
-      alert('Please enter a milestone name');
+      setError('Please enter a milestone name');
       return;
     }
 
     if (!dueDate) {
-      alert('Please select a due date');
+      setError('Please select a due date');
       return;
     }
 
     setIsSubmitting(true);
+    setError(null);
     try {
       await api.updateMilestone(milestone.id, {
         name: name.trim(),
@@ -65,7 +68,7 @@ export function MilestoneEditorModal({
       onClose();
     } catch (error) {
       logger.error('Failed to update milestone:', error);
-      alert('Failed to update milestone. Please try again.');
+      setError('Failed to update milestone. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -90,6 +93,11 @@ export function MilestoneEditorModal({
       description={`Editing "${milestone.name}"`}
     >
       <div className="space-y-4">
+        {error && (
+          <div className="rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-600">
+            {error}
+          </div>
+        )}
         {/* Milestone name */}
         <div>
           <label className="block text-sm font-medium mb-2">Name</label>
@@ -179,6 +187,7 @@ export function MilestoneEditorModal({
             Cancel
           </Button>
           <Button onClick={handleSubmit} disabled={isSubmitting}>
+            {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
             {isSubmitting ? 'Saving...' : 'Save Changes'}
           </Button>
         </div>

@@ -7,6 +7,7 @@ import { Milestone, TripMember, BillSplit } from '@/types';
 import { api } from '@/services/api';
 import { formatCurrency } from '@/lib/utils';
 import { logger } from '@/lib/logger';
+import { Loader2 } from 'lucide-react';
 
 interface RemindSettleModalProps {
   isOpen: boolean;
@@ -36,6 +37,7 @@ export function RemindSettleModal({
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const confirmedMembers = members.filter(m => m.status === 'CONFIRMED');
 
@@ -70,11 +72,12 @@ export function RemindSettleModal({
       : membersWithOutstanding.map(m => m.userId);
 
     if (recipientIds.length === 0) {
-      alert('No members with outstanding balances to remind');
+      setError('No members with outstanding balances to remind');
       return;
     }
 
     setIsSubmitting(true);
+    setError(null);
     try {
       await api.triggerMilestoneAction(tripId, 'SETTLEMENT_REMINDER', recipientIds, message);
       onSuccess?.();
@@ -84,7 +87,7 @@ export function RemindSettleModal({
       setMessage('');
     } catch (error) {
       logger.error('Failed to send settlement reminder:', error);
-      alert('Failed to send settlement reminder. Please try again.');
+      setError('Failed to send settlement reminder. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -113,6 +116,11 @@ export function RemindSettleModal({
       size="lg"
     >
       <div className="space-y-4">
+        {error && (
+          <div className="rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-600">
+            {error}
+          </div>
+        )}
         {/* Outstanding balances */}
         {membersWithOutstanding.length > 0 && (
           <div>
@@ -168,6 +176,7 @@ export function RemindSettleModal({
             Cancel
           </Button>
           <Button onClick={handleSubmit} disabled={isSubmitting}>
+            {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
             {isSubmitting ? 'Sending...' : 'Send Settlement Reminder'}
           </Button>
         </div>

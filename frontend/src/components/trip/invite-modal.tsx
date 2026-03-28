@@ -27,6 +27,7 @@ export function InviteModal({ isOpen, onClose, tripId, tripStyle, onMemberAdded 
   const [copied, setCopied] = useState(false);
   const [emailInput, setEmailInput] = useState('');
   const [emailStatus, setEmailStatus] = useState<{ success: boolean; message: string } | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -61,6 +62,7 @@ export function InviteModal({ isOpen, onClose, tripId, tripStyle, onMemberAdded 
 
   const handleInviteUser = async (userId: string) => {
     setIsInviting(true);
+    setError(null);
     try {
       await api.addTripMember(tripId, userId);
       setInvitedUsers((prev) => {
@@ -70,7 +72,7 @@ export function InviteModal({ isOpen, onClose, tripId, tripStyle, onMemberAdded 
       });
       onMemberAdded?.();
     } catch (error: any) {
-      alert(error.message || 'Failed to invite user');
+      setError(error.message || 'Failed to invite user');
     } finally {
       setIsInviting(false);
     }
@@ -118,6 +120,11 @@ export function InviteModal({ isOpen, onClose, tripId, tripStyle, onMemberAdded 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Invite to Trip" className="max-w-lg">
       <div className="space-y-4">
+        {error && (
+          <div className="rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-600">
+            {error}
+          </div>
+        )}
         <div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -156,6 +163,7 @@ export function InviteModal({ isOpen, onClose, tripId, tripStyle, onMemberAdded 
                       onClick={() => handleInviteUser(result.id)}
                       disabled={isInviting}
                     >
+                      {isInviting && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
                       Invite
                     </Button>
                   )}
@@ -197,6 +205,7 @@ export function InviteModal({ isOpen, onClose, tripId, tripStyle, onMemberAdded 
                       onClick={() => handleInviteUser(friend.id)}
                       disabled={isInviting}
                     >
+                      {isInviting && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
                       Invite
                     </Button>
                   )}

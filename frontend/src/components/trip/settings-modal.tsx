@@ -30,6 +30,7 @@ export function TripSettingsModal({ isOpen, onClose, trip, onTripUpdated }: Trip
   const [members, setMembers] = useState<TripMember[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [showDangerZone, setShowDangerZone] = useState(false);
 
   useEffect(() => {
@@ -54,6 +55,7 @@ export function TripSettingsModal({ isOpen, onClose, trip, onTripUpdated }: Trip
 
   const handleSave = async () => {
     setIsSaving(true);
+    setError(null);
     try {
       await api.updateTrip(trip.id, {
         name: tripData.name,
@@ -66,7 +68,7 @@ export function TripSettingsModal({ isOpen, onClose, trip, onTripUpdated }: Trip
       onTripUpdated?.();
       onClose();
     } catch (error: any) {
-      alert(error.message || 'Failed to save settings');
+      setError(error.message || 'Failed to save settings');
     } finally {
       setIsSaving(false);
     }
@@ -78,7 +80,7 @@ export function TripSettingsModal({ isOpen, onClose, trip, onTripUpdated }: Trip
       await api.removeTripMember(trip.id, userId);
       loadMembers();
     } catch (error: any) {
-      alert(error.message || 'Failed to remove member');
+      setError(error.message || 'Failed to remove member');
     }
   };
 
@@ -87,7 +89,7 @@ export function TripSettingsModal({ isOpen, onClose, trip, onTripUpdated }: Trip
       await api.updateTripMember(trip.id, userId, { status: 'CONFIRMED' });
       loadMembers();
     } catch (error: any) {
-      alert(error.message || 'Failed to approve member');
+      setError(error.message || 'Failed to approve member');
     }
   };
 
@@ -96,7 +98,7 @@ export function TripSettingsModal({ isOpen, onClose, trip, onTripUpdated }: Trip
       await api.updateTripMember(trip.id, userId, { status: 'DECLINED' });
       loadMembers();
     } catch (error: any) {
-      alert(error.message || 'Failed to decline member');
+      setError(error.message || 'Failed to decline member');
     }
   };
 
@@ -106,7 +108,7 @@ export function TripSettingsModal({ isOpen, onClose, trip, onTripUpdated }: Trip
       await api.updateTripMember(trip.id, userId, { role: newRole });
       loadMembers();
     } catch (error: any) {
-      alert(error.message || 'Failed to update member role');
+      setError(error.message || 'Failed to update member role');
     }
   };
 
@@ -118,7 +120,7 @@ export function TripSettingsModal({ isOpen, onClose, trip, onTripUpdated }: Trip
       loadMembers();
       onTripUpdated?.();
     } catch (error: any) {
-      alert(error.message || 'Failed to transfer master role');
+      setError(error.message || 'Failed to transfer master role');
     }
   };
 
@@ -153,6 +155,11 @@ export function TripSettingsModal({ isOpen, onClose, trip, onTripUpdated }: Trip
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Trip Settings" size="lg" className="max-w-2xl">
       <div className="space-y-6">
+        {error && (
+          <div className="rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-600">
+            {error}
+          </div>
+        )}
         {/* Trip Info Section */}
         <div className="space-y-4">
           <h3 className="flex items-center gap-2 text-lg font-semibold">

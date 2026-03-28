@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { api } from '@/services/api';
 import { logger } from '@/lib/logger';
+import { Loader2 } from 'lucide-react';
 
 interface AddMilestoneModalProps {
   isOpen: boolean;
@@ -28,6 +29,7 @@ export function AddMilestoneModal({
   const [isHard, setIsHard] = useState(true);
   const [priority, setPriority] = useState(5);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const resetForm = () => {
     setName('');
@@ -44,16 +46,17 @@ export function AddMilestoneModal({
 
   const handleSubmit = async () => {
     if (!name.trim()) {
-      alert('Please enter a milestone name');
+      setError('Please enter a milestone name');
       return;
     }
 
     if (!dueDate) {
-      alert('Please select a due date');
+      setError('Please select a due date');
       return;
     }
 
     setIsSubmitting(true);
+    setError(null);
     try {
       await api.createMilestone(tripId, {
         name: name.trim(),
@@ -66,7 +69,7 @@ export function AddMilestoneModal({
       handleClose();
     } catch (error) {
       logger.error('Failed to create milestone:', error);
-      alert('Failed to create milestone. Please try again.');
+      setError('Failed to create milestone. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -80,6 +83,11 @@ export function AddMilestoneModal({
       description="Create a custom milestone for this trip"
     >
       <div className="space-y-4">
+        {error && (
+          <div className="rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-600">
+            {error}
+          </div>
+        )}
         {/* Milestone name */}
         <div>
           <label className="block text-sm font-medium mb-2">Name *</label>
@@ -162,6 +170,7 @@ export function AddMilestoneModal({
             Cancel
           </Button>
           <Button onClick={handleSubmit} disabled={isSubmitting}>
+            {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
             {isSubmitting ? 'Creating...' : 'Create Milestone'}
           </Button>
         </div>

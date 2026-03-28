@@ -5,7 +5,7 @@ import { useSession } from 'next-auth/react';
 import { Card, CardHeader, CardTitle, CardContent, Button, Input, Label, Avatar } from '@/components';
 import { LeftSidebar } from '@/components/left-sidebar';
 import { AppHeader } from '@/components/app-header';
-import { Mail, Lock, Bell, Wallet, Save, Trash2, Plus, Check, MessageSquare, Smartphone, Camera, Image } from 'lucide-react';
+import { Mail, Lock, Bell, Wallet, Save, Trash2, Plus, Check, MessageSquare, Smartphone, Camera, Image, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { api } from '@/services/api';
 import { Settings } from '@/types';
@@ -126,6 +126,8 @@ export default function SettingsPage() {
 
   const [newPaymentType, setNewPaymentType] = useState<'venmo' | 'paypal' | 'zelle' | 'cashapp' | ''>('');
   const [newPaymentHandle, setNewPaymentHandle] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const loadSettings = async () => {
@@ -176,17 +178,18 @@ export default function SettingsPage() {
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      alert('Please select an image file');
+      setError('Please select an image file');
       return;
     }
 
     // Validate file size (5MB max)
     if (file.size > 5 * 1024 * 1024) {
-      alert('Image size must be less than 5MB');
+      setError('Image size must be less than 5MB');
       return;
     }
 
     setIsUploadingAvatar(true);
+    setError(null);
     try {
       // Compress image client-side before upload
       const compressedFile = await compressImage(file, 800, 800, 0.8);
@@ -213,7 +216,7 @@ export default function SettingsPage() {
       }
     } catch (error) {
       logger.error('Failed to upload avatar:', error);
-      alert('Failed to upload avatar. Please try again.');
+      setError('Failed to upload avatar. Please try again.');
     } finally {
       setIsUploadingAvatar(false);
       if (fileInputRef.current) {
@@ -226,6 +229,7 @@ export default function SettingsPage() {
     if (!confirm('Are you sure you want to remove your avatar?')) return;
 
     setIsUploadingAvatar(true);
+    setError(null);
     try {
       await api.removeAvatar();
       setProfile({ ...profile, avatarUrl: '' });
@@ -246,7 +250,7 @@ export default function SettingsPage() {
       setTimeout(() => setSaved(false), 2000);
     } catch (error) {
       logger.error('Failed to remove avatar:', error);
-      alert('Failed to remove avatar. Please try again.');
+      setError('Failed to remove avatar. Please try again.');
     } finally {
       setIsUploadingAvatar(false);
     }
@@ -254,10 +258,11 @@ export default function SettingsPage() {
 
   const handlePasswordSave = async () => {
     if (passwords.new !== passwords.confirm) {
-      alert('Passwords do not match');
+      setError('Passwords do not match');
       return;
     }
     setIsSaving(true);
+    setError(null);
     const result = await api.changePassword(passwords.current, passwords.new);
     setIsSaving(false);
     if (!result.error) {
@@ -338,6 +343,12 @@ export default function SettingsPage() {
       <main className="ml-sidebar p-6">
         <div className="mx-auto max-w-4xl">
 
+          {error && (
+            <div className="mb-4 rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-600">
+              {error}
+            </div>
+          )}
+
           <div className="flex gap-6">
             {/* Sidebar tabs */}
             <div className="w-48 shrink-0">
@@ -390,6 +401,7 @@ export default function SettingsPage() {
                             onClick={() => fileInputRef.current?.click()}
                             disabled={isUploadingAvatar}
                           >
+                            {isUploadingAvatar && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             <Camera className="mr-2 h-4 w-4" />
                             {isUploadingAvatar ? 'Uploading...' : 'Upload Photo'}
                           </Button>
@@ -447,6 +459,7 @@ export default function SettingsPage() {
                         />
                       </div>
                       <Button onClick={handleProfileSave} disabled={isSaving}>
+                        {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         {isSaving ? 'Saving...' : saved ? <><Check className="mr-2 h-4 w-4" /> Saved</> : <><Save className="mr-2 h-4 w-4" /> Save Changes</>}
                       </Button>
                     </div>
@@ -491,6 +504,7 @@ export default function SettingsPage() {
                       />
                     </div>
                     <Button onClick={handlePasswordSave} disabled={isSaving}>
+                      {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                       {isSaving ? 'Updating...' : saved ? <><Check className="mr-2 h-4 w-4" /> Updated</> : <><Save className="mr-2 h-4 w-4" /> Update Password</>}
                     </Button>
                   </CardContent>
