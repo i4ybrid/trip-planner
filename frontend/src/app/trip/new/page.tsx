@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Loader } from 'lucide-react';
 import { useTripStore } from '@/store';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, Button, Input, Textarea } from '@/components';
 import { LeftSidebar } from '@/components/left-sidebar';
@@ -10,28 +11,32 @@ import { ArrowLeft } from 'lucide-react';
 
 export default function NewTripPage() {
   const router = useRouter();
-  const { createTrip, isLoading, error, clearError } = useTripStore();
-  
+  const { createTrip, error, clearError } = useTripStore();
+
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [destination, setDestination] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    clearError();
-    
-    const trip = await createTrip({
-      name,
-      description: description || undefined,
-      destination: destination || undefined,
-      startDate: startDate || undefined,
-      endDate: endDate || undefined,
-    });
+    setIsSubmitting(true);
+    try {
+      const trip = await createTrip({
+        name,
+        description: description || undefined,
+        destination: destination || undefined,
+        startDate: startDate || undefined,
+        endDate: endDate || undefined,
+      });
 
-    if (trip) {
-      router.push(`/trip/${trip.id}`);
+      if (trip) {
+        router.push(`/trip/${trip.id}`);
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -104,8 +109,15 @@ export default function NewTripPage() {
                   <Button type="button" variant="outline" onClick={() => router.back()}>
                     Cancel
                   </Button>
-                  <Button type="submit" isLoading={isLoading}>
-                    Create Trip
+                  <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? (
+                      <>
+                        <Loader className="mr-2 h-4 w-4 animate-spin" />
+                        Creating...
+                      </>
+                    ) : (
+                      'Create Trip'
+                    )}
                   </Button>
                 </CardFooter>
               </form>

@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import { useActivityStore } from '@/store';
 import { Card, CardHeader, CardTitle, CardContent, Button, Badge, Input, Textarea, Select, Modal, EmptyState } from '@/components';
 import { formatCurrency, cn } from '@/lib/utils';
-import { MapPin, ThumbsUp, ThumbsDown, HelpCircle, Plus } from 'lucide-react';
+import { MapPin, ThumbsUp, ThumbsDown, HelpCircle, Plus, Loader } from 'lucide-react';
 import { CreateActivityInput, ActivityCategory } from '@/types';
 
 const categoryOptions = [
@@ -24,6 +24,7 @@ export default function TripActivities() {
   const { activities, fetchActivities, createActivity, castVote } = useActivityStore();
   const [showModal, setShowModal] = useState(false);
   const [newActivity, setNewActivity] = useState<CreateActivityInput>({ title: '', category: 'activity' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (tripId) {
@@ -33,9 +34,14 @@ export default function TripActivities() {
 
   const handleCreateActivity = async (e: React.FormEvent) => {
     e.preventDefault();
-    await createActivity(tripId, newActivity);
-    setShowModal(false);
-    setNewActivity({ title: '', category: 'activity' });
+    setIsSubmitting(true);
+    try {
+      await createActivity(tripId, newActivity);
+      setShowModal(false);
+      setNewActivity({ title: '', category: 'activity' });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleVote = async (activityId: string, option: 'yes' | 'no' | 'maybe') => {
@@ -205,7 +211,16 @@ export default function TripActivities() {
             <Button type="button" variant="outline" onClick={() => setShowModal(false)}>
               Cancel
             </Button>
-            <Button type="submit">Add Activity</Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader className="mr-2 h-4 w-4 animate-spin" />
+                  Adding...
+                </>
+              ) : (
+                'Add Activity'
+              )}
+            </Button>
           </div>
         </form>
       </Modal>

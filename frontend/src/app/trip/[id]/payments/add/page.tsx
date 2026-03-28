@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardContent, Button, Input, Textarea, Avatar } from '@/components';
 import { formatCurrency, cn } from '@/lib/utils';
 import { api } from '@/services/api';
-import { DollarSign } from 'lucide-react';
+import { DollarSign, Loader } from 'lucide-react';
 import { TripMember, User } from '@/types';
 
 interface MemberWithUser extends TripMember {
@@ -455,7 +455,14 @@ export default function AddExpense() {
             <div className="flex justify-end gap-2 pt-2">
               <Button type="button" variant="outline" onClick={() => router.back()}>Cancel</Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Creating...' : 'Add Expense'}
+                {isSubmitting ? (
+                  <>
+                    <Loader className="mr-2 h-4 w-4 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  'Add Expense'
+                )}
               </Button>
             </div>
           </form>
