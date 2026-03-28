@@ -189,10 +189,10 @@ const SEED_FRIEND_REQUESTS = [
     { senderId: 'user-4', receiverId: 'user-1', status: 'PENDING' },
 ];
 const SEED_NOTIFICATIONS = [
-    { userId: 'user-1', tripId: 'trip-1', type: 'REMINDER', title: 'Trip coming up!', body: 'Hawaii Beach Vacation starts in 2 weeks', priority: 'normal' },
-    { userId: 'user-1', tripId: 'trip-1', type: 'VOTE', title: 'Vote needed', body: 'Vote on Surfing Lessons activity for Hawaii trip', priority: 'normal' },
-    { userId: 'user-1', tripId: 'trip-1', type: 'PAYMENT_DUE', title: 'Payment needed', body: 'You owe $120 for Luau Dinner - please pay Sarah', priority: 'high' },
-    { userId: 'user-1', tripId: 'trip-5', type: 'MESSAGE', title: 'Tagged in chat', body: 'Sarah mentioned you in the Nashville trip chat', priority: 'normal' },
+    { userId: 'user-1', title: 'Trip coming up!', body: 'Hawaii Beach Vacation starts in 2 weeks', category: 'MILESTONE' },
+    { userId: 'user-1', title: 'Vote needed', body: 'Vote on Surfing Lessons activity for Hawaii trip', category: 'MILESTONE' },
+    { userId: 'user-1', title: 'Payment needed', body: 'You owe $120 for Luau Dinner - please pay Sarah', category: 'PAYMENT' },
+    { userId: 'user-1', title: 'Tagged in chat', body: 'Sarah mentioned you in the Nashville trip chat', category: 'CHAT' },
 ];
 const SEED_MEDIA = [
     { tripId: 'trip-5', uploaderId: 'user-2', type: 'image', url: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800', caption: 'Nashville skyline at night' },
