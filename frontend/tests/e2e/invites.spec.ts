@@ -10,7 +10,7 @@ test.describe('Trip Invites', () => {
     test('should show invite button on trip overview for trip master', async ({ page }) => {
       // Navigate to Hawaii trip (trip-1) where test user is MASTER
       await page.goto(`/trip/${TRIP_IDS.hawaii}/overview`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Look for invite button
       const inviteButton = page.locator('button').filter({ hasText: /invite|add member/i }).first();
@@ -32,7 +32,7 @@ test.describe('Trip Invites', () => {
 
     test('should navigate to invite page when clicking invite button', async ({ page }) => {
       await page.goto(`/trip/${TRIP_IDS.hawaii}/overview`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Click invite button
       const inviteButton = page.locator('button').filter({ hasText: /invite|add member/i }).first();
@@ -41,7 +41,7 @@ test.describe('Trip Invites', () => {
         await inviteButton.click();
         
         // Should navigate somewhere with invite
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
         
         // Check URL or page content
         const hasInviteContent = await page.locator('text=/invite|share|link|copy/i').first().isVisible({ timeout: 3000 }).catch(() => false);
@@ -65,14 +65,14 @@ test.describe('Trip Invites', () => {
   test.describe('Invite Link Generation', () => {
     test('should generate invite link for trip', async ({ page }) => {
       await page.goto(`/trip/${TRIP_IDS.hawaii}/overview`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Trigger invite flow
       const inviteButton = page.locator('button').filter({ hasText: /invite/i }).first();
       
       if (await inviteButton.isVisible({ timeout: 3000 }).catch(() => false)) {
         await inviteButton.click();
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
         
         // Look for generated link
         const linkInput = page.locator('input[value*="invite"], input[value*="tripplanner"]').first();
@@ -98,13 +98,13 @@ test.describe('Trip Invites', () => {
 
     test('should copy invite link to clipboard', async ({ page }) => {
       await page.goto(`/trip/${TRIP_IDS.hawaii}/overview`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       const inviteButton = page.locator('button').filter({ hasText: /invite/i }).first();
       
       if (await inviteButton.isVisible({ timeout: 3000 }).catch(() => false)) {
         await inviteButton.click();
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
         
         // Look for copy button
         const copyButton = page.locator('button').filter({ hasText: /copy/i }).first();
@@ -133,13 +133,13 @@ test.describe('Trip Invites', () => {
   test.describe('Invite Methods', () => {
     test('should show share options', async ({ page }) => {
       await page.goto(`/trip/${TRIP_IDS.hawaii}/overview`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       const shareButton = page.locator('button').filter({ hasText: /share/i }).first();
       
       if (await shareButton.isVisible({ timeout: 3000 }).catch(() => false)) {
         await shareButton.click();
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
         
         // Look for share options like WhatsApp, Email, etc.
         const whatsApp = page.locator('button, a').filter({ hasText: /whatsapp/i }).first();
@@ -163,7 +163,7 @@ test.describe('Trip Invites', () => {
   test.describe('Invite via Code', () => {
     test('should display invite code', async ({ page }) => {
       await page.goto(`/trip/${TRIP_IDS.hawaii}/overview`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Look for code display
       const codeDisplay = page.locator('text=/[A-Z0-9]{6,}/').first();
@@ -185,7 +185,7 @@ test.describe('Invite Page - Public Access', () => {
     
     // Try to access with a placeholder - should show appropriate error or page
     await page.goto('/invite/test-token-123');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Page should load (either accept invite or show error)
     const body = page.locator('body');
@@ -197,7 +197,7 @@ test.describe('Invite Page - Public Access', () => {
     await page.context().clearCookies();
     
     await page.goto('/invite/test-token-123');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Check for login-related content
     const hasLoginContent = await page.locator('text=/login|sign in|authenticate/i').first().isVisible({ timeout: 3000 }).catch(() => false);
@@ -216,7 +216,7 @@ test.describe('Trip Members', () => {
 
   test('should display trip members list', async ({ page }) => {
     await page.goto(`/trip/${TRIP_IDS.hawaii}/overview`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Look for members section
     const membersSection = page.locator('text=/members|team/i').first();
@@ -237,7 +237,7 @@ test.describe('Trip Members', () => {
 
   test('should show member roles', async ({ page }) => {
     await page.goto(`/trip/${TRIP_IDS.hawaii}/overview`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Look for role indicators (MASTER, ORGANIZER, MEMBER)
     const masterBadge = page.locator('text=/master|owner|organizer|member/i').first();
@@ -256,7 +256,7 @@ test.describe('Trip Members', () => {
     
     // For now, just verify the current trip's behavior
     await page.goto(`/trip/${TRIP_IDS.hawaii}/overview`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // This is more of a permission test - depends on implementation
     expect(true).toBe(true);
@@ -268,7 +268,7 @@ test.describe('Invite Accept Flow', () => {
     // This would need a real invite token
     // For now, just verify invite page loads
     await page.goto('/invite/invite-test-token');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Page should load without crash
     const body = page.locator('body');

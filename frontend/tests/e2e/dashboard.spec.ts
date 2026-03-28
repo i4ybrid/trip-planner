@@ -18,7 +18,7 @@ test.describe('Dashboard Page Load', () => {
 
   test('should load dashboard', async ({ page }) => {
     await page.goto('/dashboard');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Should see dashboard heading or content
     const dashboardContent = page.locator('text=/Dashboard|Active.*Upcoming/i').first();
@@ -44,7 +44,7 @@ test.describe('Dashboard Page Load', () => {
     await page.context().clearCookies();
     
     await page.goto('/dashboard');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Should redirect to login
     await expect(page).toHaveURL(/\/login/, { timeout: 10000 }).catch(() => {
@@ -58,7 +58,7 @@ test.describe('Trip Cards Display', () => {
   test.beforeEach(async ({ page }) => {
     await loginTestUser(page, 'test');
     await page.goto('/dashboard');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
   });
 
   test('should show trip cards', async ({ page }) => {
@@ -122,7 +122,7 @@ test.describe('Member Count Display', () => {
   test.beforeEach(async ({ page }) => {
     await loginTestUser(page, 'test');
     await page.goto('/dashboard');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
   });
 
   test('should show member count on trip cards', async ({ page }) => {
@@ -169,7 +169,7 @@ test.describe('Dashboard Navigation', () => {
   test.beforeEach(async ({ page }) => {
     await loginTestUser(page, 'test');
     await page.goto('/dashboard');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
   });
 
   test('should navigate to trip overview on card click', async ({ page }) => {
@@ -196,7 +196,7 @@ test.describe('Dashboard Navigation', () => {
   test('should show trip tabs after navigation', async ({ page }) => {
     // Navigate to a trip
     await page.goto(`/trip/${TRIP_IDS.hawaii}/overview`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Look for tab navigation
     const tabs = page.locator('[class*="tab"], nav a').first();
@@ -210,7 +210,7 @@ test.describe('Dashboard Navigation', () => {
 
   test('should navigate to different trip sections', async ({ page }) => {
     await page.goto(`/trip/${TRIP_IDS.hawaii}/overview`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Click on a section link
     const paymentsLink = page.locator('text=/Payments|Payments/i').first();
@@ -232,7 +232,7 @@ test.describe('Dashboard Sections', () => {
   test.beforeEach(async ({ page }) => {
     await loginTestUser(page, 'test');
     await page.goto('/dashboard');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
   });
 
   test('should show Active & Upcoming trips section', async ({ page }) => {

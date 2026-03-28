@@ -31,7 +31,7 @@ test.describe('Payment Optimistic Updates', () => {
     
     // Navigate to trip payments
     await navigateToTrip(page, TRIP_IDS.hawaii, 'payments');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Reset call count after initial load
     const initialBillSplitsCount = billSplitsCallCount;
@@ -95,7 +95,7 @@ test.describe('Payment Optimistic Updates', () => {
     
     // Navigate to trip payments
     await navigateToTrip(page, TRIP_IDS.hawaii, 'payments');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Reset count after initial load
     const initialCount = billSplitsCallCount;
@@ -141,7 +141,7 @@ test.describe('Payment Optimistic Updates', () => {
     
     // Navigate to payments
     await navigateToTrip(page, TRIP_IDS.hawaii, 'payments');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Count initial GET calls
     const initialGetCalls = billSplitsCalls.filter(c => c.method === 'GET').length;
@@ -175,7 +175,7 @@ test.describe('Payment Optimistic Updates', () => {
 
   test('should update badge status immediately on Mark as Paid (optimistic)', async ({ page }) => {
     await navigateToTrip(page, TRIP_IDS.hawaii, 'payments');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Find a pending member payment status
     const markAsPaidButton = page.locator('button:has-text("Mark as Paid")').first();
@@ -219,7 +219,7 @@ test.describe('Payment Optimistic Updates', () => {
     });
     
     await navigateToTrip(page, TRIP_IDS.hawaii, 'payments');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Get initial badge state
     const initialPendingCount = await page.locator('text=/PENDING/i').count();

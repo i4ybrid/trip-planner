@@ -14,7 +14,7 @@ test.describe('Send Message', () => {
   test.beforeEach(async ({ page }) => {
     await loginTestUser(page, 'test');
     await navigateToTrip(page, TRIP_IDS.hawaii, 'chat');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
   });
 
   test('should display chat heading', async ({ page }) => {
@@ -81,7 +81,7 @@ test.describe('Message Reactions', () => {
   test.beforeEach(async ({ page }) => {
     await loginTestUser(page, 'test');
     await navigateToTrip(page, TRIP_IDS.hawaii, 'chat');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
   });
 
   test('should add reaction to message', async ({ page }) => {
@@ -187,7 +187,7 @@ test.describe('Chat Member Display', () => {
   test.beforeEach(async ({ page }) => {
     await loginTestUser(page, 'test');
     await navigateToTrip(page, TRIP_IDS.hawaii, 'chat');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
   });
 
   test('should show member count in chat header', async ({ page }) => {

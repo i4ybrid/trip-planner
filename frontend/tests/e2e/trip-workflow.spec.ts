@@ -17,7 +17,7 @@ test.describe('Trip Workflow - Status Transitions', () => {
 
   test('should show existing trips on dashboard', async ({ page }) => {
     await page.goto('/dashboard');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Should see trip cards
     const tripCards = page.locator('[class*="card"], [class*="trip-card"]');
@@ -26,7 +26,7 @@ test.describe('Trip Workflow - Status Transitions', () => {
 
   test('should navigate to trip overview', async ({ page }) => {
     await page.goto('/dashboard');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Click on a trip card
     const firstTrip = page.locator('text=Hawaii Beach Vacation').first();
@@ -36,7 +36,7 @@ test.describe('Trip Workflow - Status Transitions', () => {
     } else {
       // Navigate directly
       await page.goto('/trip/trip-1/overview');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
     }
     
     // Should see trip overview page
@@ -54,7 +54,7 @@ test.describe('Trip Status Selector', () => {
 
   test('should display current trip status', async ({ page }) => {
     await page.goto('/trip/trip-1/overview');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Look for status indicator
     const statusElement = page.locator('[class*="status"], select').first();
@@ -69,7 +69,7 @@ test.describe('Trip Status Selector', () => {
 
   test('should show status dropdown for trip master', async ({ page }) => {
     await page.goto('/trip/trip-1/overview');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Check for status selector dropdown
     const statusSelect = page.locator('select').first();
@@ -104,7 +104,7 @@ test.describe('Milestone Auto-Generation', () => {
 
   test('should show milestones when trip is in PLANNING status', async ({ page }) => {
     await page.goto('/trip/trip-1/overview');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Look for milestone section
     const milestoneSection = page.locator('text=/milestone/i').first();
@@ -123,7 +123,7 @@ test.describe('Milestone Auto-Generation', () => {
 
   test('should display milestone progress', async ({ page }) => {
     await page.goto('/trip/trip-1/overview');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Look for progress indicators
     const progressBar = page.locator('[class*="progress"], [class*="strip"]').first();

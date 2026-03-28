@@ -17,7 +17,7 @@ test.describe('Dashboard Member Count', () => {
 
   test('should display member counts on dashboard trip cards', async ({ page }) => {
     await page.goto('/dashboard');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Should display the Active & Upcoming heading
     await expect(page.locator('text=Active & Upcoming').first()).toBeVisible({ timeout: 10000 });
@@ -50,7 +50,7 @@ test.describe('Dashboard Member Count', () => {
     });
     
     await page.goto('/dashboard');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Wait a bit to ensure any delayed API calls are made
     await page.waitForTimeout(1000);
@@ -73,7 +73,7 @@ test.describe('Dashboard Member Count', () => {
     });
     
     await page.goto('/dashboard');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Wait to ensure all API calls are captured
     await page.waitForTimeout(1000);
@@ -86,7 +86,7 @@ test.describe('Dashboard Member Count', () => {
 
   test('should display member count correctly on trip card', async ({ page }) => {
     await page.goto('/dashboard');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Hawaii trip from seed has multiple members
     // Find the card with "Hawaii Beach Vacation"
@@ -108,7 +108,7 @@ test.describe('Dashboard Member Count', () => {
     });
     
     await page.goto('/dashboard');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Count unique trip member API calls
     const tripMemberCalls = apiCalls.filter(url => 

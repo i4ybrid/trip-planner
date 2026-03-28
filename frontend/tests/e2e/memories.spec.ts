@@ -18,7 +18,7 @@ test.describe('Memories Grid Display', () => {
 
   test('should navigate to memories page', async ({ page }) => {
     await page.goto(`/trip/${TRIP_IDS.hawaii}/memories`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     const memoriesHeading = page.locator('text=/Memories|Photos|Gallery/i').first();
     
@@ -31,7 +31,7 @@ test.describe('Memories Grid Display', () => {
 
   test('should display memories grid', async ({ page }) => {
     await page.goto(`/trip/${TRIP_IDS.hawaii}/memories`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     const grid = page.locator('[class*="grid"], [class*="gallery"], [class*="memories"]').first();
     
@@ -44,7 +44,7 @@ test.describe('Memories Grid Display', () => {
 
   test('should show memory images or placeholders', async ({ page }) => {
     await page.goto(`/trip/${TRIP_IDS.hawaii}/memories`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     const image = page.locator('img[class*="memory"], img[class*="photo"], [class*="memory-item"]').first();
     
@@ -66,7 +66,7 @@ test.describe('Upload Memory', () => {
   test.beforeEach(async ({ page }) => {
     await loginTestUser(page, 'test');
     await page.goto(`/trip/${TRIP_IDS.hawaii}/memories`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
   });
 
   test('should show upload button', async ({ page }) => {
@@ -131,7 +131,7 @@ test.describe('Edit Memory Caption', () => {
   test.beforeEach(async ({ page }) => {
     await loginTestUser(page, 'test');
     await page.goto(`/trip/${TRIP_IDS.hawaii}/memories`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
   });
 
   test('should edit caption of existing memory', async ({ page }) => {
@@ -168,7 +168,7 @@ test.describe('Delete Memory', () => {
   test.beforeEach(async ({ page }) => {
     await loginTestUser(page, 'test');
     await page.goto(`/trip/${TRIP_IDS.hawaii}/memories`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
   });
 
   test('should delete a memory', async ({ page }) => {

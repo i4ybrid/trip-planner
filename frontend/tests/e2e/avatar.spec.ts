@@ -11,7 +11,7 @@ test.describe('Avatar Upload', () => {
     await page.goto('/settings');
     
     // Wait for page to load
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Check if avatar section exists
     const avatarSection = page.locator('text=/avatar|profile photo/i').first();
@@ -26,7 +26,7 @@ test.describe('Avatar Upload', () => {
 
   test('should show upload button on settings page', async ({ page }) => {
     await page.goto('/settings');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Look for upload-related buttons
     const uploadButton = page.locator('button').filter({ hasText: /upload|change|add avatar/i }).first();
@@ -43,7 +43,7 @@ test.describe('Avatar Upload', () => {
     // User without avatar should show initials
     // This relies on seed data which may or may not have avatars set
     await page.goto('/dashboard');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // The header should show either an avatar image or initials
     const headerAvatar = page.locator('[data-testid="user-avatar"], header img, header [class*="avatar"]').first();
@@ -58,7 +58,7 @@ test.describe('Avatar Upload', () => {
 
   test('should navigate to settings when clicking user menu', async ({ page }) => {
     await page.goto('/dashboard');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Click on user menu/avatar area
     const userButton = page.locator('button').filter({ hasText: /test@example.com|Test User/i }).first();
@@ -81,7 +81,7 @@ test.describe('Avatar Upload', () => {
   test('should display avatar in trip member list', async ({ page }) => {
     // Navigate to a trip
     await page.goto('/trip/trip-1/overview');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Look for member avatars in the members section
     const memberAvatars = page.locator('[class*="avatar"], img[alt*="member"]');
@@ -100,7 +100,7 @@ test.describe('Avatar Upload', () => {
   test('should display avatar in chat messages', async ({ page }) => {
     // Navigate to trip chat
     await page.goto('/trip/trip-1/chat');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Look for message sender avatars
     const messageAvatars = page.locator('[class*="message"] img, [class*="chat"] img');
@@ -118,7 +118,7 @@ test.describe('Avatar Upload', () => {
   test('should display avatar in payments page', async ({ page }) => {
     // Navigate to trip payments
     await page.goto('/trip/trip-1/payments');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Look for member avatars in payment cards
     const paymentCards = page.locator('[class*="card"], [class*="payment"]');
@@ -135,7 +135,7 @@ test.describe('Avatar Upload', () => {
   test('should show initials fallback for users without avatar', async ({ page }) => {
     // Create a user context without avatar and check fallback
     await page.goto('/dashboard');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Look for initials pattern like "TU" for Test User
     const initialsPattern = /^[A-Z]{1,3}$/;
@@ -169,7 +169,7 @@ test.describe('Avatar Upload - Auth Required', () => {
     await loginTestUser(page, 'test');
     
     await page.goto('/settings');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Settings page should load for authenticated user
     await expect(page.locator('body')).not.toBeEmpty();

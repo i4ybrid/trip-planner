@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import { useAuth } from '@/hooks/use-auth';
-import { Compass, Mail, Lock, User, ArrowRight, UserPlus, Gift } from 'lucide-react';
+import { Compass, Mail, Lock, User, ArrowRight, UserPlus, Gift, Loader } from 'lucide-react';
 
 // Simple OAuth button icons (SVG)
 const GoogleIcon = () => (
@@ -46,6 +46,7 @@ export default function LoginPage() {
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (inviteCode) {
@@ -55,22 +56,26 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setIsSubmitting(true);
 
-    if (isLogin) {
-      const result = await login(email, password);
-      if (result.success) {
-        router.push('/dashboard');
+    try {
+      if (isLogin) {
+        const result = await login(email, password);
+        if (result.success) {
+          router.push('/dashboard');
+        } else {
+          setError(result.error || 'Login failed');
+        }
       } else {
-        setError(result.error || 'Login failed');
+        const result = await register(email, name, password, inviteCode || undefined);
+        if (result.success) {
+          router.push('/dashboard');
+        } else {
+          setError(result.error || 'Registration failed');
+        }
       }
-    } else {
-      const result = await register(email, name, password, inviteCode || undefined);
-      if (result.success) {
-        router.push('/dashboard');
-      } else {
-        setError(result.error || 'Registration failed');
-      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -240,11 +245,20 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isSubmitting}
               className="w-full bg-amber-600 text-white py-3 rounded-lg font-medium hover:bg-amber-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              {isLoading ? 'Please wait...' : (isLogin ? 'Sign In' : 'Create Account')}
-              {!isLoading && <ArrowRight className="w-5 h-5" />}
+              {isSubmitting ? (
+                <>
+                  <Loader className="w-5 h-5 animate-spin" />
+                  {isLogin ? 'Signing in...' : 'Signing up...'}
+                </>
+              ) : (
+                <>
+                  {isLogin ? 'Sign In' : 'Create Account'}
+                  <ArrowRight className="w-5 h-5" />
+                </>
+              )}
             </button>
           </form>
 

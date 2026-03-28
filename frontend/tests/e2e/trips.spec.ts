@@ -17,7 +17,7 @@ test.describe('Trip Dashboard', () => {
 
   test('should display the dashboard with trip cards', async ({ page }) => {
     await page.goto('/dashboard');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Check for page heading (Active & Upcoming is the actual heading)
     await expect(page.locator('text=Active & Upcoming').first()).toBeVisible();
@@ -78,28 +78,28 @@ test.describe('Trip Tab Navigation', () => {
     
     // Navigate to payments tab
     await page.click('button:has-text("Payments")');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await expect(page.locator('text=Payments & Expenses').first()).toBeVisible({ timeout: 5000 });
     
     // Navigate to chat tab
     await page.click('button:has-text("Chat")');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     // Verify chat page loaded - check for chat input which is always present
     await expect(page.locator('#chat-input').first()).toBeVisible({ timeout: 8000 });
     
     // Navigate to timeline tab
     await page.click('button:has-text("Timeline")');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     // Timeline page content - just verify we're on the timeline tab
     await expect(page.locator('button:has-text("Timeline")').first()).toBeVisible({ timeout: 5000 });
     
     // Navigate to activities tab
     await page.click('button:has-text("Activities")');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Navigate to memories tab
     await page.click('button:has-text("Memories")');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
   });
 
   test('should highlight the active tab', async ({ page }) => {
@@ -107,7 +107,7 @@ test.describe('Trip Tab Navigation', () => {
     
     // Click on Chat tab (button, not link)
     await page.click('button:has-text("Chat")');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Chat tab button should have active styling (bg-primary class)
     const chatTab = page.locator('button:has-text("Chat")');
@@ -119,7 +119,7 @@ test.describe('Trip Tab Navigation', () => {
     
     // Click on Overview tab
     await page.click('button:has-text("Overview")');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Should show trip details again
     await expect(page.locator('text=Hawaii Beach Vacation').first()).toBeVisible();
@@ -173,7 +173,7 @@ test.describe('Trip List - Multiple Trips', () => {
 
   test('should display multiple trips in dashboard', async ({ page }) => {
     await page.goto('/dashboard');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Should see at least Hawaii trip and NYC trip
     await expect(page.locator('text=Hawaii Beach Vacation').first()).toBeVisible({ timeout: 5000 });
@@ -182,7 +182,7 @@ test.describe('Trip List - Multiple Trips', () => {
 
   test('should navigate to different trips', async ({ page }) => {
     await page.goto('/dashboard');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Click on NYC Birthday Weekend trip card
     const nycCard = page.locator('text=NYC Birthday Weekend').first();

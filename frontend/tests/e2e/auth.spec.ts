@@ -14,7 +14,7 @@ import { loginTestUser, logoutUser, TEST_USERS } from './helpers/auth';
 test.describe('Registration', () => {
   test('should display registration page', async ({ page }) => {
     await page.goto('/login');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Click on "Sign up" link if available (since registration is on the login page)
     const signUpLink = page.locator('text=/sign up|register|create account/i').first();
@@ -30,7 +30,7 @@ test.describe('Registration', () => {
 
   test('should show registration form fields', async ({ page }) => {
     await page.goto('/login');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Click on "Sign up" link to toggle to registration mode
     const signUpLink = page.locator('text=/sign up|register|create account/i').first();
@@ -54,7 +54,7 @@ test.describe('Registration', () => {
 
   test('should register a new user successfully', async ({ page }) => {
     await page.goto('/login');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Click on "Sign up" link to toggle to registration mode
     const signUpLink = page.locator('text=/sign up|register|create account/i').first();
@@ -84,7 +84,7 @@ test.describe('Registration', () => {
 
   test('should validate email format', async ({ page }) => {
     await page.goto('/login');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Click on "Sign up" link to toggle to registration mode
     const signUpLink = page.locator('text=/sign up|register|create account/i').first();
@@ -110,7 +110,7 @@ test.describe('Registration', () => {
 
   test('should link to login page', async ({ page }) => {
     await page.goto('/login');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Click on "Sign up" link to toggle to registration mode
     const signUpLink = page.locator('text=/sign up|register|create account/i').first();
@@ -130,7 +130,7 @@ test.describe('Registration', () => {
 test.describe('Login', () => {
   test('should display login page', async ({ page }) => {
     await page.goto('/login');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     const heading = page.locator('text=/login|sign in/i');
     await expect(heading.first()).toBeVisible({ timeout: 5000 });
@@ -138,7 +138,7 @@ test.describe('Login', () => {
 
   test('should show login form fields', async ({ page }) => {
     await page.goto('/login');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Should have email input
     const emailInput = page.locator('input[type="email"], input[id="email"]');
@@ -158,7 +158,7 @@ test.describe('Login', () => {
 
   test('should show error with invalid credentials', async ({ page }) => {
     await page.goto('/login');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Fill in invalid credentials
     await page.fill('#email', 'wrong@example.com');
@@ -180,7 +180,7 @@ test.describe('Login', () => {
 
   test('should link to registration page', async ({ page }) => {
     await page.goto('/login');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Look for sign up link
     const signUpLink = page.locator('text=/sign up|register|create account|join/i').first();
@@ -214,7 +214,7 @@ test.describe('Logout', () => {
     
     // Try to access dashboard
     await page.goto('/dashboard');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Should redirect to login or show access denied
     await expect(page).not.toHaveURL(/\/dashboard/, { timeout: 5000 });
@@ -224,7 +224,7 @@ test.describe('Logout', () => {
 test.describe('Protected Routes', () => {
   test('should redirect to login when accessing protected route', async ({ page }) => {
     await page.goto('/dashboard');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Should redirect to login
     await expect(page).toHaveURL(/\/login/, { timeout: 10000 });
@@ -232,7 +232,7 @@ test.describe('Protected Routes', () => {
 
   test('should allow access to login page without authentication', async ({ page }) => {
     await page.goto('/login');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Should show login page
     const emailInput = page.locator('#email');

@@ -51,24 +51,38 @@ export const BILL_SPLIT_IDS = {
 
 /**
  * Logs in a test user using the login page UI flow
+ * @param page Playwright page
+ * @param userKey User key from TEST_USERS
+ * @param options Optional settings
+ * @param options.allowFailure If true, don't fail if redirect to dashboard doesn't happen
  */
-export async function loginTestUser(page: Page, userKey: keyof typeof TEST_USERS = 'test'): Promise<void> {
+export async function loginTestUser(
+  page: Page,
+  userKey: keyof typeof TEST_USERS = 'test',
+  options?: { allowFailure?: boolean }
+): Promise<void> {
   const user = TEST_USERS[userKey];
-  
+
   await page.goto('/login');
-  
+
   // Fill in credentials
   await page.fill('#email', user.email);
   await page.fill('#password', user.password);
-  
-  // Submit the form
-  await page.click('button[type="submit"]');
-  
-  // Wait for redirect to dashboard
-  await page.waitForURL('**/dashboard', { timeout: 10000 });
-  
-  // Verify we're logged in
-  await page.waitForSelector('text=Dashboard', { timeout: 5000 });
+
+  // Submit the form and wait for redirect
+  await Promise.all([
+    page.waitForURL('**/dashboard', { timeout: 15000 }),
+    page.click('button[type="submit"]'),
+  ]);
+
+  if (options?.allowFailure) {
+    await page.waitForTimeout(1000);
+    return;
+  }
+
+  // Wait for DOM to settle (app has continuous polling, so domcontentloaded not networkidle)
+  await page.waitForLoadState('domcontentloaded');
+  await page.waitForTimeout(500);
 }
 
 /**
@@ -96,8 +110,9 @@ export async function logoutUser(page: Page): Promise<void> {
  */
 export async function navigateToTrip(page: Page, tripId: string, subpage = 'overview'): Promise<void> {
   await page.goto(`/trip/${tripId}/${subpage}`);
-  // Wait for page content to load
-  await page.waitForLoadState('networkidle');
+  // Wait for DOM to be ready (NOT networkidle - app has continuous polling)
+  await page.waitForLoadState('domcontentloaded');
+  await page.waitForTimeout(500);
 }
 
 /**

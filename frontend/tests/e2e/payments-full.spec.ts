@@ -19,7 +19,7 @@ test.describe('Add Payment', () => {
 
   test('should show add payment button', async ({ page }) => {
     await navigateToTrip(page, TRIP_IDS.hawaii, 'payments');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     const addBtn = page.locator('button:has-text("Add Payment"), button:has-text("New Payment"), button:has-text("Add Expense")').first();
     
@@ -32,7 +32,7 @@ test.describe('Add Payment', () => {
 
   test('should add a new payment', async ({ page }) => {
     await navigateToTrip(page, TRIP_IDS.hawaii, 'payments');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     const addBtn = page.locator('button:has-text("Add Payment"), button:has-text("New Payment"), button:has-text("Add Expense")').first();
     
@@ -76,7 +76,7 @@ test.describe('Payment Member Assignment', () => {
 
   test('should assign members to payment', async ({ page }) => {
     await navigateToTrip(page, TRIP_IDS.hawaii, 'payments');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Look for a payment item to click
     const paymentItem = page.locator('[class*="payment"], [class*="expense"], [class*="bill"]').first();
@@ -101,7 +101,7 @@ test.describe('Payment Member Assignment', () => {
 
   test('should show split options', async ({ page }) => {
     await navigateToTrip(page, TRIP_IDS.hawaii, 'payments');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Look for split type selector
     const splitSelector = page.locator('text=/Equal|Custom|Split/i').first();
@@ -120,7 +120,7 @@ test.describe('Mark Payment as Paid', () => {
 
   test('should mark payment as paid by member', async ({ page }) => {
     await navigateToTrip(page, TRIP_IDS.hawaii, 'payments');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Look for paid/unpaid indicator
     const unpaidBadge = page.locator('text=/Unpaid|Pending/i').first();
@@ -152,7 +152,7 @@ test.describe('Mark Payment as Paid', () => {
 
   test('should confirm payment by organizer', async ({ page }) => {
     await navigateToTrip(page, TRIP_IDS.hawaii, 'payments');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Look for "Confirm" button (organizer action)
     const confirmBtn = page.locator('button:has-text("Confirm"), button:has-text("Approve")').first();
@@ -176,7 +176,7 @@ test.describe('Debt Simplification', () => {
 
   test('should show debt simplification summary', async ({ page }) => {
     await navigateToTrip(page, TRIP_IDS.hawaii, 'payments');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Look for "Who owes who" or settlement section
     const debtSection = page.locator('text=/Who owes|Simplified|settlements|balances/i').first();
@@ -190,7 +190,7 @@ test.describe('Debt Simplification', () => {
 
   test('should show correct debt amounts', async ({ page }) => {
     await navigateToTrip(page, TRIP_IDS.hawaii, 'payments');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Look for debt amounts (currency format)
     const debtAmount = page.locator('text=/\\$[\\d,]+\\.?\\d*/i').first();
@@ -204,7 +204,7 @@ test.describe('Debt Simplification', () => {
 
   test('should show member balance per person', async ({ page }) => {
     await navigateToTrip(page, TRIP_IDS.hawaii, 'payments');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Look for member balance indicators
     const balanceSection = page.locator('text=/balance|owes|credit|debt/i').first();

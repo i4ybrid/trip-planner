@@ -9,7 +9,7 @@ test.describe('Friends Feature', () => {
   test.describe('Friends List Page', () => {
     test('should navigate to friends page', async ({ page }) => {
       await page.goto('/friends');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Friends page should load
       const pageContent = page.locator('body');
@@ -25,7 +25,7 @@ test.describe('Friends Feature', () => {
 
     test('should display friends list', async ({ page }) => {
       await page.goto('/friends');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Look for friends list or empty state
       const friendsList = page.locator('[class*="friend"], [class*="contact"]').first();
@@ -43,7 +43,7 @@ test.describe('Friends Feature', () => {
 
     test('should display friend names', async ({ page }) => {
       await page.goto('/friends');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Look for any user names (from seed data: Sarah, Mike, Emma)
       const userNames = page.locator('text=/Sarah|Mike|Emma/i');
@@ -59,14 +59,14 @@ test.describe('Friends Feature', () => {
 
     test('should search friends', async ({ page }) => {
       await page.goto('/friends');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Look for search input
       const searchInput = page.locator('input[type="search"], input[placeholder*="search" i], input[placeholder*="find" i]').first();
       
       if (await searchInput.isVisible({ timeout: 3000 }).catch(() => false)) {
         await searchInput.fill('Sarah');
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
         
         // Should filter results
         expect(true).toBe(true);
@@ -79,7 +79,7 @@ test.describe('Friends Feature', () => {
   test.describe('Send Friend Request', () => {
     test('should show add friend button', async ({ page }) => {
       await page.goto('/friends');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Look for add friend button
       const addButton = page.locator('button').filter({ hasText: /add friend|find user|add contact/i }).first();
@@ -93,13 +93,13 @@ test.describe('Friends Feature', () => {
 
     test('should open add friend modal/dialog', async ({ page }) => {
       await page.goto('/friends');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       const addButton = page.locator('button').filter({ hasText: /add friend|find/i }).first();
       
       if (await addButton.isVisible({ timeout: 3000 }).catch(() => false)) {
         await addButton.click();
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
         
         // Look for modal or input field
         const modal = page.locator('[role="dialog"], .modal, [class*="modal"]').first();
@@ -120,13 +120,13 @@ test.describe('Friends Feature', () => {
 
     test('should send friend request by email', async ({ page }) => {
       await page.goto('/friends');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       const addButton = page.locator('button').filter({ hasText: /add|find/i }).first();
       
       if (await addButton.isVisible({ timeout: 3000 }).catch(() => false)) {
         await addButton.click();
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
         
         // Find email input
         const emailInput = page.locator('input[type="email"], input[placeholder*="email" i]').first();
@@ -139,7 +139,7 @@ test.describe('Friends Feature', () => {
           
           if (await sendButton.isVisible({ timeout: 2000 }).catch(() => false)) {
             await sendButton.click();
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState('domcontentloaded');
             
             // Look for success message
             const success = page.locator('text=/request sent|friend request|sent/i').first();
@@ -162,7 +162,7 @@ test.describe('Friends Feature', () => {
   test.describe('Friend Requests', () => {
     test('should show pending friend requests section', async ({ page }) => {
       await page.goto('/friends');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Look for requests section
       const requestsSection = page.locator('text=/requests|pending|incoming/i').first();
@@ -176,14 +176,14 @@ test.describe('Friends Feature', () => {
 
     test('should accept a friend request', async ({ page }) => {
       await page.goto('/friends');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Look for accept button
       const acceptButton = page.locator('button').filter({ hasText: /accept|confirm|add/i }).first();
       
       if (await acceptButton.isVisible({ timeout: 3000 }).catch(() => false)) {
         await acceptButton.click();
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
         
         // Request should be removed from pending
         expect(true).toBe(true);
@@ -194,14 +194,14 @@ test.describe('Friends Feature', () => {
 
     test('should decline a friend request', async ({ page }) => {
       await page.goto('/friends');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Look for decline button
       const declineButton = page.locator('button').filter({ hasText: /decline|reject|remove/i }).first();
       
       if (await declineButton.isVisible({ timeout: 3000 }).catch(() => false)) {
         await declineButton.click();
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
         
         // Request should be removed
         expect(true).toBe(true);
@@ -214,7 +214,7 @@ test.describe('Friends Feature', () => {
   test.describe('Remove Friend', () => {
     test('should show remove friend option', async ({ page }) => {
       await page.goto('/friends');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Look for friend card/action button
       const friendCard = page.locator('[class*="friend"], [class*="contact"]').first();
@@ -225,7 +225,7 @@ test.describe('Friends Feature', () => {
         
         if (await menuButton.isVisible({ timeout: 2000 }).catch(() => false)) {
           await menuButton.click();
-          await page.waitForLoadState('networkidle');
+          await page.waitForLoadState('domcontentloaded');
           
           const removeOption = page.locator('text=/remove|unfriend|delete/i').first();
           
@@ -244,7 +244,7 @@ test.describe('Friends Feature', () => {
 
     test('should remove friend from list', async ({ page }) => {
       await page.goto('/friends');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // This would remove an actual friend - skip in normal testing
       test.skip();
@@ -254,7 +254,7 @@ test.describe('Friends Feature', () => {
   test.describe('Friend Suggestions', () => {
     test('should show friend suggestions', async ({ page }) => {
       await page.goto('/friends');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Look for suggestions section
       const suggestions = page.locator('text=/suggest|people you may know|recommended/i').first();
@@ -275,7 +275,7 @@ test.describe('Friends - Navigation', () => {
 
   test('should navigate to friends from dashboard', async ({ page }) => {
     await page.goto('/dashboard');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Look for friends link in sidebar or navigation
     const friendsLink = page.locator('a[href*="friends"], nav button').filter({ hasText: /friend/i }).first();
@@ -290,7 +290,7 @@ test.describe('Friends - Navigation', () => {
 
   test('should show friends count or badge', async ({ page }) => {
     await page.goto('/dashboard');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Look for badge showing number of friends
     const badge = page.locator('[class*="badge"], [class*="count"]').first();
@@ -306,7 +306,7 @@ test.describe('Friends - Unauthenticated', () => {
     await page.context().clearCookies();
     
     await page.goto('/friends');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Should redirect to login
     await expect(page).toHaveURL(/\/login/);
@@ -320,7 +320,7 @@ test.describe('Direct Messages', () => {
 
   test('should navigate to messages page', async ({ page }) => {
     await page.goto('/messages');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Messages page should load
     const pageContent = page.locator('body');
@@ -329,7 +329,7 @@ test.describe('Direct Messages', () => {
 
   test('should display DM conversations list', async ({ page }) => {
     await page.goto('/messages');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Look for conversation list or empty state
     const conversations = page.locator('[class*="conversation"], [class*="dm"]').first();
@@ -347,14 +347,14 @@ test.describe('Direct Messages', () => {
 
   test('should start new DM from friends page', async ({ page }) => {
     await page.goto('/friends');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Look for message button next to a friend
     const messageButton = page.locator('button').filter({ hasText: /message|chat|dm/i }).first();
     
     if (await messageButton.isVisible({ timeout: 3000 }).catch(() => false)) {
       await messageButton.click();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Should navigate to messages
       expect(page.url()).toMatch(/\/messages/);

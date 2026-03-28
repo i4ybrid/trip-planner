@@ -20,7 +20,7 @@ test.describe('Milestone Strip Display', () => {
 
   test('should show milestone strip on trip overview', async ({ page }) => {
     await navigateToTrip(page, TRIP_IDS.hawaii, 'overview');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Look for milestone strip or progress section
     const milestoneStrip = page.locator('[class*="milestone"], [class*="strip"]').first();
@@ -42,7 +42,7 @@ test.describe('Milestone Strip Display', () => {
 
   test('should show milestone list', async ({ page }) => {
     await navigateToTrip(page, TRIP_IDS.hawaii, 'overview');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Look for milestone list items
     const milestoneList = page.locator('[class*="milestone-item"], [class*="milestone-card"]').first();
@@ -57,7 +57,7 @@ test.describe('Milestone Strip Display', () => {
 
   test('should show correct milestone due dates', async ({ page }) => {
     await navigateToTrip(page, TRIP_IDS.hawaii, 'overview');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Look for date display
     const datePattern = /\d{1,2}\/\d{1,2}\/\d{2,4}|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec/i;
@@ -76,7 +76,7 @@ test.describe('Request Payment Modal', () => {
   test.beforeEach(async ({ page }) => {
     await loginTestUser(page, 'test');
     await navigateToTrip(page, TRIP_IDS.hawaii, 'overview');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
   });
 
   test('should open request payment modal', async ({ page }) => {
@@ -154,7 +154,7 @@ test.describe('Remind to Settle Modal', () => {
   test.beforeEach(async ({ page }) => {
     await loginTestUser(page, 'test');
     await navigateToTrip(page, TRIP_IDS.hawaii, 'overview');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
   });
 
   test('should open remind to settle modal', async ({ page }) => {
@@ -217,7 +217,7 @@ test.describe('Milestone Date Locking', () => {
   test.beforeEach(async ({ page }) => {
     await loginTestUser(page, 'test');
     await navigateToTrip(page, TRIP_IDS.hawaii, 'overview');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
   });
 
   test('should lock a milestone date', async ({ page }) => {

@@ -22,7 +22,7 @@ test.describe('Member Settings Access', () => {
 
   test('should show settings button for trip master', async ({ page }) => {
     await navigateToTrip(page, TRIP_IDS.hawaii, 'overview');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Look for settings/members button (usually in header or member section)
     const settingsBtn = page.locator('button:has-text("Members"), button:has-text("Settings"), button[class*="users"]').first();
@@ -43,7 +43,7 @@ test.describe('Member Settings Access', () => {
 
   test('should open settings modal', async ({ page }) => {
     await navigateToTrip(page, TRIP_IDS.hawaii, 'overview');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Try to find and click settings button
     const settingsButtons = [
@@ -78,7 +78,7 @@ test.describe('Member List Display', () => {
 
   test('should show member list with roles', async ({ page }) => {
     await navigateToTrip(page, TRIP_IDS.hawaii, 'overview');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Look for member list section
     const memberList = page.locator('[class*="member"]').first();
@@ -97,7 +97,7 @@ test.describe('Member List Display', () => {
 
   test('should display member roles correctly', async ({ page }) => {
     await navigateToTrip(page, TRIP_IDS.hawaii, 'overview');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Look for role badges (Master, Organizer, Member)
     const masterBadge = page.locator('text=/Master|Trip Master/i').first();
@@ -110,7 +110,7 @@ test.describe('Member List Display', () => {
 
   test('should show member avatars or initials', async ({ page }) => {
     await navigateToTrip(page, TRIP_IDS.hawaii, 'overview');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Look for avatar elements
     const avatar = page.locator('[class*="avatar"], [class*="initials"]').first();
@@ -128,7 +128,7 @@ test.describe('Member Kebab Menu', () => {
   test.beforeEach(async ({ page }) => {
     await loginTestUser(page, 'test');
     await navigateToTrip(page, TRIP_IDS.hawaii, 'overview');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
   });
 
   test('should have kebab menu per member', async ({ page }) => {
@@ -159,7 +159,7 @@ test.describe('Member Role Management', () => {
   });
 
   test('should promote member to organizer', async ({ page }) => {
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Find and click kebab menu for a non-master member
     const kebabButtons = page.locator('button[class*="kebab"], button[class*="dots"]');
@@ -189,7 +189,7 @@ test.describe('Member Role Management', () => {
   });
 
   test('should transfer master role', async ({ page }) => {
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Find kebab menu for another member
     const kebabButtons = page.locator('button[class*="kebab"], button[class*="dots"]');
@@ -222,7 +222,7 @@ test.describe('Member Role Management', () => {
   });
 
   test('should remove a member', async ({ page }) => {
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     const kebabButtons = page.locator('button[class*="kebab"], button[class*="dots"]');
     
@@ -261,7 +261,7 @@ test.describe('Invite Flow - MANAGED vs OPEN Trips', () => {
   test('MANAGED trip: invited member starts as PENDING', async ({ page }) => {
     // Navigate to Hawaii trip (should be MANAGED)
     await navigateToTrip(page, TRIP_IDS.hawaii, 'overview');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Send an invite
     const inviteBtn = page.locator('button:has-text("Invite"), button:has-text("Add Member")').first();
@@ -292,7 +292,7 @@ test.describe('Invite Flow - MANAGED vs OPEN Trips', () => {
 
   test('should show invite modal with email input', async ({ page }) => {
     await navigateToTrip(page, TRIP_IDS.hawaii, 'overview');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     const inviteBtn = page.locator('button:has-text("Invite"), button:has-text("Add Member")').first();
     

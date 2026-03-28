@@ -35,7 +35,7 @@ test.describe('Chat Page - View Messages', () => {
     
     // trip-1 has 50 messages in seed data
     // Should see some of these messages displayed
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Check for message content from seed data
     const messageContent = page.locator('text=Hey everyone! Excited about this trip! 🏝️');

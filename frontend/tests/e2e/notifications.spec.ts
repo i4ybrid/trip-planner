@@ -9,7 +9,7 @@ test.describe('Notifications', () => {
   test.describe('Notification Bell', () => {
     test('should display notification bell in header', async ({ page }) => {
       await page.goto('/dashboard');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Look for bell icon in header
       const bellButton = page.locator('button[aria-label*="notification" i], [class*="bell"]').first();
@@ -23,7 +23,7 @@ test.describe('Notifications', () => {
 
     test('should show unread badge when there are unread notifications', async ({ page }) => {
       await page.goto('/dashboard');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Look for notification bell with badge
       const bellButton = page.locator('button[aria-label*="notification" i]').first();
@@ -41,7 +41,7 @@ test.describe('Notifications', () => {
 
     test('should open notification panel when bell is clicked', async ({ page }) => {
       await page.goto('/dashboard');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       const bellButton = page.locator('button[aria-label*="notification" i]').first();
       
@@ -63,7 +63,7 @@ test.describe('Notifications', () => {
 
     test('should display notification list when panel is open', async ({ page }) => {
       await page.goto('/dashboard');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       const bellButton = page.locator('button[aria-label*="notification" i]').first();
       
@@ -89,7 +89,7 @@ test.describe('Notifications', () => {
   test.describe('Notification Panel', () => {
     test('should show empty state when no notifications', async ({ page }) => {
       await page.goto('/dashboard');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       const bellButton = page.locator('button[aria-label*="notification" i]').first();
       
@@ -111,7 +111,7 @@ test.describe('Notifications', () => {
 
     test('should show notification items with correct structure', async ({ page }) => {
       await page.goto('/dashboard');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       const bellButton = page.locator('button[aria-label*="notification" i]').first();
       
@@ -135,7 +135,7 @@ test.describe('Notifications', () => {
 
     test('should have Mark all read button when there are unread', async ({ page }) => {
       await page.goto('/dashboard');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       const bellButton = page.locator('button[aria-label*="notification" i]').first();
       
@@ -156,7 +156,7 @@ test.describe('Notifications', () => {
 
     test('should link to notification settings', async ({ page }) => {
       await page.goto('/dashboard');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       const bellButton = page.locator('button[aria-label*="notification" i]').first();
       
@@ -177,7 +177,7 @@ test.describe('Notifications', () => {
 
     test('should close panel when clicking outside', async ({ page }) => {
       await page.goto('/dashboard');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       const bellButton = page.locator('button[aria-label*="notification" i]').first();
       
@@ -205,7 +205,7 @@ test.describe('Notifications', () => {
   test.describe('Notification Actions', () => {
     test('should navigate to relevant page when notification is clicked', async ({ page }) => {
       await page.goto('/dashboard');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       const bellButton = page.locator('button[aria-label*="notification" i]').first();
       
@@ -218,7 +218,7 @@ test.describe('Notifications', () => {
         
         if (await notificationItem.isVisible({ timeout: 2000 }).catch(() => false)) {
           await notificationItem.click();
-          await page.waitForLoadState('networkidle');
+          await page.waitForLoadState('domcontentloaded');
           
           // Should have navigated somewhere
           const currentUrl = page.url();
@@ -232,7 +232,7 @@ test.describe('Notifications', () => {
 
     test('should show dismiss button on notification hover', async ({ page }) => {
       await page.goto('/dashboard');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       const bellButton = page.locator('button[aria-label*="notification" i]').first();
       
@@ -270,7 +270,7 @@ test.describe('Notification Settings Page', () => {
 
   test('should navigate to notification settings page', async ({ page }) => {
     await page.goto('/settings/notifications');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Page should load
     const heading = page.locator('h1').first();
@@ -285,7 +285,7 @@ test.describe('Notification Settings Page', () => {
 
   test('should display notification channel toggles', async ({ page }) => {
     await page.goto('/settings/notifications');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Look for In-App Notifications toggle
     const inAppToggle = page.locator('text=/in-app.*notification/i').first();
@@ -299,7 +299,7 @@ test.describe('Notification Settings Page', () => {
 
   test('should display email notification toggles', async ({ page }) => {
     await page.goto('/settings/notifications');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Look for email section
     const emailSection = page.locator('text=/email/i').first();
@@ -313,7 +313,7 @@ test.describe('Notification Settings Page', () => {
 
   test('should display push notification toggles', async ({ page }) => {
     await page.goto('/settings/notifications');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Look for push section
     const pushSection = page.locator('text=/push/i').first();
@@ -327,7 +327,7 @@ test.describe('Notification Settings Page', () => {
 
   test('should have save button', async ({ page }) => {
     await page.goto('/settings/notifications');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     const saveButton = page.locator('button').filter({ hasText: /save|update/i }).first();
     
@@ -340,7 +340,7 @@ test.describe('Notification Settings Page', () => {
 
   test('should toggle a notification setting', async ({ page }) => {
     await page.goto('/settings/notifications');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Find a toggle and click it
     const toggle = page.locator('input[type="checkbox"]').first();
@@ -364,7 +364,7 @@ test.describe('Notifications - Unauthenticated', () => {
     await page.context().clearCookies();
     
     await page.goto('/settings/notifications');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Should redirect to login
     await expect(page).toHaveURL(/\/login/);

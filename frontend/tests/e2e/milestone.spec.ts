@@ -25,7 +25,7 @@ test.describe('Milestone System', () => {
   test('should display milestone strip on trip overview', async ({ page }) => {
     // Navigate to a trip that has milestones (Hawaii trip should have them after PLANNING)
     await navigateToTrip(page, TRIP_IDS.hawaii, 'overview');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Look for milestone strip or milestone content
     const milestoneSection = page.locator('text=/milestone/i').first();
@@ -43,7 +43,7 @@ test.describe('Milestone System', () => {
 
   test('should show milestone list with correct due dates', async ({ page }) => {
     await navigateToTrip(page, TRIP_IDS.hawaii, 'overview');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Look for milestone details section
     const milestoneDetails = page.locator('text=/Milestone Details/i').first();
@@ -73,7 +73,7 @@ test.describe('Trip Status to Milestone Generation', () => {
     
     // Navigate to a trip and check if milestones exist for PLANNING+ trips
     await navigateToTrip(page, TRIP_IDS.hawaii, 'overview');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Look for status selector
     const statusSelect = page.locator('select').first();
@@ -98,7 +98,7 @@ test.describe('Request Payment Modal', () => {
   });
 
   test('should open request payment modal and send notifications', async ({ page }) => {
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Look for Request Payment button (for payment-type milestones)
     const requestPaymentBtn = page.locator('button').filter({ hasText: /Request Payment/i }).first();
@@ -141,7 +141,7 @@ test.describe('Remind to Settle Modal', () => {
   });
 
   test('should open remind to settle modal and send notifications', async ({ page }) => {
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Look for Remind to Settle button
     const remindBtn = page.locator('button').filter({ hasText: /Remind to Settle/i }).first();
@@ -180,7 +180,7 @@ test.describe('Milestone Editor', () => {
   });
 
   test('should lock a milestone date when manually overridden', async ({ page }) => {
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Look for settings/edit button (⚙️) on milestone cards
     const settingsBtn = page.locator('button').filter({ has: page.locator('[class*="settings"]') }).first();
@@ -218,7 +218,7 @@ test.describe('Milestone Editor', () => {
   });
 
   test('should skip a milestone', async ({ page }) => {
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Look for settings button
     const settingsBtn = page.locator('button').filter({ has: page.locator('[class*="settings"]') }).first();
@@ -263,7 +263,7 @@ test.describe('Milestone Progress', () => {
   });
 
   test('should show correct milestone progress per member', async ({ page }) => {
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Check for milestone details section
     const milestoneDetails = page.locator('text=/Milestone Details/i').first();
@@ -291,7 +291,7 @@ test.describe('On-Demand Actions and Notifications', () => {
   });
 
   test('should send immediate notification when on-demand action is triggered', async ({ page }) => {
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Look for Request Payment or Remind to Settle button
     const actionBtn = page.locator('button').filter({ hasText: /Request Payment|Remind to Settle/i }).first();
@@ -313,7 +313,7 @@ test.describe('On-Demand Actions and Notifications', () => {
 
         // Go to notifications to verify notification was created
         await page.goto('/notifications');
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
 
         // Look for payment request or settlement reminder notification
         const notificationText = page.locator('text=/Payment Request|Settlement Reminder/i').first();
@@ -337,7 +337,7 @@ test.describe('Settlement Milestones', () => {
   test('should show settlement milestones after trip ends', async ({ page }) => {
     // Navigate to a completed trip
     await navigateToTrip(page, TRIP_IDS.hawaii, 'overview');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Look for status to see if trip is COMPLETED
     const statusSelect = page.locator('select').first();

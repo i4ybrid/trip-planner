@@ -19,7 +19,7 @@ test.describe('Activities Page', () => {
     await navigateToTrip(page, TRIP_IDS.hawaii, 'activities');
     
     // Activities page should load
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Check for activities heading or content
     const heading = page.locator('text=/activities|proposals/i').first();
@@ -52,7 +52,7 @@ test.describe('Activities Page', () => {
 
   test('should display existing activities from seed data', async ({ page }) => {
     await navigateToTrip(page, TRIP_IDS.hawaii, 'activities');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Look for luau dinner (seed data activity)
     const luauActivity = page.locator('text=/luau|dinner/i').first();
@@ -86,7 +86,7 @@ test.describe('Propose Activity', () => {
     
     if (await addButton.isVisible({ timeout: 3000 }).catch(() => false)) {
       await addButton.click();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Look for modal or form
       const modal = page.locator('[role="dialog"], .modal, [class*="modal"]').first();
@@ -111,7 +111,7 @@ test.describe('Propose Activity', () => {
     
     if (await addButton.isVisible({ timeout: 3000 }).catch(() => false)) {
       await addButton.click();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Look for activity name input
       const nameInput = page.locator('input[name*="name" i], input[placeholder*="name" i], input[placeholder*="activity" i]').first();
@@ -132,7 +132,7 @@ test.describe('Propose Activity', () => {
     
     if (await addButton.isVisible({ timeout: 3000 }).catch(() => false)) {
       await addButton.click();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Fill in activity name
       const nameInput = page.locator('input[name*="name" i], input[placeholder*="name" i], input[placeholder*="activity" i]').first();
@@ -146,7 +146,7 @@ test.describe('Propose Activity', () => {
         
         if (await submitButton.isVisible({ timeout: 2000 }).catch(() => false)) {
           await submitButton.click();
-          await page.waitForLoadState('networkidle');
+          await page.waitForLoadState('domcontentloaded');
           
           // Activity should appear in list
           await expect(page.locator('text=' + activityName).first()).toBeVisible({ timeout: 5000 });
@@ -186,7 +186,7 @@ test.describe('Voting on Activities', () => {
     if (await voteButton.isVisible({ timeout: 3000 }).catch(() => false)) {
       // Click vote
       await voteButton.click();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Vote count should update
       expect(true).toBe(true);
@@ -228,7 +228,7 @@ test.describe('Voting on Activities', () => {
       
       // Second click - unvote
       await voteButton.click();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Should toggle back
       expect(true).toBe(true);
@@ -360,7 +360,7 @@ test.describe('Activity Comments', () => {
       
       if (await submitButton.isVisible({ timeout: 2000 }).catch(() => false)) {
         await submitButton.click();
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
         
         // Comment should appear
         await expect(page.locator('text=E2E Test Comment').first()).toBeVisible({ timeout: 5000 });
@@ -410,12 +410,12 @@ test.describe('Trip Members and Activities', () => {
   test('should filter activities by trip', async ({ page }) => {
     // Go to different trips and check activities are different
     await navigateToTrip(page, TRIP_IDS.hawaii, 'activities');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     const hawaiiActivities = await page.locator('[class*="activity"]').count();
     
     await navigateToTrip(page, TRIP_IDS.nyc, 'activities');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Activities should be different per trip
     // (unless by chance they have same count, so just verify pages load)
@@ -424,7 +424,7 @@ test.describe('Trip Members and Activities', () => {
 
   test('should only allow trip members to vote', async ({ page }) => {
     await navigateToTrip(page, TRIP_IDS.hawaii, 'activities');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Vote buttons should be visible for members
     const voteButton = page.locator('button').filter({ hasText: 'Vote' }).first();

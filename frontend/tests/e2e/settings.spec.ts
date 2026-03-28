@@ -17,7 +17,7 @@ test.describe('Settings Page', () => {
 
   test('should navigate to settings page', async ({ page }) => {
     await page.goto('/settings');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Settings page should load
     await expect(page.locator('text=/settings/i').first()).toBeVisible({ timeout: 10000 });
@@ -25,7 +25,7 @@ test.describe('Settings Page', () => {
 
   test('should display settings heading', async ({ page }) => {
     await page.goto('/settings');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Should show Settings heading
     const heading = page.locator('text=/settings|account.*settings|profile.*settings/i').first();
@@ -34,7 +34,7 @@ test.describe('Settings Page', () => {
 
   test('should show profile section', async ({ page }) => {
     await page.goto('/settings');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Should show Profile section
     const profileSection = page.locator('text=/profile/i').first();
@@ -43,7 +43,7 @@ test.describe('Settings Page', () => {
 
   test('should show account section', async ({ page }) => {
     await page.goto('/settings');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Should show Account section
     const accountSection = page.locator('text=/account/i').first();
@@ -55,7 +55,7 @@ test.describe('Settings Page', () => {
 
   test('should show current user info', async ({ page }) => {
     await page.goto('/settings');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Should show user's name
     await expect(page.locator('text=/Test User/i').first()).toBeVisible({ timeout: 5000 });
@@ -66,7 +66,7 @@ test.describe('Settings Page', () => {
 
   test('should show navigation to settings from dashboard', async ({ page }) => {
     await page.goto('/dashboard');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Look for settings link/button in user menu
     const settingsLink = page.locator('a[href*="settings"]').first();
@@ -84,7 +84,7 @@ test.describe('Update Profile', () => {
   test.beforeEach(async ({ page }) => {
     await loginTestUser(page, 'test');
     await page.goto('/settings');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
   });
 
   test('should show name input field', async ({ page }) => {
@@ -128,7 +128,7 @@ test.describe('Update Profile', () => {
       
       if (await saveButton.isVisible({ timeout: 2000 }).catch(() => false)) {
         await saveButton.click();
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
         
         // Name should be updated
         await expect(page.locator('text=' + newName).first()).toBeVisible({ timeout: 5000 });
@@ -204,7 +204,7 @@ test.describe('Update Avatar', () => {
   test.beforeEach(async ({ page }) => {
     await loginTestUser(page, 'test');
     await page.goto('/settings');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
   });
 
   test('should show avatar section', async ({ page }) => {
@@ -289,7 +289,7 @@ test.describe('Account Settings', () => {
   test.beforeEach(async ({ page }) => {
     await loginTestUser(page, 'test');
     await page.goto('/settings');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
   });
 
   test('should show email address', async ({ page }) => {
@@ -334,7 +334,7 @@ test.describe('Danger Zone', () => {
   test.beforeEach(async ({ page }) => {
     await loginTestUser(page, 'test');
     await page.goto('/settings');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
   });
 
   test('should show danger zone section', async ({ page }) => {
@@ -367,7 +367,7 @@ test.describe('Settings Navigation', () => {
 
   test('should have multiple settings tabs/sections', async ({ page }) => {
     await page.goto('/settings');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Look for tabs or sections
     const tabs = page.locator('[role="tab"], button[class*="tab"], nav button').first();
@@ -380,14 +380,14 @@ test.describe('Settings Navigation', () => {
 
   test('should navigate between settings tabs', async ({ page }) => {
     await page.goto('/settings');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Look for a second tab (Profile tab should exist by default)
     const profileTab = page.locator('[role="tab"], button').filter({ hasText: 'Profile' }).first();
     
     if (await profileTab.isVisible({ timeout: 3000 }).catch(() => false)) {
       await profileTab.click();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Should stay on settings page
       await expect(page).toHaveURL(/\/settings/);
@@ -402,7 +402,7 @@ test.describe('Settings - Authenticated Only', () => {
     
     // Try to access settings
     await page.goto('/settings');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Should redirect to login
     await expect(page).toHaveURL(/\/login/, { timeout: 10000 });
@@ -414,7 +414,7 @@ test.describe('Settings - Authenticated Only', () => {
     
     // Go to settings
     await page.goto('/settings');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Should show Sarah's info, not Test User's
     await expect(page.locator('text=/Sarah/i').first()).toBeVisible({ timeout: 5000 });
@@ -432,7 +432,7 @@ test.describe('Settings - Edge Cases', () => {
   test.beforeEach(async ({ page }) => {
     await loginTestUser(page, 'test');
     await page.goto('/settings');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
   });
 
   test('should handle very long name', async ({ page }) => {
@@ -471,11 +471,11 @@ test.describe('Settings - Edge Cases', () => {
       
       // Navigate away
       await page.goto('/dashboard');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Come back
       await page.goto('/settings');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Data should be gone (not persisted) - that's expected
       const newInput = page.locator('input[name="name"], input[id="name"]').first();

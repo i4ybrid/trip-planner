@@ -19,7 +19,7 @@ test.describe('Send Invite Flow', () => {
 
   test('should show invite button on trip', async ({ page }) => {
     await navigateToTrip(page, TRIP_IDS.hawaii, 'overview');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     const inviteBtn = page.locator('button:has-text("Invite"), button:has-text("Add Member")').first();
     
@@ -32,7 +32,7 @@ test.describe('Send Invite Flow', () => {
 
   test('should send invite and create notification', async ({ page }) => {
     await navigateToTrip(page, TRIP_IDS.hawaii, 'overview');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     const inviteBtn = page.locator('button:has-text("Invite"), button:has-text("Add Member")').first();
     
@@ -63,7 +63,7 @@ test.describe('Send Invite Flow', () => {
 
   test('should show email collision message if user exists', async ({ page }) => {
     await navigateToTrip(page, TRIP_IDS.hawaii, 'overview');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     const inviteBtn = page.locator('button:has-text("Invite"), button:has-text("Add Member")').first();
     
@@ -105,7 +105,7 @@ test.describe('Pending Invites Page', () => {
 
   test('should show pending invites in trip settings', async ({ page }) => {
     await navigateToTrip(page, TRIP_IDS.hawaii, 'settings');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Look for pending invites section
     const pendingSection = page.locator('text=/Pending.*Invite|Invites.*Pending/i').first();
@@ -114,7 +114,7 @@ test.describe('Pending Invites Page', () => {
     } else {
       // Try navigating to members settings
       await page.goto(`/trip/${TRIP_IDS.hawaii}/members`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       const section = page.locator('text=/Pending/i').first();
       if (await section.isVisible({ timeout: 3000 }).catch(() => false)) {
@@ -127,7 +127,7 @@ test.describe('Pending Invites Page', () => {
 
   test('should display pending invite details', async ({ page }) => {
     await page.goto(`/trip/${TRIP_IDS.hawaii}/members`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Look for invite email or status
     const inviteDetails = page.locator('text=/@.*\\.com|pending|invited/i').first();
@@ -146,7 +146,7 @@ test.describe('Accept/Decline Invite', () => {
     
     // Go to notifications
     await page.goto('/notifications');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Look for an invite notification
     const inviteNotification = page.locator('text=/invite|trip.*invitation/i').first();
@@ -182,7 +182,7 @@ test.describe('Accept/Decline Invite', () => {
   test('should decline invite', async ({ page }) => {
     await loginTestUser(page, 'test');
     await page.goto('/notifications');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     const inviteNotification = page.locator('text=/invite|trip.*invitation/i').first();
     

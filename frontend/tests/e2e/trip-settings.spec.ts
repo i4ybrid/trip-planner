@@ -79,7 +79,7 @@ test.describe('Trip Settings Modal', () => {
     
     // Navigate to the Hawaii trip where she is NOT master
     await page.goto(`/trip/${HAWAII_TRIP_ID}/overview`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Look for the settings button - it should NOT be visible for non-masters
     // Note: The invite button might be visible instead

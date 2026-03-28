@@ -23,7 +23,7 @@ import { loginTestUser, logoutUser } from './helpers/auth';
 test.describe('Social Login - OAuth Buttons', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/login');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
   });
 
   test.afterEach(async ({ page }) => {
@@ -99,7 +99,7 @@ test.describe('Social Login - OAuth Buttons', () => {
 test.describe('Social Login - OAuth Flow Handling', () => {
   test('should have OAuth buttons visible on registration page', async ({ page }) => {
     await page.goto('/login');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Toggle to registration mode
     const signUpLink = page.locator('text="Don\'t have an account? Sign up"');
@@ -175,14 +175,14 @@ test.describe('Social Login - Session and Profile', () => {
     
     // Navigate to dashboard
     await page.goto('/dashboard');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Should be logged in
     await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
     
     // Session should persist across page reloads
     await page.reload();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Should still be on dashboard (session maintained)
     await expect(page).toHaveURL(/\/dashboard/, { timeout: 5000 });
@@ -193,7 +193,7 @@ test.describe('Social Login - Session and Profile', () => {
     
     // Go to dashboard
     await page.goto('/dashboard');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Look for user menu/avatar in header
     // This could be a profile picture or initials
@@ -208,7 +208,7 @@ test.describe('Social Login - Session and Profile', () => {
 test.describe('Social Login - Error Handling', () => {
   test('should handle OAuth configuration errors gracefully', async ({ page }) => {
     await page.goto('/login');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Click Google button without proper OAuth setup
     const googleButton = page.locator('button:has-text("Continue with Google")');
@@ -232,7 +232,7 @@ test.describe('Social Login - Error Handling', () => {
 
   test('should allow retry after OAuth error', async ({ page }) => {
     await page.goto('/login');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Try to click OAuth button
     const googleButton = page.locator('button:has-text("Continue with Google")');
@@ -243,7 +243,7 @@ test.describe('Social Login - Error Handling', () => {
     
     // Navigate back to login
     await page.goto('/login');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Should still be able to use email login
     const emailInput = page.locator('input[type="email"]');
@@ -254,7 +254,7 @@ test.describe('Social Login - Error Handling', () => {
 test.describe('Social Login - Email/Password Toggle', () => {
   test('should toggle between login and signup with OAuth visible', async ({ page }) => {
     await page.goto('/login');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // OAuth buttons should be visible on login mode
     await expect(page.locator('button:has-text("Continue with Google")')).toBeVisible();

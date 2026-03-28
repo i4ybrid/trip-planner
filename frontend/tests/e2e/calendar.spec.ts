@@ -9,7 +9,7 @@ test.describe('Calendar Export', () => {
   test.describe('Trip Overview Calendar Export', () => {
     test('should display Add to Calendar button on trip overview', async ({ page }) => {
       await page.goto(`/trip/${TRIP_IDS.hawaii}/overview`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Look for calendar export button
       const calendarButton = page.locator('button').filter({ hasText: /calendar|add.*calendar/i }).first();
@@ -30,7 +30,7 @@ test.describe('Calendar Export', () => {
 
     test('should open calendar export dropdown when clicked', async ({ page }) => {
       await page.goto(`/trip/${TRIP_IDS.hawaii}/overview`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Look for and click the calendar button
       const calendarButton = page.locator('button').filter({ hasText: /calendar|add.*calendar/i }).first();
@@ -54,7 +54,7 @@ test.describe('Calendar Export', () => {
 
     test('should show iCal download option', async ({ page }) => {
       await page.goto(`/trip/${TRIP_IDS.hawaii}/overview`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Look for calendar button
       const calendarButton = page.locator('button').filter({ hasText: /calendar/i }).first();
@@ -78,7 +78,7 @@ test.describe('Calendar Export', () => {
 
     test('should show Google Calendar option', async ({ page }) => {
       await page.goto(`/trip/${TRIP_IDS.hawaii}/overview`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       const calendarButton = page.locator('button').filter({ hasText: /calendar/i }).first();
       
@@ -100,7 +100,7 @@ test.describe('Calendar Export', () => {
 
     test('should show Outlook Calendar option', async ({ page }) => {
       await page.goto(`/trip/${TRIP_IDS.hawaii}/overview`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       const calendarButton = page.locator('button').filter({ hasText: /calendar/i }).first();
       
@@ -124,7 +124,7 @@ test.describe('Calendar Export', () => {
   test.describe('Activities Calendar Export', () => {
     test('should show calendar icon on activity cards', async ({ page }) => {
       await page.goto(`/trip/${TRIP_IDS.hawaii}/activities`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Look for activity cards with calendar indicators
       const activityCards = page.locator('[class*="activity"], [class*="card"]').first();
@@ -151,7 +151,7 @@ test.describe('Calendar Export - Unauthenticated', () => {
     
     // Try to access the calendar API endpoint (will redirect to login in the app)
     await page.goto(`/trip/${TRIP_IDS.hawaii}/overview`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Should redirect to login
     const isLoginPage = page.url().includes('/login');

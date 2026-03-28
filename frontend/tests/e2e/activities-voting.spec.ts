@@ -18,7 +18,7 @@ test.describe('Propose Activity', () => {
 
   test('should show add activity button', async ({ page }) => {
     await navigateToTrip(page, TRIP_IDS.hawaii, 'activities');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     const addBtn = page.locator('button:has-text("Add Activity"), button:has-text("Propose"), button:has-text("New Activity")').first();
     
@@ -31,7 +31,7 @@ test.describe('Propose Activity', () => {
 
   test('should propose a new activity', async ({ page }) => {
     await navigateToTrip(page, TRIP_IDS.hawaii, 'activities');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     const addBtn = page.locator('button:has-text("Add Activity"), button:has-text("Propose"), button:has-text("New Activity")').first();
     
@@ -64,7 +64,7 @@ test.describe('Propose Activity', () => {
 
   test('should show activity in list after proposing', async ({ page }) => {
     await navigateToTrip(page, TRIP_IDS.hawaii, 'activities');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Check for existing activities
     const activityList = page.locator('[class*="activity"]').first();
@@ -80,7 +80,7 @@ test.describe('Voting on Activity', () => {
   test.beforeEach(async ({ page }) => {
     await loginTestUser(page, 'test');
     await navigateToTrip(page, TRIP_IDS.hawaii, 'activities');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
   });
 
   test('should vote YES on activity', async ({ page }) => {
@@ -145,7 +145,7 @@ test.describe('Change and Delete Vote', () => {
   test.beforeEach(async ({ page }) => {
     await loginTestUser(page, 'test');
     await navigateToTrip(page, TRIP_IDS.hawaii, 'activities');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
   });
 
   test('should change vote from YES to NO', async ({ page }) => {
@@ -205,7 +205,7 @@ test.describe('Vote Counts Display', () => {
   test.beforeEach(async ({ page }) => {
     await loginTestUser(page, 'test');
     await navigateToTrip(page, TRIP_IDS.hawaii, 'activities');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
   });
 
   test('should show vote counts on activity', async ({ page }) => {
