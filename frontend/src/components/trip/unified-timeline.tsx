@@ -1,13 +1,12 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Milestone, TimelineEvent, TripMember } from '@/types';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components';
-import { Clock, Check, Calendar } from 'lucide-react';
+import { Clock, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { api } from '@/services/api';
 import { useSession } from 'next-auth/react';
 
 // ─── Icons per milestone type ────────────────────────────────────────────────
@@ -55,7 +54,6 @@ interface MilestoneCardProps {
   members: TripMember[];
   currentUserId: string;
   currentUserRole: string;
-  onRefresh: () => void;
   isCompleted?: boolean; // true = past/completed milestone
 }
 
@@ -64,7 +62,6 @@ function MilestoneCard({
   members,
   currentUserId,
   currentUserRole,
-  onRefresh,
   isCompleted = false,
 }: MilestoneCardProps) {
   const now = new Date();
@@ -74,11 +71,6 @@ function MilestoneCard({
     milestone.type === 'FINAL_PAYMENT_DUE' || milestone.type === 'SETTLEMENT_DUE';
   const isCommitmentType =
     milestone.type === 'COMMITMENT_REQUEST' || milestone.type === 'COMMITMENT_DEADLINE';
-
-  const handleMarkComplete = async () => {
-    await api.updateMilestoneCompletion(milestone.id, currentUserId, 'COMPLETED');
-    onRefresh();
-  };
 
   const statusStyles = {
     completed: 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900',
@@ -179,17 +171,6 @@ function MilestoneCard({
                 Remind
               </Button>
             )}
-            {status !== 'completed' && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleMarkComplete}
-                className="text-xs text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
-              >
-                <Check className="mr-1 h-3 w-3" />
-                Mark Complete
-              </Button>
-            )}
             {canManage && (
               <Button
                 variant="ghost"
@@ -276,12 +257,14 @@ function TodayDivider() {
 // ─── Main Unified Timeline Component ────────────────────────────────────────
 interface UnifiedTimelineProps {
   events: TimelineEvent[];
+  milestones: Milestone[];
   members: TripMember[];
   tripId: string;
 }
 
 export function UnifiedTimeline({
   events,
+  milestones,
   members,
   tripId,
 }: UnifiedTimelineProps) {
@@ -289,16 +272,6 @@ export function UnifiedTimeline({
   const currentUserId = session?.user?.id || '';
   const currentUserMember = members.find((m) => m.userId === currentUserId);
   const currentUserRole = currentUserMember?.role || '';
-
-  const [milestones, setMilestones] = useState<Milestone[]>([]);
-
-  useEffect(() => {
-    api.getMilestones(tripId).then((result) => {
-      if (result.data) setMilestones(result.data);
-    }).catch(() => {
-      // Milestones might not exist for IDEA trips
-    });
-  }, [tripId]);
 
   const now = new Date();
 
@@ -371,12 +344,6 @@ export function UnifiedTimeline({
     );
   }
 
-  const handleRefresh = () => {
-    api.getMilestones(tripId).then((result) => {
-      if (result.data) setMilestones(result.data);
-    });
-  };
-
   return (
     <div className="space-y-6">
       {/* ── LOOKING BACK ── */}
@@ -402,7 +369,6 @@ export function UnifiedTimeline({
                         members={members}
                         currentUserId={currentUserId}
                         currentUserRole={currentUserRole}
-                        onRefresh={handleRefresh}
                         isCompleted
                       />
                     </div>
@@ -436,7 +402,6 @@ export function UnifiedTimeline({
                       members={members}
                       currentUserId={currentUserId}
                       currentUserRole={currentUserRole}
-                      onRefresh={handleRefresh}
                     />
                   </div>
                 );

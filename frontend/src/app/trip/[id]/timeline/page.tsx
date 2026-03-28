@@ -162,6 +162,7 @@ export default function TripTimeline() {
       <div ref={timelineContentRef}>
         <UnifiedTimeline
           events={events}
+          milestones={milestones}
           members={members}
           tripId={tripId}
         />
