@@ -1,6 +1,8 @@
 import { getPrisma } from '@/lib/prisma';
 import { TripCreateInput, TripUpdateInput } from '@/types';
 import { TripStatus } from '@prisma/client';
+import { notificationService } from '@/services/notification.service';
+import { NotificationCategory, NotificationReferenceType } from '@prisma/client';
 
 // Valid status transitions
 const VALID_TRANSITIONS: Record<TripStatus, TripStatus[]> = {
@@ -261,7 +263,12 @@ export class TripService {
   }
 
   async updateTripMember(tripId: string, userId: string, data: { role?: string; status?: string }) {
-    return this.prisma.tripMember.update({
+    const oldMember = await this.prisma.tripMember.findUnique({
+      where: { tripId_userId: { tripId, userId } },
+      select: { role: true },
+    });
+
+    const updated = await this.prisma.tripMember.update({
       where: {
         tripId_userId: {
           tripId,
@@ -273,6 +280,25 @@ export class TripService {
         status: data.status as any,
       },
     });
+
+    // Notify member if their role changed
+    if (data.role && oldMember && data.role !== oldMember.role) {
+      const trip = await this.prisma.trip.findUnique({
+        where: { id: tripId },
+        select: { name: true },
+      });
+      await notificationService.createNotification({
+        userId,
+        category: NotificationCategory.MEMBER,
+        title: 'Role Changed',
+        body: `Your role in "${trip?.name}" changed to ${data.role}`,
+        referenceId: tripId,
+        referenceType: NotificationReferenceType.TRIP,
+        link: `/trip/${tripId}`,
+      });
+    }
+
+    return updated;
   }
 
   async removeTripMember(tripId: string, userId: string) {
@@ -302,6 +328,17 @@ export class TripService {
         eventType: 'member_removed',
         description: `${member.user.name} was removed from the trip`,
       },
+    });
+
+    // Notify the removed user
+    await notificationService.createNotification({
+      userId: member.userId,
+      category: NotificationCategory.MEMBER,
+      title: 'Removed from Trip',
+      body: `You were removed from the trip`,
+      referenceId: tripId,
+      referenceType: NotificationReferenceType.TRIP,
+      link: '/dashboard',
     });
 
     return member;
@@ -496,6 +533,23 @@ export class TripService {
         createdBy: userId,
       },
     });
+
+    // Notify the added member
+    if (memberStatus === 'CONFIRMED') {
+      const trip = await this.prisma.trip.findUnique({
+        where: { id: tripId },
+        select: { name: true },
+      });
+      await notificationService.createNotification({
+        userId,
+        category: NotificationCategory.MEMBER,
+        title: 'Added to Trip',
+        body: `You were added to "${trip?.name}"`,
+        referenceId: tripId,
+        referenceType: NotificationReferenceType.TRIP,
+        link: `/trip/${tripId}`,
+      });
+    }
 
     return member;
   }
