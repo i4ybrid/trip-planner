@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { TimelineEvent } from '@/types';
 import { api } from '@/services/api';
+import { getSocket } from '@/lib/socket';
 
 const POLL_INTERVAL_MS = 60_000;
 
@@ -36,14 +37,29 @@ export function useTimelineEvents(tripId: string): UseTimelineEventsResult {
   useEffect(() => {
     fetchEvents();
 
+    // Real-time: join trip room and listen for new timeline events
+    const socket = getSocket();
+    if (socket) {
+      socket.emit('join-trip', tripId);
+      socket.on('timeline:event', (event: TimelineEvent) => {
+        if (event.tripId === tripId) {
+          setEvents((prev) => [event, ...prev]);
+        }
+      });
+    }
+
     intervalRef.current = setInterval(fetchEvents, POLL_INTERVAL_MS);
 
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
+      if (socket) {
+        socket.off('timeline:event');
+        socket.emit('leave-trip', tripId);
+      }
     };
-  }, [fetchEvents]);
+  }, [fetchEvents, tripId]);
 
   return { events, isLoading, error, refetch: fetchEvents };
 }

@@ -12,6 +12,13 @@ interface SocketData {
 // Connection manager: userId → socket
 const connectionManager = new Map<string, Socket>();
 
+// Module-level io instance for cross-service access
+let ioInstance: SocketIOServer | null = null;
+
+export function getSocketIO(): SocketIOServer | null {
+  return ioInstance;
+}
+
 function extractBearerToken(authHeader: string | undefined): string | null {
   if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
   return authHeader.slice(7);
@@ -152,6 +159,7 @@ export function setupSocketIO(server: HTTPServer) {
     });
   });
 
+  ioInstance = io;
   return io;
 }
 

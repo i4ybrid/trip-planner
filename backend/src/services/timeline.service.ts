@@ -1,4 +1,5 @@
 import { getPrisma } from '@/lib/prisma';
+import { getSocketIO } from '@/lib/socket';
 
 export interface EmitTimelineEventInput {
   tripId: string;
@@ -13,7 +14,7 @@ export class TimelineService {
   private prisma = getPrisma();
 
   async emitTimelineEvent(input: EmitTimelineEventInput): Promise<void> {
-    await this.prisma.timelineEvent.create({
+    const event = await this.prisma.timelineEvent.create({
       data: {
         tripId: input.tripId,
         eventType: input.eventType,
@@ -23,6 +24,12 @@ export class TimelineService {
         metadata: input.metadata ?? undefined,
       },
     });
+
+    // Emit to connected clients in the trip room
+    const io = getSocketIO();
+    if (io) {
+      io.to(`trip:${input.tripId}`).emit('timeline:event', event);
+    }
   }
 }
 
