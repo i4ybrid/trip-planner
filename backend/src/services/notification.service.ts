@@ -1,5 +1,6 @@
 import { getPrisma } from '@/lib/prisma';
 import { NotificationCategory, NotificationReferenceType } from '@prisma/client';
+import { getConnectionManager } from '@/lib/socket';
 
 export interface CreateNotificationData {
   userId: string;
@@ -43,7 +44,7 @@ export class NotificationService {
     if (!(await this.shouldNotify(data.userId, data.category))) {
       return null;
     }
-    return this.prisma.notification.create({
+    const notification = await this.prisma.notification.create({
       data: {
         userId: data.userId,
         category: data.category,
@@ -55,6 +56,15 @@ export class NotificationService {
         isRead: false,
       },
     });
+
+    // WebSocket Phase 2: push notification to connected user
+    const manager = getConnectionManager();
+    const userSocket = manager.get(data.userId);
+    if (userSocket) {
+      userSocket.to(`user:${data.userId}`).emit('notification:new', notification);
+    }
+
+    return notification;
   }
 
   async createTripNotification(

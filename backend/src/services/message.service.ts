@@ -1,6 +1,7 @@
 import { getPrisma } from '@/lib/prisma';
 import { notificationService } from '@/services/notification.service';
 import { NotificationCategory, NotificationReferenceType } from '@prisma/client';
+import { getConnectionManager } from '@/lib/socket';
 
 export class MessageService {
   private prisma = getPrisma();
@@ -52,6 +53,13 @@ export class MessageService {
           await notificationService.createTripChatNotification(tripId, memberId, message.id);
         }
       }
+    }
+
+    // WebSocket Phase 2: push new message to trip room
+    const msgManager = getConnectionManager();
+    const senderSocket = msgManager.get(senderId);
+    if (senderSocket) {
+      senderSocket.to(`trip:${tripId}`).emit('message:new', message);
     }
 
     return message;
@@ -106,6 +114,19 @@ export class MessageService {
               referenceType: NotificationReferenceType.MESSAGE,
               link: '/messages/' + conversationId,
             });
+          }
+        }
+      }
+    }
+
+    // WebSocket Phase 2: push new DM to recipient's user room
+    if (conversation) {
+      for (const participant of conversation.participants) {
+        if (participant.id !== senderId) {
+          const dmManager = getConnectionManager();
+          const participantSocket = dmManager.get(participant.id);
+          if (participantSocket) {
+            participantSocket.to(`user:${participant.id}`).emit('dm:new', message);
           }
         }
       }

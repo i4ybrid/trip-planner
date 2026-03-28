@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma';
+import { getConnectionManager } from '@/lib/socket';
 
 export class FriendService {
   async getFriends(userId: string) {
@@ -148,6 +149,13 @@ export class FriendService {
       },
     });
 
+    // WebSocket Phase 2: push friend request to connected receiver
+    const manager = getConnectionManager();
+    const receiverSocket = manager.get(receiverId);
+    if (receiverSocket) {
+      receiverSocket.to(`user:${receiverId}`).emit('friend:request', request);
+    }
+
     return request;
   }
 
@@ -232,6 +240,13 @@ export class FriendService {
       }),
     ]);
 
+    // WebSocket Phase 2: push friend accepted to connected sender
+    const manager = getConnectionManager();
+    const senderSocket = manager.get(request.senderId);
+    if (senderSocket) {
+      senderSocket.to(`user:${request.senderId}`).emit('friend:accepted', { requestId, friend: request.receiver });
+    }
+
     return prisma.friendRequest.findUnique({
       where: { id: requestId },
       include: {
@@ -276,6 +291,13 @@ export class FriendService {
         referenceType: 'FRIEND_REQUEST',
       },
     });
+
+    // WebSocket Phase 2: push friend declined to connected sender
+    const manager = getConnectionManager();
+    const senderSocket = manager.get(request.senderId);
+    if (senderSocket) {
+      senderSocket.to(`user:${request.senderId}`).emit('friend:declined', { requestId });
+    }
 
     return updated;
   }
