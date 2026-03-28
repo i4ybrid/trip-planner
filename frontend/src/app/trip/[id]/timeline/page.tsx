@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { Milestone, TimelineEvent, TripMember, BillSplit } from '@/types';
 import { UnifiedTimeline } from '@/components/trip/unified-timeline';
@@ -10,7 +10,7 @@ import { MilestoneEditorModal } from '@/components/trip/milestone-editor-modal';
 import { AddMilestoneModal } from '@/components/trip/add-milestone-modal';
 import { Button } from '@/components/ui/button';
 import { api } from '@/services/api';
-import { Plus } from 'lucide-react';
+import { Plus, Sparkles } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 
 export default function TripTimeline() {
@@ -22,12 +22,15 @@ export default function TripTimeline() {
   const [members, setMembers] = useState<TripMember[]>([]);
   const [billSplits, setBillSplits] = useState<BillSplit[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const [selectedMilestone, setSelectedMilestone] = useState<Milestone | null>(null);
   const [showRequestPaymentModal, setShowRequestPaymentModal] = useState(false);
   const [showRemindSettleModal, setShowRemindSettleModal] = useState(false);
   const [showMilestoneEditorModal, setShowMilestoneEditorModal] = useState(false);
   const [showAddMilestoneModal, setShowAddMilestoneModal] = useState(false);
+
+  const timelineContentRef = useRef<HTMLDivElement>(null);
 
   const { data: session } = useSession();
   const currentUserId = session?.user?.id || '';
@@ -54,6 +57,41 @@ export default function TripTimeline() {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  // Scroll to next milestone on mount
+  useEffect(() => {
+    if (milestones.length > 0 && timelineContentRef.current) {
+      const now = new Date();
+      const upcomingMilestones = milestones
+        .filter(m => {
+          if (m.isSkipped) return false;
+          const total = m.totalMembers ?? 1;
+          const completed = m.completedCount ?? 0;
+          return completed < total;
+        })
+        .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+
+      if (upcomingMilestones.length > 0) {
+        // Scroll to the first upcoming milestone after a short delay
+        const timeoutId = setTimeout(() => {
+          timelineContentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 500);
+        return () => clearTimeout(timeoutId);
+      }
+    }
+  }, [milestones]);
+
+  const handleGenerateDefaultMilestones = async () => {
+    setIsGenerating(true);
+    try {
+      await api.generateDefaultMilestones(tripId);
+      await loadData();
+    } catch (err) {
+      console.error('Failed to generate default milestones:', err);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   const handleRequestPayment = (milestone: Milestone) => {
     setSelectedMilestone(milestone);
@@ -95,16 +133,39 @@ export default function TripTimeline() {
         )}
       </div>
 
-      <UnifiedTimeline
-        events={events}
-        milestones={milestones}
-        members={members}
-        tripId={tripId}
-        onRequestPayment={handleRequestPayment}
-        onRemindSettle={handleRemindSettle}
-        onEditMilestone={handleEditMilestone}
-        onRefresh={loadData}
-      />
+      {/* Generate Default Milestones - shows when no milestones and user is MASTER or ORGANIZER */}
+      {milestones.length === 0 && canAddMilestone && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-6 dark:border-amber-700 dark:bg-amber-900/30">
+          <div className="flex items-start gap-3">
+            <Sparkles className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600" />
+            <div className="flex-1">
+              <h4 className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                No milestones yet
+              </h4>
+              <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">
+                Generate default milestones based on your trip dates to track important deadlines and payments.
+              </p>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleGenerateDefaultMilestones}
+                disabled={isGenerating}
+                className="mt-3 border-amber-300 text-amber-800 hover:bg-amber-100 dark:border-amber-600 dark:text-amber-200 dark:hover:bg-amber-900"
+              >
+                {isGenerating ? 'Generating…' : 'Generate Default Milestones'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div ref={timelineContentRef}>
+        <UnifiedTimeline
+          events={events}
+          members={members}
+          tripId={tripId}
+        />
+      </div>
 
       {/* Request Payment Modal */}
       <RequestPaymentModal

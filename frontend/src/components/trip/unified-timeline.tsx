@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Milestone, TimelineEvent, TripMember } from '@/types';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -56,9 +56,6 @@ interface MilestoneCardProps {
   currentUserId: string;
   currentUserRole: string;
   onRefresh: () => void;
-  onRequestPayment: (m: Milestone) => void;
-  onRemindSettle: (m: Milestone) => void;
-  onEditMilestone: (m: Milestone) => void;
   isCompleted?: boolean; // true = past/completed milestone
 }
 
@@ -68,9 +65,6 @@ function MilestoneCard({
   currentUserId,
   currentUserRole,
   onRefresh,
-  onRequestPayment,
-  onRemindSettle,
-  onEditMilestone,
   isCompleted = false,
 }: MilestoneCardProps) {
   const now = new Date();
@@ -163,7 +157,6 @@ function MilestoneCard({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => onRequestPayment(milestone)}
                   className="text-xs"
                 >
                   Request Payment
@@ -171,7 +164,6 @@ function MilestoneCard({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => onRemindSettle(milestone)}
                   className="text-xs"
                 >
                   Remind to Settle
@@ -182,7 +174,6 @@ function MilestoneCard({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => onRemindSettle(milestone)}
                 className="text-xs"
               >
                 Remind
@@ -203,7 +194,6 @@ function MilestoneCard({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => onEditMilestone(milestone)}
                 className="px-2 text-xs"
               >
                 Edit
@@ -286,75 +276,86 @@ function TodayDivider() {
 // ─── Main Unified Timeline Component ────────────────────────────────────────
 interface UnifiedTimelineProps {
   events: TimelineEvent[];
-  milestones: Milestone[];
   members: TripMember[];
   tripId: string;
-  onRequestPayment: (m: Milestone) => void;
-  onRemindSettle: (m: Milestone) => void;
-  onEditMilestone: (m: Milestone) => void;
-  onRefresh: () => void;
 }
 
 export function UnifiedTimeline({
   events,
-  milestones,
   members,
   tripId,
-  onRequestPayment,
-  onRemindSettle,
-  onEditMilestone,
-  onRefresh,
 }: UnifiedTimelineProps) {
   const { data: session } = useSession();
   const currentUserId = session?.user?.id || '';
   const currentUserMember = members.find((m) => m.userId === currentUserId);
   const currentUserRole = currentUserMember?.role || '';
 
+  const [milestones, setMilestones] = useState<Milestone[]>([]);
+
+  useEffect(() => {
+    api.getMilestones(tripId).then((result) => {
+      if (result.data) setMilestones(result.data);
+    }).catch(() => {
+      // Milestones might not exist for IDEA trips
+    });
+  }, [tripId]);
+
   const now = new Date();
 
-  // Classify milestones
-  const { pastMilestones, upcomingMilestones } = React.useMemo(() => {
-    const past: Milestone[] = [];
-    const upcoming: Milestone[] = [];
+  // Intersperse milestones with events chronologically
+  const timelineItems = React.useMemo(() => {
+    const items: Array<{ type: 'event'; event: TimelineEvent } | { type: 'milestone'; milestone: Milestone }> = [];
 
+    // Add all events
+    for (const event of events) {
+      items.push({ type: 'event', event });
+    }
+
+    // Add all non-skipped milestones
     for (const milestone of milestones) {
-      if (milestone.isSkipped) continue;
-      const dueDate = new Date(milestone.dueDate);
-      const total = milestone.totalMembers || 1;
-      const completed = milestone.completedCount || 0;
-
-      // Past: all members have completed (regardless of due date)
-      // Upcoming: not yet complete (includes overdue milestones that need attention)
-      if (completed >= total) {
-        past.push(milestone);
-      } else {
-        upcoming.push(milestone);
+      if (!milestone.isSkipped) {
+        items.push({ type: 'milestone', milestone });
       }
     }
 
-    // Sort past: newest first (reverse chronological by dueDate)
-    past.sort(
-      (a, b) =>
-        new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime(),
-    );
+    // Sort chronologically (newest first)
+    items.sort((a, b) => {
+      const dateA = a.type === 'event' ? new Date(a.event.createdAt).getTime() : new Date(a.milestone.dueDate).getTime();
+      const dateB = b.type === 'event' ? new Date(b.event.createdAt).getTime() : new Date(b.milestone.dueDate).getTime();
+      return dateB - dateA;
+    });
 
-    // Sort upcoming: soonest first (ascending by dueDate)
-    upcoming.sort(
-      (a, b) =>
-        new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime(),
-    );
+    return items;
+  }, [events, milestones]);
 
-    return { pastMilestones: past, upcomingMilestones: upcoming };
-  }, [milestones]);
+  // Separate into past and upcoming based on today
+  const { pastItems, upcomingItems } = React.useMemo(() => {
+    const past: typeof timelineItems = [];
+    const upcoming: typeof timelineItems = [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-  // Sort past events: newest first
-  const sortedEvents = [...events].sort(
-    (a, b) =>
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-  );
+    for (const item of timelineItems) {
+      const itemDate = item.type === 'event' 
+        ? new Date(item.event.createdAt) 
+        : new Date(item.milestone.dueDate);
+      
+      // Set to start of day for comparison
+      const compareDate = new Date(itemDate);
+      compareDate.setHours(0, 0, 0, 0);
 
-  const hasPastContent = sortedEvents.length > 0 || pastMilestones.length > 0;
-  const hasUpcomingContent = upcomingMilestones.length > 0;
+      if (compareDate < today) {
+        past.push(item);
+      } else {
+        upcoming.push(item);
+      }
+    }
+
+    return { pastItems: past, upcomingItems: upcoming };
+  }, [timelineItems]);
+
+  const hasPastContent = pastItems.length > 0;
+  const hasUpcomingContent = upcomingItems.length > 0;
 
   if (!hasPastContent && !hasUpcomingContent) {
     return (
@@ -370,6 +371,12 @@ export function UnifiedTimeline({
     );
   }
 
+  const handleRefresh = () => {
+    api.getMilestones(tripId).then((result) => {
+      if (result.data) setMilestones(result.data);
+    });
+  };
+
   return (
     <div className="space-y-6">
       {/* ── LOOKING BACK ── */}
@@ -381,29 +388,27 @@ export function UnifiedTimeline({
           <div className="relative">
             <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-border" />
             <div className="space-y-4">
-              {/* Past events */}
-              {sortedEvents.map((event) => (
-                <EventRow key={event.id} event={event} />
-              ))}
-              {/* Past/completed milestones */}
-              {pastMilestones.map((milestone) => (
-                <div key={milestone.id} className="relative pl-8">
-                  <div className="absolute left-2 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-background border-2 border-green-400 dark:border-green-600">
-                    <span className="text-xs">✅</span>
-                  </div>
-                  <MilestoneCard
-                    milestone={milestone}
-                    members={members}
-                    currentUserId={currentUserId}
-                    currentUserRole={currentUserRole}
-                    onRefresh={onRefresh}
-                    onRequestPayment={onRequestPayment}
-                    onRemindSettle={onRemindSettle}
-                    onEditMilestone={onEditMilestone}
-                    isCompleted
-                  />
-                </div>
-              ))}
+              {pastItems.map((item, index) => {
+                if (item.type === 'event') {
+                  return <EventRow key={`${item.type}-${item.event.id}`} event={item.event} />;
+                } else {
+                  return (
+                    <div key={`${item.type}-${item.milestone.id}`} className="relative pl-8">
+                      <div className="absolute left-2 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-background border-2 border-green-400 dark:border-green-600">
+                        <span className="text-xs">✅</span>
+                      </div>
+                      <MilestoneCard
+                        milestone={item.milestone}
+                        members={members}
+                        currentUserId={currentUserId}
+                        currentUserRole={currentUserRole}
+                        onRefresh={handleRefresh}
+                        isCompleted
+                      />
+                    </div>
+                  );
+                }
+              })}
             </div>
           </div>
         </div>
@@ -419,19 +424,25 @@ export function UnifiedTimeline({
             Looking Ahead
           </h3>
           <div className="space-y-3">
-            {upcomingMilestones.map((milestone) => (
-              <MilestoneCard
-                key={milestone.id}
-                milestone={milestone}
-                members={members}
-                currentUserId={currentUserId}
-                currentUserRole={currentUserRole}
-                onRefresh={onRefresh}
-                onRequestPayment={onRequestPayment}
-                onRemindSettle={onRemindSettle}
-                onEditMilestone={onEditMilestone}
-              />
-            ))}
+            {upcomingItems.map((item) => {
+              if (item.type === 'milestone') {
+                return (
+                  <div key={`${item.type}-${item.milestone.id}`} className="relative pl-8">
+                    <div className="absolute left-2 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-background border-2 border-amber-400 dark:border-amber-600">
+                      <span className="text-xs">🎯</span>
+                    </div>
+                    <MilestoneCard
+                      milestone={item.milestone}
+                      members={members}
+                      currentUserId={currentUserId}
+                      currentUserRole={currentUserRole}
+                      onRefresh={handleRefresh}
+                    />
+                  </div>
+                );
+              }
+              return null;
+            })}
           </div>
         </div>
       )}
