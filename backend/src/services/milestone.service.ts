@@ -135,11 +135,15 @@ export class MilestoneService {
         dueDate = addDays(today, r.daysOffset);
       }
 
+      const reminderAt = new Date(dueDate);
+      reminderAt.setDate(reminderAt.getDate() - 3);
+
       return {
         tripId,
         type: r.type,
         name: r.name,
         dueDate,
+        reminderAt,
         isHard: r.isHard,
         isManualOverride: false,
         isSkipped: false,
@@ -187,11 +191,15 @@ export class MilestoneService {
         finalDueDate.setDate(finalDueDate.getDate() + Math.abs(template.daysFromStart));
       }
 
+      const reminderAt = new Date(finalDueDate);
+      reminderAt.setDate(reminderAt.getDate() - 3);
+
       return {
         tripId,
         type: template.type,
         name: template.name,
         dueDate: finalDueDate,
+        reminderAt,
         isHard: template.isHard,
         isManualOverride: false,
         isSkipped: false,
@@ -363,12 +371,16 @@ export class MilestoneService {
       priority?: number;
     }
   ): Promise<any> {
+    const reminderAt = new Date(data.dueDate);
+    reminderAt.setDate(reminderAt.getDate() - 3);
+
     return this.prisma.milestone.create({
       data: {
         tripId,
-        type: data.type,
+        type: data.type as MilestoneType,
         name: data.name,
         dueDate: data.dueDate,
+        reminderAt,
         isHard: data.isHard ?? true,
         isManualOverride: true,
         isLocked: false,
@@ -395,6 +407,9 @@ export class MilestoneService {
     
     if (data.dueDate !== undefined) {
       updateData.dueDate = data.dueDate;
+      const reminderAt = new Date(data.dueDate);
+      reminderAt.setDate(reminderAt.getDate() - 3);
+      updateData.reminderAt = reminderAt;
       updateData.isManualOverride = true;
     }
     if (data.isLocked !== undefined) updateData.isLocked = data.isLocked;

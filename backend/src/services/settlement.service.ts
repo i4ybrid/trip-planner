@@ -1,5 +1,7 @@
 import { getPrisma } from '@/lib/prisma';
 import { BillSplit, BillSplitMember } from '@prisma/client';
+import { notificationService } from '@/services/notification.service';
+import { NotificationCategory, NotificationReferenceType } from '@prisma/client';
 
 export interface SettlementMemberStatus {
   userId: string;
@@ -74,6 +76,10 @@ export async function checkAndUpdateSettlementMilestones(tripId: string): Promis
     const isSettled = checkMemberIsSettled(member.userId, billSplits);
 
     if (isSettled && settlementDueMilestone) {
+      const existing = await prisma.milestoneCompletion.findUnique({
+        where: { milestoneId_userId: { milestoneId: settlementDueMilestone.id, userId: member.userId } },
+      });
+
       await prisma.milestoneCompletion.upsert({
         where: {
           milestoneId_userId: {
@@ -92,6 +98,23 @@ export async function checkAndUpdateSettlementMilestones(tripId: string): Promis
           completedAt: new Date(),
         },
       });
+
+      // Fire SETTLED notification the first time this member becomes settled
+      if (!existing || existing.status !== 'COMPLETED') {
+        const trip = await prisma.trip.findUnique({
+          where: { id: tripId },
+          select: { name: true },
+        });
+        await notificationService.createNotification({
+          userId: member.userId,
+          category: NotificationCategory.SETTLEMENT,
+          title: 'Settled',
+          body: `All your balances for "${trip?.name}" have been settled`,
+          referenceId: tripId,
+          referenceType: NotificationReferenceType.TRIP,
+          link: `/trip/${tripId}/payments`,
+        });
+      }
     }
   }
 

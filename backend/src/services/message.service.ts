@@ -14,9 +14,20 @@ export class MessageService {
       },
     });
 
+    // Get trip members for notifications
+    const trip = await this.prisma.trip.findUnique({
+      where: { id: tripId },
+      include: {
+        members: {
+          where: { status: 'CONFIRMED', userId: { not: senderId } },
+          select: { userId: true },
+        },
+      },
+    });
+
+    // Notify mentioned users
     if (mentions && mentions.length > 0) {
       const sender = message.sender;
-      const trip = await this.prisma.trip.findUnique({ where: { id: tripId }, select: { name: true } });
       for (const mentionedUserId of mentions) {
         if (mentionedUserId !== senderId) {
           await notificationService.createNotification({
@@ -28,6 +39,17 @@ export class MessageService {
             referenceType: NotificationReferenceType.MESSAGE,
             link: '/trip/' + tripId + '/chat',
           });
+        }
+      }
+    }
+
+    // Send trip chat notification (non-mention) to all other members
+    // The notificationService batches these internally if multiple messages come in
+    if (trip) {
+      const otherMemberIds = trip.members.map(m => m.userId);
+      for (const memberId of otherMemberIds) {
+        if (!mentions?.includes(memberId)) {
+          await notificationService.createTripChatNotification(tripId, memberId, message.id);
         }
       }
     }
@@ -46,12 +68,32 @@ export class MessageService {
       data: { lastMessageAt: new Date() },
     });
 
+    // Get conversation participants
+    const conversation = await this.prisma.dmConversation.findUnique({
+      where: { id: conversationId },
+      include: { participants: { select: { id: true, name: true } } },
+    });
+
+    // Notify other participant about new DM
+    if (conversation) {
+      for (const participant of conversation.participants) {
+        if (participant.id !== senderId && !mentions?.includes(participant.id)) {
+          await notificationService.createNotification({
+            userId: participant.id,
+            category: NotificationCategory.CHAT,
+            title: 'New Direct Message',
+            body: '@' + message.sender.name + ': ' + content.substring(0, 50) + (content.length > 50 ? '...' : ''),
+            referenceId: conversationId,
+            referenceType: NotificationReferenceType.MESSAGE,
+            link: '/messages/' + conversationId,
+          });
+        }
+      }
+    }
+
+    // Notify mentioned users
     if (mentions && mentions.length > 0) {
       const sender = message.sender;
-      const conversation = await this.prisma.dmConversation.findUnique({
-        where: { id: conversationId },
-        include: { participants: { select: { id: true, name: true } } },
-      });
       if (conversation) {
         for (const participant of conversation.participants) {
           if (mentions.includes(participant.id) && participant.id !== senderId) {
@@ -118,7 +160,6 @@ export class MessageService {
     if (!reactions[emoji]) reactions[emoji] = [];
     if (!reactions[emoji].includes(userId)) {
       reactions[emoji].push(userId);
-      // Notify message author about reaction
       if (message.senderId !== userId) {
         const trip = message.tripId
           ? await this.prisma.trip.findUnique({ where: { id: message.tripId }, select: { name: true } })

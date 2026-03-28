@@ -125,6 +125,10 @@ const server = createServer(app);
 // Setup Socket.IO
 const io = setupSocketIO(server);
 
+// Start notification scheduler cron jobs
+import { startNotificationScheduler } from './jobs/notificationScheduler';
+startNotificationScheduler();
+
 // Start server
 server.listen(PORT, () => {
   logger.info(`🚀 Server running on port ${PORT}`);

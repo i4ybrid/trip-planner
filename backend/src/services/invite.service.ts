@@ -34,10 +34,47 @@ export class InviteService {
       },
     });
 
+    // Send in-app notification if invitee has an account
+    await this.sendInviteNotification(invite);
+
     return {
       ...invite,
       inviteUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/invite/${token}`,
     };
+  }
+
+  // Send in-app notification to the invitee if they have an existing account
+  async sendInviteNotification(invite: any) {
+    let inviteeUserId: string | null = null;
+
+    if (invite.email) {
+      const user = await this.prisma.user.findUnique({
+        where: { email: invite.email.toLowerCase() },
+        select: { id: true },
+      });
+      inviteeUserId = user?.id ?? null;
+    } else if (invite.phone) {
+      const user = await this.prisma.user.findFirst({
+        where: { phone: invite.phone },
+        select: { id: true },
+      });
+      inviteeUserId = user?.id ?? null;
+    }
+
+    if (!inviteeUserId) return;
+
+    // Don't notify the sender if they're somehow the invitee
+    if (inviteeUserId === invite.sentById) return;
+
+    await notificationService.createNotification({
+      userId: inviteeUserId,
+      category: NotificationCategory.INVITE,
+      title: 'Trip Invite',
+      body: `You've been invited to join "${invite.trip.name}"`,
+      referenceId: invite.tripId,
+      referenceType: NotificationReferenceType.TRIP,
+      link: `/invite/${invite.token}`,
+    });
   }
 
   async getInviteByToken(token: string) {

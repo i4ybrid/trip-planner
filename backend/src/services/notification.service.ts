@@ -11,6 +11,17 @@ export interface CreateNotificationData {
   link?: string;
 }
 
+// In-memory batch state for trip chat notifications (outside class to persist)
+interface PendingTripChatBatch {
+  tripId: string;
+  messageIds: string[];
+  messageCount: number;
+  firstMessageAt: Date;
+  timer?: NodeJS.Timeout;
+}
+
+const pendingTripChat: Map<string, PendingTripChatBatch> = new Map(); // key: `${userId}:${tripId}`
+
 export class NotificationService {
   private prisma = getPrisma();
 
@@ -95,6 +106,83 @@ export class NotificationService {
       referenceType,
       link: tripId ? `/trip/${tripId}/chat` : '/messages',
     });
+  }
+
+  // Batch trip chat notification: adds to pending batch, flushes after 5 min or >5 messages
+  async createTripChatNotification(tripId: string, excludeUserId: string, messageId: string) {
+    const members = await this.prisma.tripMember.findMany({
+      where: { tripId, status: 'CONFIRMED' },
+      select: { userId: true },
+    });
+
+    for (const member of members) {
+      if (member.userId === excludeUserId) continue;
+
+      const key = member.userId + ':' + tripId;
+      const existing = pendingTripChat.get(key);
+
+      if (existing) {
+        existing.messageIds.push(messageId);
+        existing.messageCount++;
+        if (existing.timer) clearTimeout(existing.timer);
+        existing.timer = setTimeout(() => this.flushTripChatBatch(key), 5 * 60 * 1000);
+        if (existing.messageCount > 5) {
+          await this.flushTripChatBatch(key);
+        }
+      } else {
+        const timer = setTimeout(() => this.flushTripChatBatch(key), 5 * 60 * 1000);
+        pendingTripChat.set(key, {
+          tripId,
+          messageIds: [messageId],
+          messageCount: 1,
+          firstMessageAt: new Date(),
+          timer,
+        });
+      }
+    }
+  }
+
+  private async flushTripChatBatch(key: string) {
+    const batch = pendingTripChat.get(key);
+    if (!batch) return;
+
+    pendingTripChat.delete(key);
+
+    if (batch.timer) clearTimeout(batch.timer);
+
+    if (batch.messageCount === 0) return;
+
+    const userId = key.split(':')[0];
+    const trip = await this.prisma.trip.findUnique({
+      where: { id: batch.tripId },
+      select: { name: true },
+    });
+
+    if (batch.messageCount === 1) {
+      const message = await this.prisma.message.findUnique({
+        where: { id: batch.messageIds[0] },
+        select: { sender: { select: { name: true } }, content: true },
+      });
+      await this.createNotification({
+        userId,
+        category: NotificationCategory.CHAT,
+        title: 'New message in ' + (trip?.name || 'trip'),
+        body: (message?.sender?.name || 'Someone') + ': ' + (message?.content || '').substring(0, 50),
+        referenceId: batch.tripId,
+        referenceType: NotificationReferenceType.MESSAGE,
+        link: '/trip/' + batch.tripId + '/chat',
+      });
+    } else {
+      await this.createNotification({
+        userId,
+        category: NotificationCategory.CHAT,
+        title: batch.messageCount + ' new messages in ' + (trip?.name || 'trip'),
+        body: 'You have ' + batch.messageCount + ' unread messages in the trip chat',
+        referenceId: batch.tripId,
+        referenceType: NotificationReferenceType.MESSAGE,
+        link: '/trip/' + batch.tripId + '/chat',
+      });
+    }
   }
 
   async getNotifications(

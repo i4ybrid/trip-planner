@@ -37,6 +37,7 @@ enum MemberStatus {
   MAYBE
   CONFIRMED
   REMOVED
+  PENDING_JOIN
 }
 
 enum VoteOption {

@@ -1,6 +1,7 @@
 import { getPrisma } from '@/lib/prisma';
 import { notificationService } from '@/services/notification.service';
 import { NotificationCategory, NotificationReferenceType } from '@prisma/client';
+import { checkAndUpdateSettlementMilestones } from '@/services/settlement.service';
 
 export class BillSplitService {
   private prisma = getPrisma();
@@ -295,6 +296,9 @@ export class BillSplitService {
         link: `/trip/${billSplit.tripId}/payments`,
       });
     }
+
+    // Update settlement milestones and fire SETTLED notifications
+    await checkAndUpdateSettlementMilestones(billSplit.tripId);
 
     return billSplit;
   }

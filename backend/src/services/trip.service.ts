@@ -553,6 +553,154 @@ export class TripService {
 
     return member;
   }
+
+  // ─── JOIN REQUEST FLOW ─────────────────────────────────────────────────────
+
+  /**
+   * Request to join a trip (OPEN-style managed join requests)
+   */
+  async requestJoin(tripId: string, userId: string) {
+    const existing = await this.prisma.tripMember.findUnique({
+      where: { tripId_userId: { tripId, userId } },
+    });
+    if (existing && existing.status !== 'REMOVED') {
+      throw new Error('You are already a member or have a pending request');
+    }
+
+    const trip = await this.prisma.trip.findUnique({
+      where: { id: tripId },
+      select: { name: true, style: true },
+    });
+    if (!trip) throw new Error('Trip not found');
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { name: true },
+    });
+
+    const member = await this.prisma.tripMember.upsert({
+      where: { tripId_userId: { tripId, userId } },
+      update: { status: 'PENDING_JOIN', role: 'MEMBER' },
+      create: { tripId, userId, role: 'MEMBER', status: 'PENDING_JOIN' },
+    });
+
+    await this.prisma.timelineEvent.create({
+      data: {
+        tripId,
+        eventType: 'member_joined',
+        description: `${user?.name || 'Someone'} requested to join the trip`,
+        createdBy: userId,
+      },
+    });
+
+    // Notify MASTER and ORGANIZERs
+    const managers = await this.prisma.tripMember.findMany({
+      where: { tripId, role: { in: ['MASTER', 'ORGANIZER'] }, status: 'CONFIRMED' },
+      select: { userId: true },
+    });
+
+    for (const manager of managers) {
+      await notificationService.createNotification({
+        userId: manager.userId,
+        category: NotificationCategory.MEMBER,
+        title: 'Join Request',
+        body: `${user?.name || 'Someone'} wants to join "${trip.name}"`,
+        referenceId: tripId,
+        referenceType: NotificationReferenceType.TRIP,
+        link: `/trip/${tripId}/members`,
+      });
+    }
+
+    return member;
+  }
+
+  /**
+   * Approve a join request → sets member status to CONFIRMED
+   */
+  async approveJoinRequest(tripId: string, userId: string) {
+    const member = await this.prisma.tripMember.findUnique({
+      where: { tripId_userId: { tripId, userId } },
+    });
+    if (!member || member.status !== 'PENDING_JOIN') {
+      throw new Error('No pending join request found for this user');
+    }
+
+    const trip = await this.prisma.trip.findUnique({
+      where: { id: tripId },
+      select: { name: true },
+    });
+
+    const updated = await this.prisma.tripMember.update({
+      where: { tripId_userId: { tripId, userId } },
+      data: { status: 'CONFIRMED' },
+    });
+
+    await this.prisma.timelineEvent.create({
+      data: {
+        tripId,
+        eventType: 'member_joined',
+        description: 'A join request was approved',
+        createdBy: userId,
+      },
+    });
+
+    // Notify the requester
+    await notificationService.createNotification({
+      userId,
+      category: NotificationCategory.MEMBER,
+      title: 'Join Request Approved',
+      body: `Your request to join "${trip?.name}" was approved!`,
+      referenceId: tripId,
+      referenceType: NotificationReferenceType.TRIP,
+      link: `/trip/${tripId}`,
+    });
+
+    return updated;
+  }
+
+  /**
+   * Deny a join request → removes the PENDING_JOIN member
+   */
+  async denyJoinRequest(tripId: string, userId: string) {
+    const member = await this.prisma.tripMember.findUnique({
+      where: { tripId_userId: { tripId, userId } },
+    });
+    if (!member || member.status !== 'PENDING_JOIN') {
+      throw new Error('No pending join request found for this user');
+    }
+
+    const trip = await this.prisma.trip.findUnique({
+      where: { id: tripId },
+      select: { name: true },
+    });
+
+    await this.prisma.tripMember.update({
+      where: { tripId_userId: { tripId, userId } },
+      data: { status: 'REMOVED' },
+    });
+
+    await this.prisma.timelineEvent.create({
+      data: {
+        tripId,
+        eventType: 'member_removed',
+        description: 'A join request was denied',
+        createdBy: userId,
+      },
+    });
+
+    // Notify the requester
+    await notificationService.createNotification({
+      userId,
+      category: NotificationCategory.MEMBER,
+      title: 'Join Request Denied',
+      body: `Your request to join "${trip?.name}" was denied`,
+      referenceId: tripId,
+      referenceType: NotificationReferenceType.TRIP,
+      link: '/dashboard',
+    });
+
+    return { success: true };
+  }
 }
 
 export const tripService = new TripService();
