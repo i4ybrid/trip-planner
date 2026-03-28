@@ -1,5 +1,5 @@
 import { Server as HTTPServer } from 'http';
-import { Server as SocketIOServer } from 'socket.io';
+import { Server as SocketIOServer, Socket } from 'socket.io';
 import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '@/middleware/auth';
 import { logger } from './logger';
@@ -7,6 +7,24 @@ import { logger } from './logger';
 interface SocketData {
   userId: string;
   email: string;
+}
+
+// Connection manager: userId → socket
+const connectionManager = new Map<string, Socket>();
+
+function extractBearerToken(authHeader: string | undefined): string | null {
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
+  return authHeader.slice(7);
+}
+
+function extractCookieToken(cookieHeader: string | undefined): string | null {
+  if (!cookieHeader) return null;
+  const match = cookieHeader.match(/(?:^|;\s*)token=([^;]*)/);
+  return match ? match[1] : null;
+}
+
+export function getConnectionManager(): Map<string, Socket> {
+  return connectionManager;
 }
 
 export function setupSocketIO(server: HTTPServer) {
@@ -17,9 +35,22 @@ export function setupSocketIO(server: HTTPServer) {
     },
   });
 
-  // Authentication middleware
+  // Authentication middleware — checks multiple token sources
   io.use((socket, next) => {
-    const token = socket.handshake.auth.token;
+    let token: string | null = null;
+
+    // 1. socket.handshake.auth.token (existing)
+    token = socket.handshake.auth.token as string | null;
+
+    // 2. Authorization header → Bearer token
+    if (!token) {
+      token = extractBearerToken(socket.handshake.headers.authorization as string | undefined);
+    }
+
+    // 3. Cookie header → extract token
+    if (!token) {
+      token = extractCookieToken(socket.handshake.headers.cookie as string | undefined);
+    }
 
     if (!token) {
       return next(new Error('Authentication required'));
@@ -37,6 +68,13 @@ export function setupSocketIO(server: HTTPServer) {
 
   io.on('connection', (socket) => {
     const userId = socket.data.userId as string;
+
+    // Register connection in manager
+    connectionManager.set(userId, socket);
+
+    // Auto-join user-specific room for push notifications
+    socket.join(`user:${userId}`);
+
     logger.trace(`User connected: ${userId}`);
 
     // Join trip room
@@ -109,6 +147,7 @@ export function setupSocketIO(server: HTTPServer) {
 
     // Disconnect
     socket.on('disconnect', () => {
+      connectionManager.delete(userId);
       logger.trace(`User disconnected: ${userId}`);
     });
   });
