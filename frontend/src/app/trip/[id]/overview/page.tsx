@@ -11,6 +11,7 @@ import { formatDateRange, formatCurrency, cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { logger } from '@/lib/logger';
 import { MapPin, Calendar, Users, DollarSign, Share2, Settings, MoreVertical, MoreHorizontal, Shield, Trash2, Check } from 'lucide-react';
+import { api } from '@/services/api';
 import { TripMember, User, Activity, BillSplit, MemberRole, TripStyle } from '@/types';
 import { useAuth } from '@/hooks/use-auth';
 
