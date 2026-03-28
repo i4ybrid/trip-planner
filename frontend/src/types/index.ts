@@ -312,6 +312,7 @@ export interface DmConversation {
 export interface Notification {
   id: string;
   userId: string;
+  type: NotificationType;
   category: NotificationCategory;
   title: string;
   body: string;
@@ -319,6 +320,8 @@ export interface Notification {
   referenceType?: NotificationReferenceType;
   link?: string;
   isRead: boolean;
+  tripId?: string;
+  actionType?: string;
   createdAt: string;
 }
 
