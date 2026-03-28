@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import { useActivityStore } from '@/store';
 import { Card, CardHeader, CardTitle, CardContent, Button, Badge, Input, Textarea, Select, Modal, EmptyState } from '@/components';
 import { formatCurrency, cn } from '@/lib/utils';
-import { MapPin, DollarSign, ThumbsUp, ThumbsDown, HelpCircle, Plus } from 'lucide-react';
+import { MapPin, ThumbsUp, ThumbsDown, HelpCircle, Plus } from 'lucide-react';
 import { CreateActivityInput, ActivityCategory } from '@/types';
 
 const categoryOptions = [
@@ -107,8 +107,7 @@ export default function TripActivities() {
                       </span>
                     )}
                     {activity.cost && (
-                      <span className="flex items-center gap-1">
-                        <DollarSign className="h-3 w-3" />
+                      <span className="text-sm">
                         {formatCurrency(activity.cost)}
                       </span>
                     )}
