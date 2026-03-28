@@ -25,6 +25,7 @@ export class PrismaStub {
   private milestoneCompletions: Map<string, any> = new Map();
   private milestoneActions: Map<string, any> = new Map();
   private messageReadReceipts: Map<string, any> = new Map();
+  private notificationPreferences: Map<string, any> = new Map();
 
   /** Apply Prisma include/select to an activity record */
   private _applyActivityInclude(activity: any, include: any): any {
@@ -743,6 +744,47 @@ export class PrismaStub {
           return Promise.resolve(receipt);
         }),
       },
+      notificationPreference: {
+        findUnique: vi.fn(({ where }: any) => {
+          if (where.userId_category) {
+            const key = `${where.userId_category.userId}-${where.userId_category.category}`;
+            return Promise.resolve(this.notificationPreferences.get(key) || null);
+          }
+          return Promise.resolve(null);
+        }),
+        findMany: vi.fn(({ where }: any) => {
+          let result = Array.from(this.notificationPreferences.values());
+          if (where?.userId) result = result.filter((p) => p.userId === where.userId);
+          return Promise.resolve(result);
+        }),
+        create: vi.fn(({ data }: any) => {
+          const pref = { id: `pref-${Date.now()}`, ...data };
+          const key = `${data.userId}-${data.category}`;
+          this.notificationPreferences.set(key, pref);
+          return Promise.resolve(pref);
+        }),
+        createMany: vi.fn(({ data }: any) => {
+          const created = data.map((d: any) => {
+            const pref = { id: `pref-${Date.now()}-${Math.random()}`, ...d };
+            const key = `${d.userId}-${d.category}`;
+            this.notificationPreferences.set(key, pref);
+            return pref;
+          });
+          return Promise.resolve({ count: created.length });
+        }),
+        upsert: vi.fn(({ where, create, update }: any) => {
+          const key = `${where.userId_category.userId}-${where.userId_category.category}`;
+          const existing = this.notificationPreferences.get(key);
+          if (existing) {
+            const updated = { ...existing, ...update };
+            this.notificationPreferences.set(key, updated);
+            return Promise.resolve(updated);
+          }
+          const pref = { id: `pref-${Date.now()}`, ...create };
+          this.notificationPreferences.set(key, pref);
+          return Promise.resolve(pref);
+        }),
+      },
       settings: {
         findUnique: vi.fn(({ where }: any) => {
           if (where.userId) return Promise.resolve(this.settings.get(where.userId));
@@ -943,6 +985,7 @@ export class PrismaStub {
     this.milestoneCompletions.clear();
     this.milestoneActions.clear();
     this.messageReadReceipts.clear();
+    this.notificationPreferences.clear();
   }
 }
 

@@ -26,14 +26,17 @@ export class NotificationService {
   private prisma = getPrisma();
 
   async shouldNotify(userId: string, category: NotificationCategory): Promise<boolean> {
-    const preference = await this.prisma.notificationPreference.findUnique({
-      where: { userId_category: { userId, category } },
-    });
-    // Default to true if no preference set; only gate if inApp is explicitly false
-    if (preference && preference.inApp === false) {
-      return false;
+    try {
+      const preference = await this.prisma.notificationPreference.findUnique({
+        where: { userId_category: { userId, category } },
+      });
+      // If no preference set, default to true (notify)
+      if (!preference) return true;
+      return preference.inApp;
+    } catch {
+      // If table doesn't exist or query fails, default to true (fail open — better to notify than miss)
+      return true;
     }
-    return true;
   }
 
   async createNotification(data: CreateNotificationData) {

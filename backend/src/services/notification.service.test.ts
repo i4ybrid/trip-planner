@@ -7,10 +7,22 @@ describe('NotificationService', () => {
   let notificationService: NotificationService;
   let stubs: ReturnType<typeof createStubs>;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     stubs = createStubs();
     setPrisma(stubs.prisma.getImplementation() as any);
     notificationService = new NotificationService();
+    const prisma = stubs.prisma.getImplementation();
+    await prisma.notificationPreference.createMany({
+      data: [
+        { userId: 'user-1', category: 'MILESTONE', inApp: true },
+        { userId: 'user-1', category: 'INVITE', inApp: true },
+        { userId: 'user-1', category: 'PAYMENT', inApp: true },
+        { userId: 'user-1', category: 'SETTLEMENT', inApp: true },
+        { userId: 'user-1', category: 'MEMBER', inApp: true },
+        { userId: 'user-1', category: 'CHAT', inApp: true },
+        { userId: 'user-1', category: 'FRIEND', inApp: true },
+      ],
+    });
   });
 
   afterEach(() => {
