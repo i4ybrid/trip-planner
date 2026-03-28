@@ -20,6 +20,7 @@ import notificationsRouter from './routes/notifications';
 import blockedRouter from './routes/blocked';
 import inviteCodesRouter from './routes/invite-codes';
 import emailInviteRouter from './routes/email-invite';
+import milestonesRouter from './routes/milestones';
 
 // Load environment variables
 dotenv.config();
@@ -72,8 +73,16 @@ if (!storageConfig.isRemote) {
   app.use('/uploads', express.static(storageConfig.uploadDir));
 }
 
-// Health check endpoint
+// Health check endpoints
 app.get('/health', (_req, res) => {
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    version: process.env.npm_package_version || '1.0.0',
+  });
+});
+
+app.get('/api/health', (_req, res) => {
   res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
@@ -94,6 +103,7 @@ app.use('/api', notificationsRouter);
 app.use('/api', blockedRouter);
 app.use('/api', inviteCodesRouter);
 app.use('/api', emailInviteRouter);
+app.use('/api', milestonesRouter);
 
 // 404 handler
 app.use((_req, res) => {

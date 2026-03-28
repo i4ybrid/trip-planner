@@ -7,6 +7,7 @@ import { TripCard, EmptyState, Button } from '@/components';
 import { Plane } from 'lucide-react';
 import { LeftSidebar } from '@/components/left-sidebar';
 import { AppHeader } from '@/components/app-header';
+import { PendingInvites } from '@/components/notification/pending-invites';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -40,6 +41,10 @@ export default function DashboardPage() {
               {error}
             </div>
           )}
+
+          <section className="mb-6">
+            <PendingInvites onInviteProcessed={fetchTrips} />
+          </section>
 
           <section className="mb-10">
             <h2 className="mb-4 text-xl font-semibold flex items-center gap-2">

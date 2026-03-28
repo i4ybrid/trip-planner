@@ -58,6 +58,17 @@ router.delete('/invites/:id', authMiddleware, async (req: AuthRequest, res) => {
   }
 });
 
+// GET /api/invites/pending - Get pending invites for current user
+router.get('/invites/pending', authMiddleware, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.userId;
+    const invites = await inviteService.getPendingInvitesByUserId(userId);
+    res.json({ data: invites });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // GET /api/trips/:tripId/invites - Get trip invites (authenticated)
 router.get('/trips/:tripId/invites', authMiddleware, async (req: AuthRequest, res) => {
   try {

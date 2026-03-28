@@ -7,6 +7,7 @@ import { api } from '@/services/api';
 import { Send, Users } from 'lucide-react';
 import { cn, getInitials } from '@/lib/utils';
 import { Message, TripMember, User } from '@/types';
+import { logger } from '@/lib/logger';
 
 export default function TripChat() {
   const params = useParams();
@@ -37,7 +38,7 @@ export default function TripChat() {
         }
         if (membersResult.data) setMembers(membersResult.data);
       } catch (error) {
-        console.error('Failed to load chat data:', error);
+        logger.error('Failed to load chat data:', error);
       }
     };
     loadData();
@@ -70,7 +71,7 @@ export default function TripChat() {
         setHasMoreMessages(false);
       }
     } catch (error) {
-      console.error('Failed to load more messages:', error);
+      logger.error('Failed to load more messages:', error);
     } finally {
       setIsLoadingMore(false);
     }

@@ -13,6 +13,7 @@ import { AddFriendModal, FriendCard, FriendRequestCard, BlockedUserCard } from '
 import { api } from '@/services/api';
 import { Friend, FriendRequest, BlockedUser } from '@/types';
 import { cn } from '@/lib/utils';
+import { logger } from '@/lib/logger';
 
 type Tab = 'friends' | 'pending' | 'sent' | 'blocked';
 
@@ -64,7 +65,7 @@ function FriendsPageContent() {
       }
       if (blockedResult.data) setBlockedUsers(blockedResult.data);
     } catch (error) {
-      console.error('Failed to load data:', error);
+      logger.error('Failed to load data:', error);
     }
     setIsLoading(false);
   }, [session]);
@@ -101,7 +102,7 @@ function FriendsPageContent() {
       });
       setSentRequests(req => req.filter(r => r.id !== requestId));
     } catch (error) {
-      console.error('Failed to cancel request:', error);
+      logger.error('Failed to cancel request:', error);
     }
   };
 

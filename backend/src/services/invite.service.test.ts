@@ -1,6 +1,7 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { InviteService } from './invite.service';
 import { createStubs } from '@/lib/stubs';
+import { setPrisma, resetPrisma } from '@/lib/prisma-client';
 
 describe('InviteService', () => {
   let inviteService: InviteService;
@@ -8,8 +9,12 @@ describe('InviteService', () => {
 
   beforeEach(() => {
     stubs = createStubs();
+    setPrisma(stubs.prisma.getImplementation() as any);
     inviteService = new InviteService();
-    (inviteService as any).prisma = stubs.prisma.getImplementation();
+  });
+
+  afterEach(() => {
+    resetPrisma();
   });
 
   describe('createInvite', () => {

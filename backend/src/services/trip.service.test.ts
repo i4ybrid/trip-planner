@@ -1,6 +1,7 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { TripService } from './trip.service';
 import { createStubs } from '@/lib/stubs';
+import { setPrisma, resetPrisma } from '@/lib/prisma-client';
 
 describe('TripService', () => {
   let tripService: TripService;
@@ -8,9 +9,12 @@ describe('TripService', () => {
 
   beforeEach(() => {
     stubs = createStubs();
+    setPrisma(stubs.prisma.getImplementation() as any);
     tripService = new TripService();
-    // Inject the stubbed prisma client
-    (tripService as any).prisma = stubs.prisma.getImplementation();
+  });
+
+  afterEach(() => {
+    resetPrisma();
   });
 
   describe('createTrip', () => {

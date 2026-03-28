@@ -1,8 +1,9 @@
-import prisma from '@/lib/prisma';
+import { getPrisma } from '@/lib/prisma';
 
 export class MessageService {
+  private prisma = getPrisma();
   async createTripMessage(tripId: string, senderId: string, content: string, messageType = 'TEXT', mentions: string[] = [], replyToId?: string) {
-    const message = await prisma.message.create({
+    const message = await this.prisma.message.create({
       data: {
         tripId,
         senderId,
@@ -38,7 +39,7 @@ export class MessageService {
   }
 
   async createDmMessage(conversationId: string, senderId: string, content: string, messageType = 'TEXT', mentions: string[] = [], replyToId?: string) {
-    const message = await prisma.message.create({
+    const message = await this.prisma.message.create({
       data: {
         conversationId,
         senderId,
@@ -59,7 +60,7 @@ export class MessageService {
     });
 
     // Update conversation last message time
-    await prisma.dmConversation.update({
+    await this.prisma.dmConversation.update({
       where: { id: conversationId },
       data: { lastMessageAt: new Date() },
     });
@@ -68,7 +69,7 @@ export class MessageService {
   }
 
   async getTripMessages(tripId: string, limit = 30, before?: Date) {
-    return prisma.message.findMany({
+    return this.prisma.message.findMany({
       where: {
         tripId,
         deletedAt: null,
@@ -100,7 +101,7 @@ export class MessageService {
   }
 
   async getDmMessages(conversationId: string, limit = 30, before?: Date) {
-    return prisma.message.findMany({
+    return this.prisma.message.findMany({
       where: {
         conversationId,
         deletedAt: null,
@@ -121,7 +122,7 @@ export class MessageService {
   }
 
   async updateMessage(messageId: string, data: { content?: string; mentions?: string[]; reactions?: Record<string, string[]> }) {
-    return prisma.message.update({
+    return this.prisma.message.update({
       where: { id: messageId },
       data: {
         ...data,
@@ -131,7 +132,7 @@ export class MessageService {
   }
 
   async deleteMessage(messageId: string) {
-    return prisma.message.update({
+    return this.prisma.message.update({
       where: { id: messageId },
       data: {
         deletedAt: new Date(),
@@ -141,7 +142,7 @@ export class MessageService {
   }
 
   async addReaction(messageId: string, userId: string, emoji: string) {
-    const message = await prisma.message.findUnique({
+    const message = await this.prisma.message.findUnique({
       where: { id: messageId },
       select: { reactions: true },
     });
@@ -160,14 +161,14 @@ export class MessageService {
       reactions[emoji].push(userId);
     }
 
-    return prisma.message.update({
+    return this.prisma.message.update({
       where: { id: messageId },
       data: { reactions: reactions as any },
     });
   }
 
   async removeReaction(messageId: string, userId: string, emoji: string) {
-    const message = await prisma.message.findUnique({
+    const message = await this.prisma.message.findUnique({
       where: { id: messageId },
       select: { reactions: true },
     });
@@ -186,14 +187,14 @@ export class MessageService {
       }
     }
 
-    return prisma.message.update({
+    return this.prisma.message.update({
       where: { id: messageId },
       data: { reactions: reactions as any },
     });
   }
 
   async markAsRead(messageId: string, userId: string) {
-    return prisma.messageReadReceipt.upsert({
+    return this.prisma.messageReadReceipt.upsert({
       where: {
         messageId_userId: {
           messageId,
@@ -212,7 +213,7 @@ export class MessageService {
   }
 
   async getUnreadCount(conversationId: string | null, tripId: string | null, userId: string) {
-    const messages = await prisma.message.count({
+    const messages = await this.prisma.message.count({
       where: {
         conversationId,
         tripId,

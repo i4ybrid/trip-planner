@@ -244,7 +244,8 @@ test.describe('Payment Optimistic Updates', () => {
         // excessive GET calls. Maximum 1 re-fetch on error
         const getCalls = billSplitsCalls.filter(url => url.includes('GET'));
         // Should not have more than 2 GET calls total (initial + 1 possible re-fetch on error)
-        expect(getCalls.length).toBeLessThanOrEqual((await page.goto('about:blank')) && 2);
+        await page.goto('about:blank');
+        expect(getCalls.length).toBeLessThanOrEqual(2);
       }
     }
   });

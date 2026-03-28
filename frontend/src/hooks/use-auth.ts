@@ -3,7 +3,9 @@
 import { signIn, signOut, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth-store';
+import { clearSessionCache } from '@/services/api';
 import { useCallback, useEffect } from 'react';
+import { User } from '@/types';
 
 export function useAuth() {
   const { data: session, status, update } = useSession();
@@ -18,13 +20,15 @@ export function useAuth() {
         email: session.user.email!,
         name: session.user.name!,
         avatarUrl: session.user.image || undefined,
-      };
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      } as User;
       // Only update if different to avoid infinite loops
       if (!storeUser || storeUser.id !== sessionUser.id) {
         setUser(sessionUser);
       }
-    } else if (!session && storeUser) {
-      // Session cleared, clear store
+    } else if ((!session || Object.keys(session).length === 0) && storeUser) {
+      // Session cleared (null or empty object), clear store
       setUser(null);
     }
   }, [session, storeUser, setUser]);
@@ -41,6 +45,8 @@ export function useAuth() {
         return { success: false, error: result.error };
       }
 
+      // Clear session cache to ensure new token is used
+      clearSessionCache();
       // Update the session to get the latest data
       await update();
       return { success: true };
@@ -102,6 +108,8 @@ export function useAuth() {
   }, [update]);
 
   const logout = useCallback(async () => {
+    // Clear session cache
+    clearSessionCache();
     await signOut({ redirect: false });
     setUser(null);
     router.push('/login');

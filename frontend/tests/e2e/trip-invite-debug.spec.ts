@@ -132,7 +132,7 @@ test.describe('Trip Invite Debug', () => {
       } else {
         // The invite button wasn't visible - this is the bug
         console.log('BUG FOUND: Invite button not visible after search');
-        test.fail('Invite button not visible - user cannot be invited');
+        test.fail(true, 'Invite button not visible - user cannot be invited');
       }
     });
 

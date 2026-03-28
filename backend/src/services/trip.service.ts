@@ -1,4 +1,4 @@
-import prisma from '@/lib/prisma';
+import { getPrisma } from '@/lib/prisma';
 import { TripCreateInput, TripUpdateInput } from '@/types';
 import { TripStatus } from '@prisma/client';
 
@@ -13,8 +13,9 @@ const VALID_TRANSITIONS: Record<TripStatus, TripStatus[]> = {
 };
 
 export class TripService {
+  private prisma = getPrisma();
   async createTrip(userId: string, data: TripCreateInput) {
-    return prisma.trip.create({
+    return this.prisma.trip.create({
       data: {
         ...data,
         tripMasterId: userId,
@@ -52,7 +53,7 @@ export class TripService {
   }
 
   async getTripById(tripId: string) {
-    return prisma.trip.findUnique({
+    return this.prisma.trip.findUnique({
       where: { id: tripId },
       include: {
         tripMaster: {
@@ -91,7 +92,7 @@ export class TripService {
   }
 
   async getUserTrips(userId: string) {
-    return prisma.trip.findMany({
+    return this.prisma.trip.findMany({
       where: {
         members: {
           some: {
@@ -129,7 +130,16 @@ export class TripService {
   }
 
   async updateTrip(tripId: string, data: TripUpdateInput) {
-    return prisma.trip.update({
+    // Get current trip to check if startDate is changing
+    const currentTrip = await this.prisma.trip.findUnique({
+      where: { id: tripId },
+      select: { 
+        startDate: true,
+        autoMilestonesGenerated: true,
+      },
+    });
+
+    const result = await this.prisma.trip.update({
       where: { id: tripId },
       data,
       include: {
@@ -143,18 +153,36 @@ export class TripService {
         },
       },
     });
+
+    // If startDate changed and milestones were auto-generated, recalculate
+    if (
+      data.startDate &&
+      currentTrip?.autoMilestonesGenerated &&
+      currentTrip?.startDate &&
+      new Date(data.startDate).getTime() !== new Date(currentTrip.startDate).getTime()
+    ) {
+      const { milestoneService } = await import('./milestone.service');
+      await milestoneService.recalculateMilestones(tripId, new Date(data.startDate));
+    }
+
+    return result;
   }
 
   async deleteTrip(tripId: string) {
-    return prisma.trip.delete({
+    return this.prisma.trip.delete({
       where: { id: tripId },
     });
   }
 
   async changeTripStatus(tripId: string, newStatus: TripStatus) {
-    const trip = await prisma.trip.findUnique({
+    const trip = await this.prisma.trip.findUnique({
       where: { id: tripId },
-      select: { status: true },
+      select: { 
+        status: true,
+        startDate: true,
+        endDate: true,
+        createdAt: true,
+      },
     });
 
     if (!trip) {
@@ -167,7 +195,7 @@ export class TripService {
     }
 
     // Create timeline event for status change
-    await prisma.timelineEvent.create({
+    await this.prisma.timelineEvent.create({
       data: {
         tripId,
         eventType: 'status_changed',
@@ -175,14 +203,26 @@ export class TripService {
       },
     });
 
-    return prisma.trip.update({
+    // If moving to PLANNING and trip has start date, generate milestones
+    if (trip.status === 'IDEA' && newStatus === 'PLANNING' && trip.startDate) {
+      // Import milestone service dynamically to avoid circular dependency
+      const { milestoneService } = await import('./milestone.service');
+      await milestoneService.generateDefaultMilestones(
+        tripId,
+        trip.startDate,
+        trip.endDate || trip.startDate,
+        trip.createdAt
+      );
+    }
+
+    return this.prisma.trip.update({
       where: { id: tripId },
       data: { status: newStatus },
     });
   }
 
   async getTripTimeline(tripId: string, limit = 50) {
-    return prisma.timelineEvent.findMany({
+    return this.prisma.timelineEvent.findMany({
       where: { tripId },
       orderBy: { createdAt: 'desc' },
       take: limit,
@@ -190,7 +230,7 @@ export class TripService {
   }
 
   async getTripMembers(tripId: string) {
-    return prisma.tripMember.findMany({
+    return this.prisma.tripMember.findMany({
       where: { tripId },
       include: {
         user: {
@@ -210,7 +250,7 @@ export class TripService {
   }
 
   async addTripMemberByInvite(tripId: string, userId: string, role = 'MEMBER') {
-    return prisma.tripMember.create({
+    return this.prisma.tripMember.create({
       data: {
         tripId,
         userId,
@@ -221,7 +261,7 @@ export class TripService {
   }
 
   async updateTripMember(tripId: string, userId: string, data: { role?: string; status?: string }) {
-    return prisma.tripMember.update({
+    return this.prisma.tripMember.update({
       where: {
         tripId_userId: {
           tripId,
@@ -236,7 +276,7 @@ export class TripService {
   }
 
   async removeTripMember(tripId: string, userId: string) {
-    const member = await prisma.tripMember.update({
+    const member = await this.prisma.tripMember.update({
       where: {
         tripId_userId: {
           tripId,
@@ -256,7 +296,7 @@ export class TripService {
       },
     });
 
-    await prisma.timelineEvent.create({
+    await this.prisma.timelineEvent.create({
       data: {
         tripId,
         eventType: 'member_removed',
@@ -268,7 +308,7 @@ export class TripService {
   }
 
   async checkMemberPermission(tripId: string, userId: string, requiredRoles: string[] = []) {
-    const member = await prisma.tripMember.findUnique({
+    const member = await this.prisma.tripMember.findUnique({
       where: {
         tripId_userId: {
           tripId,
@@ -293,7 +333,7 @@ export class TripService {
   }
 
   async canInvite(tripId: string, userId: string): Promise<{ canInvite: boolean; reason?: string }> {
-    const trip = await prisma.trip.findUnique({
+    const trip = await this.prisma.trip.findUnique({
       where: { id: tripId },
       select: { style: true },
     });
@@ -302,7 +342,7 @@ export class TripService {
       return { canInvite: false, reason: 'Trip not found' };
     }
 
-    const member = await prisma.tripMember.findUnique({
+    const member = await this.prisma.tripMember.findUnique({
       where: {
         tripId_userId: {
           tripId,
@@ -331,7 +371,7 @@ export class TripService {
   }
 
   async canManageMember(requesterId: string, targetId: string, tripId: string): Promise<{ canManage: boolean; reason?: string }> {
-    const requester = await prisma.tripMember.findUnique({
+    const requester = await this.prisma.tripMember.findUnique({
       where: {
         tripId_userId: {
           tripId,
@@ -340,7 +380,7 @@ export class TripService {
       },
     });
 
-    const target = await prisma.tripMember.findUnique({
+    const target = await this.prisma.tripMember.findUnique({
       where: {
         tripId_userId: {
           tripId,
@@ -372,7 +412,7 @@ export class TripService {
   }
 
   async canPromoteToOrganizer(requesterId: string, tripId: string): Promise<{ canPromote: boolean; reason?: string }> {
-    const requester = await prisma.tripMember.findUnique({
+    const requester = await this.prisma.tripMember.findUnique({
       where: {
         tripId_userId: {
           tripId,
@@ -393,7 +433,7 @@ export class TripService {
   }
 
   async addTripMember(tripId: string, userId: string, invitedById: string, role = 'MEMBER') {
-    const existingMember = await prisma.tripMember.findUnique({
+    const existingMember = await this.prisma.tripMember.findUnique({
       where: {
         tripId_userId: {
           tripId,
@@ -407,7 +447,7 @@ export class TripService {
     }
 
     // Check trip style to determine initial status
-    const trip = await prisma.trip.findUnique({
+    const trip = await this.prisma.trip.findUnique({
       where: { id: tripId },
       select: { style: true },
     });
@@ -415,7 +455,7 @@ export class TripService {
     // OPEN trips auto-confirm members, MANAGED trips require approval
     const memberStatus = trip?.style === 'OPEN' ? 'CONFIRMED' : 'INVITED';
 
-    const member = await prisma.tripMember.upsert({
+    const member = await this.prisma.tripMember.upsert({
       where: {
         tripId_userId: {
           tripId,
@@ -446,7 +486,7 @@ export class TripService {
       },
     });
 
-    await prisma.timelineEvent.create({
+    await this.prisma.timelineEvent.create({
       data: {
         tripId,
         eventType: 'member_joined',

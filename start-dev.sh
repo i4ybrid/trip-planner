@@ -13,8 +13,12 @@ for port in 3000 3001 4000 4001; do
     fi
 done
 
-# Start frontend in a screen session
+# Build frontend fresh (no cache) before starting dev server
+# This ensures .next assets are always freshly compiled
 cd ./frontend
+echo "Building frontend (fresh, no cache)..."
+npm run build
+echo "Starting frontend dev server..."
 screen -dmS frontend npm run dev
 
 # Start backend in a screen session

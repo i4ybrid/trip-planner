@@ -42,6 +42,53 @@ router.post('/auth/register', async (req, res) => {
   }
 });
 
+// POST /api/users/oauth - Handle OAuth login/registration
+router.post('/users/oauth', async (req, res) => {
+  try {
+    const { email, name, avatarUrl, provider, providerId } = req.body;
+
+    if (!email || !provider) {
+      res.status(400).json({ error: 'Email and provider are required' });
+      return;
+    }
+
+    // Check if user exists with this email
+    let user = await userService.getUserByEmail(email);
+
+    if (user) {
+      // User exists - update avatar if OAuth provided one and user doesn't have one
+      if (avatarUrl && !user.avatarUrl) {
+        user = await userService.updateUser(user.id, { avatarUrl });
+      }
+    } else {
+      // Create new user
+      user = await userService.createOAuthUser({
+        email,
+        name: name || email.split('@')[0],
+        avatarUrl,
+        provider,
+        providerId,
+      });
+    }
+
+    const token = generateToken({ userId: user.id, email: user.email });
+
+    res.json({
+      data: {
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          avatarUrl: user.avatarUrl,
+        },
+        token,
+      },
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // POST /api/auth/login - Login user
 router.post('/auth/login', async (req, res) => {
   try {

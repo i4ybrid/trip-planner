@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { authMiddleware } from '@/middleware/auth';
 import { calendarService } from '@/services/calendar.service';
+import { logger } from '@/lib/logger';
 
 const router = Router();
 
@@ -16,7 +17,7 @@ router.get('/trips/:tripId/calendar', authMiddleware, async (req: any, res: any)
     
     res.json({ data: events });
   } catch (error: any) {
-    console.error('Error fetching calendar events:', error);
+    logger.error('Error fetching calendar events:', error);
     res.status(500).json({ error: error.message || 'Failed to fetch calendar events' });
   }
 });
@@ -36,7 +37,7 @@ router.get('/trips/:tripId/calendar.ics', authMiddleware, async (req: any, res: 
     res.setHeader('Content-Disposition', `attachment; filename="trip-calendar-${tripId}.ics"`);
     res.send(icsContent);
   } catch (error: any) {
-    console.error('Error generating iCal:', error);
+    logger.error('Error generating iCal:', error);
     res.status(500).json({ error: error.message || 'Failed to generate iCal file' });
   }
 });
@@ -69,7 +70,7 @@ router.get('/trips/:tripId/calendar/google', authMiddleware, async (req: any, re
       } 
     });
   } catch (error: any) {
-    console.error('Error generating Google Calendar URL:', error);
+    logger.error('Error generating Google Calendar URL:', error);
     res.status(500).json({ error: error.message || 'Failed to generate Google Calendar link' });
   }
 });
@@ -99,7 +100,7 @@ router.get('/trips/:tripId/calendar/outlook', authMiddleware, async (req: any, r
       } 
     });
   } catch (error: any) {
-    console.error('Error generating Outlook Calendar URL:', error);
+    logger.error('Error generating Outlook Calendar URL:', error);
     res.status(500).json({ error: error.message || 'Failed to generate Outlook Calendar link' });
   }
 });
@@ -121,7 +122,7 @@ router.get('/trips/:tripId/calendar/events/:eventId', authMiddleware, async (req
     
     res.json({ data: event });
   } catch (error: any) {
-    console.error('Error fetching calendar event:', error);
+    logger.error('Error fetching calendar event:', error);
     res.status(500).json({ error: error.message || 'Failed to fetch calendar event' });
   }
 });
@@ -147,7 +148,7 @@ router.get('/trips/:tripId/calendar/events/:eventId/ics', authMiddleware, async 
     res.setHeader('Content-Disposition', `attachment; filename="${event.id}.ics"`);
     res.send(icsContent);
   } catch (error: any) {
-    console.error('Error generating iCal:', error);
+    logger.error('Error generating iCal:', error);
     res.status(500).json({ error: error.message || 'Failed to generate iCal file' });
   }
 });

@@ -8,6 +8,7 @@ import { formatCurrency, cn } from '@/lib/utils';
 import { api } from '@/services/api';
 import { Wallet, CreditCard, Plus, Trash2, CheckCircle2, Circle } from 'lucide-react';
 import { TripMember, User, BillSplit, BillSplitMember, PaymentMethod } from '@/types';
+import { logger } from '@/lib/logger';
 
 interface Expense {
   id: string;
@@ -79,7 +80,7 @@ export default function TripPayments() {
       hasLoadedRef.current = true;
     } catch (error) {
       if ((error as Error).name !== 'AbortError') {
-        console.error('Failed to load payments data:', error);
+        logger.error('Failed to load payments data:', error);
       }
     }
   }, [tripId]);
@@ -104,7 +105,7 @@ export default function TripPayments() {
       await api.deleteBillSplit(id);
       setBillSplits(billSplits.filter(b => b.id !== id));
     } catch (error) {
-      console.error('Failed to delete bill split:', error);
+      logger.error('Failed to delete bill split:', error);
     }
   };
 
@@ -135,7 +136,7 @@ export default function TripPayments() {
       // Call API
       await api.markBillSplitMemberPaid(billId, userId, selectedPaymentMethod);
     } catch (error) {
-      console.error('Failed to mark as paid:', error);
+      logger.error('Failed to mark as paid:', error);
       // Revoke optimistic update on error by re-fetching
       const result = await api.getBillSplits(tripId);
       if (result.data) setBillSplits(result.data as BillSplitWithMembers[]);
@@ -164,7 +165,7 @@ export default function TripPayments() {
       // Call API
       await api.confirmBillSplitPayment(billId);
     } catch (error) {
-      console.error('Failed to confirm payment:', error);
+      logger.error('Failed to confirm payment:', error);
       // Revoke optimistic update on error by re-fetching
       const result = await api.getBillSplits(tripId);
       if (result.data) setBillSplits(result.data as BillSplitWithMembers[]);

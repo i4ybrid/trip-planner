@@ -70,6 +70,26 @@ enum FriendRequestSource {
   TRIP_MEMBERS // Only allow from people in same trip
 }
 
+enum NotificationCategory {
+  MILESTONE
+  INVITE
+  FRIEND
+  PAYMENT
+  SETTLEMENT
+  CHAT
+  MEMBER
+}
+
+enum NotificationReferenceType {
+  TRIP
+  INVITE
+  FRIEND_REQUEST
+  BILL_SPLIT
+  MILESTONE
+  MESSAGE
+  USER
+}
+
 enum PaymentStatus {
   PENDING
   PARTIAL
@@ -92,24 +112,6 @@ enum SplitType {
   SHARES     // Split by share count (e.g., 2 shares, 1 share)
   PERCENTAGE // Split by percentage (must sum to 100)
   MANUAL     // Custom amount per member
-}
-
-enum NotificationType {
-  INVITE
-  VOTE
-  ACTIVITY
-  PAYMENT
-  MESSAGE
-  REMINDER
-  MILESTONE
-  PAYMENT_DUE
-  PAYMENT_RECEIVED
-  VOTE_DEADLINE
-  TRIP_STARTING
-  FRIEND_REQUEST
-  DM_MESSAGE
-  PAYMENT_REQUEST
-  SETTLEMENT_REMINDER
 }
 
 enum MilestoneType {
@@ -146,6 +148,7 @@ model User {
   passwordHash    String?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+  emailNotificationsEnabled Boolean @default(true)
 
   memberships     TripMember[]
   tripInvitesSent TripMember[]  @relation("TripInviteSender")
@@ -187,6 +190,9 @@ model User {
 
   // Message read receipts
   messageReadReceipts MessageReadReceipt[]
+
+  // Notification preferences
+  notificationPreferences NotificationPreference[]
 }
 
 model Settings {
@@ -233,7 +239,6 @@ model Trip {
   activities    Activity[]
   messages      Message[]
   mediaItems    MediaItem[]
-  notifications Notification[]
   timelineEvents TimelineEvent[]
   billSplits   BillSplit[]
   milestones    Milestone[]
@@ -396,23 +401,34 @@ model MediaItem {
 }
 
 model Notification {
-  id            String           @id @default(cuid())
+  id            String                 @id @default(cuid())
   userId        String
-  tripId        String?
-  type          NotificationType
+  category      NotificationCategory
   title         String
   body          String
-  actionType    String?          // "payment", "vote", "trip", "friend_request", "dm"
-  actionId      String?
-  actionUrl     String?
-  read          Boolean          @default(false)
-  priority      String           @default("normal") // "low", "normal", "high", "urgent"
-  scheduledFor  DateTime?
+  referenceId   String?
+  referenceType NotificationReferenceType?
+  link          String?
+  isRead        Boolean                @default(false)
+  createdAt     DateTime               @default(now())
 
-  user          User             @relation(fields: [userId], references: [id])
-  trip          Trip?            @relation(fields: [tripId], references: [id])
+  user          User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  createdAt     DateTime         @default(now())
+  @@index([userId, isRead, createdAt])
+  @@index([userId, category])
+}
+
+model NotificationPreference {
+  id          String                 @id @default(cuid())
+  userId      String
+  category    NotificationCategory
+  inApp       Boolean                @default(true)
+  email       Boolean                @default(false)
+  push        Boolean                @default(false)
+
+  user        User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, category])
 }
 
 // Friends
@@ -547,6 +563,8 @@ model Milestone {
   type              MilestoneType
   name              String
   dueDate           DateTime
+  reminderAt        DateTime?
+  firstOverdueNotifiedAt DateTime?
   isManualOverride  Boolean        @default(false)
   isSkipped         Boolean        @default(false)
   isLocked          Boolean        @default(false)

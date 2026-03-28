@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
 
@@ -27,7 +28,7 @@ export async function POST(request: NextRequest) {
     const result = await response.json();
     return NextResponse.json(result.data);
   } catch (error) {
-    console.error('Registration error:', error);
+    logger.error('Registration error:', error);
     return NextResponse.json(
       { error: 'An unexpected error occurred' },
       { status: 500 }

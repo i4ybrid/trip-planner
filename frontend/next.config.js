@@ -6,13 +6,10 @@ const nextConfig = {
   compiler: {
     styledComponents: false,
   },
-  webpack: (config) => {
-    config.cache = false;
-    return config;
-  },
+  // Keep webpack cache enabled (default behavior) for faster rebuilds
   onDemandEntries: {
-    maxInactiveAge: 25 * 1000,
-    pagesBufferLength: 2,
+    maxInactiveAge: 120 * 1000, // 2 minutes - keep pages hot longer
+    pagesBufferLength: 10, // Keep more pages in memory
   },
 };
 

@@ -906,24 +906,25 @@ export const api = {
       const response = await fetch(`${API_BASE_URL}/notifications`, {
         headers: await getHeaders(),
       });
-      const result = await handleResponse<ApiResponse<Notification[]>>(response);
-      setCache(cacheKey, result);
-      return result;
+      const result = await handleResponse<{ data: { notifications: Notification[]; unreadCount: number } }>(response);
+      // Normalize to return notifications array as data
+      const normalized = { ...result, data: result.data?.notifications || [] };
+      setCache(cacheKey, normalized);
+      return normalized;
     });
   },
 
   async markNotificationRead(id: string): Promise<ApiResponse<void>> {
-    const response = await fetch(`${API_BASE_URL}/notifications/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/notifications/${id}/read`, {
       method: 'PATCH',
       headers: await getHeaders(),
-      body: JSON.stringify({ read: true }),
     });
     return handleResponse(response);
   },
 
   async markAllNotificationsRead(): Promise<ApiResponse<void>> {
-    const response = await fetch(`${API_BASE_URL}/notifications/mark-all-read`, {
-      method: 'POST',
+    const response = await fetch(`${API_BASE_URL}/notifications/read-all`, {
+      method: 'PATCH',
       headers: await getHeaders(),
     });
     return handleResponse(response);
@@ -933,7 +934,8 @@ export const api = {
     const response = await fetch(`${API_BASE_URL}/notifications/unread-count`, {
       headers: await getHeaders(),
     });
-    return handleResponse(response);
+    const result = await handleResponse<{ data: { count: number } }>(response);
+    return { ...result, data: result.data?.count ?? 0 };
   },
 
   async deleteNotification(id: string): Promise<ApiResponse<void>> {

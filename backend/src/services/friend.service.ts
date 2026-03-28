@@ -139,14 +139,12 @@ export class FriendService {
     await prisma.notification.create({
       data: {
         userId: receiverId,
-        type: 'FRIEND_REQUEST',
+        category: 'FRIEND',
         title: 'New Friend Request',
         body: `${sender?.name} sent you a friend request`,
-        actionType: 'friend_request',
-        actionId: request.id,
-        actionUrl: '/friends?tab=pending',
-        read: false,
-        priority: 'normal',
+        referenceId: request.id,
+        referenceType: 'FRIEND_REQUEST',
+        link: '/friends?tab=pending',
       },
     });
 
@@ -224,14 +222,12 @@ export class FriendService {
       prisma.notification.create({
         data: {
           userId: request.senderId,
-          type: 'FRIEND_REQUEST',
+          category: 'FRIEND',
           title: 'Friend Request Accepted',
           body: `${request.receiver.name} accepted your friend request`,
-          actionType: 'friend_accepted',
-          actionId: requestId,
-          actionUrl: '/friends',
-          read: false,
-          priority: 'normal',
+          referenceId: requestId,
+          referenceType: 'FRIEND_REQUEST',
+          link: '/friends',
         },
       }),
     ]);
@@ -273,13 +269,11 @@ export class FriendService {
     await prisma.notification.create({
       data: {
         userId: request.senderId,
-        type: 'FRIEND_REQUEST',
+        category: 'FRIEND',
         title: 'Friend Request Declined',
         body: `${request.receiver.name} declined your friend request`,
-        actionType: 'friend_declined',
-        actionId: requestId,
-        read: false,
-        priority: 'low',
+        referenceId: requestId,
+        referenceType: 'FRIEND_REQUEST',
       },
     });
 

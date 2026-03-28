@@ -1,7 +1,8 @@
-import prisma from '@/lib/prisma';
+import { getPrisma } from '@/lib/prisma';
 import { v4 as uuidv4 } from 'uuid';
 
 export class InviteService {
+  private prisma = getPrisma();
   async createInvite(data: {
     tripId: string;
     email?: string;
@@ -12,7 +13,7 @@ export class InviteService {
   }) {
     const token = uuidv4();
 
-    const invite = await prisma.invite.create({
+    const invite = await this.prisma.invite.create({
       data: {
         tripId: data.tripId,
         token,
@@ -47,7 +48,7 @@ export class InviteService {
   }
 
   async getInviteByToken(token: string) {
-    return prisma.invite.findUnique({
+    return this.prisma.invite.findUnique({
       where: { token },
       include: {
         trip: {
@@ -69,7 +70,7 @@ export class InviteService {
   }
 
   async acceptInvite(token: string, userId: string) {
-    const invite = await prisma.invite.findUnique({
+    const invite = await this.prisma.invite.findUnique({
       where: { token },
       include: { trip: true },
     });
@@ -87,8 +88,26 @@ export class InviteService {
       throw new Error('Invite has expired');
     }
 
+    // Check if user is already a member
+    const existingMember = await this.prisma.tripMember.findUnique({
+      where: {
+        tripId_userId: {
+          tripId: invite.tripId,
+          userId,
+        },
+      },
+    });
+
+    if (existingMember && existingMember.status === 'CONFIRMED') {
+      throw new Error('You are already a member of this trip');
+    }
+
+    // Determine status based on trip style:
+    // OPEN trips auto-confirm members, MANAGED trips require approval
+    const newMemberStatus = invite.trip.style === 'OPEN' ? 'CONFIRMED' : 'INVITED';
+
     // Add user to trip
-    await prisma.tripMember.upsert({
+    await this.prisma.tripMember.upsert({
       where: {
         tripId_userId: {
           tripId: invite.tripId,
@@ -96,38 +115,43 @@ export class InviteService {
         },
       },
       update: {
-        status: 'CONFIRMED',
+        status: newMemberStatus,
         role: 'MEMBER',
       },
       create: {
         tripId: invite.tripId,
         userId,
         role: 'MEMBER',
-        status: 'CONFIRMED',
+        status: newMemberStatus,
       },
     });
 
     // Update invite status
-    await prisma.invite.update({
+    await this.prisma.invite.update({
       where: { id: invite.id },
       data: { status: 'ACCEPTED' },
     });
 
     // Create timeline event
-    await prisma.timelineEvent.create({
+    await this.prisma.timelineEvent.create({
       data: {
         tripId: invite.tripId,
         eventType: 'member_joined',
-        description: 'A new member joined via invite',
+        description: newMemberStatus === 'CONFIRMED'
+          ? 'A new member joined via invite'
+          : 'A new member request is pending approval',
         createdBy: userId,
       },
     });
 
-    return invite.trip;
+    return {
+      ...invite.trip,
+      memberStatus: newMemberStatus,
+    };
   }
 
   async declineInvite(token: string) {
-    const invite = await prisma.invite.findUnique({
+    const invite = await this.prisma.invite.findUnique({
       where: { token },
     });
 
@@ -135,21 +159,21 @@ export class InviteService {
       throw new Error('Invite not found');
     }
 
-    return prisma.invite.update({
+    return this.prisma.invite.update({
       where: { id: invite.id },
       data: { status: 'DECLINED' as any },
     });
   }
 
   async revokeInvite(inviteId: string) {
-    return prisma.invite.update({
+    return this.prisma.invite.update({
       where: { id: inviteId },
       data: { status: 'REVOKED' },
     });
   }
 
   async getTripInvites(tripId: string) {
-    return prisma.invite.findMany({
+    return this.prisma.invite.findMany({
       where: { tripId },
       include: {
         channels: true,
@@ -165,7 +189,7 @@ export class InviteService {
   }
 
   async expireInvites(tripId: string) {
-    return prisma.invite.updateMany({
+    return this.prisma.invite.updateMany({
       where: {
         tripId,
         expiresAt: {
@@ -177,6 +201,51 @@ export class InviteService {
         status: 'EXPIRED',
       },
     });
+  }
+
+  async getPendingInvitesByEmail(email: string) {
+    return this.prisma.invite.findMany({
+      where: {
+        email: email.toLowerCase(),
+        status: 'PENDING',
+        expiresAt: {
+          gte: new Date(),
+        },
+      },
+      include: {
+        trip: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            coverImage: true,
+            style: true,
+          },
+        },
+        sentBy: {
+          select: {
+            id: true,
+            name: true,
+            avatarUrl: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async getPendingInvitesByUserId(userId: string) {
+    // Get user email to find invites sent to their email
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true },
+    });
+
+    if (!user) {
+      return [];
+    }
+
+    return this.getPendingInvitesByEmail(user.email);
   }
 }
 

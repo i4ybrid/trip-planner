@@ -53,6 +53,28 @@ export class UserService {
     });
   }
 
+  async createOAuthUser(data: {
+    email: string;
+    name: string;
+    avatarUrl?: string;
+    provider: string;
+    providerId?: string;
+  }) {
+    return prisma.user.create({
+      data: {
+        email: data.email,
+        name: data.name,
+        avatarUrl: data.avatarUrl,
+        settings: {
+          create: {},
+        },
+      },
+      include: {
+        settings: true,
+      },
+    });
+  }
+
   async updateUser(userId: string, data: {
     name?: string;
     avatarUrl?: string;

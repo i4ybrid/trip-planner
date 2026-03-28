@@ -264,10 +264,10 @@ const SEED_FRIEND_REQUESTS = [
 ];
 
 const SEED_NOTIFICATIONS = [
-  { userId: 'user-1', tripId: 'trip-1', type: 'REMINDER' as const, title: 'Trip coming up!', body: 'Hawaii Beach Vacation starts in 2 weeks', priority: 'normal' },
-  { userId: 'user-1', tripId: 'trip-1', type: 'VOTE' as const, title: 'Vote needed', body: 'Vote on Surfing Lessons activity for Hawaii trip', priority: 'normal' },
-  { userId: 'user-1', tripId: 'trip-1', type: 'PAYMENT_DUE' as const, title: 'Payment needed', body: 'You owe $120 for Luau Dinner - please pay Sarah', priority: 'high' },
-  { userId: 'user-1', tripId: 'trip-5', type: 'MESSAGE' as const, title: 'Tagged in chat', body: 'Sarah mentioned you in the Nashville trip chat', priority: 'normal' },
+  { userId: 'user-1', category: 'MILESTONE' as const, title: 'Trip coming up!', body: 'Hawaii Beach Vacation starts in 2 weeks', referenceId: 'trip-1', referenceType: 'TRIP' as const, link: '/trip/trip-1' },
+  { userId: 'user-1', category: 'MEMBER' as const, title: 'Vote needed', body: 'Vote on Surfing Lessons activity for Hawaii trip', referenceId: 'trip-1', referenceType: 'TRIP' as const, link: '/trip/trip-1' },
+  { userId: 'user-1', category: 'SETTLEMENT' as const, title: 'Payment needed', body: 'You owe $120 for Luau Dinner - please pay Sarah', referenceId: 'trip-1', referenceType: 'BILL_SPLIT' as const, link: '/trip/trip-1/payments' },
+  { userId: 'user-1', category: 'CHAT' as const, title: 'Tagged in chat', body: 'Sarah mentioned you in the Nashville trip chat', referenceId: 'trip-5', referenceType: 'TRIP' as const, link: '/trip/trip-5/chat' },
 ];
 
 const SEED_MEDIA = [

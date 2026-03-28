@@ -1,9 +1,10 @@
-import prisma from '@/lib/prisma';
+import { getPrisma } from '@/lib/prisma';
 import { ActivityCreateInput } from '@/types';
 
 export class ActivityService {
+  private prisma = getPrisma();
   async createActivity(data: ActivityCreateInput) {
-    const activity = await prisma.activity.create({
+    const activity = await this.prisma.activity.create({
       data,
       include: {
         proposer: {
@@ -17,7 +18,7 @@ export class ActivityService {
     });
 
     // Create timeline event
-    await prisma.timelineEvent.create({
+    await this.prisma.timelineEvent.create({
       data: {
         tripId: data.tripId,
         eventType: 'activity_added',
@@ -30,7 +31,7 @@ export class ActivityService {
   }
 
   async getActivityById(activityId: string) {
-    return prisma.activity.findUnique({
+    return this.prisma.activity.findUnique({
       where: { id: activityId },
       include: {
         proposer: {
@@ -57,7 +58,7 @@ export class ActivityService {
   }
 
   async getTripActivities(tripId: string) {
-    return prisma.activity.findMany({
+    return this.prisma.activity.findMany({
       where: { tripId },
       include: {
         proposer: {
@@ -89,20 +90,20 @@ export class ActivityService {
   }
 
   async updateActivity(activityId: string, data: Partial<ActivityCreateInput>) {
-    return prisma.activity.update({
+    return this.prisma.activity.update({
       where: { id: activityId },
       data,
     });
   }
 
   async deleteActivity(activityId: string) {
-    const activity = await prisma.activity.findUnique({
+    const activity = await this.prisma.activity.findUnique({
       where: { id: activityId },
       select: { tripId: true },
     });
 
     if (activity) {
-      await prisma.timelineEvent.create({
+      await this.prisma.timelineEvent.create({
         data: {
           tripId: activity.tripId,
           eventType: 'activity_removed',
@@ -111,13 +112,13 @@ export class ActivityService {
       });
     }
 
-    return prisma.activity.delete({
+    return this.prisma.activity.delete({
       where: { id: activityId },
     });
   }
 
   async getVoteCounts(activityId: string) {
-    const votes = await prisma.vote.findMany({
+    const votes = await this.prisma.vote.findMany({
       where: { activityId },
       select: { option: true },
     });

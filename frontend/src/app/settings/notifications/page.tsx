@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Bell, Mail, Smartphone, Clock, Save, ArrowLeft } from 'lucide-react';
 import { api } from '@/services/api';
 import { Settings } from '@/types';
+import { logger } from '@/lib/logger';
 import styles from './notifications-settings.module.css';
 
 export default function NotificationSettingsPage() {
@@ -34,7 +35,7 @@ export default function NotificationSettingsPage() {
         setSettings(result.data);
       }
     } catch (error) {
-      console.error('Failed to load settings:', error);
+      logger.error('Failed to load settings:', error);
     }
     setIsLoading(false);
   };
@@ -48,7 +49,7 @@ export default function NotificationSettingsPage() {
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (error) {
-      console.error('Failed to save settings:', error);
+      logger.error('Failed to save settings:', error);
     }
     setIsSaving(false);
   };

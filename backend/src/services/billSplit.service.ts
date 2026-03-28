@@ -1,6 +1,7 @@
-import prisma from '@/lib/prisma';
+import { getPrisma } from '@/lib/prisma';
 
 export class BillSplitService {
+  private prisma = getPrisma();
   async createBillSplit(data: {
     tripId: string;
     title: string;
@@ -14,7 +15,7 @@ export class BillSplitService {
     dueDate?: Date;
     members?: { userId: string; dollarAmount?: number; shares?: number; percentage?: number }[];
   }) {
-    const tripMembers = await prisma.tripMember.findMany({
+    const tripMembers = await this.prisma.tripMember.findMany({
       where: { tripId: data.tripId, status: 'CONFIRMED' },
       select: { userId: true },
     });
@@ -49,7 +50,7 @@ export class BillSplitService {
     }
 
     // Create the bill split
-    const billSplit = await prisma.billSplit.create({
+    const billSplit = await this.prisma.billSplit.create({
       data: {
         tripId: data.tripId,
         title: data.title,
@@ -93,7 +94,7 @@ export class BillSplitService {
     });
 
     // Create timeline event
-    await prisma.timelineEvent.create({
+    await this.prisma.timelineEvent.create({
       data: {
         tripId: data.tripId,
         eventType: 'payment_added',
@@ -108,17 +109,17 @@ export class BillSplitService {
     const newMemberUserIds = memberAmounts.map((m) => m.userId);
 
     // Find SETTLEMENT_DUE and SETTLEMENT_COMPLETE milestones for this trip
-    const settlementDueMilestone = await prisma.milestone.findFirst({
+    const settlementDueMilestone = await this.prisma.milestone.findFirst({
       where: { tripId: data.tripId, type: 'SETTLEMENT_DUE' },
     });
 
-    const settlementCompleteMilestone = await prisma.milestone.findFirst({
+    const settlementCompleteMilestone = await this.prisma.milestone.findFirst({
       where: { tripId: data.tripId, type: 'SETTLEMENT_COMPLETE' },
     });
 
     // Reset SETTLEMENT_DUE completions for affected members
     if (settlementDueMilestone) {
-      await prisma.milestoneCompletion.deleteMany({
+      await this.prisma.milestoneCompletion.deleteMany({
         where: {
           milestoneId: settlementDueMilestone.id,
           userId: { in: newMemberUserIds },
@@ -128,7 +129,7 @@ export class BillSplitService {
 
     // Reset SETTLEMENT_COMPLETE completions for affected members
     if (settlementCompleteMilestone) {
-      await prisma.milestoneCompletion.deleteMany({
+      await this.prisma.milestoneCompletion.deleteMany({
         where: {
           milestoneId: settlementCompleteMilestone.id,
           userId: { in: newMemberUserIds },
@@ -140,7 +141,7 @@ export class BillSplitService {
   }
 
   async getBillSplit(id: string) {
-    return prisma.billSplit.findUnique({
+    return this.prisma.billSplit.findUnique({
       where: { id },
       include: {
         members: {
@@ -185,7 +186,7 @@ export class BillSplitService {
   }
 
   async getTripBillSplits(tripId: string) {
-    return prisma.billSplit.findMany({
+    return this.prisma.billSplit.findMany({
       where: { tripId },
       include: {
         members: {
@@ -220,7 +221,7 @@ export class BillSplitService {
     paidBy?: string;
     members?: { userId: string; dollarAmount?: number; shares?: number; percentage?: number }[];
   }) {
-    const existingBill = await prisma.billSplit.findUnique({
+    const existingBill = await this.prisma.billSplit.findUnique({
       where: { id },
       include: {
         members: { select: { userId: true } },
@@ -244,7 +245,7 @@ export class BillSplitService {
     // Handle members update - delete existing and create new ones
     if (data.members) {
       // Delete existing members
-      await prisma.billSplitMember.deleteMany({
+      await this.prisma.billSplitMember.deleteMany({
         where: { billSplitId: id },
       });
 
@@ -260,7 +261,7 @@ export class BillSplitService {
       };
     }
 
-    const updatedBill = await prisma.billSplit.update({
+    const updatedBill = await this.prisma.billSplit.update({
       where: { id },
       data: updateData,
       include: {
@@ -288,16 +289,16 @@ export class BillSplitService {
     // A changed amount or member list means previously settled members may now owe more,
     // so SETTLEMENT_DUE and SETTLEMENT_COMPLETE completions must be reset to PENDING.
     if (membersChanged || amountChanged) {
-      const settlementDueMilestone = await prisma.milestone.findFirst({
+      const settlementDueMilestone = await this.prisma.milestone.findFirst({
         where: { tripId: existingBill.tripId, type: 'SETTLEMENT_DUE' },
       });
 
-      const settlementCompleteMilestone = await prisma.milestone.findFirst({
+      const settlementCompleteMilestone = await this.prisma.milestone.findFirst({
         where: { tripId: existingBill.tripId, type: 'SETTLEMENT_COMPLETE' },
       });
 
       if (settlementDueMilestone) {
-        await prisma.milestoneCompletion.deleteMany({
+        await this.prisma.milestoneCompletion.deleteMany({
           where: {
             milestoneId: settlementDueMilestone.id,
             userId: { in: affectedUserIds },
@@ -306,7 +307,7 @@ export class BillSplitService {
       }
 
       if (settlementCompleteMilestone) {
-        await prisma.milestoneCompletion.deleteMany({
+        await this.prisma.milestoneCompletion.deleteMany({
           where: {
             milestoneId: settlementCompleteMilestone.id,
             userId: { in: affectedUserIds },
@@ -319,13 +320,13 @@ export class BillSplitService {
   }
 
   async deleteBillSplit(id: string) {
-    return prisma.billSplit.delete({
+    return this.prisma.billSplit.delete({
       where: { id },
     });
   }
 
   async markMemberAsPaid(billSplitId: string, userId: string, paymentMethod: 'VENMO' | 'PAYPAL' | 'ZELLE' | 'CASHAPP' | 'CASH' | 'OTHER', transactionId?: string) {
-    const billSplitMember = await prisma.billSplitMember.findUnique({
+    const billSplitMember = await this.prisma.billSplitMember.findUnique({
       where: {
         billSplitId_userId: {
           billSplitId,
@@ -338,7 +339,7 @@ export class BillSplitService {
       throw new Error('Member not found in this bill split');
     }
 
-    const updated = await prisma.billSplitMember.update({
+    const updated = await this.prisma.billSplitMember.update({
       where: {
         billSplitId_userId: {
           billSplitId,
@@ -354,7 +355,7 @@ export class BillSplitService {
     });
 
     // Update bill split status
-    const allMembers = await prisma.billSplitMember.findMany({
+    const allMembers = await this.prisma.billSplitMember.findMany({
       where: { billSplitId },
       select: { status: true },
     });
@@ -369,7 +370,7 @@ export class BillSplitService {
       newStatus = 'PARTIAL';
     }
 
-    await prisma.billSplit.update({
+    await this.prisma.billSplit.update({
       where: { id: billSplitId },
       data: { status: newStatus as any },
     });
@@ -378,7 +379,7 @@ export class BillSplitService {
   }
 
   async removeMemberFromBillSplit(billSplitId: string, userId: string) {
-    return prisma.billSplitMember.delete({
+    return this.prisma.billSplitMember.delete({
       where: {
         billSplitId_userId: {
           billSplitId,
@@ -390,7 +391,7 @@ export class BillSplitService {
 
   async confirmPayment(billSplitId: string) {
     // Update all PAID members to CONFIRMED
-    await prisma.billSplitMember.updateMany({
+    await this.prisma.billSplitMember.updateMany({
       where: {
         billSplitId,
         status: 'PAID',
@@ -401,7 +402,7 @@ export class BillSplitService {
     });
 
     // Update bill split status to CONFIRMED
-    return prisma.billSplit.update({
+    return this.prisma.billSplit.update({
       where: { id: billSplitId },
       data: { status: 'CONFIRMED' },
     });

@@ -5,8 +5,10 @@ import { Modal } from '@/components/ui/modal';
 import { Button, Input, Badge, Avatar, Select } from '@/components';
 import { api } from '@/services/api';
 import { Trip, TripMember, TripStyle, MemberRole, MemberStatus } from '@/types';
-import { Settings, Users, Shield, Crown, UserMinus, Check, X, Loader2, AlertTriangle } from 'lucide-react';
+import { Settings, Users, Shield, Crown, UserMinus, Check, X, Loader2, AlertTriangle, MoreHorizontal } from 'lucide-react';
+import { HoverDropdown } from '@/components/hover-dropdown';
 import { useAuth } from '@/hooks/use-auth';
+import { logger } from '@/lib/logger';
 
 interface TripSettingsModalProps {
   isOpen: boolean;
@@ -44,7 +46,7 @@ export function TripSettingsModal({ isOpen, onClose, trip, onTripUpdated }: Trip
         setMembers(result.data);
       }
     } catch (error) {
-      console.error('Failed to load members:', error);
+      logger.error('Failed to load members:', error);
     } finally {
       setIsLoading(false);
     }
@@ -140,10 +142,10 @@ export function TripSettingsModal({ isOpen, onClose, trip, onTripUpdated }: Trip
   const getStatusBadgeColor = (status: MemberStatus) => {
     switch (status) {
       case 'CONFIRMED': return 'bg-green-100 text-green-800';
-      case 'INVITED': return 'bg-yellow-100 text-yellow-800';
-      case 'MAYBE': return 'bg-blue-100 text-blue-800';
-      case 'DECLINED': return 'bg-red-100 text-red-800';
-      case 'REMOVED': return 'bg-gray-100 text-gray-800';
+      case 'INVITED': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100';
+      case 'MAYBE': return 'bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100';
+      case 'DECLINED': return 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100';
+      case 'REMOVED': return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
       default: return 'bg-secondary text-secondary-foreground';
     }
   };
@@ -269,46 +271,33 @@ export function TripSettingsModal({ isOpen, onClose, trip, onTripUpdated }: Trip
                   </div>
                   
                   {isMaster && member.role !== 'MASTER' && (
-                    <div className="flex items-center gap-1">
-                      {member.role !== 'ORGANIZER' ? (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handlePromoteToOrganizer(member.userId, member.role)}
-                          title="Promote to Organizer"
-                        >
-                          <Shield className="h-4 w-4" />
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handlePromoteToOrganizer(member.userId, member.role)}
-                          title="Remove Organizer"
-                          className="text-orange-600"
-                        >
-                          <Shield className="h-4 w-4" />
-                        </Button>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleTransferMaster(member.userId)}
-                        title="Transfer Master Role"
-                        className="text-yellow-600"
-                      >
-                        <Crown className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRemoveMember(member.userId)}
-                        className="text-red-600 hover:text-red-700"
-                        title="Remove Member"
-                      >
-                        <UserMinus className="h-4 w-4" />
-                      </Button>
-                    </div>
+                    <HoverDropdown
+                      mode="click"
+                      align="right"
+                      trigger={
+                        <button className="p-1.5 rounded-md hover:bg-secondary transition-colors">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </button>
+                      }
+                      items={[
+                        {
+                          label: member.role !== 'ORGANIZER' ? 'Make Organizer' : 'Remove Organizer',
+                          onClick: () => handlePromoteToOrganizer(member.userId, member.role),
+                          icon: <Shield className="h-4 w-4" />,
+                        },
+                        {
+                          label: 'Transfer Master Role',
+                          onClick: () => handleTransferMaster(member.userId),
+                          icon: <Crown className="h-4 w-4 text-yellow-600" />,
+                        },
+                        {
+                          label: 'Remove from Trip',
+                          onClick: () => handleRemoveMember(member.userId),
+                          icon: <UserMinus className="h-4 w-4 text-red-600" />,
+                          className: 'text-red-600 hover:text-red-700',
+                        },
+                      ]}
+                    />
                   )}
                 </div>
               ))}

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Calendar, Download, Globe, Mail } from 'lucide-react';
 import styles from './calendar-export.module.css';
+import { logger } from '@/lib/logger';
 
 interface CalendarExportProps {
   tripId: string;
@@ -78,7 +79,7 @@ export function CalendarExport({ tripId, tripName, variant = 'dropdown' }: Calen
           break;
       }
     } catch (error) {
-      console.error('Failed to export calendar:', error);
+      logger.error('Failed to export calendar:', error);
     } finally {
       setIsLoading(null);
       setIsOpen(false);

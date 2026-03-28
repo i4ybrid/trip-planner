@@ -5,8 +5,9 @@ import { useSession, signOut } from 'next-auth/react';
 import { Avatar } from '@/components/ui/avatar';
 import { Settings, LogOut, User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { api } from '@/services/api';
+import { api, clearSessionCache } from '@/services/api';
 import { User as UserType } from '@/types';
+import { logger } from '@/lib/logger';
 
 export function UserMenu() {
   const router = useRouter();
@@ -25,7 +26,7 @@ export function UserMenu() {
       } catch (error) {
         // API call failed - user data will remain null
         // Logout will still work using session data as fallback
-        console.warn('Failed to fetch user from API, using session data as fallback');
+        logger.warn('Failed to fetch user from API, using session data as fallback');
       }
     };
     
@@ -56,6 +57,9 @@ export function UserMenu() {
       // Clear any application-specific auth data
       localStorage.removeItem('auth_token');
       localStorage.removeItem('user_session');
+      
+      // Clear session cache
+      clearSessionCache();
       
       // Clear all cookies related to auth
       document.cookie.split(';').forEach((cookie) => {

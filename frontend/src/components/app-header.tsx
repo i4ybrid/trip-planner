@@ -1,7 +1,7 @@
 'use client';
 
 import { ThemeSwitcher } from '@/components/theme-switcher';
-import { NotificationDrawer } from '@/components/notification-drawer';
+import { NotificationBell } from '@/components/notification/notification-bell';
 import { UserMenu } from '@/components/user-menu';
 
 interface AppHeaderProps {
@@ -30,7 +30,7 @@ export function AppHeader({ title, showBack, onBack, actions, className }: AppHe
         <div className="flex items-center gap-3">
           {actions}
           <ThemeSwitcher />
-          <NotificationDrawer />
+          <NotificationBell />
           <UserMenu />
         </div>
       </div>

@@ -6,6 +6,7 @@ import { api } from '@/services/api';
 import { Notification } from '@/types';
 import { NotificationPanel } from './notification-panel';
 import styles from './notification-bell.module.css';
+import { logger } from '@/lib/logger';
 
 export function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false);
@@ -17,8 +18,8 @@ export function NotificationBell() {
 
   useEffect(() => {
     loadNotifications();
-    // Poll for new notifications every 30 seconds
-    const interval = setInterval(loadUnreadCount, 30000);
+    // Poll for new notifications every 60 seconds
+    const interval = setInterval(loadUnreadCount, 60000);
     return () => clearInterval(interval);
   }, []);
 
@@ -44,10 +45,10 @@ export function NotificationBell() {
       const result = await api.getNotifications();
       if (result.data) {
         setNotifications(result.data);
-        setUnreadCount(result.data.filter(n => !n.read).length);
+        setUnreadCount(result.data.filter(n => !n.isRead).length);
       }
     } catch (error) {
-      console.error('Failed to load notifications:', error);
+      logger.error('Failed to load notifications:', error);
     }
     setIsLoading(false);
   };
@@ -59,7 +60,7 @@ export function NotificationBell() {
         setUnreadCount(result.data);
       }
     } catch (error) {
-      console.error('Failed to load unread count:', error);
+      logger.error('Failed to load unread count:', error);
     }
   };
 
@@ -67,11 +68,11 @@ export function NotificationBell() {
     try {
       await api.markNotificationRead(notificationId);
       setNotifications(prev =>
-        prev.map(n => (n.id === notificationId ? { ...n, read: true } : n))
+        prev.map(n => (n.id === notificationId ? { ...n, isRead: true } : n))
       );
       setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (error) {
-      console.error('Failed to mark notification as read:', error);
+      logger.error('Failed to mark notification as read:', error);
     }
   };
 
@@ -80,21 +81,21 @@ export function NotificationBell() {
       await api.deleteNotification(notificationId);
       const notification = notifications.find(n => n.id === notificationId);
       setNotifications(prev => prev.filter(n => n.id !== notificationId));
-      if (notification && !notification.read) {
+      if (notification && !notification.isRead) {
         setUnreadCount(prev => Math.max(0, prev - 1));
       }
     } catch (error) {
-      console.error('Failed to dismiss notification:', error);
+      logger.error('Failed to dismiss notification:', error);
     }
   };
 
   const handleMarkAllAsRead = async () => {
     try {
       await api.markAllNotificationsRead();
-      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
       setUnreadCount(0);
     } catch (error) {
-      console.error('Failed to mark all as read:', error);
+      logger.error('Failed to mark all as read:', error);
     }
   };
 

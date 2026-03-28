@@ -6,10 +6,19 @@ import { useTripStore } from '@/store';
 import { Card, CardHeader, CardTitle, CardContent, Button, Badge, Select, Avatar } from '@/components';
 import { InviteModal } from '@/components/trip/invite-modal';
 import { TripSettingsModal } from '@/components/trip/settings-modal';
+import { HoverDropdown } from '@/components/hover-dropdown';
+import { MilestoneStrip } from '@/components/trip/milestone-strip';
+import { MilestoneListPanel } from '@/components/trip/milestone-list';
+import { RequestPaymentModal } from '@/components/trip/request-payment-modal';
+import { RemindSettleModal } from '@/components/trip/remind-settle-modal';
+import { MilestoneEditorModal } from '@/components/trip/milestone-editor-modal';
+import { AddMilestoneModal } from '@/components/trip/add-milestone-modal';
 import { formatDateRange, formatCurrency, cn } from '@/lib/utils';
+import { format } from 'date-fns';
 import { api } from '@/services/api';
-import { MapPin, Calendar, Users, DollarSign, Share2, Settings, MoreVertical, Shield, Trash2 } from 'lucide-react';
-import { TripMember, User, Activity, BillSplit, MemberRole, TripStyle } from '@/types';
+import { logger } from '@/lib/logger';
+import { MapPin, Calendar, Users, DollarSign, Share2, Settings, MoreVertical, MoreHorizontal, Shield, Trash2, Flag, Plus, Check } from 'lucide-react';
+import { TripMember, User, Activity, BillSplit, MemberRole, TripStyle, Milestone } from '@/types';
 import { useAuth } from '@/hooks/use-auth';
 
 export default function TripOverview() {
@@ -24,6 +33,14 @@ export default function TripOverview() {
   const [stats, setStats] = useState({ total: 0, collected: 0 });
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+
+  // Milestone state
+  const [milestones, setMilestones] = useState<Milestone[]>([]);
+  const [showRequestPaymentModal, setShowRequestPaymentModal] = useState(false);
+  const [showRemindSettleModal, setShowRemindSettleModal] = useState(false);
+  const [showMilestoneEditorModal, setShowMilestoneEditorModal] = useState(false);
+  const [showAddMilestoneModal, setShowAddMilestoneModal] = useState(false);
+  const [selectedMilestone, setSelectedMilestone] = useState<Milestone | null>(null);
   
   // Track if data has been loaded to prevent redundant fetches
   const hasLoadedRef = useRef(false);
@@ -35,6 +52,17 @@ export default function TripOverview() {
     (currentTrip?.style === 'OPEN' && ['ORGANIZER', 'MEMBER'].includes(currentUserMember.role))
   ));
   const isMaster = currentUserMember?.role === 'MASTER';
+  const canAddMilestone = currentUserMember?.role === 'MASTER' || currentUserMember?.role === 'ORGANIZER';
+
+  // Compute the next upcoming milestone (earliest due date that isn't completed or skipped)
+  const nextMilestone = milestones
+    .filter(m => {
+      if (m.isSkipped) return false;
+      const total = m.totalMembers ?? 1;
+      const completed = m.completedCount ?? 0;
+      return completed < total;
+    })
+    .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())[0];
 
   const loadTripData = useCallback(async () => {
     if (abortControllerRef.current) {
@@ -63,10 +91,17 @@ export default function TripOverview() {
           }
         }),
       ]);
+
+      // Fetch milestones
+      api.getMilestones(tripId).then(result => {
+        if (result.data) setMilestones(result.data);
+      }).catch(() => {
+        // Milestones might not exist for IDEA trips
+      });
       hasLoadedRef.current = true;
     } catch (error) {
       if ((error as Error).name !== 'AbortError') {
-        console.error('Failed to load trip data:', error);
+        logger.error('Failed to load trip data:', error);
       }
     }
   }, [tripId, fetchTrip]);
@@ -104,41 +139,66 @@ export default function TripOverview() {
     handleMemberAdded();
   };
 
+  // Milestone handlers
+  const handleMilestoneClick = (milestone: Milestone) => {
+    setSelectedMilestone(milestone);
+  };
+
+  const handleEditMilestone = (milestone: Milestone) => {
+    setSelectedMilestone(milestone);
+    setShowMilestoneEditorModal(true);
+  };
+
+  const handleRequestPayment = (milestone: Milestone) => {
+    setSelectedMilestone(milestone);
+    setShowRequestPaymentModal(true);
+  };
+
+  const handleRemindSettle = (milestone: Milestone) => {
+    setSelectedMilestone(milestone);
+    setShowRemindSettleModal(true);
+  };
+
+  const handleMarkComplete = async (milestone: Milestone, userId: string, status: 'COMPLETED' | 'SKIPPED') => {
+    await api.updateMilestoneCompletion(milestone.id, userId, status);
+    // Refresh milestones
+    api.getMilestones(tripId).then(result => {
+      if (result.data) setMilestones(result.data);
+    });
+  };
+
+  const handleMilestoneSuccess = () => {
+    api.getMilestones(tripId).then(result => {
+      if (result.data) setMilestones(result.data);
+    });
+  };
+
   const renderMemberActions = (member: TripMember) => {
     if (!isMaster || member.role === 'MASTER') return null;
-    
+
     return (
-      <div className="flex items-center gap-1">
-        {member.role !== 'ORGANIZER' && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handlePromoteToOrganizer(member.userId)}
-          >
-            <Shield className="mr-1 h-3 w-3" />
-            Make Organizer
-          </Button>
-        )}
-        {member.role === 'ORGANIZER' && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handlePromoteToOrganizer(member.userId)}
-          >
-            <Shield className="mr-1 h-3 w-3" />
-            Remove Organizer
-          </Button>
-        )}
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-red-600 hover:text-red-700"
-          onClick={() => handleRemoveMember(member.userId)}
-        >
-          <Trash2 className="mr-1 h-3 w-3" />
-          Remove
-        </Button>
-      </div>
+      <HoverDropdown
+        mode="click"
+        align="right"
+        trigger={
+          <button className="rounded-md p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700">
+            <MoreHorizontal className="h-4 w-4" />
+          </button>
+        }
+        items={[
+          {
+            label: member.role !== 'ORGANIZER' ? 'Make Organizer' : 'Remove Organizer',
+            onClick: () => handlePromoteToOrganizer(member.userId),
+            icon: <Shield className="h-4 w-4" />,
+          },
+          {
+            label: 'Remove from Trip',
+            onClick: () => handleRemoveMember(member.userId),
+            icon: <Trash2 className="h-4 w-4" />,
+            className: 'text-red-600 hover:text-red-700',
+          },
+        ]}
+      />
     );
   };
 
@@ -192,6 +252,146 @@ export default function TripOverview() {
         onTripUpdated={handleTripUpdated}
       />
 
+      {/* Next Milestone Callout */}
+      {nextMilestone && (
+        <div className="rounded-lg border-2 border-amber-200 bg-amber-50 p-4">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">🎯</span>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-amber-700">
+                  Your Next Milestone
+                </p>
+                <h4 className="mt-1 text-lg font-semibold text-gray-900">
+                  {nextMilestone.name}
+                </h4>
+                <p className="mt-1 text-sm text-amber-700">
+                  Due: {format(new Date(nextMilestone.dueDate), 'MMMM d, yyyy')}
+                </p>
+                <div className="mt-2 flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-amber-300 bg-white text-amber-700 hover:bg-amber-100"
+                    onClick={() => handleMarkComplete(nextMilestone, user?.id || '', 'COMPLETED')}
+                  >
+                    <Check className="mr-1 h-4 w-4" />
+                    Mark Complete
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-amber-700 hover:text-amber-800 hover:bg-amber-100"
+                    onClick={() => handleMilestoneClick(nextMilestone)}
+                  >
+                    View Details →
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Milestone Strip */}
+      {milestones.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Flag className="h-5 w-5" />
+              Milestones
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <MilestoneStrip
+              milestones={milestones}
+              totalMembers={members.filter(m => m.status === 'CONFIRMED').length}
+              onMilestoneClick={handleMilestoneClick}
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Milestone List Panel */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Flag className="h-5 w-5" />
+              Milestone Details
+            </CardTitle>
+            {canAddMilestone && (
+              <Button size="sm" variant="outline" onClick={() => setShowAddMilestoneModal(true)}>
+                <Plus className="mr-1 h-4 w-4" />
+                Add Milestone
+              </Button>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          <MilestoneListPanel
+            milestones={milestones}
+            members={members}
+            currentUserId={user?.id || ''}
+            currentUserRole={currentUserMember?.role || ''}
+            tripId={tripId}
+            onRefresh={() => {
+              // Re-fetch milestones
+              api.getMilestones(tripId).then(result => {
+                if (result.data) setMilestones(result.data);
+              });
+            }}
+            onEditMilestone={handleEditMilestone}
+            onRequestPayment={handleRequestPayment}
+            onRemindSettle={handleRemindSettle}
+            onMarkComplete={handleMarkComplete}
+          />
+        </CardContent>
+      </Card>
+
+      {/* Milestone Modals */}
+      <RequestPaymentModal
+        isOpen={showRequestPaymentModal}
+        onClose={() => {
+          setShowRequestPaymentModal(false);
+          setSelectedMilestone(null);
+        }}
+        tripId={tripId}
+        milestone={selectedMilestone}
+        members={members}
+        onSuccess={handleMilestoneSuccess}
+      />
+
+      <RemindSettleModal
+        isOpen={showRemindSettleModal}
+        onClose={() => {
+          setShowRemindSettleModal(false);
+          setSelectedMilestone(null);
+        }}
+        tripId={tripId}
+        milestone={selectedMilestone}
+        members={members}
+        billSplits={billSplits}
+        onSuccess={handleMilestoneSuccess}
+      />
+
+      <MilestoneEditorModal
+        isOpen={showMilestoneEditorModal}
+        onClose={() => {
+          setShowMilestoneEditorModal(false);
+          setSelectedMilestone(null);
+        }}
+        milestone={selectedMilestone}
+        onSuccess={handleMilestoneSuccess}
+      />
+
+      <AddMilestoneModal
+        isOpen={showAddMilestoneModal}
+        onClose={() => setShowAddMilestoneModal(false)}
+        tripId={tripId}
+        onSuccess={handleMilestoneSuccess}
+      />
+
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
           <Card>
@@ -241,7 +441,7 @@ export default function TripOverview() {
             <CardContent>
               <div className="grid gap-3 sm:grid-cols-2">
                 {members.map((member) => (
-                  <div key={member.userId} className="flex items-center justify-between rounded-lg border border-border p-3">
+                  <div key={member.userId} className="flex items-center justify-between rounded-lg border border-border p-3 pr-2">
                     <div className="flex items-center gap-3">
                       <Avatar
                         src={member.user?.avatarUrl || undefined}

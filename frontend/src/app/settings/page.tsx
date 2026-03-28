@@ -9,6 +9,7 @@ import { Mail, Lock, Bell, Wallet, Save, Trash2, Plus, Check, MessageSquare, Sma
 import { cn } from '@/lib/utils';
 import { api } from '@/services/api';
 import { Settings } from '@/types';
+import { logger } from '@/lib/logger';
 
 type SettingsTab = 'profile' | 'security' | 'notifications' | 'payments';
 
@@ -211,7 +212,7 @@ export default function SettingsPage() {
         setTimeout(() => setSaved(false), 2000);
       }
     } catch (error) {
-      console.error('Failed to upload avatar:', error);
+      logger.error('Failed to upload avatar:', error);
       alert('Failed to upload avatar. Please try again.');
     } finally {
       setIsUploadingAvatar(false);
@@ -244,7 +245,7 @@ export default function SettingsPage() {
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch (error) {
-      console.error('Failed to remove avatar:', error);
+      logger.error('Failed to remove avatar:', error);
       alert('Failed to remove avatar. Please try again.');
     } finally {
       setIsUploadingAvatar(false);

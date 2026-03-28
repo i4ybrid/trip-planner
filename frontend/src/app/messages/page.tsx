@@ -11,6 +11,7 @@ import { Card } from '@/components/ui/card';
 import { NewConversationModal } from '@/components/messages/new-conversation-modal';
 import { api } from '@/services/api';
 import { DmConversation, Message, User } from '@/types';
+import { logger } from '@/lib/logger';
 
 function getOtherParticipant(conversation: DmConversation, currentUserId: string): User | undefined {
   return conversation.participants?.find(p => p.id !== currentUserId);
@@ -153,7 +154,7 @@ function MessagesPageContent() {
         setHasMoreMessages(false);
       }
     } catch (error) {
-      console.error('Failed to load more messages:', error);
+      logger.error('Failed to load more messages:', error);
     } finally {
       setIsLoadingMore(false);
     }

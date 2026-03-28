@@ -267,11 +267,18 @@ router.post('/trips/:tripId/invites/email', async (req: AuthRequest, res) => {
       return;
     }
 
+    // Get sender info for notification
+    const sender = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { name: true },
+    });
+
     const existingUser = await prisma.user.findUnique({
       where: { email },
     });
 
     if (existingUser) {
+      // Check if user is already a member
       const existingMember = await prisma.tripMember.findUnique({
         where: {
           tripId_userId: {
@@ -286,37 +293,46 @@ router.post('/trips/:tripId/invites/email', async (req: AuthRequest, res) => {
         return;
       }
 
-      await prisma.tripMember.upsert({
+      // Check if there's already a pending invite for this user
+      const existingInvite = await prisma.invite.findFirst({
         where: {
-          tripId_userId: {
-            tripId,
-            userId: existingUser.id,
-          },
-        },
-        update: {
-          role: 'MEMBER',
-          status: 'INVITED',
-          invitedById: userId,
-        },
-        create: {
           tripId,
-          userId: existingUser.id,
-          role: 'MEMBER',
-          status: 'INVITED',
-          invitedById: userId,
+          email: email.toLowerCase(),
+          status: 'PENDING',
+          expiresAt: { gte: new Date() },
         },
       });
 
+      if (existingInvite) {
+        res.status(400).json({ error: 'An invitation has already been sent to this email' });
+        return;
+      }
+
+      // Create an invite with token for the existing user
+      const token = uuidv4();
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 7);
+
+      const invite = await prisma.invite.create({
+        data: {
+          tripId,
+          token,
+          email: email.toLowerCase(),
+          sentById: userId,
+          expiresAt,
+        },
+      });
+
+      // Create notification with invite token for accept/decline
       await prisma.notification.create({
         data: {
           userId: existingUser.id,
-          tripId,
-          type: 'INVITE',
+          category: 'INVITE',
           title: 'Trip Invitation',
-          body: `You have been invited to join "${trip.name}"`,
-          actionType: 'trip_invite',
-          actionId: tripId,
-          actionUrl: `/trip/${tripId}`,
+          body: `${sender?.name || 'Someone'} invited you to "${trip.name}"`,
+          referenceId: invite.token,
+          referenceType: 'INVITE',
+          link: `/invites/pending`,
         },
       });
 
@@ -325,16 +341,34 @@ router.post('/trips/:tripId/invites/email', async (req: AuthRequest, res) => {
           success: true,
           message: 'Invitation sent to existing user',
           existingUserNotified: true,
+          inviteToken: token,
         },
       });
       return;
     }
 
+    // For non-existing users, we still create an invite record
+    // They can accept via the invite link sent via email
+    const token = uuidv4();
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7);
+
+    await prisma.invite.create({
+      data: {
+        tripId,
+        token,
+        email: email.toLowerCase(),
+        sentById: userId,
+        expiresAt,
+      },
+    });
+
     res.json({
       data: {
         success: true,
-        message: 'Email invitation placeholder - feature not implemented',
+        message: 'Invitation link created',
         existingUserNotified: false,
+        inviteUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/invite/${token}`,
       },
     });
   } catch (error: any) {

@@ -1,14 +1,9 @@
-import { PrismaClient } from '@prisma/client';
+import { getPrisma, setPrisma, resetPrisma } from './prisma-client';
 
-declare global {
-  // eslint-disable-next-line no-var
-  var prisma: PrismaClient | undefined;
-}
+// Re-export factory functions for tests
+export { getPrisma, setPrisma, resetPrisma };
 
-export const prisma = globalThis.prisma || new PrismaClient();
-
-if (process.env.NODE_ENV !== 'production') {
-  globalThis.prisma = prisma;
-}
-
-export default prisma;
+// Default export — calls getPrisma() at access time so setPrisma() takes effect
+const prismaClient = getPrisma();
+export default prismaClient;
+export { prismaClient as prisma };

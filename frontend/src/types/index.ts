@@ -22,20 +22,34 @@ export type FriendRequestStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED';
 
 export type FriendRequestSource = 'ANYONE' | 'TRIP_MEMBERS';
 
-export type NotificationType = 
-  | 'INVITE' 
-  | 'VOTE' 
-  | 'ACTIVITY' 
-  | 'PAYMENT' 
-  | 'MESSAGE' 
-  | 'REMINDER' 
-  | 'MILESTONE' 
-  | 'PAYMENT_DUE' 
-  | 'PAYMENT_RECEIVED' 
-  | 'VOTE_DEADLINE' 
-  | 'TRIP_STARTING' 
-  | 'FRIEND_REQUEST' 
-  | 'DM_MESSAGE';
+export type NotificationType =
+  | 'INVITE'
+  | 'VOTE'
+  | 'ACTIVITY'
+  | 'PAYMENT'
+  | 'MESSAGE'
+  | 'REMINDER'
+  | 'MILESTONE'
+  | 'PAYMENT_DUE'
+  | 'PAYMENT_RECEIVED'
+  | 'VOTE_DEADLINE'
+  | 'TRIP_STARTING'
+  | 'FRIEND_REQUEST'
+  | 'DM_MESSAGE'
+  | 'PAYMENT_REQUEST'
+  | 'SETTLEMENT_REMINDER';
+
+export type MilestoneType =
+  | 'COMMITMENT_REQUEST'
+  | 'COMMITMENT_DEADLINE'
+  | 'FINAL_PAYMENT_DUE'
+  | 'SETTLEMENT_DUE'
+  | 'SETTLEMENT_COMPLETE'
+  | 'CUSTOM';
+
+export type MilestoneActionType = 'PAYMENT_REQUEST' | 'SETTLEMENT_REMINDER';
+
+export type MilestoneStatus = 'PENDING' | 'COMPLETED' | 'SKIPPED' | 'OVERDUE';
 
 export type ActivityCategory = 'accommodation' | 'excursion' | 'restaurant' | 'transport' | 'activity' | 'other';
 
@@ -90,6 +104,7 @@ export interface Trip {
   tripMasterId: string;
   createdAt: string;
   updatedAt: string;
+  autoMilestonesGenerated?: boolean;
   _count?: {
     members: number;
     activities?: number;
@@ -149,6 +164,11 @@ export interface Invite {
   inviteUrl?: string;
   channels?: InviteChannel[];
   trip?: Trip;
+  sentBy?: {
+    id: string;
+    name: string;
+    avatarUrl?: string;
+  };
 }
 
 export interface InviteChannel {
@@ -292,17 +312,115 @@ export interface DmConversation {
 export interface Notification {
   id: string;
   userId: string;
-  tripId?: string;
   type: NotificationType;
+  category: NotificationCategory;
   title: string;
   body: string;
+  referenceId?: string;
+  referenceType?: NotificationReferenceType;
+  link?: string;
+  isRead: boolean;
+  tripId?: string;
   actionType?: string;
-  actionId?: string;
-  actionUrl?: string;
-  read: boolean;
-  priority?: string;
-  scheduledFor?: string;
   createdAt: string;
+}
+
+export type NotificationCategory =
+  | 'MILESTONE'
+  | 'INVITE'
+  | 'FRIEND'
+  | 'PAYMENT'
+  | 'SETTLEMENT'
+  | 'CHAT'
+  | 'MEMBER';
+
+export type NotificationReferenceType =
+  | 'TRIP'
+  | 'INVITE'
+  | 'FRIEND_REQUEST'
+  | 'BILL_SPLIT'
+  | 'MILESTONE'
+  | 'MESSAGE'
+  | 'USER';
+
+export interface Milestone {
+  id: string;
+  tripId: string;
+  type: MilestoneType;
+  name: string;
+  dueDate: string;
+  isManualOverride: boolean;
+  isSkipped: boolean;
+  isLocked: boolean;
+  isHard: boolean;
+  priority: number;
+  createdAt: string;
+  updatedAt: string;
+  memberCompletions?: MilestoneMemberCompletion[];
+  completedCount?: number;
+  totalMembers?: number;
+}
+
+export interface MilestoneMemberCompletion {
+  userId: string;
+  userName: string;
+  userAvatarUrl?: string;
+  status: MilestoneStatus;
+  completedAt?: string;
+  note?: string;
+}
+
+export interface MilestoneCompletion {
+  id: string;
+  milestoneId: string;
+  userId: string;
+  status: MilestoneStatus;
+  completedAt?: string;
+  note?: string;
+  createdAt: string;
+}
+
+export interface MilestoneAction {
+  id: string;
+  tripId: string;
+  actionType: MilestoneActionType;
+  sentById: string;
+  message?: string;
+  recipientIds: string[];
+  sentAt: string;
+}
+
+export interface MilestoneProgress {
+  milestones: {
+    id: string;
+    name: string;
+    type: MilestoneType;
+    dueDate: string;
+    isHard: boolean;
+    isLocked: boolean;
+    isSkipped: boolean;
+  }[];
+  memberProgress: {
+    userId: string;
+    userName: string;
+    userAvatarUrl?: string;
+    completions: {
+      milestoneId: string;
+      milestoneName: string;
+      milestoneType: MilestoneType;
+      dueDate: string;
+      status: MilestoneStatus;
+      completedAt?: string;
+    }[];
+    completedMilestones: number;
+    totalMilestones: number;
+    progressPercentage: number;
+  }[];
+  summary: {
+    totalMilestones: number;
+    completedMilestones: number;
+    overdueMilestones: number;
+  };
 }
 
 export interface CreateTripInput {
