@@ -243,16 +243,18 @@ export default function TripOverview() {
                         name={member.user?.name || 'User'}
                         size="md"
                       />
-                      <div>
+                      <div className="flex items-center gap-2">
                         <p className="font-medium">{member.user?.name || 'User'}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {member.role === 'MASTER' && 'Trip Master'}
-                          {member.role === 'ORGANIZER' && 'Organizer'}
-                          {member.role === 'MEMBER' && 'Member'}
-                          {member.role === 'VIEWER' && 'Viewer'}
-                          {member.status === 'INVITED' && ' (Invited)'}
-                        </p>
+                        {member.status === 'INVITED' && (
+                          <Badge status="INVITED" className="text-xs">Pending</Badge>
+                        )}
                       </div>
+                      <p className="text-xs text-muted-foreground">
+                        {member.role === 'MASTER' && 'Trip Master'}
+                        {member.role === 'ORGANIZER' && 'Organizer'}
+                        {member.role === 'MEMBER' && 'Member'}
+                        {member.role === 'VIEWER' && 'Viewer'}
+                      </p>
                     </div>
                     {renderMemberActions(member)}
                   </div>

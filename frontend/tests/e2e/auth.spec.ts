@@ -32,45 +32,44 @@ test.describe('Registration', () => {
     await page.goto('/login');
     await page.waitForLoadState('domcontentloaded');
     
-    // Click on "Sign up" link to toggle to registration mode
-    const signUpLink = page.locator('text=/sign up|register|create account/i').first();
-    if (await signUpLink.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await signUpLink.click();
-      await page.waitForTimeout(500);
-    }
+    // Click on "Sign up" toggle button to switch to registration mode
+    const signUpLink = page.locator('button:has-text("Sign up"), button:has-text("Don\'t have an account")').first();
+    await signUpLink.click();
     
-    // Should have name input
-    const nameInput = page.locator('input[name="name"], input[id="name"], input[placeholder*="name" i]');
-    await expect(nameInput.first()).toBeVisible({ timeout: 5000 });
+    // Wait for the name input to appear in registration form
+    const nameInput = page.locator('input[id="name"]');
+    await nameInput.waitFor({ state: 'visible', timeout: 10000 });
+    await expect(nameInput).toBeVisible();
     
     // Should have email input
-    const emailInput = page.locator('input[type="email"], input[id="email"]');
-    await expect(emailInput.first()).toBeVisible({ timeout: 5000 });
+    const emailInput = page.locator('input[id="email"]');
+    await expect(emailInput).toBeVisible();
     
     // Should have password input
-    const passwordInput = page.locator('input[type="password"], input[id="password"]');
-    await expect(passwordInput.first()).toBeVisible({ timeout: 5000 });
+    const passwordInput = page.locator('input[id="password"]');
+    await expect(passwordInput).toBeVisible();
   });
 
   test('should register a new user successfully', async ({ page }) => {
     await page.goto('/login');
     await page.waitForLoadState('domcontentloaded');
     
-    // Click on "Sign up" link to toggle to registration mode
-    const signUpLink = page.locator('text=/sign up|register|create account/i').first();
-    if (await signUpLink.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await signUpLink.click();
-      await page.waitForTimeout(500);
-    }
+    // Click on "Sign up" toggle button to switch to registration mode
+    const signUpLink = page.locator('button:has-text("Sign up"), button:has-text("Don\'t have an account")').first();
+    await signUpLink.click();
+    
+    // Wait for name input to appear
+    const nameInput = page.locator('input[id="name"]');
+    await nameInput.waitFor({ state: 'visible', timeout: 10000 });
     
     // Generate unique email
     const timestamp = Date.now();
     const testEmail = `e2e.test.${timestamp}@example.com`;
     
     // Fill in registration form
-    await page.fill('input[name="name"], input[id="name"]', 'E2E Test User');
-    await page.fill('input[type="email"], input[id="email"]', testEmail);
-    await page.fill('input[type="password"], input[id="password"]', 'TestPassword123!');
+    await page.fill('input[id="name"]', 'E2E Test User');
+    await page.fill('input[id="email"]', testEmail);
+    await page.fill('input[id="password"]', 'TestPassword123!');
     
     // Submit form
     await page.click('button[type="submit"]');
@@ -86,17 +85,18 @@ test.describe('Registration', () => {
     await page.goto('/login');
     await page.waitForLoadState('domcontentloaded');
     
-    // Click on "Sign up" link to toggle to registration mode
-    const signUpLink = page.locator('text=/sign up|register|create account/i').first();
-    if (await signUpLink.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await signUpLink.click();
-      await page.waitForTimeout(500);
-    }
+    // Click on "Sign up" toggle button to switch to registration mode
+    const signUpLink = page.locator('button:has-text("Sign up"), button:has-text("Don\'t have an account")').first();
+    await signUpLink.click();
+    
+    // Wait for name input to appear
+    const nameInput = page.locator('input[id="name"]');
+    await nameInput.waitFor({ state: 'visible', timeout: 10000 });
     
     // Fill in form with invalid email
-    await page.fill('input[name="name"], input[id="name"]', 'Test User');
-    await page.fill('input[type="email"], input[id="email"]', 'invalid-email');
-    await page.fill('input[type="password"], input[id="password"]', 'TestPassword123!');
+    await page.fill('input[id="name"]', 'Test User');
+    await page.fill('input[id="email"]', 'invalid-email');
+    await page.fill('input[id="password"]', 'TestPassword123!');
     
     // Submit form
     await page.click('button[type="submit"]');
@@ -112,18 +112,14 @@ test.describe('Registration', () => {
     await page.goto('/login');
     await page.waitForLoadState('domcontentloaded');
     
-    // Click on "Sign up" link to toggle to registration mode
-    const signUpLink = page.locator('text=/sign up|register|create account/i').first();
-    if (await signUpLink.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await signUpLink.click();
-      await page.waitForTimeout(500);
-    }
+    // Click on "Sign up" toggle button to switch to registration mode
+    const signUpLink = page.locator('button:has-text("Sign up"), button:has-text("Don\'t have an account")').first();
+    await signUpLink.click();
+    await page.waitForTimeout(300);
     
-    // Look for link back to login
-    const loginLink = page.locator('text=/already.*account|have.*account|login|sign in/i').first();
-    
-    // The link should exist somewhere on the page
-    expect(await page.locator('body').textContent()).toContain('login');
+    // Look for link back to login - should now show "Already have an account? Sign in"
+    const loginLink = page.locator('button:has-text("Already have an account"), button:has-text("Sign in")').first();
+    await expect(loginLink).toBeVisible({ timeout: 5000 });
   });
 });
 
@@ -182,8 +178,9 @@ test.describe('Login', () => {
     await page.goto('/login');
     await page.waitForLoadState('domcontentloaded');
     
-    // Look for sign up link
+    // Wait for the sign-up link to be visible (ensures page has hydrated)
     const signUpLink = page.locator('text=/sign up|register|create account|join/i').first();
+    await signUpLink.waitFor({ state: 'visible', timeout: 10000 });
     
     // The link should exist somewhere on the page
     expect(await page.locator('body').textContent()).toMatch(/sign up|register|create account/i);
@@ -356,27 +353,10 @@ test.describe('Broken Session Logout', () => {
     
     // Even if logout button click didn't work (API failed), the app should still
     // clear local session. Manually verify and force redirect if needed:
-    await page.evaluate(() => {
-      // If logout didn't navigate, manually go to login
-      if (!window.location.pathname.includes('/login')) {
-        window.location.href = '/login';
-      }
-    });
-    await page.waitForLoadState('domcontentloaded');
-    
-    // Final verification: localStorage should be cleared OR we're at /login
     const atLogin = page.url().includes('/login');
-    const sessionCleared = await page.evaluate(() => {
-      return !localStorage.getItem('next-auth.session-token');
-    });
-    
-    if (!atLogin || !sessionCleared) {
-      // Force clear and redirect
-      await page.evaluate(() => {
-        localStorage.removeItem('next-auth.session-token');
-        localStorage.removeItem('auth-storage');
-        window.location.href = '/login';
-      });
+    if (!atLogin) {
+      // Navigate to login (this will create a new execution context)
+      await page.goto('/login');
       await page.waitForLoadState('domcontentloaded');
     }
     
