@@ -86,3 +86,133 @@
 - [x] **7.5** Optimize query to use index on createdAt or message ID
 
 ---
+
+## 8. Timeline Engine
+
+**Proposal:** `proposals/timeline-engine-proposal.md`
+
+### Phase 1: Member Events (Priority)
+
+**8.1 Prisma Schema — Add TripTimelineEvent model**
+
+```prisma
+model TripTimelineEvent {
+  id        String   @id @default(cuid())
+  tripId    String
+  trip      Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  eventType String   // "MEMBER_JOINED", "MEMBER_INVITE_DECLINED", "MEMBER_REMOVED", "MEMBER_JOIN_WITHDRAWN", "ROLE_CHANGED", "JOIN_REQUEST_SENT", "JOIN_REQUEST_APPROVED", "JOIN_REQUEST_DENIED"
+  metadata  Json?    // { memberId, role, etc. }
+  actorId   String?
+  actor     User?    @relation(fields: [actorId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@index([tripId, createdAt])
+  @@index([tripId, eventType])
+}
+```
+- Run `npx prisma migrate dev --name add_trip_timeline_event`
+
+**8.2 Backend — emitTimelineEvent() service**
+
+Create `backend/src/services/timeline.service.ts`:
+```typescript
+export async function emitTimelineEvent(params: {
+  tripId: string;
+  eventType: string;
+  metadata?: Record<string, any>;
+  actorId?: string;
+}): Promise<TripTimelineEvent>
+```
+
+**8.3 Backend — Wire member events in tripMember.service.ts**
+
+| Method | Event Emitted |
+|--------|---------------|
+| `confirmJoin()` | `MEMBER_JOINED` |
+| `declineInvite()` | `MEMBER_INVITE_DECLINED` |
+| `removeMember()` | `MEMBER_REMOVED` |
+| `withdrawJoinRequest()` | `MEMBER_JOIN_WITHDRAWN` |
+| `updateRole()` | `ROLE_CHANGED` |
+| `createJoinRequest()` | `JOIN_REQUEST_SENT` |
+| `approveJoinRequest()` | `JOIN_REQUEST_APPROVED` |
+| `denyJoinRequest()` | `JOIN_REQUEST_DENIED` |
+
+**8.4 Backend — GET /api/trips/:tripId/timeline endpoint**
+
+Create `backend/src/routes/timeline.routes.ts`:
+- `GET /api/trips/:tripId/timeline?cursor=&limit=20`
+- Returns `{ events: TripTimelineEvent[], nextCursor: string | null }`
+- Only accessible to trip members (auth guard)
+- Sorted by `createdAt DESC`
+
+**8.5 Frontend — Timeline tab page**
+
+File: `frontend/src/app/trip/[id]/timeline/page.tsx`
+- Polls `GET /api/trips/:tripId/timeline` on mount + on `visibilitychange`
+- Shows `TimelineEventCard` list (newest first)
+- Infinite scroll to load more
+- Relative timestamps ("2h ago"), absolute on hover
+
+**8.6 Frontend — TimelineEventCard component**
+
+File: `frontend/src/components/timeline/TimelineEventCard.tsx`
+Props: `{ event: TripTimelineEvent }`
+
+Display per event type:
+- `MEMBER_JOINED` → 👤+ "{name} joined the trip"
+- `MEMBER_INVITE_DECLINED` → 🚪👤 "{name} declined the invitation"
+- `MEMBER_REMOVED` → 🚫 "{name} was removed from the trip"
+- `MEMBER_JOIN_WITHDRAWN` → 🔙 "{name} withdrew their join request"
+- `ROLE_CHANGED` → ⭐ "{name} was promoted to {role}" / demoted
+- `JOIN_REQUEST_SENT` → 📩 "{name} requested to join"
+- `JOIN_REQUEST_APPROVED` → ✅ "Join request approved for {name}"
+- `JOIN_REQUEST_DENIED` → ❌ "Join request denied for {name}"
+
+**8.7 Frontend — useTimelineEvents hook**
+
+File: `frontend/src/hooks/useTimelineEvents.ts`
+- `useQuery(['timeline', tripId], ...)` with `refetchInterval: 60000` (60s polling)
+- `refetchOnWindowFocus: true`
+- Returns `{ events, fetchNextPage, hasNextPage, isLoading }`
+
+---
+
+### Phase 2: Trip & Activity Events
+
+**8.8 Backend — Wire remaining event emitters**
+
+| Service | Method | Event |
+|---------|--------|-------|
+| `trip.service.ts` | `create()` | `TRIP_CREATED` |
+| `trip.service.ts` | `updateDates()` | `TRIP_DATES_CHANGED` |
+| `trip.service.ts` | `updateLocation()` | `TRIP_LOCATION_CHANGED` |
+| `settlement.service.ts` | `complete()` | `SETTLEMENT_COMPLETED` |
+| `payment.service.ts` | `confirmPayment()` | `PAYMENT_CONFIRMED` |
+| `activity.service.ts` | `create()` | `ACTIVITY_ADDED` |
+| `milestone.service.ts` | `complete()` | `MILESTONE_COMPLETED` |
+
+**8.9 Frontend — Filter bar**
+
+Add filter buttons: All | Members | Activities | Payments
+- Members: MEMBER_*, JOIN_REQUEST_*
+- Activities: ACTIVITY_ADDED, MILESTONE_COMPLETED
+- Payments: PAYMENT_CONFIRMED, SETTLEMENT_COMPLETED
+
+**8.10 Frontend — Rich metadata rendering**
+
+- `PAYMENT_CONFIRMED`: show amount
+- `TRIP_DATES_CHANGED`: show old → new dates
+- `TRIP_LOCATION_CHANGED`: show old → new location
+- `ACTIVITY_ADDED`: show activity name
+- `ROLE_CHANGED`: show old → new role
+
+**QA Checklist:**
+- [ ] All 8 member events fire and appear in timeline
+- [ ] Timeline only accessible to trip members (auth guard)
+- [ ] Non-members cannot access timeline API (401/403)
+- [ ] Timeline paginates correctly with cursor
+- [ ] Relative timestamps update correctly
+- [ ] Filter bar correctly filters by category
+- [ ] Phase 2 events fire and render with metadata
+- [ ] TypeScript 0 errors
+- [ ] `npm run build` passes

@@ -3,6 +3,8 @@ import { TripCreateInput, TripUpdateInput } from '@/types';
 import { TripStatus } from '@prisma/client';
 import { notificationService } from '@/services/notification.service';
 import { NotificationCategory, NotificationReferenceType } from '@prisma/client';
+import { timelineService } from '@/services/timeline.service';
+import { MemberRole } from '@prisma/client';
 
 // Valid status transitions
 const VALID_TRANSITIONS: Record<TripStatus, TripStatus[]> = {
@@ -584,13 +586,11 @@ export class TripService {
       create: { tripId, userId, role: 'MEMBER', status: 'PENDING_JOIN' },
     });
 
-    await this.prisma.timelineEvent.create({
-      data: {
-        tripId,
-        eventType: 'member_joined',
-        description: `${user?.name || 'Someone'} requested to join the trip`,
-        createdBy: userId,
-      },
+    await timelineService.emitTimelineEvent({
+      tripId,
+      eventType: 'JOIN_REQUEST_SENT',
+      actorId: userId,
+      description: `${user?.name || 'Someone'} requested to join the trip`,
     });
 
     // Notify MASTER and ORGANIZERs
@@ -635,13 +635,12 @@ export class TripService {
       data: { status: 'CONFIRMED' },
     });
 
-    await this.prisma.timelineEvent.create({
-      data: {
-        tripId,
-        eventType: 'member_joined',
-        description: 'A join request was approved',
-        createdBy: userId,
-      },
+    await timelineService.emitTimelineEvent({
+      tripId,
+      eventType: 'JOIN_REQUEST_APPROVED',
+      actorId: userId,
+      targetId: userId,
+      description: 'A join request was approved',
     });
 
     // Notify the requester
@@ -679,13 +678,12 @@ export class TripService {
       data: { status: 'REMOVED' },
     });
 
-    await this.prisma.timelineEvent.create({
-      data: {
-        tripId,
-        eventType: 'member_removed',
-        description: 'A join request was denied',
-        createdBy: userId,
-      },
+    await timelineService.emitTimelineEvent({
+      tripId,
+      eventType: 'JOIN_REQUEST_DENIED',
+      actorId: userId,
+      targetId: userId,
+      description: 'A join request was denied',
     });
 
     // Notify the requester
@@ -700,6 +698,64 @@ export class TripService {
     });
 
     return { success: true };
+  }
+
+  /**
+   * Change a member's role
+   */
+  async changeRole(tripId: string, userId: string, newRole: MemberRole): Promise<any> {
+    const member = await this.prisma.tripMember.findUnique({
+      where: { tripId_userId: { tripId, userId } },
+    });
+    if (!member) {
+      throw new Error('Member not found');
+    }
+
+    const oldRole = member.role;
+    if (oldRole === newRole) {
+      return member;
+    }
+
+    const updated = await this.prisma.tripMember.update({
+      where: { tripId_userId: { tripId, userId } },
+      data: { role: newRole },
+    });
+
+    await timelineService.emitTimelineEvent({
+      tripId,
+      eventType: 'ROLE_CHANGED',
+      actorId: userId,
+      targetId: userId,
+      metadata: { oldRole, newRole },
+      description: `Role changed from ${oldRole} to ${newRole}`,
+    });
+
+    return updated;
+  }
+
+  /**
+   * Withdraw a pending join request
+   */
+  async withdrawJoinRequest(tripId: string, userId: string): Promise<void> {
+    const member = await this.prisma.tripMember.findUnique({
+      where: { tripId_userId: { tripId, userId } },
+    });
+    if (!member || member.status !== 'PENDING_JOIN') {
+      throw new Error('No pending join request found');
+    }
+
+    await this.prisma.tripMember.update({
+      where: { tripId_userId: { tripId, userId } },
+      data: { status: 'REMOVED' },
+    });
+
+    await timelineService.emitTimelineEvent({
+      tripId,
+      eventType: 'MEMBER_JOIN_WITHDRAWN',
+      actorId: userId,
+      targetId: userId,
+      description: 'A join request was withdrawn',
+    });
   }
 }
 

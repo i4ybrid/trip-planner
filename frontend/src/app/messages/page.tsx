@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
 import { useSearchParams } from 'next/navigation';
 import { PageLayout } from '@/components/page-layout';
-import { MessageCircle, Search, Send, MoreVertical, Phone, Video, Plus, Loader2 } from 'lucide-react';
+import { MessageCircle, Search, Send, MoreVertical, Phone, Video, Plus, Loader2, Loader } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -46,6 +46,8 @@ function MessagesPageContent() {
   const [hasMoreMessages, setHasMoreMessages] = useState(true);
   const [showNewMessageModal, setShowNewMessageModal] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
@@ -177,10 +179,18 @@ function MessagesPageContent() {
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation) return;
     
-    const result = await api.sendDmMessage(selectedConversation, { content: newMessage.trim() });
-    if (result.data) {
-      setMessages(prev => [...prev, result.data!]);
-      setNewMessage('');
+    setIsSubmitting(true);
+    setError('');
+    try {
+      const result = await api.sendDmMessage(selectedConversation, { content: newMessage.trim() });
+      if (result.data) {
+        setMessages(prev => [...prev, result.data!]);
+        setNewMessage('');
+      } else if (result.error) {
+        setError(result.error);
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -331,10 +341,17 @@ function MessagesPageContent() {
                         onChange={(e) => setNewMessage(e.target.value)}
                         className="flex-1"
                       />
-                      <Button size="icon" onClick={handleSendMessage}>
-                        <Send className="h-4 w-4" />
+                      <Button size="icon" onClick={handleSendMessage} disabled={isSubmitting}>
+                        {isSubmitting ? (
+                          <Loader className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Send className="h-4 w-4" />
+                        )}
                       </Button>
                     </div>
+                    {error && (
+                      <p className="mt-2 text-sm text-destructive">{error}</p>
+                    )}
                   </div>
                 </>
               ) : (

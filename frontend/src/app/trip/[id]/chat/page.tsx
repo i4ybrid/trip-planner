@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardContent, Input, Button, Textarea, Avatar } from '@/components';
 import { api } from '@/services/api';
-import { Send, Users } from 'lucide-react';
+import { Send, Users, Loader } from 'lucide-react';
 import { cn, getInitials } from '@/lib/utils';
 import { Message, TripMember, User } from '@/types';
 import { logger } from '@/lib/logger';
@@ -20,6 +20,8 @@ export default function TripChat() {
   const [mentionSearch, setMentionSearch] = useState('');
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMoreMessages, setHasMoreMessages] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
@@ -139,12 +141,20 @@ export default function TripChat() {
     e.preventDefault();
     if (!newMessage.trim()) return;
     
-    const result = await api.sendTripMessage(tripId, { content: newMessage });
-    if (result.data) {
-      setMessages([...messages, result.data]);
-      setNewMessage('');
-      setShowMentions(false);
-      setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+    setIsSubmitting(true);
+    setError('');
+    try {
+      const result = await api.sendTripMessage(tripId, { content: newMessage });
+      if (result.data) {
+        setMessages([...messages, result.data]);
+        setNewMessage('');
+        setShowMentions(false);
+        setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+      } else if (result.error) {
+        setError(result.error);
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -274,10 +284,20 @@ export default function TripChat() {
                         className="flex-1 min-h-[44px] max-h-32 resize-y"
                         rows={1}
                       />
-                      <Button type="submit">
-                        <Send className="h-4 w-4" />
+                      <Button type="submit" disabled={isSubmitting}>
+                        {isSubmitting ? (
+                          <>
+                            <Loader className="h-4 w-4 animate-spin" />
+                            Sending...
+                          </>
+                        ) : (
+                          <Send className="h-4 w-4" />
+                        )}
                       </Button>
                     </form>
+                    {error && (
+                      <p className="mt-2 text-sm text-destructive">{error}</p>
+                    )}
                   </div>
                 </div>
               </div>

@@ -374,10 +374,13 @@ model MessageReadReceipt {
 model TimelineEvent {
   id          String   @id @default(cuid())
   tripId      String
-  eventType   String   // "activity_added", "member_joined", "payment_made", "vote_cast", etc.
-  description String
+  eventType   String   // SCREAMING_SNAKE_CASE: "MEMBER_JOINED", "JOIN_REQUEST_SENT", "INVITE_DECLINED", etc.
+  description String   // Human-readable description (backward compat)
+  actorId     String?  // User who triggered the event
+  targetId    String?  // User affected by the event
+  metadata    Json?    // Additional structured data
   createdAt   DateTime @default(now())
-  createdBy   String?
+  createdBy   String?  // Deprecated: use actorId
 
   trip        Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
 

@@ -2,6 +2,7 @@ import { getPrisma } from '@/lib/prisma';
 import { v4 as uuidv4 } from 'uuid';
 import { notificationService } from '@/services/notification.service';
 import { NotificationCategory, NotificationReferenceType } from '@prisma/client';
+import { timelineService } from '@/services/timeline.service';
 
 export class InviteService {
   private prisma = getPrisma();
@@ -147,13 +148,20 @@ export class InviteService {
   async declineInvite(token: string) {
     const invite = await this.prisma.invite.findUnique({
       where: { token },
-      include: { trip: { select: { name: true } } },
+      include: { trip: { select: { id: true, name: true } } },
     });
     if (!invite) { throw new Error('Invite not found'); }
 
     const updated = await this.prisma.invite.update({
       where: { id: invite.id },
       data: { status: 'DECLINED' as any },
+    });
+
+    await timelineService.emitTimelineEvent({
+      tripId: invite.tripId,
+      eventType: 'INVITE_DECLINED',
+      actorId: invite.sentById,
+      description: 'An invite was declined',
     });
 
     // Notify trip creator/sender about invite declined
