@@ -238,9 +238,14 @@ export class MilestoneService {
       const newDueDate = new Date(newStartDate);
       newDueDate.setDate(newDueDate.getDate() + template.daysFromStart);
 
+      const daysDelta = newDueDate.getTime() - milestone.dueDate.getTime();
+      const newReminderAt = milestone.reminderAt
+        ? new Date(milestone.reminderAt.getTime() + daysDelta)
+        : undefined;
+
       await this.prisma.milestone.update({
         where: { id: milestone.id },
-        data: { dueDate: newDueDate },
+        data: { dueDate: newDueDate, reminderAt: newReminderAt },
       });
     }
   }

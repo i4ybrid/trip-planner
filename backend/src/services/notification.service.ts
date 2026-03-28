@@ -25,7 +25,21 @@ const pendingTripChat: Map<string, PendingTripChatBatch> = new Map(); // key: `$
 export class NotificationService {
   private prisma = getPrisma();
 
+  async shouldNotify(userId: string, category: NotificationCategory): Promise<boolean> {
+    const preference = await this.prisma.notificationPreference.findUnique({
+      where: { userId_category: { userId, category } },
+    });
+    // Default to true if no preference set; only gate if inApp is explicitly false
+    if (preference && preference.inApp === false) {
+      return false;
+    }
+    return true;
+  }
+
   async createNotification(data: CreateNotificationData) {
+    if (!(await this.shouldNotify(data.userId, data.category))) {
+      return null;
+    }
     return this.prisma.notification.create({
       data: {
         userId: data.userId,
@@ -57,8 +71,9 @@ export class NotificationService {
     const notifications = [];
     for (const member of members) {
       if (member.userId === excludeUserId) continue;
+      if (!(await this.shouldNotify(member.userId, category))) continue;
 
-      const notification = await this.createNotification({
+      notifications.push({
         userId: member.userId,
         category,
         title,
@@ -66,12 +81,14 @@ export class NotificationService {
         referenceId: referenceId || tripId,
         referenceType: referenceType || NotificationReferenceType.TRIP,
         link: `/trip/${tripId}`,
+        isRead: false,
       });
-
-      notifications.push(notification);
     }
 
-    return notifications;
+    if (notifications.length === 0) return 0;
+
+    const result = await this.prisma.notification.createMany({ data: notifications });
+    return result.count;
   }
 
   async createFriendNotification(
@@ -117,6 +134,7 @@ export class NotificationService {
 
     for (const member of members) {
       if (member.userId === excludeUserId) continue;
+      if (!(await this.shouldNotify(member.userId, NotificationCategory.CHAT))) continue;
 
       const key = member.userId + ':' + tripId;
       const existing = pendingTripChat.get(key);
