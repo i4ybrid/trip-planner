@@ -26,8 +26,8 @@ test.describe('Trip Settings Modal', () => {
   test.beforeEach(async ({ page }) => {
     // Login before each test
     await page.goto('/login');
-    await page.fill('input[name="email"]', TEST_USER.email);
-    await page.fill('input[name="password"]', TEST_USER.password);
+    await page.fill('#email', TEST_USER.email);
+    await page.fill('#password', TEST_USER.password);
     await page.click('button[type="submit"]');
     
     // Wait for redirect to dashboard
@@ -67,13 +67,21 @@ test.describe('Trip Settings Modal', () => {
   });
 
   test('Non-master cannot access settings button', async ({ page }) => {
-    // Logout first
-    await page.click('text=Logout');
-    await page.waitForURL('**/login');
+    // Logout first - open user menu then click logout
+    const userMenuBtn = page.locator('header button.rounded-full, nav button.rounded-full').first();
+    if (await userMenuBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await userMenuBtn.click();
+      await page.waitForTimeout(300);
+      const logoutBtn = page.locator('button:has-text("Logout")').first();
+      if (await logoutBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await logoutBtn.click();
+        await page.waitForURL(/\/login/, { timeout: 10000 });
+      }
+    }
     
     // Login as a different user (sarah is not master of trip-1)
-    await page.fill('input[name="email"]', 'sarah@example.com');
-    await page.fill('input[name="password"]', TEST_USER.password);
+    await page.fill('#email', 'sarah@example.com');
+    await page.fill('#password', TEST_USER.password);
     await page.click('button[type="submit"]');
     await page.waitForURL('**/dashboard', { timeout: 10000 });
     
@@ -99,8 +107,8 @@ test.describe('Member Management', () => {
   test.beforeEach(async ({ page }) => {
     // Login as master user
     await page.goto('/login');
-    await page.fill('input[name="email"]', TEST_USER.email);
-    await page.fill('input[name="password"]', TEST_USER.password);
+    await page.fill('#email', TEST_USER.email);
+    await page.fill('#password', TEST_USER.password);
     await page.click('button[type="submit"]');
     await page.waitForURL('**/dashboard', { timeout: 10000 });
     
@@ -171,8 +179,8 @@ test.describe('Invite Flow', () => {
   test.beforeEach(async ({ page }) => {
     // Login
     await page.goto('/login');
-    await page.fill('input[name="email"]', TEST_USER.email);
-    await page.fill('input[name="password"]', TEST_USER.password);
+    await page.fill('#email', TEST_USER.email);
+    await page.fill('#password', TEST_USER.password);
     await page.click('button[type="submit"]');
     await page.waitForURL('**/dashboard', { timeout: 10000 });
     
@@ -306,8 +314,8 @@ test.describe('OPEN vs MANAGED Trip Workflows', () => {
 test.describe('Member Status Workflow', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/login');
-    await page.fill('input[name="email"]', TEST_USER.email);
-    await page.fill('input[name="password"]', TEST_USER.password);
+    await page.fill('#email', TEST_USER.email);
+    await page.fill('#password', TEST_USER.password);
     await page.click('button[type="submit"]');
     await page.waitForURL('**/dashboard', { timeout: 10000 });
   });
@@ -317,7 +325,7 @@ test.describe('Member Status Workflow', () => {
     // They should be able to decline
     
     // Navigate to notifications
-    await page.click('[aria-label="Notifications"]');
+    await page.click('[aria-label*="notification" i]');
     
     // Look for an invite notification
     const inviteNotification = page.locator('text=/invitation|invited.*trip/i');
@@ -352,8 +360,8 @@ test.describe('Member Status Workflow', () => {
 test.describe('Member Count Updates', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/login');
-    await page.fill('input[name="email"]', TEST_USER.email);
-    await page.fill('input[name="password"]', TEST_USER.password);
+    await page.fill('#email', TEST_USER.email);
+    await page.fill('#password', TEST_USER.password);
     await page.click('button[type="submit"]');
     await page.waitForURL('**/dashboard', { timeout: 10000 });
     
