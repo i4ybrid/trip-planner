@@ -51,6 +51,7 @@ export const BILL_SPLIT_IDS = {
 
 /**
  * Logs in a test user using the login page UI flow
+ * The login page uses quick-login buttons that fill React state, NOT direct form filling.
  * @param page Playwright page
  * @param userKey User key from TEST_USERS
  * @param options Optional settings
@@ -64,10 +65,28 @@ export async function loginTestUser(
   const user = TEST_USERS[userKey];
 
   await page.goto('/login');
+  await page.waitForLoadState('domcontentloaded');
 
-  // Fill in credentials
-  await page.fill('#email', user.email);
-  await page.fill('#password', user.password);
+  // Use quick-login buttons (fill React state, then we click submit)
+  // The quick-login section has buttons: "Test User", "Sarah Chen", "Mike Johnson", "Emma Wilson"
+  const userLabelMap: Record<string, string> = {
+    test: 'Test User',
+    sarah: 'Sarah Chen',
+    mike: 'Mike Johnson',
+    emma: 'Emma Wilson',
+  };
+
+  const label = userLabelMap[userKey] || user.name;
+  const quickLoginBtn = page.locator(`button:has-text("${label}")`).first();
+
+  if (await quickLoginBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
+    await quickLoginBtn.click();
+    await page.waitForTimeout(300); // let React update state
+  } else {
+    // Fallback: fill email/password directly
+    await page.fill('#email', user.email);
+    await page.fill('#password', user.password);
+  }
 
   // Submit the form and wait for redirect
   await Promise.all([
