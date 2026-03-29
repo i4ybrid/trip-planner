@@ -193,21 +193,48 @@ test.describe('Logout', () => {
   });
 
   test('should logout successfully', async ({ page }) => {
-    // Skip for now - the user menu button selector needs to be updated
-    // The UserMenu component exists but isn't visible in the test context
-    test.skip();
+    // Click the user menu button (rounded-full button with avatar in header)
+    const userMenuBtn = page.locator('header button.rounded-full, nav button.rounded-full').first();
     
-    await logoutUser(page);
+    if (await userMenuBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await userMenuBtn.click();
+      await page.waitForTimeout(300);
+      
+      // Click Logout in dropdown
+      const logoutBtn = page.locator('button:has-text("Logout"), button:has-text("Sign Out")').first();
+      await logoutBtn.click();
+      await page.waitForURL(/\/login/, { timeout: 10000 });
+    } else {
+      // Fallback: try any button with avatar in header
+      const avatarBtn = page.locator('header button:has([class*="avatar"]), nav button:has([class*="avatar"])').first();
+      if (await avatarBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await avatarBtn.click();
+        await page.waitForTimeout(300);
+        const logoutBtn = page.locator('button:has-text("Logout")').first();
+        await logoutBtn.click();
+        await page.waitForURL(/\/login/, { timeout: 10000 });
+      } else {
+        test.skip();
+      }
+    }
     
     // Should redirect to login
     await expect(page).toHaveURL(/\/login/, { timeout: 10000 });
   });
 
   test('should not access dashboard after logout', async ({ page }) => {
-    // Skip for now - the user menu button selector needs to be updated
-    test.skip();
+    // Click user menu and logout
+    const userMenuBtn = page.locator('header button.rounded-full, nav button.rounded-full').first();
     
-    await logoutUser(page);
+    if (await userMenuBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await userMenuBtn.click();
+      await page.waitForTimeout(300);
+      const logoutBtn = page.locator('button:has-text("Logout")').first();
+      if (await logoutBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await logoutBtn.click();
+        await page.waitForURL(/\/login/, { timeout: 10000 });
+      }
+    }
     
     // Try to access dashboard
     await page.goto('/dashboard');
@@ -274,7 +301,7 @@ test.describe('Broken Session Logout', () => {
     await page.waitForTimeout(1000);
     
     // Step 4: Try to find and click logout - if user menu visible, click it
-    const userMenuButton = page.locator('button.rounded-full, button[class*="user"], button[class*="avatar"]').first();
+    const userMenuButton = page.locator('header button.rounded-full, nav button.rounded-full').first();
     const isUserMenuVisible = await userMenuButton.isVisible({ timeout: 3000 }).catch(() => false);
     
     if (isUserMenuVisible) {
@@ -337,7 +364,7 @@ test.describe('Broken Session Logout', () => {
     await page.waitForTimeout(1000);
     
     // Try to logout - click user menu if visible, otherwise manually clear session
-    const userMenuButton = page.locator('button.rounded-full, button[class*="user"], button[class*="avatar"]').first();
+    const userMenuButton = page.locator('header button.rounded-full, nav button.rounded-full').first();
     const isUserMenuVisible = await userMenuButton.isVisible({ timeout: 3000 }).catch(() => false);
     
     if (isUserMenuVisible) {

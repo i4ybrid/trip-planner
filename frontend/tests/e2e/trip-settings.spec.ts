@@ -42,7 +42,7 @@ test.describe('Trip Settings Modal', () => {
     await page.waitForSelector('text=Hawaii Beach Vacation', { timeout: 10000 });
     
     // Find and click the settings button
-    const settingsButton = page.locator('button').filter({ has: page.locator('svg.h-4.w-4') }).last();
+    const settingsButton = page.locator('button[data-testid="settings-btn"], button[aria-label*="settings" i], button[class*="settings"]');
     await expect(settingsButton).toBeVisible();
     await settingsButton.click();
     
@@ -62,7 +62,7 @@ test.describe('Trip Settings Modal', () => {
     await page.waitForSelector('text=Hawaii Beach Vacation', { timeout: 10000 });
     
     // Settings button should be visible for MASTER
-    const settingsButton = page.locator('button').filter({ has: page.locator('svg.h-4.w-4') }).last();
+    const settingsButton = page.locator('button[data-testid="settings-btn"], button[aria-label*="settings" i], button[class*="settings"]');
     await expect(settingsButton).toBeVisible();
   });
 
@@ -87,7 +87,7 @@ test.describe('Trip Settings Modal', () => {
     const buttonCount = await buttons.count();
     
     // Check if any settings button exists (with Settings icon)
-    const settingsButton = page.locator('button').filter({ has: page.locator('svg.h-4.w-4') }).last();
+    const settingsButton = page.locator('button[data-testid="settings-btn"], button[aria-label*="settings" i], button[class*="settings"]');
     
     // The settings icon button shouldn't have Settings text visible for non-master
     // We verify by checking the modal doesn't open when looking for it
@@ -109,7 +109,7 @@ test.describe('Member Management', () => {
     await page.waitForSelector('text=Hawaii Beach Vacation', { timeout: 10000 });
     
     // Open settings modal
-    const settingsButton = page.locator('button').filter({ has: page.locator('svg.h-4.w-4') }).last();
+    const settingsButton = page.locator('button[data-testid="settings-btn"], button[aria-label*="settings" i], button[class*="settings"]');
     await settingsButton.click();
     await page.waitForSelector('text=Trip Settings', { timeout: 5000 });
   });
@@ -152,8 +152,8 @@ test.describe('Member Management', () => {
   });
 
   test('Trip master can transfer master role to another member', async ({ page }) => {
-    // Look for Crown icon button (transfer master)
-    const crownBtn = page.locator('button').filter({ has: page.locator('svg.h-4.w-4.text-yellow-600') }).first();
+    // Look for Crown icon button (transfer master) - use stable selectors
+    const crownBtn = page.locator('button[data-testid="transfer-master-btn"], button[aria-label*="transfer" i], button[class*="crown"]').first();
     
     // Handle confirmation dialog
     page.on('dialog', dialog => dialog.accept());
@@ -293,7 +293,7 @@ test.describe('OPEN vs MANAGED Trip Workflows', () => {
     await page.goto(page.url().replace('/overview', ''));
     
     // Open settings
-    const settingsButton = page.locator('button').filter({ has: page.locator('svg.h-4.w-4') }).last();
+    const settingsButton = page.locator('button[data-testid="settings-btn"], button[aria-label*="settings" i], button[class*="settings"]');
     await settingsButton.click();
     
     // Look for "Pending Approval" section
@@ -403,7 +403,7 @@ test.describe('Member Count Updates', () => {
     const initialCount = parseInt(initialText?.match(/\d+/)?.[0] || '0');
     
     // Open settings modal
-    const settingsButton = page.locator('button').filter({ has: page.locator('svg.h-4.w-4') }).last();
+    const settingsButton = page.locator('button[data-testid="settings-btn"], button[aria-label*="settings" i], button[class*="settings"]');
     await settingsButton.click();
     await page.waitForSelector('text=Trip Settings', { timeout: 5000 });
     

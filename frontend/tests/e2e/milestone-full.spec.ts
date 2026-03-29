@@ -19,7 +19,7 @@ test.describe('Milestone Strip Display', () => {
   });
 
   test('should show milestone strip on trip overview', async ({ page }) => {
-    await navigateToTrip(page, TRIP_IDS.hawaii, 'overview');
+    await navigateToTrip(page, TRIP_IDS.hawaii, 'timeline');
     await page.waitForLoadState('domcontentloaded');
     
     // Look for milestone strip or progress section
@@ -41,7 +41,7 @@ test.describe('Milestone Strip Display', () => {
   });
 
   test('should show milestone list', async ({ page }) => {
-    await navigateToTrip(page, TRIP_IDS.hawaii, 'overview');
+    await navigateToTrip(page, TRIP_IDS.hawaii, 'timeline');
     await page.waitForLoadState('domcontentloaded');
     
     // Look for milestone list items
@@ -56,7 +56,7 @@ test.describe('Milestone Strip Display', () => {
   });
 
   test('should show correct milestone due dates', async ({ page }) => {
-    await navigateToTrip(page, TRIP_IDS.hawaii, 'overview');
+    await navigateToTrip(page, TRIP_IDS.hawaii, 'timeline');
     await page.waitForLoadState('domcontentloaded');
     
     // Look for date display
@@ -75,7 +75,7 @@ test.describe('Milestone Strip Display', () => {
 test.describe('Request Payment Modal', () => {
   test.beforeEach(async ({ page }) => {
     await loginTestUser(page, 'test');
-    await navigateToTrip(page, TRIP_IDS.hawaii, 'overview');
+    await navigateToTrip(page, TRIP_IDS.hawaii, 'timeline');
     await page.waitForLoadState('domcontentloaded');
   });
 
@@ -153,7 +153,7 @@ test.describe('Request Payment Modal', () => {
 test.describe('Remind to Settle Modal', () => {
   test.beforeEach(async ({ page }) => {
     await loginTestUser(page, 'test');
-    await navigateToTrip(page, TRIP_IDS.hawaii, 'overview');
+    await navigateToTrip(page, TRIP_IDS.hawaii, 'timeline');
     await page.waitForLoadState('domcontentloaded');
   });
 
@@ -216,7 +216,7 @@ test.describe('Remind to Settle Modal', () => {
 test.describe('Milestone Date Locking', () => {
   test.beforeEach(async ({ page }) => {
     await loginTestUser(page, 'test');
-    await navigateToTrip(page, TRIP_IDS.hawaii, 'overview');
+    await navigateToTrip(page, TRIP_IDS.hawaii, 'timeline');
     await page.waitForLoadState('domcontentloaded');
   });
 

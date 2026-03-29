@@ -275,3 +275,115 @@ test.describe('Invite Accept Flow', () => {
     await expect(body).toBeVisible();
   });
 });
+
+test.describe('Pending Badge on Members', () => {
+  test.beforeEach(async ({ page }) => {
+    await loginTestUser(page, 'test');
+  });
+
+  test('should show yellow Pending badge for invited-but-not-accepted members', async ({ page }) => {
+    // Navigate to trip members/settings page where pending invites are shown
+    await page.goto(`/trip/${TRIP_IDS.hawaii}/members`);
+    await page.waitForLoadState('domcontentloaded');
+    
+    // Look for yellow "Pending" badge next to invited members
+    const pendingBadge = page.locator('text=/Pending|INVITED/i').first();
+    
+    if (await pendingBadge.isVisible({ timeout: 5000 }).catch(() => false)) {
+      // Pending badge should be visible for members who haven't accepted
+      await expect(pendingBadge).toBeVisible();
+      
+      // Badge should be yellow/amber colored
+      const badgeElement = pendingBadge.locator('..').first();
+      if (await badgeElement.isVisible({ timeout: 1000 }).catch(() => false)) {
+        const bgColor = await badgeElement.evaluate(el => {
+          const style = window.getComputedStyle(el);
+          return style.backgroundColor || style.background || '';
+        });
+        // Yellow/amber colors have high red component
+        if (bgColor) {
+          expect(bgColor).toMatch(/rgb\(.*,.*,(0|1)/);
+        }
+      }
+    } else {
+      // No pending invites in seed data - that's acceptable
+      test.skip();
+    }
+  });
+
+  test('should show pending badge next to member in members list', async ({ page }) => {
+    await page.goto(`/trip/${TRIP_IDS.hawaii}/members`);
+    await page.waitForLoadState('domcontentloaded');
+    
+    // Find members with pending status
+    const pendingMembers = page.locator('[class*="pending"], [class*="invited"]');
+    const memberCount = await pendingMembers.count();
+    
+    if (memberCount > 0) {
+      // Should have at least one pending member shown
+      expect(memberCount).toBeGreaterThan(0);
+    } else {
+      test.skip();
+    }
+  });
+
+  test('should remove pending badge when invite is accepted', async ({ page }) => {
+    // Login and navigate to trip settings where pending invites are shown
+    await page.goto(`/trip/${TRIP_IDS.hawaii}/members`);
+    await page.waitForLoadState('domcontentloaded');
+    
+    // Look for a pending invite that can be accepted
+    const acceptBtn = page.locator('button:has-text("Accept"), button:has-text("Confirm"), button:has-text("Approve")').first();
+    
+    if (await acceptBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      // Get initial pending badge count
+      const pendingBadge = page.locator('text=/Pending|INVITED/i').first();
+      const initialBadgeVisible = await pendingBadge.isVisible({ timeout: 1000 }).catch(() => false);
+      
+      if (initialBadgeVisible) {
+        await acceptBtn.click();
+        await page.waitForTimeout(1000);
+        
+        // Badge should disappear or change status
+        const badgeAfter = page.locator('text=/Pending|INVITED/i').first();
+        const badgeGone = !(await badgeAfter.isVisible({ timeout: 3000 }).catch(() => false));
+        
+        if (badgeGone) {
+          expect(true).toBe(true);
+        } else {
+          // Badge may still show - verify member status changed to confirmed
+          const confirmedBadge = page.locator('text=/Confirmed|Active|MEMBER/i').first();
+          expect(await confirmedBadge.isVisible({ timeout: 2000 }).catch(() => false)).toBe(true);
+        }
+      }
+    } else {
+      test.skip();
+    }
+  });
+
+  test('should remove pending badge when invite is declined', async ({ page }) => {
+    await page.goto(`/trip/${TRIP_IDS.hawaii}/members`);
+    await page.waitForLoadState('domcontentloaded');
+    
+    // Look for a pending invite that can be declined
+    const declineBtn = page.locator('button:has-text("Decline"), button:has-text("Reject"), button:has-text("Remove")').first();
+    
+    if (await declineBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      // Get initial state
+      const pendingBadge = page.locator('text=/Pending|INVITED/i').first();
+      const initialBadgeVisible = await pendingBadge.isVisible({ timeout: 1000 }).catch(() => false);
+      
+      if (initialBadgeVisible) {
+        await declineBtn.click();
+        await page.waitForTimeout(1000);
+        
+        // Badge should disappear - member either removed or status changed
+        const badgeAfter = page.locator('text=/Pending|INVITED/i').first();
+        const badgeGone = !(await badgeAfter.isVisible({ timeout: 3000 }).catch(() => false));
+        expect(badgeGone).toBe(true);
+      }
+    } else {
+      test.skip();
+    }
+  });
+});

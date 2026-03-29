@@ -183,13 +183,86 @@ test.describe('Update Profile', () => {
       
       if (await saveButton.isVisible({ timeout: 2000 }).catch(() => false)) {
         await saveButton.click();
-        await page.waitForTimeout(1000);
+        
+        // Wait for loading spinner (if any) before checking success
+        const spinner = page.locator('[class*="spinner"], [class*="loader"], [class*="loading"]').first();
+        if (await spinner.isVisible({ timeout: 1000 }).catch(() => false)) {
+          // Wait for spinner to disappear
+          await spinner.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
+        }
+        
+        await page.waitForTimeout(500);
         
         // Look for success message
         const success = page.locator('text=/saved|updated|success|changes.*saved/i').first();
         
         if (await success.isVisible({ timeout: 3000 }).catch(() => false)) {
           await expect(success).toBeVisible();
+        }
+      } else {
+        test.skip();
+      }
+    } else {
+      test.skip();
+    }
+  });
+
+  test('should show inline error on validation failure', async ({ page }) => {
+    const nameInput = page.locator('input[name="name"], input[id="name"]').first();
+    
+    if (await nameInput.isVisible({ timeout: 3000 }).catch(() => false)) {
+      // Clear name to trigger validation error
+      await nameInput.clear();
+      
+      // Try to save with empty name
+      const saveButton = page.locator('button[type="submit"], button').filter({ hasText: 'Save' }).first();
+      
+      if (await saveButton.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await saveButton.click();
+        await page.waitForTimeout(500);
+        
+        // Look for inline validation error
+        const error = page.locator('text=/required|name.*empty|min.*length|cannot.*be.*empty/i').first();
+        
+        if (await error.isVisible({ timeout: 3000 }).catch(() => false)) {
+          await expect(error).toBeVisible();
+        } else {
+          // Error might be shown in a different format (red border, alert, etc.)
+          const hasErrorIndicator = await page.locator('[class*="error"][class*="input"], [class*="invalid"]').first().isVisible({ timeout: 1000 }).catch(() => false);
+          expect(hasErrorIndicator).toBe(true);
+        }
+      } else {
+        test.skip();
+      }
+    } else {
+      test.skip();
+    }
+  });
+
+  test('should disable submit button during submission', async ({ page }) => {
+    const nameInput = page.locator('input[name="name"], input[id="name"]').first();
+    
+    if (await nameInput.isVisible({ timeout: 3000 }).catch(() => false)) {
+      // Update name
+      await nameInput.clear();
+      await nameInput.fill('Test Disable ' + Date.now());
+      
+      const saveButton = page.locator('button[type="submit"], button').filter({ hasText: 'Save' }).first();
+      
+      if (await saveButton.isVisible({ timeout: 2000 }).catch(() => false)) {
+        // Click save and immediately check button state
+        await saveButton.click();
+        
+        // Check if button becomes disabled during submission
+        const isDisabled = await saveButton.isDisabled({ timeout: 1000 }).catch(() => false);
+        
+        // If not immediately disabled, check for loading state
+        if (!isDisabled) {
+          const spinner = page.locator('[class*="spinner"], [class*="loader"]').first();
+          const hasSpinner = await spinner.isVisible({ timeout: 500 }).catch(() => false);
+          expect(hasSpinner || isDisabled).toBe(true);
+        } else {
+          expect(isDisabled).toBe(true);
         }
       } else {
         test.skip();

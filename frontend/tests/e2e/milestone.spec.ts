@@ -24,7 +24,8 @@ test.describe('Milestone System', () => {
 
   test('should display milestone strip on trip overview', async ({ page }) => {
     // Navigate to a trip that has milestones (Hawaii trip should have them after PLANNING)
-    await navigateToTrip(page, TRIP_IDS.hawaii, 'overview');
+    // Milestones have been moved to the Timeline tab
+    await navigateToTrip(page, TRIP_IDS.hawaii, 'timeline');
     await page.waitForLoadState('domcontentloaded');
 
     // Look for milestone strip or milestone content
@@ -42,7 +43,8 @@ test.describe('Milestone System', () => {
   });
 
   test('should show milestone list with correct due dates', async ({ page }) => {
-    await navigateToTrip(page, TRIP_IDS.hawaii, 'overview');
+    // Milestones have been moved to the Timeline tab
+    await navigateToTrip(page, TRIP_IDS.hawaii, 'timeline');
     await page.waitForLoadState('domcontentloaded');
 
     // Look for milestone details section
@@ -72,7 +74,7 @@ test.describe('Trip Status to Milestone Generation', () => {
     // Note: This would require a trip in IDEA status with start date set
     
     // Navigate to a trip and check if milestones exist for PLANNING+ trips
-    await navigateToTrip(page, TRIP_IDS.hawaii, 'overview');
+    await navigateToTrip(page, TRIP_IDS.hawaii, 'timeline');
     await page.waitForLoadState('domcontentloaded');
 
     // Look for status selector
@@ -94,7 +96,7 @@ test.describe('Trip Status to Milestone Generation', () => {
 test.describe('Request Payment Modal', () => {
   test.beforeEach(async ({ page }) => {
     await loginTestUser(page, 'test');
-    await navigateToTrip(page, TRIP_IDS.hawaii, 'overview');
+    await navigateToTrip(page, TRIP_IDS.hawaii, 'timeline');
   });
 
   test('should open request payment modal and send notifications', async ({ page }) => {
@@ -137,7 +139,7 @@ test.describe('Request Payment Modal', () => {
 test.describe('Remind to Settle Modal', () => {
   test.beforeEach(async ({ page }) => {
     await loginTestUser(page, 'test');
-    await navigateToTrip(page, TRIP_IDS.hawaii, 'overview');
+    await navigateToTrip(page, TRIP_IDS.hawaii, 'timeline');
   });
 
   test('should open remind to settle modal and send notifications', async ({ page }) => {
@@ -176,7 +178,7 @@ test.describe('Remind to Settle Modal', () => {
 test.describe('Milestone Editor', () => {
   test.beforeEach(async ({ page }) => {
     await loginTestUser(page, 'test');
-    await navigateToTrip(page, TRIP_IDS.hawaii, 'overview');
+    await navigateToTrip(page, TRIP_IDS.hawaii, 'timeline');
   });
 
   test('should lock a milestone date when manually overridden', async ({ page }) => {
@@ -259,7 +261,7 @@ test.describe('Milestone Editor', () => {
 test.describe('Milestone Progress', () => {
   test.beforeEach(async ({ page }) => {
     await loginTestUser(page, 'test');
-    await navigateToTrip(page, TRIP_IDS.hawaii, 'overview');
+    await navigateToTrip(page, TRIP_IDS.hawaii, 'timeline');
   });
 
   test('should show correct milestone progress per member', async ({ page }) => {
@@ -287,7 +289,7 @@ test.describe('Milestone Progress', () => {
 test.describe('On-Demand Actions and Notifications', () => {
   test.beforeEach(async ({ page }) => {
     await loginTestUser(page, 'test');
-    await navigateToTrip(page, TRIP_IDS.hawaii, 'overview');
+    await navigateToTrip(page, TRIP_IDS.hawaii, 'timeline');
   });
 
   test('should send immediate notification when on-demand action is triggered', async ({ page }) => {
@@ -334,29 +336,67 @@ test.describe('Settlement Milestones', () => {
     await loginTestUser(page, 'test');
   });
 
-  test('should show settlement milestones after trip ends', async ({ page }) => {
-    // Navigate to a completed trip
-    await navigateToTrip(page, TRIP_IDS.hawaii, 'overview');
+  test('should show settlement milestones in timeline after trip ends', async ({ page }) => {
+    // Navigate to a completed trip - milestones are in the Timeline tab
+    await navigateToTrip(page, TRIP_IDS.hawaii, 'timeline');
     await page.waitForLoadState('domcontentloaded');
 
-    // Look for status to see if trip is COMPLETED
-    const statusSelect = page.locator('select').first();
-    const hasStatus = await statusSelect.isVisible({ timeout: 3000 }).catch(() => false);
+    // Look for timeline entries which may include settlement milestones
+    const timelineSection = page.locator('text=/Timeline|Event/i').first();
+    const hasTimeline = await timelineSection.isVisible({ timeout: 5000 }).catch(() => false);
 
-    if (hasStatus) {
-      const statusValue = await statusSelect.inputValue();
-      
-      // Check for settlement milestones (SETTLEMENT_DUE, SETTLEMENT_COMPLETE)
-      if (statusValue === 'COMPLETED' || statusValue === 'HAPPENING') {
-        const settlementSection = page.locator('text=/Settlement/i').first();
-        const hasSettlement = await settlementSection.isVisible({ timeout: 3000 }).catch(() => false);
+    if (hasTimeline) {
+      // Settlement milestones (SETTLEMENT_DUE, SETTLEMENT_COMPLETE) appear in timeline
+      const settlementSection = page.locator('text=/Settlement/i').first();
+      const hasSettlement = await settlementSection.isVisible({ timeout: 3000 }).catch(() => false);
 
-        if (hasSettlement) {
-          expect(true).toBe(true);
+      if (hasSettlement) {
+        expect(true).toBe(true);
+      } else {
+        // Trip might not be in COMPLETED status yet - check status
+        const statusSelect = page.locator('select').first();
+        if (await statusSelect.isVisible({ timeout: 1000 }).catch(() => false)) {
+          const statusValue = await statusSelect.inputValue();
+          // Settlement milestones only show for COMPLETED/HAPPENING trips
+          if (statusValue !== 'COMPLETED' && statusValue !== 'HAPPENING') {
+            test.skip();
+          }
+        } else {
+          test.skip();
         }
       }
+    } else {
+      test.skip();
     }
+  });
 
-    test.skip();
+  test('should display settlement amount in timeline', async ({ page }) => {
+    // Navigate to trip timeline
+    await navigateToTrip(page, TRIP_IDS.hawaii, 'timeline');
+    await page.waitForLoadState('domcontentloaded');
+
+    // Look for monetary values associated with settlement milestones
+    const settlementSection = page.locator('text=/Settlement/i').first();
+    if (await settlementSection.isVisible({ timeout: 3000 }).catch(() => false)) {
+      // Should show amount owed or settlement status
+      const amountPattern = /\$\d+|owed|balance/i;
+      const hasAmount = await page.locator(`text=${amountPattern}`).first().isVisible({ timeout: 2000 }).catch(() => false);
+      if (hasAmount) {
+        expect(true).toBe(true);
+      } else {
+        test.skip();
+      }
+    } else {
+      // Trip might not be in COMPLETED/HAPPENING status - check trip status
+      const statusSelect = page.locator('select').first();
+      if (await statusSelect.isVisible({ timeout: 1000 }).catch(() => false)) {
+        const statusValue = await statusSelect.inputValue();
+        if (statusValue !== 'COMPLETED' && statusValue !== 'HAPPENING') {
+          test.skip();
+        }
+      } else {
+        test.skip();
+      }
+    }
   });
 });

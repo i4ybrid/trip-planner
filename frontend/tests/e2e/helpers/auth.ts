@@ -89,8 +89,8 @@ export async function loginTestUser(
  * Logs out the current user
  */
 export async function logoutUser(page: Page): Promise<void> {
-  // Click user menu button (the avatar/name button in header)
-  const userMenu = page.locator('button.rounded-full, button[class*="user"], button[class*="avatar"]').first();
+  // Click user menu button (the rounded-full button with avatar in header)
+  const userMenu = page.locator('header button.rounded-full, nav button.rounded-full').first();
   
   if (await userMenu.isVisible({ timeout: 3000 }).catch(() => false)) {
     await userMenu.click();
