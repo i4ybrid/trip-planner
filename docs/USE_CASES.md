@@ -33,6 +33,8 @@ tripplanner://invite/{code}       (mobile deep link)
 4. If Accept:
    - OPEN trips: User B → CONFIRMED member immediately
    - MANAGED trips: User B → INVITED (pending MASTER/ORGANIZER approval)
+   - A **pending badge** appears on the notification bell when invites are awaiting acceptance
+   - For MANAGED trips: after accepting an invite, the user sees a 'pending approval' state until a trip admin approves their join request
 5. If Decline: Invite marked DECLINED, User B not added
 6. Accepted: User B redirected to trip dashboard
 ```
@@ -111,13 +113,14 @@ tripplanner://invite/{code}       (mobile deep link)
 
 ### Trip Overview Page Sections
 1. **Trip Header** — Name, destination, invite button, settings
-2. **Next Milestone Callout** — Amber banner with soonest upcoming milestone
-3. **Milestone Strip** — Progress bar showing all milestones
-4. **Milestone Details** — Full list with actions (Request Payment, Remind, Mark Complete)
-5. **Trip Status Card** — Current status + description + date range
-6. **Members Card** — Grid of members with avatars and roles
-7. **Quick Stats Card** — Activity count, member count, memory count
-8. **Budget Card** — Total expenses, collected amount, link to Payments
+2. **Trip Status Card** — Current status + description + date range
+3. **Members Card** — Grid of members with avatars and roles
+4. **Activities List** — Proposed and confirmed activities with voting status
+5. **Quick Stats Card** — Activity count, member count, memory count
+6. **Budget Card** — Total expenses, collected amount, link to Payments
+
+### Timeline Tab
+The Timeline tab shows a chronological event log of trip activity: votes cast, activities proposed/confirmed, members joining/leaving, payment/settlement events, etc. This is where milestones and trip history are now displayed.
 
 ---
 
@@ -207,6 +210,7 @@ Bill splits can be edited after creation. All fields editable. The `members[]` a
 - Reply threads
 - Typing indicators
 - Read receipts
+- Real-time events via Socket.io: `message_sent`, `message_edited`, `message_deleted`, `typing_indicator`, `message_read`
 
 **Input Behavior:**
 - `Enter` → Send message
@@ -269,21 +273,47 @@ Organizers (`ORGANIZER` or `MASTER`) can add custom milestones at any time via "
 
 ## 10. Notifications
 
-Triggered by:
+### Notification Types
 | Event | Notification Type |
 |-------|-----------------|
-| Invite sent | `INVITE` |
-| Friend request | `FRIEND_REQUEST` |
-| Vote on activity | `VOTE` |
+| Invite sent | `TRIP_INVITE` |
+| Friend request sent/received | `FRIEND_REQUEST` |
+| Friend request accepted | `FRIEND_ACCEPTED` |
+| Vote on activity | `VOTE_CAST` |
 | Vote deadline approaching | `VOTE_DEADLINE` |
-| Activity confirmed | `ACTIVITY` |
-| Payment requested | `PAYMENT` |
-| Payment due reminder | `PAYMENT_DUE` |
+| Activity proposed | `ACTIVITY_PROPOSED` |
+| Activity confirmed | `ACTIVITY_CONFIRMED` |
+| Payment requested | `PAYMENT_REQUESTED` |
+| Payment due reminder | `SETTLEMENT_DUE` |
 | Payment received | `PAYMENT_RECEIVED` |
 | Trip starting soon | `TRIP_STARTING` |
+| Milestone approaching | `MILESTONE_DUE` |
+| Milestone overdue | `MILESTONE_OVERDUE` |
 | New trip message | `MESSAGE` |
 | New DM | `DM_MESSAGE` |
-| Milestone reminder | `MILESTONE` |
+| Join request (MANAGED trips) | `JOIN_REQUEST` |
+| Join request approved | `JOIN_REQUEST_APPROVED` |
+| Join request denied | `JOIN_REQUEST_DENIED` |
+
+### Notification Preferences
+Users can configure how they receive notifications:
+- **Channels**: Email, Push (mobile), In-App
+- **Per-type toggles**: Enable/disable specific notification types independently
+- **Quiet hours**: Suppress non-urgent notifications during configured time windows
+
+### Notification Settings Page (`/settings/notifications`)
+- Toggle channels per notification type
+- Configure quiet hours (start/end time, days of week)
+- Preview of current preferences
+
+### Notification Bell
+- Displays unread count badge when there are unread notifications
+- Pending invite count shown when invites are awaiting acceptance
+- **Mark all as read** button to dismiss all unread notifications
+- Clicking a notification navigates to the relevant trip or action page
+
+### Real-time Delivery
+Notifications are pushed in real-time via Socket.io to the user's personal room (`user:${userId}`).
 
 ---
 

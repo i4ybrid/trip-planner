@@ -26,13 +26,25 @@ IDEA → PLANNING → CONFIRMED → HAPPENING → COMPLETED
 |-------|-----|
 | `/trip/[id]/overview` | Overview (default) |
 | `/trip/[id]/activities` | Activities & voting |
-| `/trip/[id]/timeline` | Event timeline |
+| `/trip/[id]/timeline` | Timeline tab. Shows a chronological event log: votes cast, activities proposed/confirmed, members joining/leaving, payment events, milestone events, etc. |
 | `/trip/[id]/chat` | Group chat |
 | `/trip/[id]/payments` | Expenses & settlements |
 | `/trip/[id]/memories` | Photos/videos |
 | `/invites/pending` | Pending invitations |
 
 ---
+
+## Real-time Events (WebSocket)
+
+TripPlanner uses Socket.io for real-time event delivery:
+
+- **Connection**: Authenticated via session token on connect
+- **Rooms**: Each user joins `user:${userId}` room. Each trip has a `trip:${tripId}` room
+- **Notification push**: Notifications created server-side are pushed to the user's room immediately
+- **Chat**: Messages are pushed to the trip room in real-time when sent
+- **Timeline**: Trip-scoped events (votes, proposals, member changes) are pushed to the trip room
+
+See **API.md** for full WebSocket event reference.
 
 ## Milestones
 

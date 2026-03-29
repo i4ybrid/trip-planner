@@ -468,10 +468,92 @@ Response:
 ## Notifications
 
 ```
-GET    /api/notifications                    List notifications
-PATCH  /api/notifications/:id               Mark as read
-POST   /api/notifications/mark-all-read     Mark all as read
+GET    /api/notifications                      List user's notifications (paginated)
+GET    /api/notifications/:id                Get single notification
+PATCH  /api/notifications/:id                Mark as read
+DELETE /api/notifications/:id                Delete notification
+POST   /api/notifications/mark-all-read      Mark all as read
+POST   /api/notifications/subscribe-push     Subscribe to push notifications
+DELETE /api/notifications/unsubscribe-push   Unsubscribe from push notifications
 ```
+
+### List Notifications
+```
+GET /api/notifications?limit=20&before=2026-02-28T12:00:00Z
+
+Response:
+{
+  "data": [
+    {
+      "id": "notif-123",
+      "type": "TRIP_INVITE",
+      "title": "You've been invited to Hawaii Trip",
+      "body": "Sarah Chen invited you to join",
+      "read": false,
+      "actionType": "invite",
+      "actionId": "invite-token-xyz",
+      "actionUrl": "/invites/pending",
+      "tripId": "trip-456",
+      "createdAt": "2026-02-28T10:00:00Z"
+    }
+  ]
+}
+```
+
+### Mark as Read
+```
+PATCH /api/notifications/:id
+Response (200 OK): { "data": { "id": "notif-123", "read": true } }
+```
+
+### Mark All as Read
+```
+POST /api/notifications/mark-all-read
+Response (200 OK): { "data": { "count": 5 } }
+```
+
+### Push Subscription
+```
+POST /api/notifications/subscribe-push
+{
+  "subscription": {
+    "endpoint": "https://fcm.googleapis.com/...",
+    "keys": { "p256dh": "...", "auth": "..." }
+  }
+}
+
+DELETE /api/notifications/unsubscribe-push
+```
+
+---
+
+## WebSocket Events
+
+### Connection
+Client connects with auth token. Server validates and joins user to their personal room.
+
+### Event Reference
+
+#### Notification Events
+- `notification:new` — `{ notification: {...} }` — sent to user room when a new notification is created
+
+#### Message Events
+- `message:new` — `{ message: {...} }` — sent to trip room when a chat message is sent
+- `message:edit` — `{ messageId, content }` — sent to trip room when a message is edited
+- `message:delete` — `{ messageId }` — sent to trip room when a message is deleted
+
+#### Friend Events
+- `friend:request` — `{ fromUserId, toUserId }` — sent to user room
+- `friend:accepted` — `{ fromUserId, toUserId }` — sent to user room
+- `friend:declined` — `{ fromUserId, toUserId }` — sent to user room
+
+#### Timeline Events (trip room)
+- `timeline:event` — `{ eventType, actorId, targetId, metadata, createdAt }` — sent to `trip:${tripId}` room
+- Event types: `MEMBER_JOINED`, `MEMBER_INVITE_DECLINED`, `MEMBER_REMOVED`, `ROLE_CHANGED`, `JOIN_REQUEST_SENT`, `JOIN_REQUEST_APPROVED`, `JOIN_REQUEST_DENIED`, `ACTIVITY_PROPOSED`, `ACTIVITY_CONFIRMED`, `VOTE_CAST`, `VOTE_RETACTED`
+
+### Rooms
+- `user:${userId}` — personal notifications, messages, friend events
+- `trip:${tripId}` — all trip-scoped events (messages, timeline)
 
 ---
 
