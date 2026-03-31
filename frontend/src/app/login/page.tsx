@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import { useAuth } from '@/hooks/use-auth';
+import { api } from '@/services/api';
 import { Compass, Mail, Lock, User, ArrowRight, UserPlus, Gift, Loader } from 'lucide-react';
 
 // Simple OAuth button icons (SVG)
@@ -47,12 +48,46 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
+  const [isValidatingSession, setIsValidatingSession] = useState(false);
 
   useEffect(() => {
     if (inviteCode) {
       setIsLogin(false);
     }
   }, [inviteCode]);
+
+  // Session validation: redirect to dashboard if user already has valid session
+  useEffect(() => {
+    const token = localStorage.getItem('next-auth.session-token');
+    if (!token) return;
+
+    setIsValidatingSession(true);
+
+    // Race getCurrentUser against a 5-second timeout
+    const timeout = new Promise<null>((resolve) =>
+      setTimeout(() => resolve(null), 5000)
+    );
+
+    Promise.race([
+      api.getCurrentUser(),
+      timeout,
+    ])
+      .then((result) => {
+        if (result && result.data) {
+          router.push('/dashboard');
+        }
+        // If timeout (result is null) or no data, fall through to finally
+      })
+      .catch(() => {
+        // Invalid session — clear and stay on login
+        localStorage.removeItem('next-auth.session-token');
+        localStorage.removeItem('next-auth.csrf-token');
+      })
+      .finally(() => {
+        setIsValidatingSession(false);
+      });
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,6 +100,7 @@ export default function LoginPage() {
           router.push('/dashboard');
         } else {
           setError(result.error || 'Login failed');
+          setIsSubmitting(false);
         }
       } else {
         const result = await register(email, name, password, inviteCode || undefined);
@@ -72,9 +108,10 @@ export default function LoginPage() {
           router.push('/dashboard');
         } else {
           setError(result.error || 'Registration failed');
+          setIsSubmitting(false);
         }
       }
-    } finally {
+    } catch {
       setIsSubmitting(false);
     }
   };
@@ -89,6 +126,18 @@ export default function LoginPage() {
     setEmail(credentials[userType].email);
     setPassword(credentials[userType].password);
   };
+
+  // Show loading spinner while validating session
+  if (isValidatingSession) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="text-center">
+          <Loader className="w-8 h-8 animate-spin text-amber-600 mx-auto mb-4" />
+          <p className="text-gray-600">Checking your session...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex">
@@ -131,6 +180,25 @@ export default function LoginPage() {
             <Compass className="w-10 h-10 text-amber-600" />
             <h1 className="text-2xl font-bold text-amber-800">TripPlanner</h1>
           </div>
+
+          {/* Session Expired Banner */}
+          {searchParams.get('reason') === 'session_expired' && !bannerDismissed && (
+            <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-3">
+              <div className="flex-1">
+                <p className="text-sm font-medium text-amber-800">Your session expired.</p>
+                <p className="text-sm text-amber-700 mt-0.5">Please log back in to continue.</p>
+              </div>
+              <button
+                onClick={() => setBannerDismissed(true)}
+                className="text-amber-600 hover:text-amber-800 p-1 rounded transition-colors"
+                aria-label="Dismiss"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          )}
 
           <div className="mb-8">
             <h2 className="text-3xl font-bold text-gray-900 mb-2">

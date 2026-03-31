@@ -306,7 +306,7 @@ export default function TripPayments() {
                                         onClick={() => setMarkingPaid({ billId: bill.id, userId: member.userId })}
                                         className="h-7 text-xs"
                                       >
-                                        Mark as Paid
+                                        Mark Settled
                                       </Button>
                                     )}
                                   </div>

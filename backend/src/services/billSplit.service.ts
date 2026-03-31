@@ -1,6 +1,7 @@
 import { getPrisma } from '@/lib/prisma';
 import { notificationService } from '@/services/notification.service';
 import { NotificationCategory, NotificationReferenceType } from '@prisma/client';
+import { timelineService } from '@/services/timeline.service';
 import { checkAndUpdateSettlementMilestones } from '@/services/settlement.service';
 
 export class BillSplitService {
@@ -13,6 +14,7 @@ export class BillSplitService {
     amount: number;
     currency?: string;
     splitType: 'EQUAL' | 'SHARES' | 'PERCENTAGE' | 'MANUAL';
+    costType?: 'PER_PERSON' | 'FIXED';
     paidBy: string;
     createdBy: string;
     activityId?: string;
@@ -31,10 +33,17 @@ export class BillSplitService {
       throw new Error('No members in trip');
     }
 
-    // Calculate amounts based on split type
+    // Calculate amounts based on split type and cost type
     let memberAmounts: { userId: string; dollarAmount: number; type: string; percentage?: number; shares?: number }[] = [];
 
-    if (data.members && data.members.length > 0) {
+    if (data.costType === 'FIXED') {
+      // Fixed cost: only the payer owes the full amount, everyone else owes $0
+      memberAmounts = memberIds.map((userId) => ({
+        userId,
+        dollarAmount: userId === data.paidBy ? data.amount : 0,
+        type: data.splitType,
+      }));
+    } else if (data.members && data.members.length > 0) {
       memberAmounts = data.members.map((m) => ({
         userId: m.userId,
         dollarAmount: m.dollarAmount || 0,
@@ -66,6 +75,7 @@ export class BillSplitService {
         amount: data.amount,
         currency: data.currency || 'USD',
         splitType: data.splitType,
+        costType: data.costType || 'PER_PERSON',
         paidBy: data.paidBy,
         createdBy: data.createdBy,
         activityId: data.activityId,
@@ -91,13 +101,11 @@ export class BillSplitService {
     });
 
     // Create timeline event
-    await this.prisma.timelineEvent.create({
-      data: {
-        tripId: data.tripId,
-        eventType: 'payment_added',
-        description: `Bill split "${data.title}" was added`,
-        createdBy: data.createdBy,
-      },
+    await timelineService.emitTimelineEvent({
+      tripId: data.tripId,
+      eventType: 'payment_added',
+      description: `Bill split "${data.title}" was added`,
+      actorId: data.createdBy,
     });
 
     // Reset settlement milestone completions for all members
@@ -164,6 +172,7 @@ export class BillSplitService {
   async updateBillSplit(id: string, data: {
     title?: string; description?: string; amount?: number; currency?: string;
     splitType?: 'EQUAL' | 'SHARES' | 'PERCENTAGE' | 'MANUAL';
+    costType?: 'PER_PERSON' | 'FIXED';
     status?: 'PENDING' | 'PARTIAL' | 'PAID' | 'CONFIRMED' | 'CANCELLED';
     dueDate?: Date; paidBy?: string;
     members?: { userId: string; dollarAmount?: number; shares?: number; percentage?: number }[];
@@ -181,7 +190,34 @@ export class BillSplitService {
       : existingBill.members.map((m) => m.userId);
 
     const updateData: any = { ...data };
-    if (data.members) {
+
+    // Handle FIXED cost type: recalculate member amounts so only the payer owes the full amount
+    if (data.costType === 'FIXED' && data.paidBy) {
+      const amount = data.amount !== undefined ? data.amount : existingBill.amount.toNumber();
+      if (data.members) {
+        // Override member amounts based on FIXED cost type
+        updateData.members = {
+          create: data.members.map((m) => ({
+            userId: m.userId,
+            dollarAmount: m.userId === data.paidBy ? amount : 0,
+            type: data.splitType || 'EQUAL',
+            percentage: m.percentage,
+            shares: m.shares,
+          })),
+        };
+      } else {
+        // Recalculate existing members for FIXED cost type
+        const existingMemberIds = existingBill.members.map((m) => m.userId);
+        await this.prisma.billSplitMember.deleteMany({ where: { billSplitId: id } });
+        updateData.members = {
+          create: existingMemberIds.map((userId) => ({
+            userId,
+            dollarAmount: userId === data.paidBy ? amount : 0,
+            type: data.splitType || 'EQUAL',
+          })),
+        };
+      }
+    } else if (data.members) {
       await this.prisma.billSplitMember.deleteMany({ where: { billSplitId: id } });
       updateData.members = {
         create: data.members.map((m) => ({
@@ -222,6 +258,7 @@ export class BillSplitService {
   async markMemberAsPaid(billSplitId: string, userId: string, paymentMethod: 'VENMO' | 'PAYPAL' | 'ZELLE' | 'CASHAPP' | 'CASH' | 'OTHER', transactionId?: string) {
     const billSplitMember = await this.prisma.billSplitMember.findUnique({
       where: { billSplitId_userId: { billSplitId, userId } },
+      include: { user: { select: { name: true } }, billSplit: { select: { title: true, tripId: true } } },
     });
     if (!billSplitMember) { throw new Error('Member not found in this bill split'); }
 
@@ -256,6 +293,18 @@ export class BillSplitService {
         referenceType: NotificationReferenceType.BILL_SPLIT,
         link: `/trip/${billSplit.tripId}/payments`,
       });
+    }
+
+    // Emit member_paid timeline event
+    try {
+      await timelineService.emitTimelineEvent({
+        tripId: billSplitMember.billSplit.tripId,
+        eventType: 'member_paid',
+        description: `${billSplitMember.user.name} paid their share for "${billSplitMember.billSplit.title}"`,
+        actorId: userId,
+      });
+    } catch (e) {
+      console.error('Timeline event failed:', e);
     }
 
     return updated;

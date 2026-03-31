@@ -15,19 +15,70 @@ export function formatDate(date: string | Date | undefined): string {
   });
 }
 
+export function formatDateTime(date: string | Date | undefined): string {
+  if (!date) return 'TBD';
+  const d = new Date(date);
+  const dateStr = d.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+  // Check if time component exists and is not midnight
+  const hours = d.getHours();
+  const minutes = d.getMinutes();
+  if (hours === 0 && minutes === 0) {
+    return dateStr;
+  }
+  const timeStr = d.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
+  return `${dateStr} at ${timeStr}`;
+}
+
 export function formatDateRange(start?: string | Date, end?: string | Date): string {
   if (!start) return 'TBD';
-  if (!end) return formatDate(start);
+  if (!end) return formatDateTime(start);
   
   const startDate = new Date(start);
   const endDate = new Date(end);
   
-  if (startDate.getMonth() === endDate.getMonth() && startDate.getFullYear() === endDate.getFullYear()) {
-    const startMonth = startDate.toLocaleDateString('en-US', { month: 'short' });
-    return `${startMonth} ${startDate.getDate()}-${endDate.getDate()}, ${startDate.getFullYear()}`;
+  // If both dates are the same day and have no time, just show date once
+  const startHasTime = startDate.getHours() !== 0 || startDate.getMinutes() !== 0;
+  const endHasTime = endDate.getHours() !== 0 || endDate.getMinutes() !== 0;
+  
+  if (startDate.toDateString() === endDate.toDateString()) {
+    if (startHasTime) {
+      return `${formatDateTime(start)}`;
+    }
+    return formatDate(start);
   }
   
-  return `${formatDate(start)} - ${formatDate(end)}`;
+  if (startDate.getMonth() === endDate.getMonth() && startDate.getFullYear() === endDate.getFullYear()) {
+    const startMonth = startDate.toLocaleDateString('en-US', { month: 'short' });
+    const startDay = startDate.getDate();
+    const endDay = endDate.getDate();
+    const year = startDate.getFullYear();
+    
+    // Build end part: include time if set
+    let endPart = `${endDay}, ${year}`;
+    if (endHasTime) {
+      const endTimeStr = endDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+      endPart = `${endDay} at ${endTimeStr}, ${year}`;
+    }
+    
+    // Build start part: include time if set
+    let startPart = `${startMonth} ${startDay}`;
+    if (startHasTime) {
+      const startTimeStr = startDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+      startPart = `${startMonth} ${startDay} at ${startTimeStr}`;
+    }
+    
+    return `${startPart} - ${endPart}`;
+  }
+  
+  return `${formatDateTime(start)} - ${formatDateTime(end)}`;
 }
 
 export function formatCurrency(amount?: number, currency: string = 'USD'): string {
@@ -73,6 +124,7 @@ export function getStatusColor(status: string): string {
     DECLINED: 'bg-red-100 text-red-800',
     MAYBE: 'bg-orange-100 text-orange-800',
     REMOVED: 'bg-gray-100 text-gray-500',
+    PAID: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
   };
   return colors[status] || 'bg-gray-100 text-gray-800';
 }

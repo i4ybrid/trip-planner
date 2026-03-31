@@ -49,15 +49,11 @@ export const Modal: React.FC<ModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={onClose}>
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm pointer-events-none" />
       <div
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={(e) => {
-          e.stopPropagation();
-          onClose();
-        }}
-      />
-      <div
+        role="dialog"
+        aria-modal="true"
         className={cn(
           'relative z-50 w-full rounded-lg bg-background p-6 shadow-lg',
           sizes[size],

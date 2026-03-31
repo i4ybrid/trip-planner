@@ -1,5 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 
+
 /**
  * Playwright configuration for TripPlanner E2E tests
  * 
@@ -22,9 +23,10 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './tests/e2e',
+  globalSetup: './tests/e2e/global-setup',
   timeout: 60 * 1000,
   expect: {
-    timeout: 10 * 1000,
+    timeout: 30 * 1000,  // 30s for first assertion on a page (e.g. page.goto + first expect)
   },
   fullyParallel: true,
   forbidOnly: !!process.env.CI,

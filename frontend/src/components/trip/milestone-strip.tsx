@@ -42,11 +42,11 @@ export function MilestoneStrip({ milestones, totalMembers, onMilestoneClick }: M
 
   const getMilestoneColor = (status: string) => {
     switch (status) {
-      case 'completed': return 'bg-green-500';
-      case 'in-progress': return 'bg-yellow-500';
-      case 'overdue': return 'bg-red-500';
-      case 'skipped': return 'bg-gray-400';
-      default: return 'bg-gray-200 border-2 border-gray-300';
+      case 'completed': return 'bg-green-500 dark:bg-green-600';
+      case 'in-progress': return 'bg-yellow-500 dark:bg-yellow-600';
+      case 'overdue': return 'bg-red-500 dark:bg-red-600';
+      case 'skipped': return 'bg-gray-400 dark:bg-gray-600';
+      default: return 'bg-gray-200 border-2 border-gray-300 dark:bg-gray-700 dark:border-gray-600';
     }
   };
 
@@ -115,7 +115,7 @@ export function MilestoneStrip({ milestones, totalMembers, onMilestoneClick }: M
                 {/* Half-filled indicator for in-progress */}
                 {status === 'in-progress' && (
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="h-full w-1/2 rounded-full bg-yellow-500" />
+                    <div className="h-full w-1/2 rounded-full bg-yellow-500 dark:bg-yellow-600" />
                   </div>
                 )}
               </button>
@@ -125,7 +125,7 @@ export function MilestoneStrip({ milestones, totalMembers, onMilestoneClick }: M
                 <div 
                   className={cn(
                     'absolute left-1/2 top-1/2 h-0.5 w-full -translate-y-1/2',
-                    status === 'completed' ? 'bg-green-500' : 'bg-gray-200'
+                    status === 'completed' ? 'bg-green-500 dark:bg-green-600' : 'bg-gray-200 dark:bg-gray-600'
                   )}
                   style={{ left: '50%' }}
                 />
@@ -138,19 +138,19 @@ export function MilestoneStrip({ milestones, totalMembers, onMilestoneClick }: M
       {/* Legend */}
       <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
         <div className="flex items-center gap-1">
-          <div className="h-2 w-2 rounded-full bg-green-500" />
+          <div className="h-2 w-2 rounded-full bg-green-500 dark:bg-green-600" />
           <span>Completed</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="h-2 w-2 rounded-full bg-yellow-500" />
+          <div className="h-2 w-2 rounded-full bg-yellow-500 dark:bg-yellow-600" />
           <span>In Progress</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="h-2 w-2 rounded-full bg-gray-200 border border-gray-300" />
+          <div className="h-2 w-2 rounded-full bg-gray-200 border border-gray-300 dark:bg-gray-700 dark:border-gray-600" />
           <span>Upcoming</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="h-2 w-2 rounded-full bg-red-500" />
+          <div className="h-2 w-2 rounded-full bg-red-500 dark:bg-red-600" />
           <span>Overdue</span>
         </div>
       </div>

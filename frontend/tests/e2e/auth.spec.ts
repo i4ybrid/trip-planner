@@ -1,3 +1,8 @@
+/**
+ * PARALLEL SAFE — all tests are read-only or skip gracefully.
+ * Authentication tests use isolated per-test login and don't mutate shared state.
+ */
+
 import { test, expect } from '@playwright/test';
 import { loginTestUser, logoutUser, TEST_USERS } from './helpers/auth';
 

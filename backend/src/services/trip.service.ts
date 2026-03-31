@@ -267,7 +267,7 @@ export class TripService {
   async updateTripMember(tripId: string, userId: string, data: { role?: string; status?: string }) {
     const oldMember = await this.prisma.tripMember.findUnique({
       where: { tripId_userId: { tripId, userId } },
-      select: { role: true },
+      include: { user: { select: { name: true } } },
     });
 
     const updated = await this.prisma.tripMember.update({
@@ -283,12 +283,25 @@ export class TripService {
       },
     });
 
-    // Notify member if their role changed
+    // Emit timeline event and notify member if their role changed
     if (data.role && oldMember && data.role !== oldMember.role) {
       const trip = await this.prisma.trip.findUnique({
         where: { id: tripId },
         select: { name: true },
       });
+
+      try {
+        await timelineService.emitTimelineEvent({
+          tripId,
+          eventType: 'role_changed',
+          actorId: userId,
+          metadata: { memberId: userId, oldRole: oldMember.role, newRole: data.role },
+          description: `${oldMember.user.name}'s role changed from ${oldMember.role} to ${data.role}`,
+        });
+      } catch (e) {
+        console.error('Timeline event failed:', e);
+      }
+
       await notificationService.createNotification({
         userId,
         category: NotificationCategory.MEMBER,
@@ -324,24 +337,32 @@ export class TripService {
       },
     });
 
-    await this.prisma.timelineEvent.create({
-      data: {
-        tripId,
-        eventType: 'member_removed',
-        description: `${member.user.name} was removed from the trip`,
-      },
-    });
+    try {
+      await this.prisma.timelineEvent.create({
+        data: {
+          tripId,
+          eventType: 'member_removed',
+          description: `${member.user.name} was removed from the trip`,
+        },
+      });
+    } catch (e) {
+      console.error('Timeline event failed:', e);
+    }
 
     // Notify the removed user
-    await notificationService.createNotification({
-      userId: member.userId,
-      category: NotificationCategory.MEMBER,
-      title: 'Removed from Trip',
-      body: `You were removed from the trip`,
-      referenceId: tripId,
-      referenceType: NotificationReferenceType.TRIP,
-      link: '/dashboard',
-    });
+    try {
+      await notificationService.createNotification({
+        userId: member.userId,
+        category: NotificationCategory.MEMBER,
+        title: 'Removed from Trip',
+        body: `You were removed from the trip`,
+        referenceId: tripId,
+        referenceType: NotificationReferenceType.TRIP,
+        link: '/dashboard',
+      });
+    } catch (e) {
+      console.error('Notification failed:', e);
+    }
 
     return member;
   }
@@ -494,25 +515,27 @@ export class TripService {
     // OPEN trips auto-confirm members, MANAGED trips require approval
     const memberStatus = trip?.style === 'OPEN' ? 'CONFIRMED' : 'INVITED';
 
-    const member = await this.prisma.tripMember.upsert({
-      where: {
-        tripId_userId: {
+    let member;
+    try {
+      member = await this.prisma.tripMember.upsert({
+        where: {
+          tripId_userId: {
+            tripId,
+            userId,
+          },
+        },
+        update: {
+          role: role as any,
+          status: memberStatus,
+          invitedById: invitedById ?? null,
+        },
+        create: {
           tripId,
           userId,
+          role: role as any,
+          status: memberStatus,
+          invitedById: invitedById ?? null,
         },
-      },
-      update: {
-        role: role as any,
-        status: memberStatus,
-        invitedById,
-      },
-      create: {
-        tripId,
-        userId,
-        role: role as any,
-        status: memberStatus,
-        invitedById,
-      },
       include: {
         user: {
           select: {
@@ -524,17 +547,28 @@ export class TripService {
         },
       },
     });
+    } catch (error: any) {
+      // Re-throw Prisma errors as user-friendly messages
+      if (error.code === 'P2002') {
+        throw new Error('User is already a member of this trip');
+      }
+      throw error;
+    }
 
-    await this.prisma.timelineEvent.create({
-      data: {
-        tripId,
-        eventType: 'member_joined',
-        description: memberStatus === 'CONFIRMED' 
-          ? `${member.user.name} joined the trip`
-          : `${member.user.name} requested to join the trip`,
-        createdBy: userId,
-      },
-    });
+    try {
+      await this.prisma.timelineEvent.create({
+        data: {
+          tripId,
+          eventType: 'member_joined',
+          description: memberStatus === 'CONFIRMED' 
+            ? `${member.user.name} joined the trip`
+            : `${member.user.name} requested to join the trip`,
+          createdBy: userId,
+        },
+      });
+    } catch (e) {
+      console.error('Timeline event failed:', e);
+    }
 
     // Notify the added member
     if (memberStatus === 'CONFIRMED') {
@@ -542,15 +576,19 @@ export class TripService {
         where: { id: tripId },
         select: { name: true },
       });
-      await notificationService.createNotification({
-        userId,
-        category: NotificationCategory.MEMBER,
-        title: 'Added to Trip',
-        body: `You were added to "${trip?.name}"`,
-        referenceId: tripId,
-        referenceType: NotificationReferenceType.TRIP,
-        link: `/trip/${tripId}`,
-      });
+      try {
+        await notificationService.createNotification({
+          userId,
+          category: NotificationCategory.MEMBER,
+          title: 'Added to Trip',
+          body: `You were added to "${trip?.name}"`,
+          referenceId: tripId,
+          referenceType: NotificationReferenceType.TRIP,
+          link: `/trip/${tripId}`,
+        });
+      } catch (e) {
+        console.error('Notification creation failed:', e);
+      }
     }
 
     return member;
@@ -586,12 +624,16 @@ export class TripService {
       create: { tripId, userId, role: 'MEMBER', status: 'PENDING_JOIN' },
     });
 
-    await timelineService.emitTimelineEvent({
-      tripId,
-      eventType: 'JOIN_REQUEST_SENT',
-      actorId: userId,
-      description: `${user?.name || 'Someone'} requested to join the trip`,
-    });
+    try {
+      await timelineService.emitTimelineEvent({
+        tripId,
+        eventType: 'JOIN_REQUEST_SENT',
+        actorId: userId,
+        description: `${user?.name || 'Someone'} requested to join the trip`,
+      });
+    } catch (e) {
+      console.error('Timeline event failed:', e);
+    }
 
     // Notify MASTER and ORGANIZERs
     const managers = await this.prisma.tripMember.findMany({
@@ -600,15 +642,19 @@ export class TripService {
     });
 
     for (const manager of managers) {
-      await notificationService.createNotification({
-        userId: manager.userId,
-        category: NotificationCategory.MEMBER,
-        title: 'Join Request',
-        body: `${user?.name || 'Someone'} wants to join "${trip.name}"`,
-        referenceId: tripId,
-        referenceType: NotificationReferenceType.TRIP,
-        link: `/trip/${tripId}/members`,
-      });
+      try {
+        await notificationService.createNotification({
+          userId: manager.userId,
+          category: NotificationCategory.MEMBER,
+          title: 'Join Request',
+          body: `${user?.name || 'Someone'} wants to join "${trip.name}"`,
+          referenceId: tripId,
+          referenceType: NotificationReferenceType.TRIP,
+          link: `/trip/${tripId}/members`,
+        });
+      } catch (e) {
+        console.error('Notification failed:', e);
+      }
     }
 
     return member;
@@ -635,24 +681,32 @@ export class TripService {
       data: { status: 'CONFIRMED' },
     });
 
-    await timelineService.emitTimelineEvent({
-      tripId,
-      eventType: 'JOIN_REQUEST_APPROVED',
-      actorId: userId,
-      targetId: userId,
-      description: 'A join request was approved',
-    });
+    try {
+      await timelineService.emitTimelineEvent({
+        tripId,
+        eventType: 'JOIN_REQUEST_APPROVED',
+        actorId: userId,
+        targetId: userId,
+        description: 'A join request was approved',
+      });
+    } catch (e) {
+      console.error('Timeline event failed:', e);
+    }
 
     // Notify the requester
-    await notificationService.createNotification({
-      userId,
-      category: NotificationCategory.MEMBER,
-      title: 'Join Request Approved',
-      body: `Your request to join "${trip?.name}" was approved!`,
-      referenceId: tripId,
-      referenceType: NotificationReferenceType.TRIP,
-      link: `/trip/${tripId}`,
-    });
+    try {
+      await notificationService.createNotification({
+        userId,
+        category: NotificationCategory.MEMBER,
+        title: 'Join Request Approved',
+        body: `Your request to join "${trip?.name}" was approved!`,
+        referenceId: tripId,
+        referenceType: NotificationReferenceType.TRIP,
+        link: `/trip/${tripId}`,
+      });
+    } catch (e) {
+      console.error('Notification failed:', e);
+    }
 
     return updated;
   }
@@ -678,24 +732,32 @@ export class TripService {
       data: { status: 'REMOVED' },
     });
 
-    await timelineService.emitTimelineEvent({
-      tripId,
-      eventType: 'JOIN_REQUEST_DENIED',
-      actorId: userId,
-      targetId: userId,
-      description: 'A join request was denied',
-    });
+    try {
+      await timelineService.emitTimelineEvent({
+        tripId,
+        eventType: 'JOIN_REQUEST_DENIED',
+        actorId: userId,
+        targetId: userId,
+        description: 'A join request was denied',
+      });
+    } catch (e) {
+      console.error('Timeline event failed:', e);
+    }
 
     // Notify the requester
-    await notificationService.createNotification({
-      userId,
-      category: NotificationCategory.MEMBER,
-      title: 'Join Request Denied',
-      body: `Your request to join "${trip?.name}" was denied`,
-      referenceId: tripId,
-      referenceType: NotificationReferenceType.TRIP,
-      link: '/dashboard',
-    });
+    try {
+      await notificationService.createNotification({
+        userId,
+        category: NotificationCategory.MEMBER,
+        title: 'Join Request Denied',
+        body: `Your request to join "${trip?.name}" was denied`,
+        referenceId: tripId,
+        referenceType: NotificationReferenceType.TRIP,
+        link: '/dashboard',
+      });
+    } catch (e) {
+      console.error('Notification failed:', e);
+    }
 
     return { success: true };
   }
@@ -706,6 +768,7 @@ export class TripService {
   async changeRole(tripId: string, userId: string, newRole: MemberRole): Promise<any> {
     const member = await this.prisma.tripMember.findUnique({
       where: { tripId_userId: { tripId, userId } },
+      include: { user: { select: { name: true } } },
     });
     if (!member) {
       throw new Error('Member not found');
@@ -721,14 +784,17 @@ export class TripService {
       data: { role: newRole },
     });
 
-    await timelineService.emitTimelineEvent({
-      tripId,
-      eventType: 'ROLE_CHANGED',
-      actorId: userId,
-      targetId: userId,
-      metadata: { oldRole, newRole },
-      description: `Role changed from ${oldRole} to ${newRole}`,
-    });
+    try {
+      await timelineService.emitTimelineEvent({
+        tripId,
+        eventType: 'role_changed',
+        actorId: userId,
+        metadata: { memberId: userId, oldRole, newRole },
+        description: `${member.user.name}'s role changed from ${oldRole} to ${newRole}`,
+      });
+    } catch (e) {
+      console.error('Timeline event failed:', e);
+    }
 
     return updated;
   }
@@ -739,6 +805,7 @@ export class TripService {
   async withdrawJoinRequest(tripId: string, userId: string): Promise<void> {
     const member = await this.prisma.tripMember.findUnique({
       where: { tripId_userId: { tripId, userId } },
+      include: { user: { select: { name: true } } },
     });
     if (!member || member.status !== 'PENDING_JOIN') {
       throw new Error('No pending join request found');
@@ -749,13 +816,16 @@ export class TripService {
       data: { status: 'REMOVED' },
     });
 
-    await timelineService.emitTimelineEvent({
-      tripId,
-      eventType: 'MEMBER_JOIN_WITHDRAWN',
-      actorId: userId,
-      targetId: userId,
-      description: 'A join request was withdrawn',
-    });
+    try {
+      await timelineService.emitTimelineEvent({
+        tripId,
+        eventType: 'member_left',
+        actorId: userId,
+        description: `${member.user.name} left the trip`,
+      });
+    } catch (e) {
+      console.error('Timeline event failed:', e);
+    }
   }
 }
 

@@ -8,6 +8,16 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, 
 import { LeftSidebar } from '@/components/left-sidebar';
 import { AppHeader } from '@/components/app-header';
 import { ArrowLeft } from 'lucide-react';
+import { useFormSubmit } from '@/hooks/useFormSubmit';
+
+function normalizeDateForSubmit(dateStr: string, isEndDate: boolean): string | undefined {
+  if (!dateStr) return undefined;
+  if (!dateStr.includes('T')) {
+    // Date-only, no time component — apply default time
+    return `${dateStr}T${isEndDate ? '23:59' : '00:00'}`;
+  }
+  return dateStr;
+}
 
 export default function NewTripPage() {
   const router = useRouter();
@@ -18,26 +28,29 @@ export default function NewTripPage() {
   const [destination, setDestination] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { isSubmitting, error: hookError, submitForm } = useFormSubmit({
+    waitForNavigation: true,
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    try {
+    await submitForm(async () => {
+      const normalizedStart = normalizeDateForSubmit(startDate, false);
+      const normalizedEnd = normalizeDateForSubmit(endDate, true);
+
       const trip = await createTrip({
         name,
         description: description || undefined,
         destination: destination || undefined,
-        startDate: startDate || undefined,
-        endDate: endDate || undefined,
+        startDate: normalizedStart,
+        endDate: normalizedEnd,
       });
 
       if (trip) {
         router.push(`/trip/${trip.id}`);
       }
-    } finally {
-      setIsSubmitting(false);
-    }
+    });
   };
 
   return (
@@ -61,13 +74,14 @@ export default function NewTripPage() {
               </CardHeader>
               <form onSubmit={handleSubmit}>
                 <CardContent className="space-y-4">
-                  {error && (
+                  {hookError && (
                     <div className="rounded-lg bg-red-50 p-4 text-red-600 dark:bg-red-950">
-                      {error}
+                      {hookError}
                     </div>
                   )}
                   
                   <Input
+                    id="name"
                     label="Trip Name"
                     placeholder="Summer Vacation 2026"
                     value={name}
@@ -93,14 +107,21 @@ export default function NewTripPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <Input
                       label="Start Date"
-                      type="date"
+                      type="datetime-local"
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
                     />
                     <Input
                       label="End Date"
-                      type="date"
+                      type="datetime-local"
                       value={endDate}
+                      onFocus={() => {
+                        if (!endDate && startDate) {
+                          // Extract date portion (before any T)
+                          const dateOnly = startDate.split('T')[0];
+                          setEndDate(dateOnly);
+                        }
+                      }}
                       onChange={(e) => setEndDate(e.target.value)}
                     />
                   </div>

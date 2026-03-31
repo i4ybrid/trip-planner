@@ -6,6 +6,17 @@ import { tripService } from '@/services/trip.service';
 
 const router = Router();
 
+// GET /api/invites/pending - Get pending invites for current user
+router.get('/invites/pending', authMiddleware, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.userId;
+    const invites = await inviteService.getPendingInvitesByUserId(userId);
+    res.json({ data: invites });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // GET /api/invites/:token - Get invite details (public)
 router.get('/invites/:token', optionalAuthMiddleware, async (req: AuthRequest, res) => {
   try {
@@ -36,7 +47,7 @@ router.post('/invites/:token/accept', authMiddleware, async (req: AuthRequest, r
 });
 
 // POST /api/invites/:token/decline - Decline invite
-router.post('/invites/:token/decline', async (req, res) => {
+router.post('/invites/:token/decline', authMiddleware, async (req: AuthRequest, res) => {
   try {
     const token = req.params.token;
     await inviteService.declineInvite(token);
@@ -53,17 +64,6 @@ router.delete('/invites/:id', authMiddleware, async (req: AuthRequest, res) => {
 
     const result = await inviteService.revokeInvite(inviteId);
     res.json({ data: result, message: 'Invite revoked' });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// GET /api/invites/pending - Get pending invites for current user
-router.get('/invites/pending', authMiddleware, async (req: AuthRequest, res) => {
-  try {
-    const userId = req.user!.userId;
-    const invites = await inviteService.getPendingInvitesByUserId(userId);
-    res.json({ data: invites });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }

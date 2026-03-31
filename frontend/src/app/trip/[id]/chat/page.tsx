@@ -29,14 +29,12 @@ export default function TripChat() {
     const loadData = async () => {
       try {
         const [messagesResult, membersResult] = await Promise.all([
-          api.getTripMessages(tripId, 30),
+          api.getTripMessages(tripId, 50),
           api.getTripMembers(tripId),
         ]);
         if (messagesResult.data) {
           setMessages([...messagesResult.data].reverse());
           setHasMoreMessages(messagesResult.data.length === 30);
-          // Scroll to bottom after messages are loaded
-          setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'auto' }), 100);
         }
         if (membersResult.data) setMembers(membersResult.data);
       } catch (error) {

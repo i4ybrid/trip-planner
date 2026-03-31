@@ -20,15 +20,21 @@ export default function TripMemories() {
   useEffect(() => {
     const loadMemories = async () => {
       setIsLoading(true);
-      const result = await api.getMedia(tripId);
-      if (result.data) {
-        // Sort by createdAt ascending (oldest first)
-        const sorted = [...result.data].sort((a, b) =>
-          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-        );
-        setMemories(sorted);
+      try {
+        const result = await api.getMedia(tripId);
+        if (result.data) {
+          // Sort by createdAt ascending (oldest first)
+          const sorted = [...result.data].sort((a, b) =>
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          );
+          setMemories(sorted);
+        }
+      } catch (error) {
+        console.warn('Memories feature unavailable:', error);
+        // Silently fail — page shows Coming Soon UI
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
     loadMemories();
   }, [tripId]);

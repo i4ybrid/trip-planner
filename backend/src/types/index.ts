@@ -56,7 +56,18 @@ export interface ActivityCreateInput {
   cost?: number;
   currency?: string;
   category: string;
+  costType?: 'PER_PERSON' | 'FIXED';
   proposedBy: string;
+}
+
+// price fields are locked at creation — not editable
+export interface ActivityUpdateInput {
+  title?: string;
+  description?: string;
+  location?: string;
+  startTime?: Date;
+  endTime?: Date;
+  category?: string;
 }
 
 // Vote types
@@ -88,6 +99,8 @@ export interface MessageCreateInput {
 }
 
 // BillSplit types
+export type CostType = 'PER_PERSON' | 'FIXED';
+
 export interface BillSplitCreateInput {
   tripId: string;
   title: string;
@@ -95,6 +108,7 @@ export interface BillSplitCreateInput {
   amount: number;
   currency?: string;
   splitType: 'EQUAL' | 'SHARES' | 'PERCENTAGE' | 'MANUAL';
+  costType?: CostType;
   paidBy: string;
   createdBy: string;
   activityId?: string;

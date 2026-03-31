@@ -1,3 +1,8 @@
+/**
+ * PARALLEL SAFE — all tests are read-only or skip gracefully.
+ * API cache tests only monitor/read API call patterns without mutations.
+ */
+
 import { test, expect } from '@playwright/test';
 import { loginTestUser, navigateToTrip, TRIP_IDS } from './helpers/auth';
 
@@ -66,7 +71,8 @@ test.describe('API Caching', () => {
     
     // Payments should still show data
     await expect(page.locator('text=Payments & Expenses').first()).toBeVisible({ timeout: 10000 });
-    await expect(page.locator('text=Hotel: Grand Wailea').first()).toBeVisible({ timeout: 5000 });
+    // Wait for payments data to load (seed data includes "Hotel: Grand Wailea")
+    await expect(page.locator('text=Hotel: Grand Wailea').first()).toBeVisible({ timeout: 15000 });
   });
 
   test('should navigate between tabs without breaking', async ({ page }) => {

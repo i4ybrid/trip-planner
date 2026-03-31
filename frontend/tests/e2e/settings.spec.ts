@@ -1,3 +1,8 @@
+/**
+ * PARALLEL SAFE — all tests are read-only or skip gracefully.
+ * Settings tests primarily read/display settings without mutations.
+ */
+
 import { test, expect } from '@playwright/test';
 import { loginTestUser, TEST_USERS } from './helpers/auth';
 
@@ -60,8 +65,8 @@ test.describe('Settings Page', () => {
     // Should show user's name
     await expect(page.locator('text=/Test User/i').first()).toBeVisible({ timeout: 5000 });
     
-    // Should show user's email
-    await expect(page.locator('text=' + TEST_USERS.test.email).first()).toBeVisible({ timeout: 5000 });
+    // Should show user's email in the email input field
+    await expect(page.locator('input#email')).toHaveValue(TEST_USERS.test.email);
   });
 
   test('should show navigation to settings from dashboard', async ({ page }) => {
@@ -366,9 +371,8 @@ test.describe('Account Settings', () => {
   });
 
   test('should show email address', async ({ page }) => {
-    // Should show user's email
-    const emailDisplay = page.locator('text=' + TEST_USERS.test.email).first();
-    await expect(emailDisplay).toBeVisible({ timeout: 5000 });
+    // Should show user's email in the input field
+    await expect(page.locator('input#email')).toHaveValue(TEST_USERS.test.email);
   });
 
   test('should show change password option', async ({ page }) => {

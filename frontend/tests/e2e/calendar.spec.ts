@@ -1,3 +1,8 @@
+/**
+ * PARALLEL SAFE — all tests are read-only or skip gracefully.
+ * Calendar tests only read/display trip dates without mutations.
+ */
+
 import { test, expect } from '@playwright/test';
 import { loginTestUser, TEST_USERS, TRIP_IDS } from './helpers/auth';
 

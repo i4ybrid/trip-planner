@@ -270,6 +270,55 @@ const SEED_NOTIFICATIONS = [
   { userId: 'user-1', category: 'CHAT' as const, title: 'Tagged in chat', body: 'Sarah mentioned you in the Nashville trip chat', referenceId: 'trip-5', referenceType: 'TRIP' as const, link: '/trip/trip-5/chat' },
 ];
 
+const SEED_MILESTONES = [
+  {
+    id: 'milestone-1',
+    tripId: 'trip-1',
+    type: 'COMMITMENT_REQUEST' as const,
+    name: 'Commitment Request',
+    dueDate: new Date('2026-05-01'),
+    priority: 10,
+    isHard: true,
+  },
+  {
+    id: 'milestone-2',
+    tripId: 'trip-1',
+    type: 'COMMITMENT_DEADLINE' as const,
+    name: 'Commitment Deadline',
+    dueDate: new Date('2026-05-15'),
+    priority: 9,
+    isHard: false,
+  },
+  {
+    id: 'milestone-3',
+    tripId: 'trip-1',
+    type: 'FINAL_PAYMENT_DUE' as const,
+    name: 'Final Payment Due',
+    dueDate: new Date('2026-06-01'),
+    priority: 8,
+    isHard: true,
+  },
+  {
+    id: 'milestone-4',
+    tripId: 'trip-1',
+    type: 'SETTLEMENT_DUE' as const,
+    name: 'Settlement Due',
+    dueDate: new Date('2026-06-25'),
+    priority: 7,
+    isHard: true,
+  },
+];
+
+const SEED_MILESTONE_COMPLETIONS = [
+  { milestoneId: 'milestone-1', userId: 'user-1', status: 'COMPLETED' as const },
+  { milestoneId: 'milestone-1', userId: 'user-2', status: 'COMPLETED' as const },
+  { milestoneId: 'milestone-1', userId: 'user-3', status: 'PENDING' as const },
+  { milestoneId: 'milestone-2', userId: 'user-1', status: 'COMPLETED' as const },
+  { milestoneId: 'milestone-2', userId: 'user-2', status: 'COMPLETED' as const },
+  { milestoneId: 'milestone-2', userId: 'user-3', status: 'PENDING' as const },
+  { milestoneId: 'milestone-2', userId: 'user-4', status: 'PENDING' as const },
+];
+
 const SEED_MEDIA = [
   { tripId: 'trip-5', uploaderId: 'user-2', type: 'image' as const, url: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800', caption: 'Nashville skyline at night' },
   { tripId: 'trip-5', uploaderId: 'user-2', type: 'image' as const, url: 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=800', caption: 'Broadway neon lights' },
@@ -291,6 +340,9 @@ async function main() {
 
   // Clear existing data (in reverse order of dependencies)
   console.log('🗑️  Clearing existing data...');
+  await prisma.milestoneAction.deleteMany();
+  await prisma.milestoneCompletion.deleteMany();
+  await prisma.milestone.deleteMany();
   await prisma.timelineEvent.deleteMany();
   await prisma.messageReadReceipt.deleteMany();
   await prisma.message.deleteMany();
@@ -446,6 +498,22 @@ async function main() {
     });
   }
 
+  // Create milestones
+  console.log('🏁 Creating milestones...');
+  for (const milestoneData of SEED_MILESTONES) {
+    await prisma.milestone.create({
+      data: milestoneData,
+    });
+  }
+
+  // Create milestone completions
+  console.log('🏁 Creating milestone completions...');
+  for (const completionData of SEED_MILESTONE_COMPLETIONS) {
+    await prisma.milestoneCompletion.create({
+      data: completionData,
+    });
+  }
+
   // Create media items
   console.log('📸 Creating media items...');
   for (const mediaData of SEED_MEDIA) {
@@ -503,6 +571,8 @@ async function main() {
   console.log(`   - ${SEED_FRIENDS.length} friendships`);
   console.log(`   - ${SEED_FRIEND_REQUESTS.length} friend requests`);
   console.log(`   - ${SEED_NOTIFICATIONS.length} notifications`);
+  console.log(`   - ${SEED_MILESTONES.length} milestones`);
+  console.log(`   - ${SEED_MILESTONE_COMPLETIONS.length} milestone completions`);
   console.log(`   - ${SEED_MEDIA.length} media items`);
   console.log(`   - ${SEED_DM_CONVERSATIONS.length} DM conversations`);
   console.log(`   - ${SEED_DM_MESSAGES.length} DM messages`);

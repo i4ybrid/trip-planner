@@ -7,7 +7,7 @@ import dotenv from 'dotenv';
 
 import { setupSocketIO } from './lib/socket';
 import { storageConfig } from './lib/storage';
-import { logger } from './lib/logger';
+import { logger, registerGlobalErrorHandlers, writeCrashLog } from './lib/logger';
 import usersRouter from './routes/users';
 import tripsRouter from './routes/trips';
 import tripInvitesRouter from './routes/trip-invites';
@@ -21,9 +21,13 @@ import blockedRouter from './routes/blocked';
 import inviteCodesRouter from './routes/invite-codes';
 import emailInviteRouter from './routes/email-invite';
 import milestonesRouter from './routes/milestones';
+import pushRoutes from './routes/push.routes';
 
 // Load environment variables
 dotenv.config();
+
+// Register global crash handlers first — before anything else can go wrong
+registerGlobalErrorHandlers();
 
 const app = express();
 app.set('strict routing', true); // Treat /trips and /trips/ as different routes
@@ -104,6 +108,7 @@ app.use('/api', blockedRouter);
 app.use('/api', inviteCodesRouter);
 app.use('/api', emailInviteRouter);
 app.use('/api', milestonesRouter);
+app.use('/api', pushRoutes);
 
 // 404 handler
 app.use((_req, res) => {
@@ -113,6 +118,7 @@ app.use((_req, res) => {
 // Error handler
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   logger.error('Error:', err);
+  writeCrashLog('ERROR', `Express handler error: ${err.message}`, err.stack);
   res.status(500).json({
     error: 'Internal server error',
     message: process.env.NODE_ENV === 'development' ? err.message : undefined,

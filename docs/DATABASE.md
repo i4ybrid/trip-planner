@@ -102,6 +102,16 @@ enum NotificationType {
   DM_MESSAGE
 }
 
+enum NotificationCategory {
+  MILESTONE
+  INVITE
+  FRIEND
+  PAYMENT
+  SETTLEMENT
+  CHAT
+  MEMBER
+}
+
 enum TripStyle {
   OPEN      // Anyone can join after accepting invite
   MANAGED   // MASTER/ORGANIZER must approve new members
@@ -167,6 +177,8 @@ model User {
 
   // User settings
   settings       Settings?
+  notificationPreferences NotificationPreference[]
+  pushSubscriptions        PushSubscription[]
 
   // Payments
   billSplitsCreated BillSplit[]     @relation("BillSplitCreator")
@@ -430,6 +442,40 @@ model Notification {
   trip          Trip?            @relation(fields: [tripId], references: [id])
 
   createdAt     DateTime         @default(now())
+}
+```
+
+### NotificationPreference
+
+```prisma
+model NotificationPreference {
+  id          String                 @id @default(cuid())
+  userId      String
+  category    NotificationCategory
+  inApp       Boolean                @default(true)
+  email       Boolean                @default(false)
+  push        Boolean                @default(false)
+
+  user        User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, category])
+}
+```
+
+### PushSubscription
+
+```prisma
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId])
 }
 ```
 

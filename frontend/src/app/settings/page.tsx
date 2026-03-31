@@ -2,14 +2,16 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
+import { useSearchParams } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardContent, Button, Input, Label, Avatar } from '@/components';
 import { LeftSidebar } from '@/components/left-sidebar';
 import { AppHeader } from '@/components/app-header';
-import { Mail, Lock, Bell, Wallet, Save, Trash2, Plus, Check, MessageSquare, Smartphone, Camera, Image, Loader2 } from 'lucide-react';
+import { Mail, Lock, Bell, Wallet, Save, Trash2, Plus, Check, MessageSquare, Smartphone, Camera, Image, Loader2, Clock, BellOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { api } from '@/services/api';
 import { Settings } from '@/types';
 import { logger } from '@/lib/logger';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 
 type SettingsTab = 'profile' | 'security' | 'notifications' | 'payments';
 
@@ -21,7 +23,9 @@ interface PaymentMethod {
 
 export default function SettingsPage() {
   const { data: session, update: updateSession } = useSession();
-  const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get('tab') as SettingsTab | null;
+  const [activeTab, setActiveTab] = useState<SettingsTab>(tabParam || 'profile');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
@@ -121,6 +125,8 @@ export default function SettingsPage() {
     email: false,
     text: false,
   });
+
+  const { isSubscribed: pushIsSubscribed, isLoading: pushLoading, subscribe, unsubscribe } = usePushNotifications();
 
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
 
@@ -513,175 +519,330 @@ export default function SettingsPage() {
 
               {activeTab === 'notifications' && (
                 <div className="space-y-6">
+                  {/* In-App Notifications */}
                   <Card>
                     <CardHeader>
-                      <CardTitle>Notification Channels</CardTitle>
+                      <CardTitle className="flex items-center gap-2">
+                        <Bell size={16} /> In-App Notifications
+                      </CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                      <p className="text-sm text-muted-foreground">
-                        Choose how you want to receive notifications
-                      </p>
-                      <div className="grid gap-4 md:grid-cols-3">
+                    <CardContent>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium">In-App Notifications</p>
+                          <p className="text-sm text-muted-foreground">Show notifications in the app</p>
+                        </div>
                         <button
-                          onClick={() => setNotificationChannels({ ...notificationChannels, push: !notificationChannels.push })}
+                          onClick={() => setNotifications({ ...notifications, inAppAll: !notifications.inAppAll })}
                           className={cn(
-                            "flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-all",
-                            notificationChannels.push
-                              ? "border-primary bg-primary/5"
-                              : "border-border hover:border-primary/50"
+                            "relative h-6 w-11 rounded-full transition-colors",
+                            notifications.inAppAll ? "bg-primary" : "bg-secondary"
                           )}
                         >
-                          <Bell className="h-6 w-6" />
-                          <span className="font-medium">Push</span>
-                          <span className="text-xs text-muted-foreground">In-app</span>
-                        </button>
-                        <button
-                          onClick={() => setNotificationChannels({ ...notificationChannels, email: !notificationChannels.email })}
-                          className={cn(
-                            "flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-all",
-                            notificationChannels.email
-                              ? "border-primary bg-primary/5"
-                              : "border-border hover:border-primary/50"
-                          )}
-                        >
-                          <Mail className="h-6 w-6" />
-                          <span className="font-medium">Email</span>
-                          <span className="text-xs text-muted-foreground">test@example.com</span>
-                        </button>
-                        <button
-                          onClick={() => setNotificationChannels({ ...notificationChannels, text: !notificationChannels.text })}
-                          className={cn(
-                            "flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-all",
-                            notificationChannels.text
-                              ? "border-primary bg-primary/5"
-                              : "border-border hover:border-primary/50"
-                          )}
-                        >
-                          <Smartphone className="h-6 w-6" />
-                          <span className="font-medium">Text</span>
-                          <span className="text-xs text-muted-foreground">+1 (555) 123-4567</span>
+                          <span className={cn(
+                            "absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform",
+                            notifications.inAppAll && "translate-x-5"
+                          )} />
                         </button>
                       </div>
                     </CardContent>
                   </Card>
 
+                  {/* Email Notifications */}
                   <Card>
                     <CardHeader>
-                      <CardTitle>Notification Preferences</CardTitle>
+                      <CardTitle className="flex items-center gap-2">
+                        <Mail size={16} /> Email Notifications
+                      </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium">Email: Trip Invites</p>
-                            <p className="text-sm text-muted-foreground">Receive email when invited to trips</p>
-                          </div>
-                          <button
-                            onClick={() => setNotifications({ ...notifications, emailTripInvites: !notifications.emailTripInvites })}
-                            className={cn(
-                              "relative h-6 w-11 rounded-full transition-colors",
-                              notifications.emailTripInvites ? "bg-primary" : "bg-secondary"
-                            )}
-                          >
-                            <span className={cn(
-                              "absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform",
-                              notifications.emailTripInvites && "translate-x-5"
-                            )} />
-                          </button>
+                    <CardContent className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium">Trip Invites</p>
+                          <p className="text-sm text-muted-foreground">When someone invites you to a trip</p>
                         </div>
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium">Email: Voting Reminders</p>
-                            <p className="text-sm text-muted-foreground">When you need to vote on activities</p>
-                          </div>
-                          <button
-                            onClick={() => setNotifications({ ...notifications, emailVotingReminders: !notifications.emailVotingReminders })}
-                            className={cn(
-                              "relative h-6 w-11 rounded-full transition-colors",
-                              notifications.emailVotingReminders ? "bg-primary" : "bg-secondary"
-                            )}
-                          >
-                            <span className={cn(
-                              "absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform",
-                              notifications.emailVotingReminders && "translate-x-5"
-                            )} />
-                          </button>
+                        <button
+                          onClick={() => setNotifications({ ...notifications, emailTripInvites: !notifications.emailTripInvites })}
+                          className={cn(
+                            "relative h-6 w-11 rounded-full transition-colors",
+                            notifications.emailTripInvites ? "bg-primary" : "bg-secondary"
+                          )}
+                        >
+                          <span className={cn(
+                            "absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform",
+                            notifications.emailTripInvites && "translate-x-5"
+                          )} />
+                        </button>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium">Payment Requests</p>
+                          <p className="text-sm text-muted-foreground">When someone requests payment from you</p>
                         </div>
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium">Email: Payment Requests</p>
-                            <p className="text-sm text-muted-foreground">When someone owes you or you owe them</p>
-                          </div>
-                          <button
-                            onClick={() => setNotifications({ ...notifications, emailPaymentRequests: !notifications.emailPaymentRequests })}
-                            className={cn(
-                              "relative h-6 w-11 rounded-full transition-colors",
-                              notifications.emailPaymentRequests ? "bg-primary" : "bg-secondary"
-                            )}
-                          >
-                            <span className={cn(
-                              "absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform",
-                              notifications.emailPaymentRequests && "translate-x-5"
-                            )} />
-                          </button>
+                        <button
+                          onClick={() => setNotifications({ ...notifications, emailPaymentRequests: !notifications.emailPaymentRequests })}
+                          className={cn(
+                            "relative h-6 w-11 rounded-full transition-colors",
+                            notifications.emailPaymentRequests ? "bg-primary" : "bg-secondary"
+                          )}
+                        >
+                          <span className={cn(
+                            "absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform",
+                            notifications.emailPaymentRequests && "translate-x-5"
+                          )} />
+                        </button>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium">Voting Reminders</p>
+                          <p className="text-sm text-muted-foreground">When a vote is ending soon</p>
                         </div>
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium">Email: Messages</p>
-                            <p className="text-sm text-muted-foreground">When you receive direct messages</p>
-                          </div>
-                          <button
-                            onClick={() => setNotifications({ ...notifications, emailMessages: !notifications.emailMessages })}
-                            className={cn(
-                              "relative h-6 w-11 rounded-full transition-colors",
-                              notifications.emailMessages ? "bg-primary" : "bg-secondary"
-                            )}
-                          >
-                            <span className={cn(
-                              "absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform",
-                              notifications.emailMessages && "translate-x-5"
-                            )} />
-                          </button>
+                        <button
+                          onClick={() => setNotifications({ ...notifications, emailVotingReminders: !notifications.emailVotingReminders })}
+                          className={cn(
+                            "relative h-6 w-11 rounded-full transition-colors",
+                            notifications.emailVotingReminders ? "bg-primary" : "bg-secondary"
+                          )}
+                        >
+                          <span className={cn(
+                            "absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform",
+                            notifications.emailVotingReminders && "translate-x-5"
+                          )} />
+                        </button>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium">Trip Reminders</p>
+                          <p className="text-sm text-muted-foreground">Reminders before your trip starts</p>
                         </div>
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium">Push: Trip Reminders</p>
-                            <p className="text-sm text-muted-foreground">Get notified before your trips</p>
-                          </div>
-                          <button
-                            onClick={() => setNotifications({ ...notifications, pushTripReminders: !notifications.pushTripReminders })}
-                            className={cn(
-                              "relative h-6 w-11 rounded-full transition-colors",
-                              notifications.pushTripReminders ? "bg-primary" : "bg-secondary"
-                            )}
-                          >
-                            <span className={cn(
-                              "absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform",
-                              notifications.pushTripReminders && "translate-x-5"
-                            )} />
-                          </button>
+                        <button
+                          onClick={() => setNotifications({ ...notifications, emailTripReminders: !notifications.emailTripReminders })}
+                          className={cn(
+                            "relative h-6 w-11 rounded-full transition-colors",
+                            notifications.emailTripReminders ? "bg-primary" : "bg-secondary"
+                          )}
+                        >
+                          <span className={cn(
+                            "absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform",
+                            notifications.emailTripReminders && "translate-x-5"
+                          )} />
+                        </button>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium">Friend Requests</p>
+                          <p className="text-sm text-muted-foreground">When someone sends you a friend request</p>
                         </div>
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium">Push: Messages</p>
-                            <p className="text-sm text-muted-foreground">When you receive direct messages</p>
+                        <button
+                          onClick={() => setNotifications({ ...notifications, emailFriendRequests: !notifications.emailFriendRequests })}
+                          className={cn(
+                            "relative h-6 w-11 rounded-full transition-colors",
+                            notifications.emailFriendRequests ? "bg-primary" : "bg-secondary"
+                          )}
+                        >
+                          <span className={cn(
+                            "absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform",
+                            notifications.emailFriendRequests && "translate-x-5"
+                          )} />
+                        </button>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium">Messages</p>
+                          <p className="text-sm text-muted-foreground">When you receive direct messages</p>
+                        </div>
+                        <button
+                          onClick={() => setNotifications({ ...notifications, emailMessages: !notifications.emailMessages })}
+                          className={cn(
+                            "relative h-6 w-11 rounded-full transition-colors",
+                            notifications.emailMessages ? "bg-primary" : "bg-secondary"
+                          )}
+                        >
+                          <span className={cn(
+                            "absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform",
+                            notifications.emailMessages && "translate-x-5"
+                          )} />
+                        </button>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Push Notifications */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Smartphone size={16} /> Push Notifications
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {/* Browser push subscription management */}
+                      <div className="rounded-lg bg-muted/50 p-4 mb-4">
+                        {pushIsSubscribed ? (
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-medium">Browser Push</p>
+                              <p className="text-sm text-muted-foreground">Push notifications are enabled.</p>
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={unsubscribe}
+                              disabled={pushLoading}
+                            >
+                              <BellOff size={14} className="mr-1" />
+                              Disable
+                            </Button>
                           </div>
-                          <button
-                            onClick={() => setNotifications({ ...notifications, pushMessages: !notifications.pushMessages })}
-                            className={cn(
-                              "relative h-6 w-11 rounded-full transition-colors",
-                              notifications.pushMessages ? "bg-primary" : "bg-secondary"
-                            )}
-                          >
-                            <span className={cn(
-                              "absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform",
-                              notifications.pushMessages && "translate-x-5"
-                            )} />
-                          </button>
+                        ) : (
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-medium">Browser Push</p>
+                              <p className="text-sm text-muted-foreground">Enable to receive alerts even when the app is not open.</p>
+                            </div>
+                            <Button
+                              variant="primary"
+                              size="sm"
+                              onClick={subscribe}
+                              disabled={pushLoading}
+                            >
+                              <Smartphone size={14} className="mr-1" />
+                              Enable
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium">Trip Invites</p>
+                          <p className="text-sm text-muted-foreground">Real-time trip notifications</p>
+                        </div>
+                        <button
+                          onClick={() => setNotifications({ ...notifications, pushTripInvites: !notifications.pushTripInvites })}
+                          className={cn(
+                            "relative h-6 w-11 rounded-full transition-colors",
+                            notifications.pushTripInvites ? "bg-primary" : "bg-secondary"
+                          )}
+                        >
+                          <span className={cn(
+                            "absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform",
+                            notifications.pushTripInvites && "translate-x-5"
+                          )} />
+                        </button>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium">Payment Requests</p>
+                          <p className="text-sm text-muted-foreground">Payment-related notifications</p>
+                        </div>
+                        <button
+                          onClick={() => setNotifications({ ...notifications, pushPaymentRequests: !notifications.pushPaymentRequests })}
+                          className={cn(
+                            "relative h-6 w-11 rounded-full transition-colors",
+                            notifications.pushPaymentRequests ? "bg-primary" : "bg-secondary"
+                          )}
+                        >
+                          <span className={cn(
+                            "absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform",
+                            notifications.pushPaymentRequests && "translate-x-5"
+                          )} />
+                        </button>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium">Voting Reminders</p>
+                          <p className="text-sm text-muted-foreground">When a vote is ending soon</p>
+                        </div>
+                        <button
+                          onClick={() => setNotifications({ ...notifications, pushVotingReminders: !notifications.pushVotingReminders })}
+                          className={cn(
+                            "relative h-6 w-11 rounded-full transition-colors",
+                            notifications.pushVotingReminders ? "bg-primary" : "bg-secondary"
+                          )}
+                        >
+                          <span className={cn(
+                            "absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform",
+                            notifications.pushVotingReminders && "translate-x-5"
+                          )} />
+                        </button>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium">Trip Reminders</p>
+                          <p className="text-sm text-muted-foreground">Get notified before your trips</p>
+                        </div>
+                        <button
+                          onClick={() => setNotifications({ ...notifications, pushTripReminders: !notifications.pushTripReminders })}
+                          className={cn(
+                            "relative h-6 w-11 rounded-full transition-colors",
+                            notifications.pushTripReminders ? "bg-primary" : "bg-secondary"
+                          )}
+                        >
+                          <span className={cn(
+                            "absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform",
+                            notifications.pushTripReminders && "translate-x-5"
+                          )} />
+                        </button>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium">Messages</p>
+                          <p className="text-sm text-muted-foreground">Chat and direct messages</p>
+                        </div>
+                        <button
+                          onClick={() => setNotifications({ ...notifications, pushMessages: !notifications.pushMessages })}
+                          className={cn(
+                            "relative h-6 w-11 rounded-full transition-colors",
+                            notifications.pushMessages ? "bg-primary" : "bg-secondary"
+                          )}
+                        >
+                          <span className={cn(
+                            "absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform",
+                            notifications.pushMessages && "translate-x-5"
+                          )} />
+                        </button>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Quiet Hours */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Clock size={16} /> Quiet Hours
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <p className="text-sm text-muted-foreground">
+                        Set a time range when you don&apos;t want to receive notifications.
+                      </p>
+                      <div className="flex items-center gap-4">
+                        <div className="flex-1">
+                          <Label className="text-xs text-muted-foreground">Start</Label>
+                          <Input
+                            type="time"
+                            value={notifications.quietHoursStart || '22:00'}
+                            onChange={(e) => setNotifications({ ...notifications, quietHoursStart: e.target.value })}
+                            className="mt-1"
+                          />
+                        </div>
+                        <span className="mt-5 text-muted-foreground">to</span>
+                        <div className="flex-1">
+                          <Label className="text-xs text-muted-foreground">End</Label>
+                          <Input
+                            type="time"
+                            value={notifications.quietHoursEnd || '08:00'}
+                            onChange={(e) => setNotifications({ ...notifications, quietHoursEnd: e.target.value })}
+                            className="mt-1"
+                          />
                         </div>
                       </div>
                     </CardContent>
                   </Card>
+
+                  <Button onClick={handleNotificationSave} disabled={isSaving} className="w-full">
+                    {isSaving ? 'Saving...' : saved ? <><Check className="mr-2 h-4 w-4" /> Saved</> : <><Save className="mr-2 h-4 w-4" /> Save Notification Settings</>}
+                  </Button>
                 </div>
               )}
 

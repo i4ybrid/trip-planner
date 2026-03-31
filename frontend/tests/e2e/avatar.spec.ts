@@ -1,3 +1,8 @@
+/**
+ * PARALLEL SAFE — all tests are read-only or skip gracefully.
+ * Avatar tests only read/display avatar state without mutations.
+ */
+
 import { test, expect } from '@playwright/test';
 import { loginTestUser, TEST_USERS } from './helpers/auth';
 

@@ -1,3 +1,8 @@
+/**
+ * PARALLEL SAFE — all tests are read-only or skip gracefully.
+ * Member count tests only read API response patterns without mutations.
+ */
+
 import { test, expect } from '@playwright/test';
 import { loginTestUser, TRIP_IDS } from './helpers/auth';
 

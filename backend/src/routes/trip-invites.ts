@@ -115,6 +115,7 @@ router.post('/invites/code/use', async (req: AuthRequest, res) => {
     // OPEN trips auto-confirm members, MANAGED trips require approval
     const newMemberStatus = invite.trip.style === 'OPEN' ? 'CONFIRMED' : 'INVITED';
 
+    // Create as VIEWER first, then upgrade to MEMBER on acceptance
     await prisma.tripMember.upsert({
       where: {
         tripId_userId: {
@@ -130,20 +131,21 @@ router.post('/invites/code/use', async (req: AuthRequest, res) => {
       create: {
         tripId: invite.tripId,
         userId,
-        role: 'MEMBER',
+        role: 'VIEWER',
         status: newMemberStatus,
         invitedById: invite.sentById,
       },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            avatarUrl: true,
-          },
+    });
+
+    // Promote VIEWER → MEMBER on acceptance
+    await prisma.tripMember.update({
+      where: {
+        tripId_userId: {
+          tripId: invite.tripId,
+          userId,
         },
       },
+      data: { role: 'MEMBER' },
     });
 
     await prisma.invite.update({

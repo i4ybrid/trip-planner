@@ -36,8 +36,8 @@ cd "$PROJECT_ROOT/backend"
 npm install
 npm run db:generate
 
-echo "🗄️  Running Prisma migrations..."
-npm run db:migrate
+echo "🗄️  Running Prisma schema sync (non-destructive)..."
+npm run db:push
 
 echo "✅ Backend infrastructure is ready!"
 echo "   - PostgreSQL: localhost:5432"

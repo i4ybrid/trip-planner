@@ -11,6 +11,7 @@ interface AuthState {
   setUser: (user: User | null) => void;
   updateUser: (data: Partial<User>) => Promise<void>;
   clearError: () => void;
+  clearSession: () => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -26,6 +27,10 @@ export const useAuthStore = create<AuthState>((set) => ({
       isLoading: false,
       error: null,
     });
+  },
+
+  clearSession: () => {
+    set({ user: null, isAuthenticated: false, isLoading: false, error: null });
   },
 
   updateUser: async (data: Partial<User>) => {

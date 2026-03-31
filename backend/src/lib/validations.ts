@@ -54,6 +54,7 @@ export const createActivitySchema = z.object({
   cost: z.number().positive().optional(),
   currency: z.string().default('USD'),
   category: z.string(),
+  costType: z.enum(['PER_PERSON', 'FIXED']).optional(),
 });
 
 export const updateActivitySchema = z.object({
@@ -62,8 +63,6 @@ export const updateActivitySchema = z.object({
   location: z.string().optional(),
   startTime: z.string().datetime().optional(),
   endTime: z.string().datetime().optional(),
-  cost: z.number().positive().optional(),
-  currency: z.string().optional(),
   category: z.string().optional(),
 });
 
@@ -101,6 +100,7 @@ export const createBillSplitSchema = z.object({
   amount: z.number().positive(),
   currency: z.string().default('USD'),
   splitType: z.enum(['EQUAL', 'SHARES', 'PERCENTAGE', 'MANUAL']).default('EQUAL'),
+  costType: z.enum(['PER_PERSON', 'FIXED']).optional(),
   paidBy: z.string(),
   activityId: z.string().optional(),
   dueDate: z.string().datetime().optional(),
@@ -118,6 +118,7 @@ export const updateBillSplitSchema = z.object({
   amount: z.number().positive().optional(),
   currency: z.string().optional(),
   splitType: z.enum(['EQUAL', 'SHARES', 'PERCENTAGE', 'MANUAL']).optional(),
+  costType: z.enum(['PER_PERSON', 'FIXED']).optional(),
   status: z.enum(['PENDING', 'PARTIAL', 'PAID', 'CONFIRMED', 'CANCELLED']).optional(),
   dueDate: z.string().datetime().optional(),
   paidBy: z.string().optional(),

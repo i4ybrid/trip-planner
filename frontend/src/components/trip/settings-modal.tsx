@@ -17,14 +17,23 @@ interface TripSettingsModalProps {
   onTripUpdated?: () => void;
 }
 
+function normalizeDateForSubmit(dateStr: string, isEndDate: boolean): string | undefined {
+  if (!dateStr) return undefined;
+  if (!dateStr.includes('T')) {
+    // Date-only, no time component — apply default time
+    return `${dateStr}T${isEndDate ? '23:59' : '00:00'}`;
+  }
+  return dateStr;
+}
+
 export function TripSettingsModal({ isOpen, onClose, trip, onTripUpdated }: TripSettingsModalProps) {
   const { user } = useAuth();
   const [tripData, setTripData] = useState({
     name: trip.name,
     description: trip.description || '',
     destination: trip.destination || '',
-    startDate: trip.startDate?.split('T')[0] || '',
-    endDate: trip.endDate?.split('T')[0] || '',
+    startDate: trip.startDate || '',
+    endDate: trip.endDate || '',
     style: trip.style as TripStyle,
   });
   const [members, setMembers] = useState<TripMember[]>([]);
@@ -57,12 +66,15 @@ export function TripSettingsModal({ isOpen, onClose, trip, onTripUpdated }: Trip
     setIsSaving(true);
     setError(null);
     try {
+      const normalizedStart = normalizeDateForSubmit(tripData.startDate, false);
+      const normalizedEnd = normalizeDateForSubmit(tripData.endDate, true);
+
       await api.updateTrip(trip.id, {
         name: tripData.name,
         description: tripData.description || undefined,
         destination: tripData.destination || undefined,
-        startDate: tripData.startDate || undefined,
-        endDate: tripData.endDate || undefined,
+        startDate: normalizedStart,
+        endDate: normalizedEnd,
         style: tripData.style,
       });
       onTripUpdated?.();
@@ -216,7 +228,7 @@ export function TripSettingsModal({ isOpen, onClose, trip, onTripUpdated }: Trip
               <div>
                 <label className="block text-sm font-medium mb-1">Start Date</label>
                 <Input
-                  type="date"
+                  type="datetime-local"
                   value={tripData.startDate}
                   onChange={(e) => setTripData({ ...tripData, startDate: e.target.value })}
                   disabled={!isMaster}
@@ -226,8 +238,15 @@ export function TripSettingsModal({ isOpen, onClose, trip, onTripUpdated }: Trip
               <div>
                 <label className="block text-sm font-medium mb-1">End Date</label>
                 <Input
-                  type="date"
+                  type="datetime-local"
                   value={tripData.endDate}
+                  onFocus={() => {
+                    if (!tripData.endDate && tripData.startDate) {
+                      // Extract date portion (before any T)
+                      const dateOnly = tripData.startDate.split('T')[0];
+                      setTripData({ ...tripData, endDate: dateOnly });
+                    }
+                  }}
                   onChange={(e) => setTripData({ ...tripData, endDate: e.target.value })}
                   disabled={!isMaster}
                 />

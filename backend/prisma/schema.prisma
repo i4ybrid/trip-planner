@@ -46,6 +46,12 @@ enum VoteOption {
   MAYBE
 }
 
+enum ActivityStatus {
+  PROPOSED
+  CONFIRMED
+  REJECTED
+}
+
 enum InviteStatus {
   PENDING
   ACCEPTED
@@ -113,6 +119,11 @@ enum SplitType {
   SHARES     // Split by share count (e.g., 2 shares, 1 share)
   PERCENTAGE // Split by percentage (must sum to 100)
   MANUAL     // Custom amount per member
+}
+
+enum CostType {
+  PER_PERSON  // Cost is split per person (default)
+  FIXED       // Fixed total cost — only payer owes the full amount
 }
 
 enum MilestoneType {
@@ -194,6 +205,9 @@ model User {
 
   // Notification preferences
   notificationPreferences NotificationPreference[]
+
+  // Push subscriptions
+  pushSubscriptions PushSubscription[]
 }
 
 model Settings {
@@ -254,7 +268,7 @@ model TripMember {
   id              String        @id @default(cuid())
   tripId          String
   userId          String
-  role            MemberRole    @default(MEMBER)
+  role            MemberRole    @default(VIEWER)
   status          MemberStatus @default(INVITED)
   joinedAt        DateTime      @default(now())
   invitedById     String?
@@ -304,7 +318,13 @@ model Activity {
   cost        Decimal?  @db.Decimal(10, 2)
   currency    String    @default("USD")
   category    String    // "accommodation", "excursion", "restaurant", "transport", "activity", "other"
+  costType    CostType  @default(PER_PERSON)
   proposedBy  String
+  status      ActivityStatus @default(PROPOSED)
+  confirmedAt DateTime?
+  rejectedAt  DateTime?
+  confirmedBy String?
+  rejectedBy  String?
 
   trip        Trip      @relation(fields: [tripId], references: [id], onDelete: Cascade)
   proposer    User      @relation(fields: [proposedBy], references: [id])
@@ -512,6 +532,7 @@ model BillSplit {
   currency      String        @default("USD")
 
   splitType     SplitType     @default(EQUAL)
+  costType      CostType      @default(PER_PERSON)
 
   paidBy        String        // userId who initially paid
   createdBy     String
@@ -606,4 +627,16 @@ model MilestoneAction {
   trip          Trip             @relation(fields: [tripId], references: [id], onDelete: Cascade)
   sentBy        User             @relation("MilestoneActionSender", fields: [sentById], references: [id])
   sentAt        DateTime         @default(now())
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId])
 }

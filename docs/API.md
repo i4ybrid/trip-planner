@@ -473,8 +473,6 @@ GET    /api/notifications/:id                Get single notification
 PATCH  /api/notifications/:id                Mark as read
 DELETE /api/notifications/:id                Delete notification
 POST   /api/notifications/mark-all-read      Mark all as read
-POST   /api/notifications/subscribe-push     Subscribe to push notifications
-DELETE /api/notifications/unsubscribe-push   Unsubscribe from push notifications
 ```
 
 ### List Notifications
@@ -512,18 +510,77 @@ POST /api/notifications/mark-all-read
 Response (200 OK): { "data": { "count": 5 } }
 ```
 
-### Push Subscription
+---
+
+## Push Notifications
+
 ```
-POST /api/notifications/subscribe-push
+POST   /api/push/subscribe         Subscribe to push notifications
+DELETE /api/push/unsubscribe        Unsubscribe from push notifications
+```
+
+> **VAPID Public Key:** The server's VAPID public key is available via the `NEXT_PUBLIC_VAPID_PUBLIC_KEY` environment variable (frontend-only, not an API endpoint).
+
+### Subscribe to Push
+```
+POST /api/push/subscribe
 {
   "subscription": {
     "endpoint": "https://fcm.googleapis.com/...",
-    "keys": { "p256dh": "...", "auth": "..." }
+    "keys": {
+      "p256dh": "...",
+      "auth": "..."
+    }
   }
 }
 
-DELETE /api/notifications/unsubscribe-push
+Response (200 OK): { "ok": true }
 ```
+
+### Unsubscribe from Push
+```
+DELETE /api/push/unsubscribe
+Response (200 OK): { "ok": true }
+```
+
+---
+
+## Notification Preferences
+
+```
+GET    /api/notifications/preferences     Get user's notification preferences
+PATCH  /api/notifications/preferences     Update preferences for a category
+```
+
+### Get Preferences
+```
+GET /api/notifications/preferences
+
+Response:
+{
+  "data": [
+    { "category": "MILESTONE", "inApp": true, "email": false, "push": true },
+    { "category": "INVITE", "inApp": true, "email": true, "push": true },
+    ...
+  ]
+}
+```
+
+### Update Preference
+```
+PATCH /api/notifications/preferences
+{
+  "category": "MILESTONE",
+  "inApp": true,
+  "email": false,
+  "push": true
+}
+
+Response (200 OK): { "data": { "category": "MILESTONE", "inApp": true, "email": false, "push": true } }
+```
+
+### Notification Categories
+`MILESTONE` · `INVITE` · `FRIEND` · `PAYMENT` · `SETTLEMENT` · `CHAT` · `MEMBER`
 
 ---
 

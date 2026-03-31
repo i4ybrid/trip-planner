@@ -1,6 +1,7 @@
 import { getPrisma } from '@/lib/prisma';
 import { NotificationCategory, NotificationReferenceType } from '@prisma/client';
 import { getConnectionManager } from '@/lib/socket';
+import { pushService } from './push.service';
 
 export interface CreateNotificationData {
   userId: string;
@@ -62,6 +63,18 @@ export class NotificationService {
     const userSocket = manager.get(data.userId);
     if (userSocket) {
       userSocket.to(`user:${data.userId}`).emit('notification:new', notification);
+    }
+
+    // WebPush: send browser push notification if preference is enabled
+    const pref = await this.prisma.notificationPreference.findUnique({
+      where: { userId_category: { userId: data.userId, category: data.category } },
+    });
+    if (pref?.push) {
+      await pushService.sendPush(data.userId, {
+        title: notification.title,
+        body: notification.body,
+        data: { notificationId: notification.id, category: notification.category },
+      });
     }
 
     return notification;

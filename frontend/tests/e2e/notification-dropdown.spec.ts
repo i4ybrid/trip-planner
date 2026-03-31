@@ -1,3 +1,8 @@
+/**
+ * PARALLEL SAFE — all tests are read-only or skip gracefully.
+ * Notification dropdown tests only read/display notification state without mutations.
+ */
+
 import { test, expect } from '@playwright/test';
 import { loginTestUser } from './helpers/auth';
 

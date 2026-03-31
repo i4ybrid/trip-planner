@@ -102,15 +102,15 @@ router.patch('/activities/:id', async (req: AuthRequest, res) => {
       return;
     }
 
-    const validatedData = updateActivitySchema.parse(req.body);
+    // Strip cost fields — price is locked at creation (defense-in-depth)
+    const { cost, costType, currency, ...updateBody } = req.body;
+    const validatedData = updateActivitySchema.parse(updateBody);
     const updated = await activityService.updateActivity(activityId, {
       title: validatedData.title,
       description: validatedData.description,
       location: validatedData.location,
       startTime: validatedData.startTime ? new Date(validatedData.startTime) : undefined,
       endTime: validatedData.endTime ? new Date(validatedData.endTime) : undefined,
-      cost: validatedData.cost,
-      currency: validatedData.currency,
       category: validatedData.category,
     });
 
@@ -136,9 +136,9 @@ router.delete('/activities/:id', async (req: AuthRequest, res) => {
       return;
     }
     
-    // Check permission
+    // Check permission — only ORGANIZER or MASTER can delete
     const permission = await tripService.checkMemberPermission(activity.tripId, userId, ['MASTER', 'ORGANIZER']);
-    if (!permission.hasPermission && activity.proposedBy !== userId) {
+    if (!permission.hasPermission) {
       res.status(403).json({ error: 'Unauthorized' });
       return;
     }
@@ -197,6 +197,46 @@ router.delete('/activities/:id/votes', async (req: AuthRequest, res) => {
     
     await voteService.removeVote(activityId, userId);
     res.json({ message: 'Vote removed successfully' });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// PATCH /api/trips/:tripId/activities/:activityId/confirm - Confirm activity
+router.patch('/trips/:tripId/activities/:activityId/confirm', async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.userId;
+    const { tripId, activityId } = req.params;
+
+    // Check permission
+    const permission = await tripService.checkMemberPermission(tripId, userId, ['MASTER', 'ORGANIZER']);
+    if (!permission.hasPermission) {
+      res.status(403).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    const activity = await activityService.confirmActivity(activityId, userId);
+    res.json({ data: activity });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// PATCH /api/trips/:tripId/activities/:activityId/reject - Reject activity
+router.patch('/trips/:tripId/activities/:activityId/reject', async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.userId;
+    const { tripId, activityId } = req.params;
+
+    // Check permission
+    const permission = await tripService.checkMemberPermission(tripId, userId, ['MASTER', 'ORGANIZER']);
+    if (!permission.hasPermission) {
+      res.status(403).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    const activity = await activityService.rejectActivity(activityId, userId);
+    res.json({ data: activity });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }

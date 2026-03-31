@@ -10,6 +10,8 @@ export type InviteStatus = 'PENDING' | 'ACCEPTED' | 'EXPIRED' | 'REVOKED';
 
 export type VoteOption = 'YES' | 'NO' | 'MAYBE';
 
+export type ActivityStatus = 'PROPOSED' | 'CONFIRMED' | 'REJECTED';
+
 export type MessageType = 'TEXT' | 'IMAGE' | 'VIDEO' | 'SYSTEM';
 
 export type PaymentStatus = 'PENDING' | 'PARTIAL' | 'PAID' | 'CONFIRMED' | 'CANCELLED';
@@ -17,6 +19,8 @@ export type PaymentStatus = 'PENDING' | 'PARTIAL' | 'PAID' | 'CONFIRMED' | 'CANC
 export type PaymentMethod = 'VENMO' | 'PAYPAL' | 'ZELLE' | 'CASHAPP' | 'CASH' | 'OTHER';
 
 export type SplitType = 'EQUAL' | 'SHARES' | 'PERCENTAGE' | 'MANUAL';
+
+export type CostType = 'PER_PERSON' | 'FIXED';
 
 export type FriendRequestStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED';
 
@@ -137,9 +141,15 @@ export interface Activity {
   cost?: number;
   currency: string;
   category: ActivityCategory;
+  costType?: CostType;
   proposedBy: string;
   proposer?: User;
   votes?: Vote[];
+  status?: ActivityStatus;
+  confirmedAt?: string;
+  rejectedAt?: string;
+  confirmedBy?: string;
+  rejectedBy?: string;
   createdAt: string;
 }
 
@@ -231,6 +241,7 @@ export interface BillSplit {
   amount: number;
   currency: string;
   splitType: SplitType;
+  costType?: CostType;
   paidBy: string;
   createdBy: string;
   status: PaymentStatus;
@@ -450,6 +461,7 @@ export interface CreateActivityInput {
   endTime?: string;
   cost?: number;
   category: ActivityCategory;
+  costType?: CostType;
 }
 
 export interface CreateInviteInput {
@@ -469,6 +481,7 @@ export interface CreateBillSplitInput {
   amount: number;
   currency?: string;
   splitType: SplitType;
+  costType?: CostType;
   paidBy: string;
   activityId?: string;
   dueDate?: string;
@@ -486,6 +499,7 @@ export interface UpdateBillSplitInput {
   amount?: number;
   currency?: string;
   splitType?: SplitType;
+  costType?: CostType;
   status?: 'PENDING' | 'PARTIAL' | 'PAID' | 'CONFIRMED' | 'CANCELLED';
   dueDate?: string;
   paidBy?: string;

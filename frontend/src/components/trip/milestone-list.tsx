@@ -5,7 +5,7 @@ import { Milestone, TripMember } from '@/types';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Calendar, Check, Clock, AlertCircle, Settings, Bell, DollarSign, Users, Sparkles } from 'lucide-react';
+import { Calendar, Check, CheckCircle, Clock, AlertCircle, Settings, Bell, DollarSign, Users, Sparkles } from 'lucide-react';
 import { api } from '@/services/api';
 
 interface MilestoneListPanelProps {
@@ -76,14 +76,17 @@ export function MilestoneListPanel({
   const getMilestoneTypeIcon = (type: string) => {
     switch (type) {
       case 'COMMITMENT_REQUEST':
+        return <Users className="h-4 w-4 text-blue-500" />;
       case 'COMMITMENT_DEADLINE':
-        return <Users className="h-4 w-4" />;
+        return <Users className="h-4 w-4 text-purple-500" />;
       case 'FINAL_PAYMENT_DUE':
+        return <DollarSign className="h-4 w-4 text-amber-500" />;
       case 'SETTLEMENT_DUE':
+        return <DollarSign className="h-4 w-4 text-orange-500" />;
       case 'SETTLEMENT_COMPLETE':
-        return <DollarSign className="h-4 w-4" />;
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
       default:
-        return <Bell className="h-4 w-4" />;
+        return <Bell className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
@@ -98,14 +101,14 @@ export function MilestoneListPanel({
           Milestones will appear here once the trip moves to planning.
         </p>
         {canManage && tripId && (
-          <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-700 dark:bg-amber-900/30">
+          <div className="mt-4 rounded-lg border bg-card p-4 dark:border-border dark:bg-card">
             <div className="flex items-start gap-3 text-left">
               <Sparkles className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600" />
               <div className="flex-1">
-                <h4 className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                <h4 className="text-sm font-medium text-foreground dark:text-foreground">
                   No milestones yet
                 </h4>
-                <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">
+                <p className="mt-1 text-xs text-muted-foreground">
                   Generate default milestones based on your trip dates.
                 </p>
                 <Button
@@ -113,7 +116,7 @@ export function MilestoneListPanel({
                   variant="outline"
                   onClick={handleGenerateDefaults}
                   disabled={isGenerating}
-                  className="mt-3 border-amber-300 text-amber-800 hover:bg-amber-100 dark:border-amber-600 dark:text-amber-200 dark:hover:bg-amber-900"
+                  className="mt-3 bg-secondary text-foreground hover:bg-secondary/80 dark:bg-secondary-dark"
                 >
                   {isGenerating ? 'Generating…' : 'Generate Default Milestones'}
                 </Button>

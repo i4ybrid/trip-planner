@@ -1,22 +1,27 @@
 'use client';
 
-import React from 'react';
-import { Milestone, TimelineEvent, TripMember } from '@/types';
+import React, { useState } from 'react';
+import { Milestone, TimelineEvent, TripMember, BillSplit } from '@/types';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components';
-import { Clock, Calendar } from 'lucide-react';
+import { Clock, Calendar, Sparkles, Flag, DollarSign, Users, CheckCircle, Target } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSession } from 'next-auth/react';
+import { api } from '@/services/api';
+import { RequestPaymentModal } from '@/components/trip/request-payment-modal';
+import { TimelineEventCard } from '@/components/timeline/TimelineEventCard';
+import { RemindSettleModal } from '@/components/trip/remind-settle-modal';
+import { MilestoneEditorModal } from '@/components/trip/milestone-editor-modal';
 
 // ─── Icons per milestone type ────────────────────────────────────────────────
-const MILESTONE_TYPE_ICONS: Record<string, string> = {
-  COMMITMENT_REQUEST: '📋',
-  COMMITMENT_DEADLINE: '⏰',
-  FINAL_PAYMENT_DUE: '💰',
-  SETTLEMENT_DUE: '📊',
-  SETTLEMENT_COMPLETE: '✅',
-  CUSTOM: '🎯',
+const MILESTONE_TYPE_ICONS: Record<string, { icon: React.ElementType; className?: string }> = {
+  FINAL_PAYMENT_DUE: { icon: DollarSign, className: 'text-amber-500' },
+  SETTLEMENT_DUE: { icon: DollarSign, className: 'text-orange-500' },
+  COMMITMENT_REQUEST: { icon: Users, className: 'text-blue-500' },
+  COMMITMENT_DEADLINE: { icon: Users, className: 'text-purple-500' },
+  SETTLEMENT_COMPLETE: { icon: CheckCircle, className: 'text-green-500' },
+  CUSTOM: { icon: Flag, className: 'text-pink-500' },
 };
 
 // ─── Past timeline event icons (reuse from existing page) ────────────────────
@@ -55,6 +60,9 @@ interface MilestoneCardProps {
   currentUserId: string;
   currentUserRole: string;
   isCompleted?: boolean; // true = past/completed milestone
+  onRequestPayment?: (milestone: Milestone) => void;
+  onRemindSettle?: (milestone: Milestone) => void;
+  onEdit?: (milestone: Milestone) => void;
 }
 
 function MilestoneCard({
@@ -63,6 +71,9 @@ function MilestoneCard({
   currentUserId,
   currentUserRole,
   isCompleted = false,
+  onRequestPayment,
+  onRemindSettle,
+  onEdit,
 }: MilestoneCardProps) {
   const now = new Date();
   const status = getMilestoneStatus(milestone, now);
@@ -76,8 +87,8 @@ function MilestoneCard({
     completed: 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900',
     'in-progress': 'border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-900',
     overdue: 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900',
-    upcoming: 'border-amber-200 bg-amber-50 dark:border-amber-700 dark:bg-amber-900',
-    skipped: 'border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900',
+    upcoming: 'border-border bg-card dark:border-border dark:bg-card',
+    skipped: 'border-border bg-muted dark:border-border dark:bg-muted',
   };
 
   const statusBadge = {
@@ -88,6 +99,9 @@ function MilestoneCard({
     skipped: 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400',
   };
 
+  const MilestoneIcon = MILESTONE_TYPE_ICONS[milestone.type]?.icon || Flag;
+  const milestoneIconClass = MILESTONE_TYPE_ICONS[milestone.type]?.className || 'text-muted-foreground';
+
   return (
     <div
       className={cn(
@@ -97,10 +111,15 @@ function MilestoneCard({
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3">
-          {/* Milestone type icon */}
-          <span className="mt-0.5 text-xl">
-            {MILESTONE_TYPE_ICONS[milestone.type] || '📌'}
-          </span>
+          {/* Milestone type icon — Lucide icon circle */}
+          <div
+            className={cn(
+              'mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-muted',
+              milestoneIconClass,
+            )}
+          >
+            <MilestoneIcon className="h-4 w-4" />
+          </div>
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <h4 className="font-medium">{milestone.name}</h4>
@@ -150,6 +169,7 @@ function MilestoneCard({
                   variant="outline"
                   size="sm"
                   className="text-xs"
+                  onClick={() => onRequestPayment?.(milestone)}
                 >
                   Request Payment
                 </Button>
@@ -157,6 +177,7 @@ function MilestoneCard({
                   variant="outline"
                   size="sm"
                   className="text-xs"
+                  onClick={() => onRemindSettle?.(milestone)}
                 >
                   Remind to Settle
                 </Button>
@@ -176,6 +197,7 @@ function MilestoneCard({
                 variant="ghost"
                 size="sm"
                 className="px-2 text-xs"
+                onClick={() => onEdit?.(milestone)}
               >
                 Edit
               </Button>
@@ -260,6 +282,7 @@ interface UnifiedTimelineProps {
   milestones: Milestone[];
   members: TripMember[];
   tripId: string;
+  billSplits?: BillSplit[];
 }
 
 export function UnifiedTimeline({
@@ -267,11 +290,51 @@ export function UnifiedTimeline({
   milestones,
   members,
   tripId,
+  billSplits = [],
 }: UnifiedTimelineProps) {
   const { data: session } = useSession();
   const currentUserId = session?.user?.id || '';
   const currentUserMember = members.find((m) => m.userId === currentUserId);
   const currentUserRole = currentUserMember?.role || '';
+  const canManage = currentUserRole === 'MASTER' || currentUserRole === 'ORGANIZER';
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  // Modal state
+  const [selectedMilestone, setSelectedMilestone] = useState<Milestone | null>(null);
+  const [showRequestPayment, setShowRequestPayment] = useState(false);
+  const [showRemindSettle, setShowRemindSettle] = useState(false);
+  const [showEditor, setShowEditor] = useState(false);
+
+  // Milestone card handlers
+  const handleRequestPayment = (milestone: Milestone) => {
+    // Guard: ensure milestone is valid before opening modal
+    if (!milestone || !milestone.id) return;
+    setSelectedMilestone(milestone);
+    setShowRequestPayment(true);
+  };
+
+  const handleRemindSettle = (milestone: Milestone) => {
+    setSelectedMilestone(milestone);
+    setShowRemindSettle(true);
+  };
+
+  const handleEdit = (milestone: Milestone) => {
+    setSelectedMilestone(milestone);
+    setShowEditor(true);
+  };
+
+  const handleGenerateDefaults = async () => {
+    if (!tripId) return;
+    setIsGenerating(true);
+    try {
+      await api.generateDefaultMilestones(tripId);
+      window.location.reload();
+    } catch (err) {
+      console.error('Failed to generate default milestones:', err);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   const now = new Date();
 
@@ -339,6 +402,30 @@ export function UnifiedTimeline({
           <p className="mt-1 text-xs">
             Events and milestones will appear here as the trip progresses
           </p>
+          {canManage && (
+            <div className="mt-6 mx-auto max-w-sm rounded-lg border bg-card p-4 dark:border-border dark:bg-card">
+              <div className="flex items-start gap-3 text-left">
+                <Sparkles className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600 dark:text-amber-400" />
+                <div className="flex-1">
+                  <h4 className="text-sm font-medium text-foreground dark:text-foreground">
+                    No milestones yet
+                  </h4>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Generate default milestones based on your trip dates.
+                  </p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleGenerateDefaults}
+                    disabled={isGenerating}
+                    className="mt-3 bg-secondary text-foreground hover:bg-secondary/80 dark:bg-secondary-dark"
+                  >
+                    {isGenerating ? 'Generating…' : 'Generate Default Milestones'}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     );
@@ -360,18 +447,11 @@ export function UnifiedTimeline({
                   return <EventRow key={`${item.type}-${item.event.id}`} event={item.event} />;
                 } else {
                   return (
-                    <div key={`${item.type}-${item.milestone.id}`} className="relative pl-8">
-                      <div className="absolute left-2 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-background border-2 border-green-400 dark:border-green-600">
-                        <span className="text-xs">✅</span>
-                      </div>
-                      <MilestoneCard
-                        milestone={item.milestone}
-                        members={members}
-                        currentUserId={currentUserId}
-                        currentUserRole={currentUserRole}
-                        isCompleted
-                      />
-                    </div>
+                    <TimelineEventCard
+                      key={`${item.type}-${item.milestone.id}`}
+                      milestone={item.milestone}
+                      className="relative pl-8"
+                    />
                   );
                 }
               })}
@@ -386,7 +466,7 @@ export function UnifiedTimeline({
       {/* ── LOOKING AHEAD ── */}
       {hasUpcomingContent && (
         <div>
-          <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+          <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-foreground">
             Looking Ahead
           </h3>
           <div className="space-y-3">
@@ -395,13 +475,16 @@ export function UnifiedTimeline({
                 return (
                   <div key={`${item.type}-${item.milestone.id}`} className="relative pl-8">
                     <div className="absolute left-2 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-background border-2 border-amber-400 dark:border-amber-600">
-                      <span className="text-xs">🎯</span>
+                      <Target className="h-2.5 w-2.5 text-amber-500" />
                     </div>
                     <MilestoneCard
                       milestone={item.milestone}
                       members={members}
                       currentUserId={currentUserId}
                       currentUserRole={currentUserRole}
+                      onRequestPayment={handleRequestPayment}
+                      onRemindSettle={handleRemindSettle}
+                      onEdit={handleEdit}
                     />
                   </div>
                 );
@@ -411,6 +494,49 @@ export function UnifiedTimeline({
           </div>
         </div>
       )}
+
+      {/* Modals */}
+      <RequestPaymentModal
+        isOpen={showRequestPayment}
+        onClose={() => {
+          setShowRequestPayment(false);
+          setSelectedMilestone(null);
+        }}
+        tripId={tripId}
+        milestone={selectedMilestone}
+        members={members}
+        onSuccess={() => {
+          setShowRequestPayment(false);
+          setSelectedMilestone(null);
+        }}
+      />
+      <RemindSettleModal
+        isOpen={showRemindSettle}
+        onClose={() => {
+          setShowRemindSettle(false);
+          setSelectedMilestone(null);
+        }}
+        tripId={tripId}
+        milestone={selectedMilestone}
+        members={members}
+        billSplits={billSplits}
+        onSuccess={() => {
+          setShowRemindSettle(false);
+          setSelectedMilestone(null);
+        }}
+      />
+      <MilestoneEditorModal
+        isOpen={showEditor}
+        onClose={() => {
+          setShowEditor(false);
+          setSelectedMilestone(null);
+        }}
+        milestone={selectedMilestone}
+        onSuccess={() => {
+          setShowEditor(false);
+          setSelectedMilestone(null);
+        }}
+      />
     </div>
   );
 }

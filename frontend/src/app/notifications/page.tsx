@@ -113,6 +113,38 @@ export default function NotificationsPage() {
     } catch (error) { console.error('Failed to delete notification:', error); }
   };
 
+  const handleAccept = async (notification: Notification) => {
+    const token = notification.referenceId;
+    if (!token) return;
+    setProcessingId(notification.id);
+    try {
+      const result = await api.acceptInvite(token);
+      if (result.data?.tripId) {
+        // Remove the notification and redirect
+        setNotifications(prev => prev.filter(n => n.id !== notification.id));
+        if (!notification.isRead) { setUnreadCount(prev => Math.max(0, prev - 1)); }
+        window.location.href = `/trip/${result.data.tripId}`;
+      }
+    } catch (error) {
+      console.error('Failed to accept invite:', error);
+      alert('Failed to accept invite. It may have expired or already been processed.');
+    } finally { setProcessingId(null); }
+  };
+
+  const handleDecline = async (notification: Notification) => {
+    const token = notification.referenceId;
+    if (!token) return;
+    setProcessingId(notification.id);
+    try {
+      await api.declineInvite(token);
+      setNotifications(prev => prev.filter(n => n.id !== notification.id));
+      if (!notification.isRead) { setUnreadCount(prev => Math.max(0, prev - 1)); }
+    } catch (error) {
+      console.error('Failed to decline invite:', error);
+      alert('Failed to decline invite. It may have expired or already been processed.');
+    } finally { setProcessingId(null); }
+  };
+
   const grouped = notifications.reduce((groups, notification) => {
     const dateKey = formatDate(notification.createdAt);
     if (!groups[dateKey]) groups[dateKey] = [];
@@ -156,12 +188,26 @@ export default function NotificationsPage() {
                       <p className={styles.body}>{notification.body}</p>
                     </Link>
                     <div className={styles.actions}>
-                      {!notification.isRead && (
-                        <button className={styles.actionButton} onClick={() => handleMarkAsRead(notification.id)} title="Mark as read" disabled={processingId === notification.id}>
-                          {processingId === notification.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check size={16} />}
-                        </button>
+                      {notification.category === 'INVITE' && (
+                        <>
+                          <button className={styles.actionButton} onClick={() => handleAccept(notification)} title="Accept invite" disabled={processingId === notification.id} style={{ color: 'green' }}>
+                            {processingId === notification.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check size={16} />}
+                          </button>
+                          <button className={styles.actionButton} onClick={() => handleDecline(notification)} title="Decline invite" disabled={processingId === notification.id} style={{ color: 'red' }}>
+                            <Trash2 size={16} />
+                          </button>
+                        </>
                       )}
-                      <button className={styles.actionButton} onClick={() => handleDismiss(notification.id)} title="Delete"><Trash2 size={16} /></button>
+                      {notification.category !== 'INVITE' && (
+                        <>
+                          {!notification.isRead && (
+                            <button className={styles.actionButton} onClick={() => handleMarkAsRead(notification.id)} title="Mark as read" disabled={processingId === notification.id}>
+                              {processingId === notification.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check size={16} />}
+                            </button>
+                          )}
+                          <button className={styles.actionButton} onClick={() => handleDismiss(notification.id)} title="Delete"><Trash2 size={16} /></button>
+                        </>
+                      )}
                     </div>
                   </div>
                 ))}

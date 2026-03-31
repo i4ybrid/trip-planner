@@ -1,3 +1,8 @@
+/**
+ * PARALLEL SAFE — all tests are read-only or skip gracefully.
+ * Timeline tests only read/display events without mutations.
+ */
+
 import { test, expect } from '@playwright/test';
 import { loginTestUser, navigateToTrip, TRIP_IDS } from './helpers/auth';
 

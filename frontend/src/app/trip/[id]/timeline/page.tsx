@@ -1,20 +1,73 @@
 'use client';
 
 import { useParams } from 'next/navigation';
+import { useEffect, useState, useCallback } from 'react';
 import { useTimelineEvents } from '@/hooks/useTimelineEvents';
-import { TimelineEventCard } from '@/components/timeline/TimelineEventCard';
-import { Calendar } from 'lucide-react';
+import { UnifiedTimeline } from '@/components/trip/unified-timeline';
+import { api } from '@/services/api';
+import { Milestone, TripMember, BillSplit } from '@/types';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function TripTimeline() {
   const params = useParams();
   const tripId = params.id as string;
-  const { events, isLoading, error } = useTimelineEvents(tripId);
+  const { user } = useAuth();
+  const { events, isLoading: eventsLoading, error: eventsError } = useTimelineEvents(tripId);
+  const [milestones, setMilestones] = useState<Milestone[]>([]);
+  const [members, setMembers] = useState<TripMember[]>([]);
+  const [billSplits, setBillSplits] = useState<BillSplit[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  // Track whether auth session has been loaded (NextAuth may return null initially)
+  const [authReady, setAuthReady] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const sortedEvents = [...events].sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-  );
+  const loadData = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const [milestonesResult, membersResult, billSplitsResult] = await Promise.all([
+        api.getMilestones(tripId),
+        api.getTripMembers(tripId),
+        api.getBillSplits(tripId),
+      ]);
+      if (milestonesResult.data) setMilestones(milestonesResult.data);
+      if (membersResult.data) setMembers(membersResult.data);
+      if (billSplitsResult.data) setBillSplits(billSplitsResult.data);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load timeline data');
+    } finally {
+      // Always set loading to false, even if an unhandled exception escapes.
+      // Without this, exceptions that bypass the catch block (e.g. from state
+      // updates during render) would leave the page stuck on the skeleton.
+      setIsLoading(false);
+    }
+  }, [tripId]);
 
-  if (isLoading) {
+  // Safety timeout: if loading state never resolves (e.g. API throws before
+  // finally), force loading=false after 15s to prevent infinite skeleton.
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 15_000);
+    return () => clearTimeout(timer);
+  }, [tripId]);
+
+  // Mark auth as ready once user is available (not null)
+  useEffect(() => {
+    if (user) {
+      setAuthReady(true);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const handleRefresh = () => {
+    loadData();
+  };
+
+  if (isLoading || eventsLoading || !authReady) {
     return (
       <div className="space-y-4">
         <div className="h-6 w-24 animate-pulse rounded bg-muted" />
@@ -28,27 +81,10 @@ export default function TripTimeline() {
     );
   }
 
-  if (error) {
+  if (error || eventsError) {
     return (
       <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-300">
-        {error}
-      </div>
-    );
-  }
-
-  if (sortedEvents.length === 0) {
-    return (
-      <div className="space-y-4">
-        <h2 className="text-xl font-semibold">Timeline</h2>
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-12 text-center">
-          <Calendar className="h-8 w-8 text-muted-foreground/50" />
-          <p className="mt-3 text-sm font-medium text-muted-foreground">
-            No activity yet
-          </p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Member join requests, approvals, and role changes will appear here.
-          </p>
-        </div>
+        {error || eventsError}
       </div>
     );
   }
@@ -56,11 +92,13 @@ export default function TripTimeline() {
   return (
     <div className="space-y-4">
       <h2 className="text-xl font-semibold">Timeline</h2>
-      <div className="space-y-3">
-        {sortedEvents.map((event) => (
-          <TimelineEventCard key={event.id} event={event} />
-        ))}
-      </div>
+      <UnifiedTimeline
+        events={events}
+        milestones={milestones}
+        members={members}
+        billSplits={billSplits}
+        tripId={tripId}
+      />
     </div>
   );
 }

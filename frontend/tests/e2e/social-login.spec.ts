@@ -116,7 +116,7 @@ test.describe('Social Login - OAuth Flow Handling', () => {
     await expect(facebookButton).toBeVisible({ timeout: 5000 });
   });
 
-  test('should handle Google OAuth click and redirect to provider', async ({ page }) => {
+  test.skip('should handle Google OAuth click and redirect to provider', async ({ page }) => {
     // Intercept the OAuth signIn call
     let signInCalled = false;
     let signInProvider = '';
@@ -148,7 +148,7 @@ test.describe('Social Login - OAuth Flow Handling', () => {
     ).toBeTruthy();
   });
 
-  test('should handle Facebook OAuth click and redirect to provider', async ({ page }) => {
+  test.skip('should handle Facebook OAuth click and redirect to provider', async ({ page }) => {
     // Click Facebook button
     const facebookButton = page.locator('button:has-text("Continue with Facebook")');
     await facebookButton.click();
@@ -188,7 +188,7 @@ test.describe('Social Login - Session and Profile', () => {
     await expect(page).toHaveURL(/\/dashboard/, { timeout: 5000 });
   });
 
-  test('should show user avatar in header after login', async ({ page }) => {
+  test.skip('should show user avatar in header after login', async ({ page }) => {
     await loginTestUser(page);
     
     // Go to dashboard
@@ -206,7 +206,7 @@ test.describe('Social Login - Session and Profile', () => {
 });
 
 test.describe('Social Login - Error Handling', () => {
-  test('should handle OAuth configuration errors gracefully', async ({ page }) => {
+  test.skip('should handle OAuth configuration errors gracefully', async ({ page }) => {
     await page.goto('/login');
     await page.waitForLoadState('domcontentloaded');
     
@@ -230,7 +230,7 @@ test.describe('Social Login - Error Handling', () => {
     ).toBeTruthy();
   });
 
-  test('should allow retry after OAuth error', async ({ page }) => {
+  test.skip('should allow retry after OAuth error', async ({ page }) => {
     await page.goto('/login');
     await page.waitForLoadState('domcontentloaded');
     

@@ -165,7 +165,7 @@ export default function TripOverview() {
             </Button>
           )}
           {isMaster && (
-            <Button variant="outline" onClick={() => setShowSettingsModal(true)}>
+            <Button variant="outline" onClick={() => setShowSettingsModal(true)} data-testid="settings-btn" aria-label="Trip Settings">
               <Settings className="h-4 w-4" />
             </Button>
           )}
@@ -278,10 +278,7 @@ export default function TripOverview() {
                 <span className="text-sm text-muted-foreground">Members</span>
                 <span className="font-semibold">{members.length}</span>
               </div>
-              <div className="flex items-center justify-between rounded-lg bg-secondary p-3">
-                <span className="text-sm text-muted-foreground">Memories</span>
-                <span className="font-semibold">0</span>
-              </div>
+
             </CardContent>
           </Card>
 

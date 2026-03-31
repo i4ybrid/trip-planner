@@ -144,7 +144,8 @@ async function handleResponse<T>(response: Response): Promise<T> {
     
     // Handle 401 - redirect to login
     if (status === 401 && typeof window !== 'undefined') {
-      window.location.href = '/login';
+      clearSessionCache();
+      window.location.href = '/login?reason=session_expired';
       // Return empty data to prevent error while redirecting
       return {} as T;
     }
@@ -167,7 +168,7 @@ let cachedSessionToken: string | null = null;
 let sessionCacheTime: number = 0;
 const SESSION_CACHE_TTL = 5000; // 5 seconds
 
-async function getHeaders(): Promise<HeadersInit> {
+export async function getHeaders(): Promise<HeadersInit> {
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
   };
@@ -356,6 +357,7 @@ export const api = {
     });
     const result = await handleResponse<ApiResponse<TripMember>>(response);
     invalidateCacheByPrefix(`trip:${tripId}:members`);
+    invalidateCacheByPrefix('trips:');
     return result;
   },
 
@@ -469,6 +471,22 @@ export const api = {
   async removeVote(activityId: string): Promise<ApiResponse<void>> {
     const response = await fetch(`${API_BASE_URL}/activities/${activityId}/votes`, {
       method: 'DELETE',
+      headers: await getHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  async confirmActivity(tripId: string, activityId: string): Promise<ApiResponse<Activity>> {
+    const response = await fetch(`${API_BASE_URL}/trips/${tripId}/activities/${activityId}/confirm`, {
+      method: 'PATCH',
+      headers: await getHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  async rejectActivity(tripId: string, activityId: string): Promise<ApiResponse<Activity>> {
+    const response = await fetch(`${API_BASE_URL}/trips/${tripId}/activities/${activityId}/reject`, {
+      method: 'PATCH',
       headers: await getHeaders(),
     });
     return handleResponse(response);

@@ -60,11 +60,11 @@ export function InviteModal({ isOpen, onClose, tripId, tripStyle, onMemberAdded 
     }
   };
 
-  const handleInviteUser = async (userId: string) => {
+  const handleInviteUser = async (userId: string, email: string) => {
     setIsInviting(true);
     setError(null);
     try {
-      await api.addTripMember(tripId, userId);
+      await api.sendTripEmailInvite(tripId, email);
       setInvitedUsers((prev) => {
         const newSet = new Set(Array.from(prev));
         newSet.add(userId);
@@ -160,7 +160,7 @@ export function InviteModal({ isOpen, onClose, tripId, tripStyle, onMemberAdded 
                   ) : (
                     <Button
                       size="sm"
-                      onClick={() => handleInviteUser(result.id)}
+                      onClick={() => handleInviteUser(result.id, result.email)}
                       disabled={isInviting}
                     >
                       {isInviting && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
@@ -202,7 +202,7 @@ export function InviteModal({ isOpen, onClose, tripId, tripStyle, onMemberAdded 
                   ) : (
                     <Button
                       size="sm"
-                      onClick={() => handleInviteUser(friend.id)}
+                      onClick={() => handleInviteUser(friend.id, friend.email)}
                       disabled={isInviting}
                     >
                       {isInviting && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}

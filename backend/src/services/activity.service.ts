@@ -1,5 +1,6 @@
 import { getPrisma } from '@/lib/prisma';
-import { ActivityCreateInput } from '@/types';
+import { ActivityCreateInput, ActivityUpdateInput } from '@/types';
+import { timelineService } from '@/services/timeline.service';
 
 export class ActivityService {
   private prisma = getPrisma();
@@ -18,13 +19,11 @@ export class ActivityService {
     });
 
     // Create timeline event
-    await this.prisma.timelineEvent.create({
-      data: {
-        tripId: data.tripId,
-        eventType: 'activity_added',
-        description: `${activity.title} was added by the proposer`,
-        createdBy: data.proposedBy,
-      },
+    await timelineService.emitTimelineEvent({
+      tripId: data.tripId,
+      eventType: 'activity_added',
+      description: `${activity.title} was added by the proposer`,
+      actorId: data.proposedBy,
     });
 
     return activity;
@@ -89,7 +88,7 @@ export class ActivityService {
     });
   }
 
-  async updateActivity(activityId: string, data: Partial<ActivityCreateInput>) {
+  async updateActivity(activityId: string, data: ActivityUpdateInput) {
     return this.prisma.activity.update({
       where: { id: activityId },
       data,
@@ -114,6 +113,20 @@ export class ActivityService {
 
     return this.prisma.activity.delete({
       where: { id: activityId },
+    });
+  }
+
+  async confirmActivity(activityId: string, userId: string) {
+    return this.prisma.activity.update({
+      where: { id: activityId },
+      data: { status: 'CONFIRMED', confirmedAt: new Date(), confirmedBy: userId },
+    });
+  }
+
+  async rejectActivity(activityId: string, userId: string) {
+    return this.prisma.activity.update({
+      where: { id: activityId },
+      data: { status: 'REJECTED', rejectedAt: new Date(), rejectedBy: userId },
     });
   }
 

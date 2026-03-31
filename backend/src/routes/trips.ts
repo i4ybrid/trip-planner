@@ -5,6 +5,14 @@ import { createTripSchema, updateTripSchema } from '@/lib/validations';
 
 const router = Router();
 
+function normalizeDate(dateStr: string, isEndDate: boolean): Date {
+  const date = new Date(dateStr);
+  const hours = isEndDate ? 23 : 0;
+  const minutes = isEndDate ? 59 : 0;
+  date.setHours(hours, minutes, 0, 0);
+  return date;
+}
+
 // All routes require authentication
 router.use(authMiddleware);
 
@@ -29,8 +37,8 @@ router.post('/trips', async (req: AuthRequest, res) => {
       name: validatedData.name,
       description: validatedData.description,
       destination: validatedData.destination,
-      startDate: validatedData.startDate ? new Date(validatedData.startDate) : undefined,
-      endDate: validatedData.endDate ? new Date(validatedData.endDate) : undefined,
+      startDate: validatedData.startDate ? normalizeDate(validatedData.startDate, false) : undefined,
+      endDate: validatedData.endDate ? normalizeDate(validatedData.endDate, true) : undefined,
       coverImage: validatedData.coverImage,
     });
     res.status(201).json({ data: trip });
@@ -77,8 +85,8 @@ router.patch('/trips/:id', async (req: AuthRequest, res) => {
       name: validatedData.name,
       description: validatedData.description,
       destination: validatedData.destination,
-      startDate: validatedData.startDate ? new Date(validatedData.startDate) : undefined,
-      endDate: validatedData.endDate ? new Date(validatedData.endDate) : undefined,
+      startDate: validatedData.startDate ? normalizeDate(validatedData.startDate, false) : undefined,
+      endDate: validatedData.endDate ? normalizeDate(validatedData.endDate, true) : undefined,
       coverImage: validatedData.coverImage,
       status: validatedData.status,
       style: validatedData.style,
@@ -208,6 +216,15 @@ router.post('/trips/:id/members', async (req: AuthRequest, res) => {
     const member = await tripService.addTripMember(tripId, newMemberId, userId);
     res.status(201).json({ data: member });
   } catch (error: any) {
+    // Handle Prisma unique constraint violation (user already a member)
+    if (error.code === 'P2002') {
+      res.status(409).json({ error: 'User is already a member of this trip' });
+      return;
+    }
+    if (error.message === 'User is already a member of this trip') {
+      res.status(409).json({ error: error.message });
+      return;
+    }
     res.status(500).json({ error: error.message });
   }
 });

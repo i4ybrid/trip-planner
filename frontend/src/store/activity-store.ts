@@ -9,8 +9,12 @@ interface ActivityState {
   
   fetchActivities: (tripId: string) => Promise<void>;
   createActivity: (tripId: string, input: CreateActivityInput) => Promise<Activity | null>;
+  updateActivity: (activityId: string, input: Partial<CreateActivityInput>) => Promise<Activity | null>;
   castVote: (activityId: string, option: VoteOption) => Promise<Vote | null>;
   removeVote: (activityId: string) => Promise<boolean>;
+  confirmActivity: (tripId: string, activityId: string) => Promise<Activity | null>;
+  rejectActivity: (tripId: string, activityId: string) => Promise<Activity | null>;
+  deleteActivity: (activityId: string) => Promise<boolean>;
   clearActivities: () => void;
   clearError: () => void;
 }
@@ -50,6 +54,26 @@ export const useActivityStore = create<ActivityState>((set) => ({
       return newActivity;
     } catch (error) {
       set({ error: 'Failed to create activity', isLoading: false });
+      return null;
+    }
+  },
+
+  updateActivity: async (activityId: string, input: Partial<CreateActivityInput>) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await api.updateActivity(activityId, input);
+      if (response.error) {
+        set({ error: response.error, isLoading: false });
+        return null;
+      }
+      const updatedActivity = response.data!;
+      set((state) => ({
+        activities: state.activities.map((a) => (a.id === activityId ? updatedActivity : a)),
+        isLoading: false,
+      }));
+      return updatedActivity;
+    } catch (error) {
+      set({ error: 'Failed to update activity', isLoading: false });
       return null;
     }
   },
@@ -97,6 +121,63 @@ export const useActivityStore = create<ActivityState>((set) => ({
       return true;
     } catch (error) {
       set({ error: 'Failed to remove vote', isLoading: false });
+      return false;
+    }
+  },
+
+  confirmActivity: async (tripId: string, activityId: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await api.confirmActivity(tripId, activityId);
+      if (response.error) {
+        set({ error: response.error, isLoading: false });
+        return null;
+      }
+      set((state) => ({
+        activities: state.activities.map((a) => (a.id === activityId ? response.data! : a)),
+        isLoading: false,
+      }));
+      return response.data!;
+    } catch (error) {
+      set({ error: 'Failed to confirm activity', isLoading: false });
+      return null;
+    }
+  },
+
+  rejectActivity: async (tripId: string, activityId: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await api.rejectActivity(tripId, activityId);
+      if (response.error) {
+        set({ error: response.error, isLoading: false });
+        return null;
+      }
+      set((state) => ({
+        activities: state.activities.map((a) => (a.id === activityId ? response.data! : a)),
+        isLoading: false,
+      }));
+      return response.data!;
+    } catch (error) {
+      set({ error: 'Failed to reject activity', isLoading: false });
+      return null;
+    }
+  },
+
+  deleteActivity: async (activityId: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await api.deleteActivity(activityId);
+      if (response.error) {
+        set({ error: response.error, isLoading: false });
+        return false;
+      }
+      set((state) => ({
+        activities: state.activities.filter((a) => a.id !== activityId),
+        isLoading: false,
+      }));
+      return true;
+    } catch (error) {
+      set({ error: 'Failed to delete activity', isLoading: false });
       return false;
     }
   },

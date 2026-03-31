@@ -3,6 +3,7 @@ import './globals.css';
 import { AuthProvider } from '@/components/auth-provider';
 import NextAuthProvider from '@/components/next-auth-provider';
 import { SocketProvider } from '@/components/socket-provider';
+import { CrashReporter } from '@/components/crash-reporter';
 
 export const metadata: Metadata = {
   title: 'TripPlanner - Plan trips with friends',
@@ -17,6 +18,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="min-h-screen">
+        <CrashReporter />
         <NextAuthProvider>
           <SocketProvider>
             <AuthProvider>{children}</AuthProvider>

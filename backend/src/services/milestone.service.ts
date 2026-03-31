@@ -1,5 +1,6 @@
 import { getPrisma } from '@/lib/prisma';
 import { notificationService } from './notification.service';
+import { timelineService } from '@/services/timeline.service';
 import { MilestoneType, MilestoneActionType } from '@prisma/client';
 
 interface MilestoneTemplate {
@@ -437,7 +438,7 @@ export class MilestoneService {
     status: string,
     note?: string
   ): Promise<any> {
-    return this.prisma.milestoneCompletion.upsert({
+    const result = await this.prisma.milestoneCompletion.upsert({
       where: {
         milestoneId_userId: {
           milestoneId,
@@ -457,6 +458,29 @@ export class MilestoneService {
         note,
       },
     });
+
+    // Emit milestone_occurred timeline event when milestone is completed
+    if (status === 'COMPLETED') {
+      try {
+        const milestone = await this.prisma.milestone.findUnique({
+          where: { id: milestoneId },
+          select: { name: true, type: true, tripId: true },
+        });
+        if (milestone) {
+          await timelineService.emitTimelineEvent({
+            tripId: milestone.tripId,
+            eventType: 'milestone_occurred',
+            description: `Milestone "${milestone.name}" was completed`,
+            actorId: userId,
+            metadata: { milestoneId, milestoneType: milestone.type },
+          });
+        }
+      } catch (e) {
+        console.error('Timeline event failed:', e);
+      }
+    }
+
+    return result;
   }
 
   /**

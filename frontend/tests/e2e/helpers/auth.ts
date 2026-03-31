@@ -64,8 +64,16 @@ export async function loginTestUser(
 ): Promise<void> {
   const user = TEST_USERS[userKey];
 
+  // Navigate to login page FIRST before any localStorage access
+  // to avoid "Access is denied for this document" on about:blank
   await page.goto('/login');
   await page.waitForLoadState('domcontentloaded');
+
+  // Now safe to clear localStorage and cookies (page is on /login)
+  await page.evaluate(() => {
+    localStorage.clear();
+  });
+  await page.context().clearCookies();
 
   // Use quick-login buttons (fill React state, then we click submit)
   // The quick-login section has buttons: "Test User", "Sarah Chen", "Mike Johnson", "Emma Wilson"
@@ -125,13 +133,70 @@ export async function logoutUser(page: Page): Promise<void> {
 }
 
 /**
- * Navigates to a specific trip's page
+ * Clears all session state - both NextAuth httpOnly cookies AND localStorage.
+ * Use this to simulate logout/session expiry in tests.
  */
-export async function navigateToTrip(page: Page, tripId: string, subpage = 'overview'): Promise<void> {
+export async function clearSession(page: Page): Promise<void> {
+  // Clear httpOnly session cookies first
+  await page.context().clearCookies();
+  // Then clear localStorage
+  await page.evaluate(() => {
+    localStorage.clear();
+  });
+}
+
+/**
+ * Navigates to a specific trip's page and waits for content to fully load.
+ * @param page Playwright page
+ * @param tripId Trip ID to navigate to (e.g., 'trip-1')
+ * @param subpage Subpage to navigate to (default: 'overview')
+ * @param headingText The h2 heading text to wait for in the main content area (e.g., 'Timeline', 'Payments & Expenses')
+ */
+export async function navigateToTrip(page: Page, tripId: string, subpage = 'overview', headingText?: string): Promise<void> {
   await page.goto(`/trip/${tripId}/${subpage}`);
-  // Wait for DOM to be ready (NOT networkidle - app has continuous polling)
-  await page.waitForLoadState('domcontentloaded');
-  await page.waitForTimeout(500);
+  // Wait for URL to match the target subpage
+  await page.waitForURL(`**/trip/${tripId}/${subpage}*`, { timeout: 10000 });
+  // Wait for the page heading to appear in the main content area (not just nav tabs)
+  if (headingText) {
+    // Use exact match for h2 to avoid substring matching (e.g. "Timeline" matching "Payments")
+    await page.waitForSelector(`h2:text-is("${headingText}"), h1:text-is("${headingText}")`, { state: 'visible', timeout: 10000 });
+  } else {
+    await page.waitForLoadState('domcontentloaded');
+  }
+}
+
+/**
+ * Ensures a trip has default milestones generated.
+ * Calls the backend API directly (bypasses UI) to generate milestones.
+ * Idempotent — safe to call even if milestones already exist.
+ */
+export async function ensureMilestones(page: Page, tripId: string): Promise<void> {
+  // Call the API directly to generate milestones — avoids UI timing issues
+  const response = await page.evaluate(async (tid: string) => {
+    // Get auth headers using the same approach as api.ts
+    const sessionResponse = await fetch('/api/auth/session');
+    const session = await sessionResponse.json();
+    const token = session?.accessToken || '';
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    };
+    const result = await fetch(`/api/trips/${tid}/milestones/generate-default`, {
+      method: 'POST',
+      headers,
+    });
+    return result.ok;
+  }, tripId);
+  // If API call failed (no auth), fall back to UI approach
+  if (!response) {
+    await navigateToTrip(page, tripId, 'timeline');
+    await page.waitForLoadState('domcontentloaded');
+    const generateBtn = page.locator('button').filter({ hasText: /Generate Default Milestones/i }).first();
+    if (await generateBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await generateBtn.click();
+      await page.waitForURL(`**/trip/${tripId}/timeline*`, { timeout: 10000 });
+    }
+  }
 }
 
 /**

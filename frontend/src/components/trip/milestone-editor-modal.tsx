@@ -94,7 +94,7 @@ export function MilestoneEditorModal({
     >
       <div className="space-y-4">
         {error && (
-          <div className="rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-600">
+          <div className="rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-600 dark:bg-red-900/30 dark:border-red-800 dark:text-red-300">
             {error}
           </div>
         )}

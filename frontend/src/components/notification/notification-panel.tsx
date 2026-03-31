@@ -98,7 +98,7 @@ export const NotificationPanel = forwardRef<HTMLDivElement, NotificationPanelPro
                 <Check size={16} /><span>Mark all read</span>
               </button>
             )}
-            <Link href="/settings/notifications" className={styles.headerButton} onClick={onClose} title="Notification settings">
+            <Link href="/settings?tab=notifications" className={styles.headerButton} onClick={onClose} title="Notification settings">
               <Settings size={16} />
             </Link>
           </div>
