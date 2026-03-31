@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import { useActivityStore } from '@/store';
 import { Card, CardHeader, CardTitle, CardContent, Button, Badge, Input, Textarea, Select, Modal, EmptyState } from '@/components';
 import { formatCurrency, cn } from '@/lib/utils';
-import { MapPin, ThumbsUp, ThumbsDown, HelpCircle, Plus, Loader, Lock, Pencil, Trash2 } from 'lucide-react';
+import { MapPin, Check, X, HelpCircle, Plus, Loader, Lock, Pencil, Trash2 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { api } from '@/services/api';
 import { TripMember } from '@/types';
@@ -173,19 +173,19 @@ export default function TripActivities() {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleConfirm(activity.id)}
-                            className="h-8 px-2 text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/30"
+                            className="h-8 px-2 text-green-500 hover:text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:text-green-300 dark:hover:bg-green-900/30"
                             title="Confirm activity"
                           >
-                            <ThumbsUp className="h-4 w-4" />
+                            <Check className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => handleReject(activity.id)}
-                            className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/30"
+                            className="h-8 px-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/30"
                             title="Reject activity"
                           >
-                            <ThumbsDown className="h-4 w-4" />
+                            <X className="h-4 w-4" />
                           </Button>
                         </>
                       )}
@@ -242,11 +242,11 @@ export default function TripActivities() {
                         className={cn(
                           'flex items-center gap-1 rounded-md px-3 py-1.5 text-sm transition-colors',
                           (activity.votes || []).some((v) => v.option === 'YES')
-                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                            ? 'bg-green-100 text-green-500 dark:bg-green-900/30 dark:text-green-400'
                             : 'bg-secondary hover:bg-secondary/80'
                         )}
                       >
-                        <ThumbsUp className="h-3 w-3" />
+                        <Check className="h-3 w-3" />
                         {counts.yes}
                       </button>
                       <button
@@ -266,11 +266,11 @@ export default function TripActivities() {
                         className={cn(
                           'flex items-center gap-1 rounded-md px-3 py-1.5 text-sm transition-colors',
                           (activity.votes || []).some((v) => v.option === 'NO')
-                            ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                            ? 'bg-red-100 text-red-500 dark:bg-red-900/30 dark:text-red-400'
                             : 'bg-secondary hover:bg-secondary/80'
                         )}
                       >
-                        <ThumbsDown className="h-3 w-3" />
+                        <X className="h-3 w-3" />
                         {counts.no}
                       </button>
                     </div>

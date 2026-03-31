@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { loginTestUser, navigateToTrip, TRIP_IDS } from './helpers/auth';
+import { loginTestUser, navigateToTrip, TRIP_IDS, BILL_SPLIT_IDS } from './helpers/auth';
 
 /**
  * E2E tests for Payment Settlement UI workflow
@@ -17,20 +17,20 @@ test.describe('Payments Page - View Expenses', () => {
   });
 
   test('should display the Payments & Expenses heading', async ({ page }) => {
-    await navigateToTrip(page, TRIP_IDS.hawaii, 'payments');
+    await navigateToTrip(page, TRIP_IDS.hawaii, 'payments', 'Payments & Expenses');
     
     await expect(page.locator('text=Payments & Expenses').first()).toBeVisible({ timeout: 10000 });
   });
 
   test('should display Add Expense button', async ({ page }) => {
-    await navigateToTrip(page, TRIP_IDS.hawaii, 'payments');
+    await navigateToTrip(page, TRIP_IDS.hawaii, 'payments', 'Payments & Expenses');
     
     const addExpenseButton = page.locator('button').filter({ hasText: /add expense/i });
     await expect(addExpenseButton).toBeVisible({ timeout: 5000 });
   });
 
   test('should display bill splits from seed data', async ({ page }) => {
-    await navigateToTrip(page, TRIP_IDS.hawaii, 'payments');
+    await navigateToTrip(page, TRIP_IDS.hawaii, 'payments', 'Payments & Expenses');
     
     // Should show the "Hotel: Grand Wailea" bill split (bill-1 from seed)
     await expect(page.locator('text=Hotel: Grand Wailea').first()).toBeVisible({ timeout: 10000 });
@@ -40,7 +40,7 @@ test.describe('Payments Page - View Expenses', () => {
   });
 
   test('should display bill split amounts', async ({ page }) => {
-    await navigateToTrip(page, TRIP_IDS.hawaii, 'payments');
+    await navigateToTrip(page, TRIP_IDS.hawaii, 'payments', 'Payments & Expenses');
     
     // Hotel: Grand Wailea is $1800
     await expect(page.locator('text=$1,800').first()).toBeVisible({ timeout: 10000 });
@@ -50,7 +50,7 @@ test.describe('Payments Page - View Expenses', () => {
   });
 
   test('should display payment status badges', async ({ page }) => {
-    await navigateToTrip(page, TRIP_IDS.hawaii, 'payments');
+    await navigateToTrip(page, TRIP_IDS.hawaii, 'payments', 'Payments & Expenses');
     
     // The Hotel bill has PENDING status (bill-1: status PENDING)
     await expect(page.locator('text=/PENDING/i').first()).toBeVisible({ timeout: 10000 });
@@ -60,7 +60,7 @@ test.describe('Payments Page - View Expenses', () => {
   });
 
   test('should display member payment status', async ({ page }) => {
-    await navigateToTrip(page, TRIP_IDS.hawaii, 'payments');
+    await navigateToTrip(page, TRIP_IDS.hawaii, 'payments', 'Payments & Expenses');
     
     // Should show "Payment Status:" section for bill splits
     await expect(page.locator('text=Payment Status:').first()).toBeVisible({ timeout: 10000 });
@@ -70,7 +70,7 @@ test.describe('Payments Page - View Expenses', () => {
   });
 
   test('should display Summary card with total expenses', async ({ page }) => {
-    await navigateToTrip(page, TRIP_IDS.hawaii, 'payments');
+    await navigateToTrip(page, TRIP_IDS.hawaii, 'payments', 'Payments & Expenses');
     
     // Should show Summary card
     await expect(page.locator('text=Summary').first()).toBeVisible({ timeout: 5000 });
@@ -80,7 +80,7 @@ test.describe('Payments Page - View Expenses', () => {
   });
 
   test('should display Balances card', async ({ page }) => {
-    await navigateToTrip(page, TRIP_IDS.hawaii, 'payments');
+    await navigateToTrip(page, TRIP_IDS.hawaii, 'payments', 'Payments & Expenses');
     
     // Should show Balances card with member balances
     await expect(page.locator('text=Balances').first()).toBeVisible({ timeout: 5000 });
@@ -96,7 +96,7 @@ test.describe('Payment Status Workflow', () => {
   });
 
   test('should show Mark as Paid button for pending members', async ({ page }) => {
-    await navigateToTrip(page, TRIP_IDS.hawaii, 'payments');
+    await navigateToTrip(page, TRIP_IDS.hawaii, 'payments', 'Payments & Expenses');
     
     // For Hotel bill (bill-1), user-2 and user-4 have PENDING status
     // The "Mark as Paid" button should be visible for them if current user is them
@@ -111,7 +111,7 @@ test.describe('Payment Status Workflow', () => {
   });
 
   test('should show payment method badge for paid members', async ({ page }) => {
-    await navigateToTrip(page, TRIP_IDS.hawaii, 'payments');
+    await navigateToTrip(page, TRIP_IDS.hawaii, 'payments', 'Payments & Expenses');
     
     // Luau Dinner bill has paid members with VENMO and CASH payment methods
     // The payment method badges should be visible for paid members
@@ -123,7 +123,7 @@ test.describe('Payment Status Workflow', () => {
   });
 
   test('should show PENDING badge with yellow styling', async ({ page }) => {
-    await navigateToTrip(page, TRIP_IDS.hawaii, 'payments');
+    await navigateToTrip(page, TRIP_IDS.hawaii, 'payments', 'Payments & Expenses');
     
     // PENDING status should have yellow/orange styling
     // Use exact text match to avoid matching other elements containing "PENDING"
@@ -134,7 +134,7 @@ test.describe('Payment Status Workflow', () => {
   });
 
   test('should show PAID badge with blue styling', async ({ page }) => {
-    await navigateToTrip(page, TRIP_IDS.hawaii, 'payments');
+    await navigateToTrip(page, TRIP_IDS.hawaii, 'payments', 'Payments & Expenses');
     
     // PAID status should have blue styling
     // Use exact text match to avoid matching "Total Paid By Others" section header
@@ -145,7 +145,7 @@ test.describe('Payment Status Workflow', () => {
   });
 
   test('should show CONFIRMED badge with green styling', async ({ page }) => {
-    await navigateToTrip(page, TRIP_IDS.hawaii, 'payments');
+    await navigateToTrip(page, TRIP_IDS.hawaii, 'payments', 'Payments & Expenses');
     
     // CONFIRMED status should have green styling
     // This may appear if any member has confirmed payment
@@ -164,7 +164,7 @@ test.describe('Mark as Paid Flow', () => {
   });
 
   test('should show payment method selector when Mark as Paid is clicked', async ({ page }) => {
-    await navigateToTrip(page, TRIP_IDS.hawaii, 'payments');
+    await navigateToTrip(page, TRIP_IDS.hawaii, 'payments', 'Payments & Expenses');
     
     // Find and click "Mark as Paid" button if visible
     // Since the test user is the payer (user-1), they see "Confirm Receipt" instead
@@ -185,7 +185,7 @@ test.describe('Mark as Paid Flow', () => {
   });
 
   test('should show payment method options (Venmo, PayPal, etc.)', async ({ page }) => {
-    await navigateToTrip(page, TRIP_IDS.hawaii, 'payments');
+    await navigateToTrip(page, TRIP_IDS.hawaii, 'payments', 'Payments & Expenses');
     
     // Click Mark as Paid if visible
     const markAsPaidButton = page.locator('button').filter({ hasText: /mark as paid/i }).first();
@@ -205,7 +205,7 @@ test.describe('Mark as Paid Flow', () => {
   });
 
   test('should show Confirm and Cancel buttons after selecting payment method', async ({ page }) => {
-    await navigateToTrip(page, TRIP_IDS.hawaii, 'payments');
+    await navigateToTrip(page, TRIP_IDS.hawaii, 'payments', 'Payments & Expenses');
     
     const markAsPaidButton = page.locator('button').filter({ hasText: /mark as paid/i }).first();
     const isVisible = await markAsPaidButton.isVisible().catch(() => false);
@@ -227,7 +227,7 @@ test.describe('Mark as Paid Flow', () => {
   });
 
   test('should hide payment form when Cancel is clicked', async ({ page }) => {
-    await navigateToTrip(page, TRIP_IDS.hawaii, 'payments');
+    await navigateToTrip(page, TRIP_IDS.hawaii, 'payments', 'Payments & Expenses');
     
     const markAsPaidButton = page.locator('button').filter({ hasText: /mark as paid/i }).first();
     const isVisible = await markAsPaidButton.isVisible().catch(() => false);
@@ -252,7 +252,7 @@ test.describe('Add Expense Flow', () => {
   });
 
   test('should navigate to Add Expense page', async ({ page }) => {
-    await navigateToTrip(page, TRIP_IDS.hawaii, 'payments');
+    await navigateToTrip(page, TRIP_IDS.hawaii, 'payments', 'Payments & Expenses');
     
     // Click Add Expense button
     await page.click('button:has-text("Add Expense")');
@@ -262,14 +262,117 @@ test.describe('Add Expense Flow', () => {
   });
 
   test('should display expense form fields', async ({ page }) => {
-    await navigateToTrip(page, TRIP_IDS.hawaii, 'payments');
+    await navigateToTrip(page, TRIP_IDS.hawaii, 'payments', 'Payments & Expenses');
     await page.click('button:has-text("Add Expense")');
     await page.waitForURL(/\/payments\/add/);
     
     // Should show form fields (based on the add expense page structure)
     // Common fields for bill splitting
-    await expect(page.locator('text=Title').first()).toBeVisible({ timeout: 5000 }).catch(() => {});
-    await expect(page.locator('text=Amount').first()).toBeVisible({ timeout: 5000 }).catch(() => {});
+    await expect(page.locator('input[name="title"], input[placeholder*="Title"], input[required]').first()).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('input[type="number"], input[placeholder*="Amount"]').first()).toBeVisible({ timeout: 5000 });
+  });
+
+  test('should show loading state and disable button on submit', async ({ page }) => {
+    await navigateToTrip(page, TRIP_IDS.hawaii, 'payments', 'Payments & Expenses');
+    await page.click('button:has-text("Add Expense")');
+    await page.waitForURL(/\/payments\/add/);
+
+    // Fill the form
+    const titleInput = page.locator('input[required]').first();
+    await titleInput.fill('Test Expense');
+    
+    const amountInput = page.locator('input[type="number"]').first();
+    await amountInput.fill('50.00');
+
+    const submitBtn = page.locator('button[type="submit"]');
+    
+    // Intercept API call to delay it
+    await page.route('**/api/trips/**/bill-splits', async (route) => {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      await route.continue();
+    });
+
+    // Click and check state immediately
+    await submitBtn.click();
+    
+    // Check for loading state (text change or disabled)
+    // Based on test-error.cjs, we expect text to change or button to be disabled
+    const btnText = await submitBtn.textContent();
+    const isDisabled = await submitBtn.isDisabled();
+    
+    expect(isDisabled || btnText?.toLowerCase().includes('saving') || btnText?.toLowerCase().includes('adding')).toBeTruthy();
+  });
+
+  test('should display error message on API failure', async ({ page }) => {
+    await navigateToTrip(page, TRIP_IDS.hawaii, 'payments', 'Payments & Expenses');
+    await page.click('button:has-text("Add Expense")');
+    await page.waitForURL(/\/payments\/add/);
+
+    // Mock API error
+    await page.route('**/api/trips/**/bill-splits', async (route) => {
+      await route.fulfill({
+        status: 500,
+        contentType: 'application/json',
+        body: JSON.stringify({ message: 'Internal Server Error' }),
+      });
+    });
+
+    // Fill form
+    await page.locator('input[required]').first().fill('API Error Test');
+    await page.locator('input[type="number"]').first().fill('100.00');
+
+    // Submit
+    await page.click('button[type="submit"]');
+
+    // Check for error message
+    // Based on test-error.cjs, it looks for .text-red, [role="alert"], etc.
+    const errorMsg = page.locator('[role="alert"], .text-red-500, [class*="error"]').first();
+    await expect(errorMsg).toBeVisible({ timeout: 5000 });
+  });
+});
+
+test.describe('Edit Expense Flow', () => {
+  test.beforeEach(async ({ page }) => {
+    await loginTestUser(page, 'test');
+  });
+
+  test('should navigate to edit page and show current values', async ({ page }) => {
+    // Navigate directly to edit page for bill-1 (Hotel: Grand Wailea)
+    await page.goto(`/trip/${TRIP_IDS.hawaii}/payments/edit/${BILL_SPLIT_IDS.hotelBill}`);
+    await page.waitForLoadState('networkidle');
+
+    // Check if title is filled correctly
+    const titleInput = page.locator('input[required]').first();
+    await expect(titleInput).toHaveValue(/Hotel|Wailea/i);
+    
+    // Check if amount is filled correctly
+    const amountInput = page.locator('input[type="number"]').first();
+    await expect(amountInput).toHaveValue('1800');
+  });
+
+  test('should show loading state and disable button on update', async ({ page }) => {
+    await page.goto(`/trip/${TRIP_IDS.hawaii}/payments/edit/${BILL_SPLIT_IDS.hotelBill}`);
+    await page.waitForLoadState('networkidle');
+
+    const titleInput = page.locator('input[required]').first();
+    await titleInput.fill('Updated Hotel');
+
+    const saveBtn = page.locator('button[type="submit"]');
+
+    // Intercept API call to delay it
+    await page.route('**/api/trips/**/bill-splits/**', async (route) => {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      await route.continue();
+    });
+
+    // Click and check state immediately
+    await saveBtn.click();
+    
+    const btnText = await saveBtn.textContent();
+    const isDisabled = await saveBtn.isDisabled();
+    
+    // Verify loading state
+    expect(isDisabled || btnText?.toLowerCase().includes('saving')).toBeTruthy();
   });
 });
 
@@ -279,7 +382,7 @@ test.describe('Bill Split Management', () => {
   });
 
   test('should display delete button for bill splits', async ({ page }) => {
-    await navigateToTrip(page, TRIP_IDS.hawaii, 'payments');
+    await navigateToTrip(page, TRIP_IDS.hawaii, 'payments', 'Payments & Expenses');
     
     // Wait for the payments list to fully render
     await page.waitForSelector('text=Hotel: Grand Wailea', { timeout: 10000 });
@@ -300,7 +403,7 @@ test.describe('Bill Split Management', () => {
   });
 
   test('should display edit button for bill splits', async ({ page }) => {
-    await navigateToTrip(page, TRIP_IDS.hawaii, 'payments');
+    await navigateToTrip(page, TRIP_IDS.hawaii, 'payments', 'Payments & Expenses');
     
     // Each bill split should have an edit (pencil) button
     const editButtons = page.getByRole('button').filter({ has: page.locator('svg') });
@@ -308,7 +411,7 @@ test.describe('Bill Split Management', () => {
   });
 
   test('should navigate to edit page when edit button is clicked', async ({ page }) => {
-    await navigateToTrip(page, TRIP_IDS.hawaii, 'payments');
+    await navigateToTrip(page, TRIP_IDS.hawaii, 'payments', 'Payments & Expenses');
     
     // Find edit button for Hotel bill
     const editButton = page.locator('button').filter({ has: page.locator('svg') }).nth(0);
@@ -334,10 +437,11 @@ test.describe('Empty State', () => {
   });
 
   test('should show empty state for trips with no expenses', async ({ page }) => {
-    await navigateToTrip(page, TRIP_IDS.hawaii, 'payments');
+    await navigateToTrip(page, TRIP_IDS.hawaii, 'payments', 'Payments & Expenses');
     
     // Hawaii trip (trip-1) has 2 bill splits, so no empty state
     // But we can verify the expenses are displayed
     await expect(page.locator('text=Hotel: Grand Wailea').first()).toBeVisible({ timeout: 5000 });
   });
 });
+
