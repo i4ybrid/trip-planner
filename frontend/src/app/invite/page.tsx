@@ -6,8 +6,6 @@ import { Compass, UserPlus, Check, X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { api } from '@/services/api';
-import { InviteCode } from '@/types';
 
 export default function InvitePage() {
   const router = useRouter();
@@ -86,7 +84,7 @@ export default function InvitePage() {
             <Compass className="w-12 h-12 text-amber-600" />
             <h1 className="text-3xl font-bold text-amber-800">TripPlanner</h1>
           </div>
-          <h2 className="text-xl font-semibold mb-2">You've been invited!</h2>
+          <h2 className="text-xl font-semibold mb-2">You&apos;ve been invited!</h2>
           <p className="text-muted-foreground">
             Enter an invite code or sign up to connect with your friend
           </p>
@@ -135,7 +133,7 @@ export default function InvitePage() {
                     Invite from {inviteData.creator.name}
                   </p>
                   <p className="text-sm text-green-600">
-                    You'll become friends after signing up
+                    You&apos;ll become friends after signing up
                   </p>
                 </div>
               </div>
@@ -157,7 +155,7 @@ export default function InvitePage() {
           </div>
 
           <p className="text-center text-xs text-muted-foreground">
-            By signing up, you'll automatically become friends with the person who invited you.
+            By signing up, you&apos;ll automatically become friends with the person who invited you.
           </p>
         </div>
       </Card>

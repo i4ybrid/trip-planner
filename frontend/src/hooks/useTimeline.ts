@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { TimelineEvent } from '@/types';
 
 const POLL_INTERVAL_MS = 60_000;
@@ -41,7 +41,7 @@ export function useTimeline(tripId: string): UseTimelineResult {
   const [error, setError] = useState<string | null>(null);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const fetchEvents = async () => {
+  const fetchEvents = useCallback(async () => {
     try {
       const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
       const token = await getAuthToken();
@@ -62,7 +62,7 @@ export function useTimeline(tripId: string): UseTimelineResult {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [tripId]);
 
   useEffect(() => {
     if (!tripId) return;
@@ -73,7 +73,7 @@ export function useTimeline(tripId: string): UseTimelineResult {
     return () => {
       if (pollingRef.current) clearInterval(pollingRef.current);
     };
-  }, [tripId]);
+  }, [tripId, fetchEvents]);
 
   return { events, isLoading, error, refetch: fetchEvents };
 }

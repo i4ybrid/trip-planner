@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { TimelineEvent } from '@/types';
 
 const POLL_INTERVAL_MS = 60_000;
@@ -40,7 +40,7 @@ export function useTimelineSummary(tripId: string): TimelineSummaryData {
   const [isLoading, setIsLoading] = useState(false);
   const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const fetchSummary = async () => {
+  const fetchSummary = useCallback(async () => {
     try {
       const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
       const token = await getAuthToken();
@@ -59,6 +59,7 @@ export function useTimelineSummary(tripId: string): TimelineSummaryData {
       if (data.needsRefresh === 'true') {
         setNeedsRefresh('true');
         setIsLoading(true);
+        // Using setTimeout with the same memoized function is fine
         setTimeout(fetchSummary, 500);
       } else {
         setItems(data.data ?? []);
@@ -69,7 +70,7 @@ export function useTimelineSummary(tripId: string): TimelineSummaryData {
       console.error('Failed to fetch timeline summary:', error);
       setIsLoading(false);
     }
-  };
+  }, [tripId]);
 
   useEffect(() => {
     if (!tripId) return;
@@ -83,7 +84,7 @@ export function useTimelineSummary(tripId: string): TimelineSummaryData {
         clearInterval(pollingIntervalRef.current);
       }
     };
-  }, [tripId]);
+  }, [tripId, fetchSummary]);
 
   return { items, needsRefresh, isLoading };
 }

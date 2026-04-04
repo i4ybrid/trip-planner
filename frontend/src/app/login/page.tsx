@@ -212,7 +212,7 @@ export default function LoginPage() {
               <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-2">
                 <Gift className="h-4 w-4 text-amber-600" />
                 <span className="text-sm text-amber-800">
-                  You've been invited! You'll become friends after signing up.
+                  You&apos;ve been invited! You&apos;ll become friends after signing up.
                 </span>
               </div>
             )}

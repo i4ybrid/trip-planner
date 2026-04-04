@@ -81,6 +81,7 @@ export function AddExpenseModal({ isOpen, onClose, tripId, members, onSuccess }:
   const totalPercentage = splits.reduce((sum, s) => sum + (Number(s.percentage) || 0), 0);
   const totalCustomAmount = splits.reduce((sum, s) => sum + (Number(s.customAmount) || 0), 0);
 
+  const percentageKey = splits.map(s => s.percentage).join(',');
   // Auto-balance last member's percentage when other members change
   useEffect(() => {
     if (splitType !== 'percentage' || members.length < 2 || lastEditedIndex === null) return;
@@ -98,8 +99,9 @@ export function AddExpenseModal({ isOpen, onClose, tripId, members, onSuccess }:
       i === members.length - 1 ? { ...s, percentage: newLastPercentage } : s
     ));
     setLastEditedIndex(null);
-  }, [splits.map(s => s.percentage).join(','), splitType, members.length]);
+  }, [percentageKey, splitType, members.length, lastEditedIndex, splits]);
 
+  const customAmountKey = splits.map(s => s.customAmount).join(',');
   // Auto-balance last member's custom amount when other members change
   useEffect(() => {
     if (splitType !== 'custom' || members.length < 2 || lastEditedIndex === null) return;
@@ -119,7 +121,7 @@ export function AddExpenseModal({ isOpen, onClose, tripId, members, onSuccess }:
       ));
     }
     setLastEditedIndex(null);
-  }, [splits.map(s => s.customAmount).join(','), splitType, members.length, totalAmount]);
+  }, [customAmountKey, splitType, members.length, totalAmount, lastEditedIndex, splits]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -193,7 +193,7 @@ export default function NotificationsPage() {
         {isLoading ? (
           <div className={styles.loading}><Loader2 className="h-8 w-8 animate-spin" /><span>Loading notifications...</span></div>
         ) : notifications.length === 0 ? (
-          <div className={styles.empty}><Bell size={48} strokeWidth={1} /><h2>No notifications yet</h2><p>We'll notify you when something happens</p></div>
+          <div className={styles.empty}><Bell size={48} strokeWidth={1} /><h2>No notifications yet</h2><p>We&apos;ll notify you when something happens</p></div>
         ) : (
           <>
             <div className={styles.list}>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Modal } from '@/components/ui/modal';
 import { Button, Input, Badge, Avatar, Select } from '@/components';
 import { api } from '@/services/api';
@@ -42,13 +42,7 @@ export function TripSettingsModal({ isOpen, onClose, trip, onTripUpdated }: Trip
   const [error, setError] = useState<string | null>(null);
   const [showDangerZone, setShowDangerZone] = useState(false);
 
-  useEffect(() => {
-    if (isOpen) {
-      loadMembers();
-    }
-  }, [isOpen, trip.id]);
-
-  const loadMembers = async () => {
+  const loadMembers = useCallback(async () => {
     setIsLoading(true);
     try {
       const result = await api.getTripMembers(trip.id);
@@ -60,7 +54,13 @@ export function TripSettingsModal({ isOpen, onClose, trip, onTripUpdated }: Trip
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [trip.id]);
+
+  useEffect(() => {
+    if (isOpen) {
+      loadMembers();
+    }
+  }, [isOpen, loadMembers]);
 
   const handleSave = async () => {
     setIsSaving(true);

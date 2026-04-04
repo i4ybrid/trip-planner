@@ -46,10 +46,13 @@ async function checkMilestoneDue() {
         isSkipped: false,
         isLocked: false,
       },
-      include: {
+      select: {
+        id: true,
+        name: true,
         trip: {
-          select: { id: true, name: true },
-          include: {
+          select: {
+            id: true,
+            name: true,
             members: {
               where: { status: 'CONFIRMED' },
               select: { userId: true },
@@ -96,10 +99,13 @@ async function checkMilestoneOverdue() {
           { firstOverdueNotifiedAt: { lt: yesterday } },
         ],
       },
-      include: {
+      select: {
+        id: true,
+        name: true,
         trip: {
-          select: { id: true, name: true },
-          include: {
+          select: {
+            id: true,
+            name: true,
             members: {
               where: { status: 'CONFIRMED' },
               select: { userId: true },
@@ -146,10 +152,13 @@ async function checkMilestoneReminders() {
         isSkipped: false,
         isLocked: false,
       },
-      include: {
+      select: {
+        id: true,
+        name: true,
         trip: {
-          select: { id: true, name: true },
-          include: {
+          select: {
+            id: true,
+            name: true,
             members: {
               where: { status: 'CONFIRMED' },
               select: { userId: true },
@@ -191,7 +200,9 @@ async function checkSettlementDue() {
         endDate: { lte: yesterday },
         status: 'COMPLETED',
       },
-      include: {
+      select: {
+        id: true,
+        name: true,
         members: {
           where: { status: 'CONFIRMED' },
           select: { userId: true },

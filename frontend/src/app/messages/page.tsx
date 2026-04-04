@@ -51,16 +51,6 @@ function MessagesPageContent() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
-  if (status === 'loading') {
-    return (
-      <PageLayout title="Messages">
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      </PageLayout>
-    );
-  }
-
   useEffect(() => {
     if (!session) return;
 
@@ -112,7 +102,7 @@ function MessagesPageContent() {
     if (conversations.length > 0) {
       handleFriendParam();
     }
-  }, [friendParam, currentUserId, conversations.length, hasInitialized]);
+  }, [friendParam, currentUserId, conversations, hasInitialized]);
 
   useEffect(() => {
     const loadMessages = async () => {
@@ -175,6 +165,16 @@ function MessagesPageContent() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, selectedConversation]);
+
+  if (status === 'loading') {
+    return (
+      <PageLayout title="Messages">
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </PageLayout>
+    );
+  }
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation) return;
