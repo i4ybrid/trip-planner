@@ -208,6 +208,21 @@ model User {
 
   // Push subscriptions
   pushSubscriptions PushSubscription[]
+
+  // Password Reset
+  passwordResetTokens PasswordResetToken[]
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  email     String
+  tokenHash String
+  expiresAt DateTime
+  usedAt    DateTime?
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+
+  @@index([email])
 }
 
 model Settings {
@@ -259,6 +274,7 @@ model Trip {
   milestones    Milestone[]
   milestoneActions MilestoneAction[]
   autoMilestonesGenerated Boolean @default(false)
+  timelineUIState  TripTimelineUIState?
 
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
@@ -390,21 +406,51 @@ model MessageReadReceipt {
   @@unique([messageId, userId])
 }
 
-// TimelineEvent - Audit log for trip history (automatically populated)
+enum TimelineEventKind {
+  EVENT
+  MILESTONE
+  ACTIVITY_START
+  ACTIVITY_END
+}
+
+enum RefreshState {
+  TRUE
+  REFRESHING
+  FALSE
+}
+
 model TimelineEvent {
-  id          String   @id @default(cuid())
+  id          String           @id @default(cuid())
   tripId      String
-  eventType   String   // SCREAMING_SNAKE_CASE: "MEMBER_JOINED", "JOIN_REQUEST_SENT", "INVITE_DECLINED", etc.
-  description String   // Human-readable description (backward compat)
-  actorId     String?  // User who triggered the event
-  targetId    String?  // User affected by the event
-  metadata    Json?    // Additional structured data
-  createdAt   DateTime @default(now())
-  createdBy   String?  // Deprecated: use actorId
+  kind        TimelineEventKind @default(EVENT)
+  eventType   String?          // SCREAMING_SNAKE_CASE: "MEMBER_JOINED", "JOIN_REQUEST_SENT", etc.
+  description String?          // Human-readable description (backward compat)
+  actorId     String?          // User who triggered the event
+  targetId    String?          // User affected by the event
+  metadata    Json?            // Additional structured data
+  sourceType  String?          // 'MILESTONE' — kind of source that wrote this event
+  sourceId    String?          // ID of the source (milestone.id, etc.)
+  activityId  String?          // For ACTIVITY_START/ACTIVITY_END kinds
+  effectiveDate DateTime       @default(now())
+  icon        String?          // Lucide icon name
+  title       String?          // Short display title
+  meta        String?          // JSON: { amount?, role?, memberName? }
+  createdAt   DateTime         @default(now())
+  createdBy   String?
 
-  trip        Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  trip        Trip             @relation(fields: [tripId], references: [id], onDelete: Cascade)
 
-  @@index([tripId, createdAt])
+  @@index([tripId, effectiveDate(sort: Desc)])
+  @@index([sourceType, sourceId])
+}
+
+model TripTimelineUIState {
+  tripId          String      @id @unique
+  cachedEventIds  String      // JSON array of TimelineEvent.id
+  needsRefresh    RefreshState @default(TRUE)
+  updatedAt       DateTime    @updatedAt
+
+  trip            Trip        @relation(fields: [tripId], references: [id], onDelete: Cascade)
 }
 
 model MediaItem {

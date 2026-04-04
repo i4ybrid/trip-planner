@@ -123,6 +123,50 @@ router.post('/auth/login', async (req, res) => {
   }
 });
 
+// POST /api/auth/forgot-password
+router.post('/auth/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      res.status(400).json({ error: 'Email is required' });
+      return;
+    }
+    const result = await userService.generatePasswordResetToken(email);
+    const appUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const resetLink = `${appUrl}/reset-password?token=${result.token}`;
+    // For now, return the link directly (email not enabled)
+    res.json({ 
+      message: 'If an account exists, a reset link has been sent.',
+      resetLink, // temp: return link directly
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/auth/reset-password
+router.post('/auth/reset-password', async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+    if (!token || !newPassword) {
+      res.status(400).json({ error: 'Token and new password are required' });
+      return;
+    }
+    if (newPassword.length < 8) {
+      res.status(400).json({ error: 'Password must be at least 8 characters' });
+      return;
+    }
+    const success = await userService.resetPassword(token, newPassword);
+    if (!success) {
+      res.status(400).json({ error: 'Token is invalid or expired' });
+      return;
+    }
+    res.json({ success: true });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // GET /api/users/me - Get current user profile
 router.get('/users/me', authMiddleware, async (req: AuthRequest, res) => {
   try {

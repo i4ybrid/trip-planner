@@ -167,3 +167,32 @@ export function generateTelegramShareUrl(message: string): string {
 export function generateEmailShareUrl(to: string, subject: string, body: string): string {
   return `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
+
+export function getNextStatus(currentStatus: string): string | null {
+  const statusFlow: Record<string, string> = {
+    IDEA: 'PLANNING',
+    PLANNING: 'CONFIRMED',
+    CONFIRMED: 'HAPPENING',
+    HAPPENING: 'COMPLETED',
+    COMPLETED: 'COMPLETED',
+    CANCELLED: 'CANCELLED',
+  };
+  return statusFlow[currentStatus] || null;
+}
+
+export function getNextStatusLabel(currentStatus: string): string {
+  const labels: Record<string, string> = {
+    IDEA: 'Move to Planning',
+    PLANNING: 'Confirm Trip',
+    CONFIRMED: 'Mark as Happening',
+    HAPPENING: 'Complete Trip',
+    COMPLETED: 'Completed',
+    CANCELLED: 'Cancelled',
+  };
+  return labels[currentStatus] || '';
+}
+
+export function canMoveToHappening(startDate: string | undefined): boolean {
+  if (!startDate) return false;
+  return new Date(startDate).getTime() - Date.now() <= 24 * 60 * 60 * 1000;
+}

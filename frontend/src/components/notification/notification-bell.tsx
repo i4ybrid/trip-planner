@@ -39,6 +39,12 @@ export function NotificationBell() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    if (isOpen && unreadCount > 0) {
+      handleMarkAllAsRead();
+    }
+  }, [isOpen, unreadCount]);
+
   const loadNotifications = async () => {
     setIsLoading(true);
     try {
@@ -78,7 +84,7 @@ export function NotificationBell() {
 
   const handleDismiss = async (notificationId: string) => {
     try {
-      await api.deleteNotification(notificationId);
+      await api.markNotificationRead(notificationId);
       const notification = notifications.find(n => n.id === notificationId);
       setNotifications(prev => prev.filter(n => n.id !== notificationId));
       if (notification && !notification.isRead) {

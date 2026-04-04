@@ -1,12 +1,21 @@
 import { getPrisma } from '@/lib/prisma';
-import { notificationService } from './notification.service';
 import { timelineService } from '@/services/timeline.service';
 import { MilestoneType, MilestoneActionType } from '@prisma/client';
+
+const MILESTONE_ICON_MAP: Record<string, string> = {
+  COMMITMENT_REQUEST: 'Handshake',
+  COMMITMENT_DEADLINE: 'Clock',
+  FINAL_PAYMENT_DUE: 'DollarSign',
+  SETTLEMENT_DUE: 'FileText',
+  SETTLEMENT_COMPLETE: 'CheckCircle',
+  CUSTOM: 'Star',
+};
 
 interface MilestoneTemplate {
   type: MilestoneType;
   name: string;
   daysFromStart: number;
+  daysFromEnd?: number;
   isHard: boolean;
   priority: number;
 }
@@ -36,14 +45,16 @@ const MILESTONE_TEMPLATES: MilestoneTemplate[] = [
   {
     type: 'SETTLEMENT_DUE',
     name: 'Settlement Due',
-    daysFromStart: 7,
+    daysFromStart: 0,
+    daysFromEnd: 1,
     isHard: true,
     priority: 4,
   },
   {
     type: 'SETTLEMENT_COMPLETE',
     name: 'Settlement Complete',
-    daysFromStart: 14,
+    daysFromStart: 0,
+    daysFromEnd: 7,
     isHard: false,
     priority: 5,
   },
@@ -109,20 +120,6 @@ export class MilestoneService {
         isHard: true,
         priority: 3,
       },
-      {
-        type: 'SETTLEMENT_DUE' as const,
-        name: 'Settlement Due',
-        daysOffset: null, // special: relative to endDate
-        isHard: true,
-        priority: 4,
-      },
-      {
-        type: 'SETTLEMENT_COMPLETE' as const,
-        name: 'Settlement Complete',
-        daysOffset: null, // special: relative to endDate
-        isHard: false,
-        priority: 5,
-      },
     ];
 
     const milestones = records.map((r) => {
@@ -130,8 +127,7 @@ export class MilestoneService {
       if (r.daysOffset === null) {
         const base = new Date(endDate);
         base.setHours(0, 0, 0, 0);
-        const extra = r.type === 'SETTLEMENT_DUE' ? 1 : 7;
-        dueDate = addDays(base, extra);
+        dueDate = base;
       } else {
         dueDate = addDays(today, r.daysOffset);
       }
@@ -161,62 +157,262 @@ export class MilestoneService {
       data: { autoMilestonesGenerated: true },
     });
 
-    return this.prisma.milestone.findMany({
+    // Fetch trip master ID for timeline events
+    const trip = await this.prisma.trip.findUnique({
+      where: { id: tripId },
+      select: { tripMasterId: true },
+    });
+
+    // Write timeline events for each milestone
+    const createdMilestones = await this.prisma.milestone.findMany({
       where: { tripId },
       orderBy: [{ priority: 'asc' }, { dueDate: 'asc' }],
     });
+
+    for (const milestone of createdMilestones) {
+      await timelineService.writeMilestoneToTimeline(
+        {
+          id: milestone.id,
+          tripId: milestone.tripId,
+          type: milestone.type,
+          name: milestone.name,
+          dueDate: milestone.dueDate,
+        },
+        trip?.tripMasterId
+      );
+    }
+
+    await timelineService.upsertNeedsRefresh(tripId);
+
+    return createdMilestones;
   }
 
   /**
-   * Generate default milestones for a trip based on start date
+   * Generate idea-phase milestones: COMMITMENT_REQUEST and COMMITMENT_DEADLINE.
+   * These are created when a trip is first made (IDEA → PLANNING transition).
+   *
+   * Algorithm:
+   *   T_remaining_ms = startDate.getTime() - Date.now()
+   *   COMMITMENT_REQUEST  = now + T_remaining_ms × 0.30
+   *   COMMITMENT_DEADLINE = now + T_remaining_ms × 0.50
+   *
+   * Only creates if not already exists for this trip.
    */
-  async generateDefaultMilestones(
-    tripId: string,
-    startDate: Date,
-    _endDate: Date,
-    tripCreatedAt: Date
-  ): Promise<void> {
-    // Delete any existing milestones first
-    await this.prisma.milestone.deleteMany({ where: { tripId } });
+  async generateIdeaMilestones(tripId: string, startDate: Date): Promise<any[]> {
+    const now = new Date();
+    const T_remaining_ms = startDate.getTime() - now.getTime();
 
-    const milestones = MILESTONE_TEMPLATES.map((template) => {
-      // Calculate due date based on start date
-      const dueDate = new Date(startDate);
-      dueDate.setDate(dueDate.getDate() + template.daysFromStart);
+    const addMs = (base: Date, ms: number): Date => new Date(base.getTime() + ms);
 
-      // Don't create milestones in the past if trip was created recently
-      // For past trips, shift milestones to be relative to trip creation
-      let finalDueDate = dueDate;
-      if (dueDate < tripCreatedAt) {
-        finalDueDate = new Date(tripCreatedAt);
-        finalDueDate.setDate(finalDueDate.getDate() + Math.abs(template.daysFromStart));
-      }
+    const records = [
+      {
+        type: 'COMMITMENT_REQUEST' as const,
+        name: 'Commitment Request',
+        dueDate: addMs(now, T_remaining_ms * 0.30),
+        priority: 1,
+        isHard: false,
+      },
+      {
+        type: 'COMMITMENT_DEADLINE' as const,
+        name: 'Commitment Deadline',
+        dueDate: addMs(now, T_remaining_ms * 0.50),
+        priority: 2,
+        isHard: true,
+      },
+    ];
 
-      const reminderAt = new Date(finalDueDate);
+    const created: any[] = [];
+
+    for (const r of records) {
+      // Idempotent: skip if already exists
+      const existing = await this.prisma.milestone.findFirst({
+        where: { tripId, type: r.type },
+      });
+      if (existing) continue;
+
+      const reminderAt = new Date(r.dueDate);
       reminderAt.setDate(reminderAt.getDate() - 3);
 
-      return {
+      const milestone = await this.prisma.milestone.create({
+        data: {
+          tripId,
+          type: r.type,
+          name: r.name,
+          dueDate: r.dueDate,
+          reminderAt,
+          isHard: r.isHard,
+          isManualOverride: false,
+          isSkipped: false,
+          isLocked: false,
+          priority: r.priority,
+        },
+      });
+      created.push(milestone);
+    }
+
+    // Write timeline events
+    if (created.length > 0) {
+      const trip = await this.prisma.trip.findUnique({
+        where: { id: tripId },
+        select: { tripMasterId: true },
+      });
+      for (const milestone of created) {
+        await timelineService.writeMilestoneToTimeline(
+          {
+            id: milestone.id,
+            tripId: milestone.tripId,
+            type: milestone.type,
+            name: milestone.name,
+            dueDate: milestone.dueDate,
+          },
+          trip?.tripMasterId
+        );
+      }
+      await timelineService.upsertNeedsRefresh(tripId);
+    }
+
+    return created;
+  }
+
+  /**
+   * Generate FINAL_PAYMENT_DUE milestone.
+   * Called when trip moves to PLANNING or CONFIRMED status.
+   *
+   * Algorithm:
+   *   FINAL_PAYMENT_DUE = now + T_remaining_ms × 0.75
+   *   where T_remaining_ms = startDate.getTime() - Date.now()
+   *
+   * Idempotent: only creates if one doesn't already exist for this trip.
+   */
+  async generateFinalPaymentMilestone(tripId: string, startDate: Date): Promise<any | null> {
+    const existing = await this.prisma.milestone.findFirst({
+      where: { tripId, type: 'FINAL_PAYMENT_DUE' },
+    });
+    if (existing) return null;
+
+    const now = new Date();
+    const T_remaining_ms = startDate.getTime() - now.getTime();
+    const dueDate = new Date(now.getTime() + T_remaining_ms * 0.75);
+    const reminderAt = new Date(dueDate);
+    reminderAt.setDate(reminderAt.getDate() - 3);
+
+    const milestone = await this.prisma.milestone.create({
+      data: {
         tripId,
-        type: template.type,
-        name: template.name,
-        dueDate: finalDueDate,
+        type: 'FINAL_PAYMENT_DUE',
+        name: 'Final Payment Due',
+        dueDate,
         reminderAt,
-        isHard: template.isHard,
+        isHard: true,
         isManualOverride: false,
         isSkipped: false,
         isLocked: false,
-        priority: template.priority,
-      };
+        priority: 3,
+      },
     });
 
-    // Create milestones
-    await this.prisma.milestone.createMany({ data: milestones });
-
-    // Mark trip as having auto-generated milestones
-    await this.prisma.trip.update({
+    const trip = await this.prisma.trip.findUnique({
       where: { id: tripId },
-      data: { autoMilestonesGenerated: true },
+      select: { tripMasterId: true },
     });
+    await timelineService.writeMilestoneToTimeline(
+      {
+        id: milestone.id,
+        tripId: milestone.tripId,
+        type: milestone.type,
+        name: milestone.name,
+        dueDate: milestone.dueDate,
+      },
+      trip?.tripMasterId
+    );
+    await timelineService.upsertNeedsRefresh(tripId);
+
+    return milestone;
+  }
+
+  /**
+   * Generate settlement milestones: SETTLEMENT_DUE and SETTLEMENT_COMPLETE.
+   * Called when trip moves to HAPPENING status.
+   *
+   * Algorithm:
+   *   SETTLEMENT_DUE     = endDate + 1 day
+   *   SETTLEMENT_COMPLETE = endDate + 7 days
+   *
+   * Creates both milestones if they don't already exist for this trip.
+   */
+  async generateSettlementMilestones(tripId: string, endDate: Date): Promise<any[]> {
+    const addDays = (base: Date, days: number): Date => {
+      const d = new Date(base);
+      d.setDate(d.getDate() + days);
+      return d;
+    };
+
+    const records = [
+      {
+        type: 'SETTLEMENT_DUE' as const,
+        name: 'Settlement Due',
+        dueDate: addDays(endDate, 1),
+        priority: 4,
+        isHard: true,
+      },
+      {
+        type: 'SETTLEMENT_COMPLETE' as const,
+        name: 'Settlement Complete',
+        dueDate: addDays(endDate, 7),
+        priority: 5,
+        isHard: false,
+      },
+    ];
+
+    const created: any[] = [];
+
+    for (const r of records) {
+      const existing = await this.prisma.milestone.findFirst({
+        where: { tripId, type: r.type },
+      });
+      if (existing) continue;
+
+      const reminderAt = new Date(r.dueDate);
+      reminderAt.setDate(reminderAt.getDate() - 3);
+
+      const milestone = await this.prisma.milestone.create({
+        data: {
+          tripId,
+          type: r.type,
+          name: r.name,
+          dueDate: r.dueDate,
+          reminderAt,
+          isHard: r.isHard,
+          isManualOverride: false,
+          isSkipped: false,
+          isLocked: false,
+          priority: r.priority,
+        },
+      });
+      created.push(milestone);
+    }
+
+    if (created.length > 0) {
+      const trip = await this.prisma.trip.findUnique({
+        where: { id: tripId },
+        select: { tripMasterId: true },
+      });
+      for (const milestone of created) {
+        await timelineService.writeMilestoneToTimeline(
+          {
+            id: milestone.id,
+            tripId: milestone.tripId,
+            type: milestone.type,
+            name: milestone.name,
+            dueDate: milestone.dueDate,
+          },
+          trip?.tripMasterId
+        );
+      }
+      await timelineService.upsertNeedsRefresh(tripId);
+    }
+
+    return created;
   }
 
   /**
@@ -315,53 +511,70 @@ export class MilestoneService {
   }
 
   /**
-   * Trigger on-demand action (payment request or settlement reminder)
-   * Creates notifications for all recipients
+   * Trigger on-demand action.
+   * NOTE: SETTLEMENT_REMINDER and PAYMENT_REQUEST action types are no longer supported.
+   * Settlement reminders are now sent via the Payments tab using reminderService.
    */
   async triggerOnDemandAction(
-    tripId: string,
+    _tripId: string,
     actionType: MilestoneActionType,
-    sentById: string,
-    recipientIds: string[],
-    message?: string
+    _sentById: string,
+    _recipientIds: string[],
+    _message?: string
   ): Promise<void> {
-    const trip = await this.prisma.trip.findUnique({
-      where: { id: tripId },
-      select: { name: true },
-    });
+    throw new Error(`Unsupported action type: ${actionType}. Settlement reminders are now sent via the Payments tab.`);
+  }
 
-    if (!trip) {
-      throw new Error('Trip not found');
+  /**
+   * Create a milestone of any type (COMMITMENT_REQUEST, COMMITMENT_DEADLINE,
+   * FINAL_PAYMENT_DUE, SETTLEMENT_DUE, SETTLEMENT_COMPLETE, or CUSTOM).
+   */
+  async createMilestone(
+    tripId: string,
+    data: {
+      name: string;
+      type: MilestoneType;
+      dueDate: Date;
+      isHard?: boolean;
+      priority?: number;
     }
+  ): Promise<any> {
+    const reminderAt = new Date(data.dueDate);
+    reminderAt.setDate(reminderAt.getDate() - 3);
 
-    // Create milestone action record
-    await this.prisma.milestoneAction.create({
+    const milestone = await this.prisma.milestone.create({
       data: {
         tripId,
-        actionType,
-        sentById,
-        message,
-        recipientIds,
+        type: data.type,
+        name: data.name,
+        dueDate: data.dueDate,
+        reminderAt,
+        isHard: data.isHard ?? true,
+        isManualOverride: true,
+        isLocked: false,
+        isSkipped: false,
+        priority: data.priority ?? 10,
       },
     });
 
-    // Determine notification title and body based on action type
-    const notificationType = actionType === 'PAYMENT_REQUEST' ? 'PAYMENT_REQUEST' : 'SETTLEMENT_REMINDER';
-    const title = actionType === 'PAYMENT_REQUEST' ? 'Payment Request' : 'Settlement Reminder';
-    const body = message || `Reminder from ${trip.name} organizer`;
+    const trip = await this.prisma.trip.findUnique({
+      where: { id: tripId },
+      select: { tripMasterId: true },
+    });
 
-    // Create notifications for each recipient
-    for (const recipientId of recipientIds) {
-      await notificationService.createNotification({
-        userId: recipientId,
-        category: notificationType === 'PAYMENT_REQUEST' ? 'PAYMENT' : 'SETTLEMENT',
-        title,
-        body,
-        referenceId: tripId,
-        referenceType: 'BILL_SPLIT',
-        link: `/trip/${tripId}/payments`,
-      });
-    }
+    await timelineService.writeMilestoneToTimeline(
+      {
+        id: milestone.id,
+        tripId: milestone.tripId,
+        type: milestone.type,
+        name: milestone.name,
+        dueDate: milestone.dueDate,
+      },
+      trip?.tripMasterId
+    );
+    await timelineService.upsertNeedsRefresh(tripId);
+
+    return milestone;
   }
 
   /**
@@ -380,7 +593,7 @@ export class MilestoneService {
     const reminderAt = new Date(data.dueDate);
     reminderAt.setDate(reminderAt.getDate() - 3);
 
-    return this.prisma.milestone.create({
+    const milestone = await this.prisma.milestone.create({
       data: {
         tripId,
         type: data.type as MilestoneType,
@@ -394,6 +607,43 @@ export class MilestoneService {
         priority: data.priority ?? 10,
       },
     });
+
+    // Fetch tripMasterId for the timeline event
+    const trip = await this.prisma.trip.findUnique({
+      where: { id: tripId },
+      select: { tripMasterId: true },
+    });
+
+    await timelineService.writeMilestoneToTimeline(
+      {
+        id: milestone.id,
+        tripId: milestone.tripId,
+        type: milestone.type,
+        name: milestone.name,
+        dueDate: milestone.dueDate,
+      },
+      trip?.tripMasterId
+    );
+    await timelineService.upsertNeedsRefresh(tripId);
+
+    return milestone;
+  }
+
+  /**
+   * Delete a milestone and its timeline events
+   */
+  async deleteMilestone(milestoneId: string): Promise<void> {
+    const milestone = await this.prisma.milestone.findUnique({
+      where: { id: milestoneId },
+      select: { tripId: true },
+    });
+
+    if (milestone) {
+      await timelineService.deleteMilestoneTimelineEvents(milestoneId);
+      await timelineService.upsertNeedsRefresh(milestone.tripId);
+    }
+
+    await this.prisma.milestone.delete({ where: { id: milestoneId } });
   }
 
   /**
@@ -409,6 +659,12 @@ export class MilestoneService {
       name?: string;
     }
   ): Promise<any> {
+    // Fetch the existing milestone to compare dueDate
+    const existing = await this.prisma.milestone.findUnique({
+      where: { id: milestoneId },
+      select: { tripId: true, dueDate: true },
+    });
+
     const updateData: any = {};
     
     if (data.dueDate !== undefined) {
@@ -423,10 +679,24 @@ export class MilestoneService {
     if (data.isHard !== undefined) updateData.isHard = data.isHard;
     if (data.name !== undefined) updateData.name = data.name;
 
-    return this.prisma.milestone.update({
+    const updated = await this.prisma.milestone.update({
       where: { id: milestoneId },
       data: updateData,
     });
+
+    // If dueDate changed, sync the timeline event's effectiveDate
+    if (
+      existing &&
+      data.dueDate !== undefined &&
+      existing.dueDate.getTime() !== data.dueDate.getTime()
+    ) {
+      await timelineService.updateMilestoneTimelineEvent(milestoneId, {
+        effectiveDate: data.dueDate,
+      });
+      await timelineService.upsertNeedsRefresh(existing.tripId);
+    }
+
+    return updated;
   }
 
   /**
@@ -459,7 +729,7 @@ export class MilestoneService {
       },
     });
 
-    // Emit milestone_occurred timeline event when milestone is completed
+    // Update the existing MILESTONE timeline event in-place when completed
     if (status === 'COMPLETED') {
       try {
         const milestone = await this.prisma.milestone.findUnique({
@@ -467,16 +737,15 @@ export class MilestoneService {
           select: { name: true, type: true, tripId: true },
         });
         if (milestone) {
-          await timelineService.emitTimelineEvent({
-            tripId: milestone.tripId,
-            eventType: 'milestone_occurred',
-            description: `Milestone "${milestone.name}" was completed`,
-            actorId: userId,
-            metadata: { milestoneId, milestoneType: milestone.type },
+          const icon = MILESTONE_ICON_MAP[milestone.type] ?? 'Star';
+          await timelineService.updateMilestoneTimelineEvent(milestoneId, {
+            title: milestone.name,
+            icon,
           });
+          await timelineService.upsertNeedsRefresh(milestone.tripId);
         }
       } catch (e) {
-        console.error('Timeline event failed:', e);
+        console.error('Timeline update failed:', e);
       }
     }
 

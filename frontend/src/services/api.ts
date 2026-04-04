@@ -237,6 +237,24 @@ export const api = {
   async logout(): Promise<void> {
     // Token cleanup is handled by NextAuth signOut
   },
+
+  async forgotPassword(email: string): Promise<{ message: string; resetLink?: string }> {
+    const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    return handleResponse(response);
+  },
+
+  async resetPassword(token: string, newPassword: string): Promise<{ success: boolean }> {
+    const response = await fetch(`${API_BASE_URL}/auth/reset-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, newPassword }),
+    });
+    return handleResponse(response);
+  },
   // Trips
   async getTrips(): Promise<ApiResponse<Trip[]>> {
     const cacheKey = 'trips:list';
@@ -915,18 +933,24 @@ export const api = {
   },
 
   // Notifications
-  async getNotifications(): Promise<ApiResponse<Notification[]>> {
-    const cacheKey = 'notifications:list';
-    const cached = getCached<ApiResponse<Notification[]>>(cacheKey);
+  async getNotifications(cursor?: string, limit = 10): Promise<{
+    data: Notification[];
+    nextCursor: string | null;
+    hasMore: boolean;
+  }> {
+    const cacheKey = `notifications:list:${cursor ?? 'initial'}`;
+    const cached = getCached<{ data: Notification[]; nextCursor: string | null; hasMore: boolean }>(cacheKey);
     if (cached) return cached;
-    
-    return deduplicatedFetch<ApiResponse<Notification[]>>(cacheKey, async () => {
-      const response = await fetch(`${API_BASE_URL}/notifications`, {
+
+    return deduplicatedFetch<{ data: Notification[]; nextCursor: string | null; hasMore: boolean }>(cacheKey, async () => {
+      const response = await fetch(`${API_BASE_URL}/notifications?cursor=${cursor || ''}&limit=${limit}`, {
         headers: await getHeaders(),
       });
-      const result = await handleResponse<{ data: { notifications: Notification[]; unreadCount: number } }>(response);
-      // Normalize to return notifications array as data
-      const normalized = { ...result, data: result.data?.notifications || [] };
+      const result = await handleResponse<{ data: { notifications: Notification[]; nextCursor: string | null }; unreadCount: number }>(response);
+      const data = result.data?.notifications || [];
+      const nextCursor = result.data?.nextCursor || null;
+      const hasMore = data.length === limit && nextCursor !== null;
+      const normalized = { data, nextCursor, hasMore };
       setCache(cacheKey, normalized);
       return normalized;
     });
@@ -1076,7 +1100,7 @@ export const api = {
     return handleResponse(response);
   },
 
-  async updateMilestone(milestoneId: string, data: { dueDate?: string; isLocked?: boolean; isSkipped?: boolean; isHard?: boolean; name?: string }): Promise<ApiResponse<Milestone>> {
+  async updateMilestone(milestoneId: string, data: { dueDate?: string; isLocked?: boolean; isSkipped?: boolean; isHard?: boolean; name?: string; priority?: number }): Promise<ApiResponse<Milestone>> {
     const response = await fetch(`${API_BASE_URL}/milestones/${milestoneId}`, {
       method: 'PATCH',
       headers: await getHeaders(),
@@ -1120,6 +1144,31 @@ export const api = {
 
   async generateDefaultMilestones(tripId: string): Promise<ApiResponse<Milestone[]>> {
     const response = await fetch(`${API_BASE_URL}/trips/${tripId}/milestones/generate-default`, {
+      method: 'POST',
+      headers: await getHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  async deleteMilestone(milestoneId: string): Promise<ApiResponse<void>> {
+    const response = await fetch(`${API_BASE_URL}/milestones/${milestoneId}`, {
+      method: 'DELETE',
+      headers: await getHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  // Settlement Reminders
+  async sendBulkSettlementReminder(tripId: string): Promise<{ notified: string[]; skipped: string[] }> {
+    const response = await fetch(`${API_BASE_URL}/trips/${tripId}/settlements/remind-all`, {
+      method: 'POST',
+      headers: await getHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  async sendSettlementReminder(tripId: string, userId: string): Promise<{ success: boolean }> {
+    const response = await fetch(`${API_BASE_URL}/trips/${tripId}/settlements/remind/${userId}`, {
       method: 'POST',
       headers: await getHeaders(),
     });

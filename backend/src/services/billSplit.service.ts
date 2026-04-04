@@ -11,7 +11,7 @@ export class BillSplitService {
     tripId: string;
     title: string;
     description?: string;
-    amount: number;
+    amount?: number;
     currency?: string;
     splitType: 'EQUAL' | 'SHARES' | 'PERCENTAGE' | 'MANUAL';
     costType?: 'PER_PERSON' | 'FIXED';
@@ -21,6 +21,18 @@ export class BillSplitService {
     dueDate?: Date;
     members?: { userId: string; dollarAmount?: number; shares?: number; percentage?: number }[];
   }) {
+    // Auto-calculate amount from members if not provided
+    if (data.amount === undefined) {
+      if (data.members && data.members.length > 0) {
+        data.amount = data.members.reduce(
+          (sum, m) => sum + (m.dollarAmount || 0) * (m.shares || 1),
+          0
+        );
+      } else {
+        data.amount = 0;
+      }
+    }
+
     const tripMembers = await this.prisma.tripMember.findMany({
       where: { tripId: data.tripId, status: 'CONFIRMED' },
       select: { userId: true },
@@ -40,7 +52,7 @@ export class BillSplitService {
       // Fixed cost: only the payer owes the full amount, everyone else owes $0
       memberAmounts = memberIds.map((userId) => ({
         userId,
-        dollarAmount: userId === data.paidBy ? data.amount : 0,
+        dollarAmount: userId === data.paidBy ? (data.amount || 0) : 0,
         type: data.splitType,
       }));
     } else if (data.members && data.members.length > 0) {
@@ -52,7 +64,7 @@ export class BillSplitService {
         shares: m.shares,
       }));
     } else if (data.splitType === 'EQUAL') {
-      const amountPerMember = data.amount / memberCount;
+      const amountPerMember = (data.amount || 0) / memberCount;
       memberAmounts = memberIds.map((userId) => ({
         userId,
         dollarAmount: amountPerMember,
@@ -72,7 +84,7 @@ export class BillSplitService {
         tripId: data.tripId,
         title: data.title,
         description: data.description,
-        amount: data.amount,
+        amount: data.amount || 0,
         currency: data.currency || 'USD',
         splitType: data.splitType,
         costType: data.costType || 'PER_PERSON',
@@ -100,13 +112,29 @@ export class BillSplitService {
       },
     });
 
-    // Create timeline event
+    // Build rich description using already-available payer name
+    const payerName = (billSplit as any).payer?.name || data.paidBy;
+    const formattedAmount = `$${Number(data.amount).toFixed(2)}`;
+    const description = `${payerName} added an expense: ${data.title} (${formattedAmount})`;
+
+    // Emit payment_added timeline event
     await timelineService.emitTimelineEvent({
       tripId: data.tripId,
       eventType: 'payment_added',
-      description: `Bill split "${data.title}" was added`,
-      actorId: data.createdBy,
+      actorId: data.paidBy,           // person who paid
+      description,
+      metadata: {
+        billSplitId: billSplit.id,
+        amount: data.amount || 0,
+        currency: data.currency || 'USD',
+        paidByUserId: data.paidBy,
+        activityId: data.activityId || undefined,
+      },
+      effectiveDate: new Date(),
     });
+
+    // Signal UI refresh
+    await timelineService.upsertNeedsRefresh(data.tripId);
 
     // Reset settlement milestone completions for all members
     const newMemberUserIds = memberAmounts.map((m) => m.userId);

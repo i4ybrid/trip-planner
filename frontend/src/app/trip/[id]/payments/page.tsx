@@ -6,9 +6,10 @@ import { useSession } from 'next-auth/react';
 import { Card, CardHeader, CardTitle, CardContent, Button, Badge, Avatar } from '@/components';
 import { formatCurrency, cn } from '@/lib/utils';
 import { api } from '@/services/api';
-import { Wallet, CreditCard, Plus, Trash2, CheckCircle2, Circle } from 'lucide-react';
+import { Wallet, CreditCard, Plus, Trash2, CheckCircle2, Circle, Bell } from 'lucide-react';
 import { TripMember, User, BillSplit, BillSplitMember, PaymentMethod } from '@/types';
 import { logger } from '@/lib/logger';
+import { AddExpenseModal } from '@/components/trip/add-expense-modal';
 
 interface Expense {
   id: string;
@@ -61,6 +62,9 @@ export default function TripPayments() {
   const hasLoadedRef = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
 
+  const [expenseModalOpen, setExpenseModalOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+
   const loadData = useCallback(async () => {
     // Cancel any in-progress request
     if (abortControllerRef.current) {
@@ -84,6 +88,13 @@ export default function TripPayments() {
       }
     }
   }, [tripId]);
+
+  // Reload when refreshKey changes
+  useEffect(() => {
+    if (refreshKey > 0) {
+      loadData();
+    }
+  }, [refreshKey, loadData]);
 
   useEffect(() => {
     if (tripId && !hasLoadedRef.current) {
@@ -188,11 +199,22 @@ export default function TripPayments() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold">Payments & Expenses</h2>
-        <Button onClick={() => router.push(`/trip/${tripId}/payments/add`)}>
+        <Button onClick={() => setExpenseModalOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           Add Expense
         </Button>
       </div>
+
+      <AddExpenseModal
+        isOpen={expenseModalOpen}
+        onClose={() => setExpenseModalOpen(false)}
+        tripId={tripId}
+        members={members}
+        onSuccess={() => {
+          setExpenseModalOpen(false);
+          setRefreshKey(k => k + 1);
+        }}
+      />
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-4">
@@ -555,6 +577,93 @@ export default function TripPayments() {
               </CardContent>
             </Card>
           )}
+
+          {/* Settlement Reminders — only visible to ORGANIZER/MASTER */}
+          {(() => {
+            const myMember = members.find(m => m.userId === currentUserId);
+            const canManage = myMember?.role === 'MASTER' || myMember?.role === 'ORGANIZER';
+            if (!canManage) return null;
+
+            // Members with outstanding balances (status !== 'CONFIRMED')
+            const outstandingMembers: { userId: string; name: string; avatarUrl?: string; dollarAmount: string }[] = [];
+            for (const bill of billSplits) {
+              for (const member of (bill.members || [])) {
+                if (member.status !== 'CONFIRMED') {
+                  const existing = outstandingMembers.find(m => m.userId === member.userId);
+                  const memberInfo = members.find(m => m.userId === member.userId);
+                  const amount = existing ? String(Number(existing.dollarAmount) + Number(member.dollarAmount)) : String(member.dollarAmount);
+                  if (existing) {
+                    existing.dollarAmount = amount;
+                  } else {
+                    outstandingMembers.push({
+                      userId: member.userId,
+                      name: memberInfo?.user?.name || memberInfo?.userId || 'Unknown',
+                      avatarUrl: memberInfo?.user?.avatarUrl,
+                      dollarAmount: amount,
+                    });
+                  }
+                }
+              }
+            }
+
+            if (outstandingMembers.length === 0) return null;
+
+            return (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Bell className="h-5 w-5" />
+                    Settlement Reminders
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={async () => {
+                      try {
+                        const result = await api.sendBulkSettlementReminder(tripId);
+                        alert(`Reminders sent to ${result.notified.length} member${result.notified.length !== 1 ? 's' : ''}`);
+                      } catch (err) {
+                        alert('Failed to send reminders');
+                      }
+                    }}
+                  >
+                    <Bell className="mr-2 h-4 w-4" />
+                    Remind All ({outstandingMembers.length})
+                  </Button>
+                  <div className="border-t border-border pt-3 space-y-2">
+                    <p className="text-xs font-medium text-muted-foreground">Outstanding balances:</p>
+                    {outstandingMembers.map(member => (
+                      <div key={member.userId} className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Avatar src={member.avatarUrl} name={member.name} size="sm" />
+                          <span className="text-sm">{member.name}</span>
+                          <span className="text-xs text-muted-foreground">{formatCurrency(Number(member.dollarAmount))}</span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={async () => {
+                            try {
+                              await api.sendSettlementReminder(tripId, member.userId);
+                              alert(`Reminder sent to ${member.name}`);
+                            } catch (err) {
+                              alert('Failed to send reminder');
+                            }
+                          }}
+                        >
+                          <Bell className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })()}
         </div>
       </div>
     </div>

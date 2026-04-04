@@ -68,23 +68,47 @@ export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [activeFilter, setActiveFilter] = useState<NotificationCategory | 'ALL'>('ALL');
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(true);
+
+  const MAX_TOTAL = 50;
 
   useEffect(() => { loadNotifications(); }, [activeFilter]);
 
   const loadNotifications = async () => {
     setIsLoading(true);
+    setHasMore(true);
+    setCursor(null);
     try {
       const result = await api.getNotifications();
       if (result.data) {
-        const all = result.data;
-        const filtered = activeFilter === 'ALL' ? all : all.filter(n => n.category === activeFilter);
-        setNotifications(filtered);
-        setUnreadCount(all.filter(n => !n.isRead).length);
+        setNotifications(result.data);
+        setCursor(result.nextCursor);
+        setHasMore(result.hasMore && result.data.length < MAX_TOTAL);
+        setUnreadCount(0); // Will be fetched separately if needed
       }
     } catch (error) { console.error('Failed to load notifications:', error); }
     setIsLoading(false);
+  };
+
+  const loadMore = async () => {
+    if (!cursor || isLoadingMore || notifications.length >= MAX_TOTAL) return;
+    setIsLoadingMore(true);
+    try {
+      const result = await api.getNotifications(cursor);
+      if (result.data) {
+        const newNotifications = result.data;
+        const totalNow = notifications.length + newNotifications.length;
+        const capped = totalNow >= MAX_TOTAL ? newNotifications.slice(0, MAX_TOTAL - notifications.length) : newNotifications;
+        setNotifications(prev => [...prev, ...capped]);
+        setCursor(result.nextCursor);
+        setHasMore(result.hasMore && totalNow < MAX_TOTAL);
+      }
+    } catch (error) { console.error('Failed to load more notifications:', error); }
+    setIsLoadingMore(false);
   };
 
   const handleMarkAsRead = async (id: string) => {
@@ -171,49 +195,59 @@ export default function NotificationsPage() {
         ) : notifications.length === 0 ? (
           <div className={styles.empty}><Bell size={48} strokeWidth={1} /><h2>No notifications yet</h2><p>We'll notify you when something happens</p></div>
         ) : (
-          <div className={styles.list}>
-            {Object.entries(grouped).map(([date, items]) => (
-              <div key={date}>
-                <div className={styles.dateHeader}>{date}</div>
-                {items.map(notification => (
-                  <div key={notification.id} className={`${styles.item} ${!notification.isRead ? styles.unread : ''}`}>
-                    <div className={`${styles.icon} ${categoryColors[notification.category] || 'bg-gray-100 text-gray-600'}`}>
-                      <span className="text-base font-bold">{categoryIcons[notification.category] || 'N'}</span>
-                    </div>
-                    <Link href={notification.link || '/dashboard'} className={styles.content} onClick={() => !notification.isRead && handleMarkAsRead(notification.id)}>
-                      <div className={styles.contentHeader}>
-                        <span className={styles.title}>{notification.title}</span>
-                        <span className={styles.time}>{formatTimeAgo(notification.createdAt)}</span>
+          <>
+            <div className={styles.list}>
+              {Object.entries(grouped).map(([date, items]) => (
+                <div key={date}>
+                  <div className={styles.dateHeader}>{date}</div>
+                  {items.map(notification => (
+                    <div key={notification.id} className={`${styles.item} ${!notification.isRead ? styles.unread : ''}`}>
+                      <div className={`${styles.icon} ${categoryColors[notification.category] || 'bg-gray-100 text-gray-600'}`}>
+                        <span className="text-base font-bold">{categoryIcons[notification.category] || 'N'}</span>
                       </div>
-                      <p className={styles.body}>{notification.body}</p>
-                    </Link>
-                    <div className={styles.actions}>
-                      {notification.category === 'INVITE' && (
-                        <>
-                          <button className={styles.actionButton} onClick={() => handleAccept(notification)} title="Accept invite" disabled={processingId === notification.id} style={{ color: 'green' }}>
-                            {processingId === notification.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check size={16} />}
-                          </button>
-                          <button className={styles.actionButton} onClick={() => handleDecline(notification)} title="Decline invite" disabled={processingId === notification.id} style={{ color: 'red' }}>
-                            <Trash2 size={16} />
-                          </button>
-                        </>
-                      )}
-                      {notification.category !== 'INVITE' && (
-                        <>
-                          {!notification.isRead && (
-                            <button className={styles.actionButton} onClick={() => handleMarkAsRead(notification.id)} title="Mark as read" disabled={processingId === notification.id}>
+                      <Link href={notification.link || '/dashboard'} className={styles.content} onClick={() => !notification.isRead && handleMarkAsRead(notification.id)}>
+                        <div className={styles.contentHeader}>
+                          <span className={styles.title}>{notification.title}</span>
+                          <span className={styles.time}>{formatTimeAgo(notification.createdAt)}</span>
+                        </div>
+                        <p className={styles.body}>{notification.body}</p>
+                      </Link>
+                      <div className={styles.actions}>
+                        {notification.category === 'INVITE' && (
+                          <>
+                            <button className={styles.actionButton} onClick={() => handleAccept(notification)} title="Accept invite" disabled={processingId === notification.id} style={{ color: 'green' }}>
                               {processingId === notification.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check size={16} />}
                             </button>
-                          )}
-                          <button className={styles.actionButton} onClick={() => handleDismiss(notification.id)} title="Delete"><Trash2 size={16} /></button>
-                        </>
-                      )}
+                            <button className={styles.actionButton} onClick={() => handleDecline(notification)} title="Decline invite" disabled={processingId === notification.id} style={{ color: 'red' }}>
+                              <Trash2 size={16} />
+                            </button>
+                          </>
+                        )}
+                        {notification.category !== 'INVITE' && (
+                          <>
+                            {!notification.isRead && (
+                              <button className={styles.actionButton} onClick={() => handleMarkAsRead(notification.id)} title="Mark as read" disabled={processingId === notification.id}>
+                                {processingId === notification.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check size={16} />}
+                              </button>
+                            )}
+                            <button className={styles.actionButton} onClick={() => handleDismiss(notification.id)} title="Delete"><Trash2 size={16} /></button>
+                          </>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+              ))}
+            </div>
+            {hasMore && notifications.length < MAX_TOTAL && (
+              <div style={{ display: 'flex', justifyContent: 'center', padding: '1rem' }}>
+                <Button variant="outline" onClick={loadMore} disabled={isLoadingMore}>
+                  {isLoadingMore ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  Load More
+                </Button>
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
       </main>
     </div>

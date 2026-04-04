@@ -45,26 +45,44 @@ export const updateTripSchema = z.object({
 });
 
 // Activity schemas
-export const createActivitySchema = z.object({
-  title: z.string().min(1),
-  description: z.string().optional(),
-  location: z.string().optional(),
-  startTime: z.string().datetime().optional(),
-  endTime: z.string().datetime().optional(),
-  cost: z.number().positive().optional(),
-  currency: z.string().default('USD'),
-  category: z.string(),
-  costType: z.enum(['PER_PERSON', 'FIXED']).optional(),
-});
+export const createActivitySchema = z
+  .object({
+    title: z.string().min(1),
+    description: z.string().optional(),
+    location: z.string().optional(),
+    startTime: z.string().datetime().optional(),
+    endTime: z.string().datetime().optional(),
+    cost: z.number().positive().optional(),
+    currency: z.string().default('USD'),
+    category: z.string(),
+    costType: z.enum(['PER_PERSON', 'FIXED']).optional(),
+  })
+  .refine(
+    (data) => !data.endTime || !data.startTime || new Date(data.endTime) >= new Date(data.startTime),
+    { message: 'End time must be on or after start time', path: ['endTime'] }
+  )
+  .refine(
+    (data) => data.category !== 'accommodation' || (data.endTime != null && data.endTime !== ''),
+    { message: 'End time is required for accommodation activities', path: ['endTime'] }
+  );
 
-export const updateActivitySchema = z.object({
-  title: z.string().min(1).optional(),
-  description: z.string().optional(),
-  location: z.string().optional(),
-  startTime: z.string().datetime().optional(),
-  endTime: z.string().datetime().optional(),
-  category: z.string().optional(),
-});
+export const updateActivitySchema = z
+  .object({
+    title: z.string().min(1).optional(),
+    description: z.string().optional(),
+    location: z.string().optional(),
+    startTime: z.string().datetime().optional(),
+    endTime: z.string().datetime().optional(),
+    category: z.string().optional(),
+  })
+  .refine(
+    (data) => !data.endTime || !data.startTime || new Date(data.endTime) >= new Date(data.startTime),
+    { message: 'End time must be on or after start time', path: ['endTime'] }
+  )
+  .refine(
+    (data) => data.category !== 'accommodation' || (data.endTime != null && data.endTime !== ''),
+    { message: 'End time is required for accommodation activities', path: ['endTime'] }
+  );
 
 // Vote schemas
 export const createVoteSchema = z.object({
@@ -97,7 +115,7 @@ export const updateMessageSchema = z.object({
 export const createBillSplitSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
-  amount: z.number().positive(),
+  amount: z.number().positive().optional(),
   currency: z.string().default('USD'),
   splitType: z.enum(['EQUAL', 'SHARES', 'PERCENTAGE', 'MANUAL']).default('EQUAL'),
   costType: z.enum(['PER_PERSON', 'FIXED']).optional(),

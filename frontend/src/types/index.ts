@@ -223,13 +223,26 @@ export interface MediaItem {
   createdAt: string;
 }
 
+export type TimelineEventKind = 'EVENT' | 'MILESTONE' | 'ACTIVITY_START' | 'ACTIVITY_END';
+
 export interface TimelineEvent {
   id: string;
   tripId: string;
-  eventType: string;
-  description: string;
+  kind: TimelineEventKind;
+  eventType?: string | null;
+  description?: string | null;
+  actorId?: string | null;
+  targetId?: string | null;
+  metadata?: Record<string, unknown> | null;
+  sourceType?: string | null;
+  sourceId?: string | null;
+  activityId?: string | null;
+  effectiveDate: string;
+  icon?: string | null;
+  title?: string | null;
+  meta?: string | null;
   createdAt: string;
-  createdBy?: string;
+  createdBy?: string | null;
 }
 
 export interface BillSplit {

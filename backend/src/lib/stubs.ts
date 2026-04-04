@@ -26,6 +26,7 @@ export class PrismaStub {
   private milestoneActions: Map<string, any> = new Map();
   private messageReadReceipts: Map<string, any> = new Map();
   private notificationPreferences: Map<string, any> = new Map();
+  private tripTimelineUIStates: Map<string, any> = new Map();
 
   /** Apply Prisma include/select to an activity record */
   private _applyActivityInclude(activity: any, include: any): any {
@@ -686,6 +687,63 @@ export class PrismaStub {
           if (where?.tripId) result = result.filter((e) => e.tripId === where.tripId);
           return Promise.resolve(result);
         }),
+        updateMany: vi.fn(({ where, data }: any) => {
+          let count = 0;
+          for (const event of this.timelineEvents.values()) {
+            let matches = true;
+            if (where?.sourceType && event.sourceType !== where.sourceType) matches = false;
+            if (where?.sourceId && event.sourceId !== where.sourceId) matches = false;
+            if (where?.activityId && event.activityId !== where.activityId) matches = false;
+            if (where?.kind && event.kind !== where.kind) matches = false;
+            if (matches) {
+              this.timelineEvents.set(event.id, { ...event, ...data });
+              count++;
+            }
+          }
+          return Promise.resolve({ count });
+        }),
+        deleteMany: vi.fn(({ where }: any) => {
+          let count = 0;
+          if (where?.sourceType && where?.sourceId) {
+            for (const [id, event] of this.timelineEvents.entries()) {
+              if (event.sourceType === where.sourceType && event.sourceId === where.sourceId) {
+                this.timelineEvents.delete(id);
+                count++;
+              }
+            }
+          } else if (where?.activityId) {
+            for (const [id, event] of this.timelineEvents.entries()) {
+              if (event.activityId === where.activityId) {
+                this.timelineEvents.delete(id);
+                count++;
+              }
+            }
+          }
+          return Promise.resolve({ count });
+        }),
+      },
+      tripTimelineUIState: {
+        upsert: vi.fn(({ where, create, update }: any) => {
+          const existing = this.tripTimelineUIStates.get(where.tripId);
+          if (existing) {
+            const updated = { ...existing, ...update };
+            this.tripTimelineUIStates.set(where.tripId, updated);
+            return Promise.resolve(updated);
+          }
+          const state = { ...create };
+          this.tripTimelineUIStates.set(where.tripId, state);
+          return Promise.resolve(state);
+        }),
+        findUnique: vi.fn(({ where }: any) => {
+          return Promise.resolve(this.tripTimelineUIStates.get(where.tripId) || null);
+        }),
+        update: vi.fn(({ where, data }: any) => {
+          const existing = this.tripTimelineUIStates.get(where.tripId);
+          if (!existing) return Promise.reject(new Error('Not found'));
+          const updated = { ...existing, ...data };
+          this.tripTimelineUIStates.set(where.tripId, updated);
+          return Promise.resolve(updated);
+        }),
       },
       dmConversation: {
         findUnique: vi.fn(({ where }: any) => {
@@ -986,6 +1044,7 @@ export class PrismaStub {
     this.milestoneActions.clear();
     this.messageReadReceipts.clear();
     this.notificationPreferences.clear();
+    this.tripTimelineUIStates.clear();
   }
 }
 

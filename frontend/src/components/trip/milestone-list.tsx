@@ -5,7 +5,7 @@ import { Milestone, TripMember } from '@/types';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Calendar, Check, CheckCircle, Clock, AlertCircle, Settings, Bell, DollarSign, Users, Sparkles } from 'lucide-react';
+import { Calendar, Check, Clock, AlertCircle, Settings, Users, Sparkles } from 'lucide-react';
 import { api } from '@/services/api';
 
 interface MilestoneListPanelProps {
@@ -16,8 +16,6 @@ interface MilestoneListPanelProps {
   tripId?: string;
   onRefresh?: () => void;
   onEditMilestone: (milestone: Milestone) => void;
-  onRequestPayment: (milestone: Milestone) => void;
-  onRemindSettle: (milestone: Milestone) => void;
   onMarkComplete: (milestone: Milestone, userId: string, status: 'COMPLETED' | 'SKIPPED') => void;
 }
 
@@ -29,8 +27,6 @@ export function MilestoneListPanel({
   tripId,
   onRefresh,
   onEditMilestone,
-  onRequestPayment,
-  onRemindSettle,
   onMarkComplete,
 }: MilestoneListPanelProps) {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -80,13 +76,9 @@ export function MilestoneListPanel({
       case 'COMMITMENT_DEADLINE':
         return <Users className="h-4 w-4 text-purple-500" />;
       case 'FINAL_PAYMENT_DUE':
-        return <DollarSign className="h-4 w-4 text-amber-500" />;
-      case 'SETTLEMENT_DUE':
-        return <DollarSign className="h-4 w-4 text-orange-500" />;
-      case 'SETTLEMENT_COMPLETE':
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
+        return <Clock className="h-4 w-4 text-amber-500" />;
       default:
-        return <Bell className="h-4 w-4 text-muted-foreground" />;
+        return <Settings className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
@@ -100,30 +92,7 @@ export function MilestoneListPanel({
         <p className="mt-1 text-xs text-muted-foreground">
           Milestones will appear here once the trip moves to planning.
         </p>
-        {canManage && tripId && (
-          <div className="mt-4 rounded-lg border bg-card p-4 dark:border-border dark:bg-card">
-            <div className="flex items-start gap-3 text-left">
-              <Sparkles className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600" />
-              <div className="flex-1">
-                <h4 className="text-sm font-medium text-foreground dark:text-foreground">
-                  No milestones yet
-                </h4>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Generate default milestones based on your trip dates.
-                </p>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleGenerateDefaults}
-                  disabled={isGenerating}
-                  className="mt-3 bg-secondary text-foreground hover:bg-secondary/80 dark:bg-secondary-dark"
-                >
-                  {isGenerating ? 'Generating…' : 'Generate Default Milestones'}
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
+
       </div>
     );
   }
@@ -132,8 +101,6 @@ export function MilestoneListPanel({
     <div className="space-y-3">
       {activeMilestones.map((milestone) => {
         const status = getMilestoneStatus(milestone);
-        const isPaymentType = milestone.type === 'FINAL_PAYMENT_DUE' || milestone.type === 'SETTLEMENT_DUE';
-        const isCommitmentType = milestone.type === 'COMMITMENT_REQUEST' || milestone.type === 'COMMITMENT_DEADLINE';
 
         return (
           <div
@@ -188,28 +155,6 @@ export function MilestoneListPanel({
               </div>
 
               <div className="flex items-center gap-2">
-                {/* Action buttons based on milestone type */}
-                {isPaymentType && canManage && (
-                  <>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onRequestPayment(milestone)}
-                      className="text-xs"
-                    >
-                      Request Payment
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onRemindSettle(milestone)}
-                      className="text-xs"
-                    >
-                      Remind to Settle
-                    </Button>
-                  </>
-                )}
-
                 {/* Mark complete button for current user */}
                 {status !== 'completed' && (
                   <Button

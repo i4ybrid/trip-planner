@@ -6,7 +6,7 @@ import { useSession } from 'next-auth/react';
 import { api } from '@/services/api';
 import { useAuthStore } from '@/store/auth-store';
 
-const PUBLIC_PATHS = ['/login', '/invite'];
+const PUBLIC_PATHS = ['/login', '/invite', '/forgot-password', '/reset-password'];
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();

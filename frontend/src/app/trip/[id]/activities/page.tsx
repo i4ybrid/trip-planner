@@ -32,6 +32,8 @@ export default function TripActivities() {
   const [editingActivity, setEditingActivity] = useState<(typeof activities)[0] | null>(null);
   const [members, setMembers] = useState<TripMember[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [newActivityErrors, setNewActivityErrors] = useState<{ startTime?: string; endTime?: string }>({});
+  const [editActivityErrors, setEditActivityErrors] = useState<{ startTime?: string; endTime?: string }>({});
 
   const currentUserMember = members.find(m => m.userId === user?.id);
   const canEdit = currentUserMember?.role === 'MASTER' || currentUserMember?.role === 'ORGANIZER';
@@ -56,11 +58,18 @@ export default function TripActivities() {
 
   const handleCreateActivity = async (e: React.FormEvent) => {
     e.preventDefault();
+    const errors = validateTimes(newActivity.startTime, newActivity.endTime, newActivity.category);
+    if (Object.keys(errors).length > 0) {
+      setNewActivityErrors(errors);
+      return;
+    }
+    setNewActivityErrors({});
     setIsSubmitting(true);
     try {
       await createActivity(tripId, newActivity);
       setShowModal(false);
       setNewActivity({ title: '', category: 'activity' });
+      setNewActivityErrors({});
     } finally {
       setIsSubmitting(false);
     }
@@ -69,11 +78,18 @@ export default function TripActivities() {
   const handleUpdateActivity = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingActivity) return;
+    const errors = validateTimes(editingActivity.startTime, editingActivity.endTime, editingActivity.category);
+    if (Object.keys(errors).length > 0) {
+      setEditActivityErrors(errors);
+      return;
+    }
+    setEditActivityErrors({});
     setIsSubmitting(true);
     try {
       await updateActivity(editingActivity.id, editingActivity);
       setShowEditModal(false);
       setEditingActivity(null);
+      setEditActivityErrors({});
     } finally {
       setIsSubmitting(false);
     }
@@ -84,7 +100,10 @@ export default function TripActivities() {
   };
 
   const handleConfirm = async (activityId: string) => {
-    await confirmActivity(tripId, activityId);
+    const confirmed = await confirmActivity(tripId, activityId);
+    if (confirmed && confirmed.cost && Number(confirmed.cost) > 0) {
+      alert(`Expense created for ${confirmed.title}`);
+    }
     await fetchActivities(tripId);
   };
 
@@ -115,6 +134,30 @@ export default function TripActivities() {
       'user-4': 'Emma Wilson',
     };
     return names[userId] || 'Unknown';
+  };
+
+  // Convert ISO string to datetime-local input value (YYYY-MM-DDTHH:mm in local time)
+  const toDatetimeLocal = (iso?: string) => {
+    if (!iso) return '';
+    const d = new Date(iso);
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+
+  // Validate time fields for a given activity data
+  const validateTimes = (startTime?: string, endTime?: string, category?: string): { startTime?: string; endTime?: string } => {
+    const errors: { startTime?: string; endTime?: string } = {};
+    if (startTime && endTime) {
+      const start = new Date(startTime);
+      const end = new Date(endTime);
+      if (end < start) {
+        errors.endTime = 'End time must be on or after start time';
+      }
+    }
+    if (category === 'accommodation' && !endTime) {
+      errors.endTime = 'End time is required for accommodation activities';
+    }
+    return errors;
   };
 
   return (
@@ -284,7 +327,10 @@ export default function TripActivities() {
 
       <Modal
         isOpen={showModal}
-        onClose={() => setShowModal(false)}
+        onClose={() => {
+          setShowModal(false);
+          setNewActivityErrors({});
+        }}
         title="Add Activity"
         description="Propose an activity for the trip"
       >
@@ -310,6 +356,10 @@ export default function TripActivities() {
               // Default to FIXED cost type for accommodation, PER_PERSON for everything else
               const defaultCostType = newCategory === 'accommodation' ? 'FIXED' : 'PER_PERSON';
               setNewActivity({ ...newActivity, category: newCategory, costType: defaultCostType });
+              // If switching to accommodation, require endTime
+              if (newCategory === 'accommodation' && !newActivity.endTime) {
+                setNewActivityErrors(prev => ({ ...prev, endTime: 'End time is required for accommodation activities' }));
+              }
             }}
             options={categoryOptions}
           />
@@ -332,9 +382,10 @@ export default function TripActivities() {
                     onBlur={(e) => { const v = parseFloat(e.target.value); if (isNaN(v)) e.target.value = ''; }}
                     className="pr-8 appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                   />
-                  {(newActivity.costType || 'PER_PERSON') === 'PER_PERSON' && (
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">/pp</span>
-                  )}
+                  <span className={cn(
+                    "absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground",
+                    (newActivity.costType || 'PER_PERSON') !== 'PER_PERSON' && "opacity-50"
+                  )}>/pp</span>
                 </div>
                 <button
                   type="button"
@@ -343,12 +394,62 @@ export default function TripActivities() {
                     "px-3 py-1.5 text-xs font-medium rounded-md border transition-colors shrink-0",
                     (newActivity.costType || 'PER_PERSON') === 'PER_PERSON'
                       ? "bg-primary text-white border-primary"
-                      : "bg-gray-100 text-gray-400 border-gray-200 dark:bg-gray-800 dark:text-gray-500 dark:border-gray-700"
+                      : "bg-gray-100 text-gray-400 border-gray-200 dark:bg-gray-800 dark:text-gray-500 dark:border-gray-700 opacity-50"
                   )}
                 >
-                  {(newActivity.costType || 'PER_PERSON') === 'PER_PERSON' ? '/pp' : ''}
+                  /pp
                 </button>
               </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-1.5">Start Time</label>
+              <input
+                type="datetime-local"
+                value={toDatetimeLocal(newActivity.startTime)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setNewActivity(prev => {
+                    const newStartTime = val ? new Date(val).toISOString() : undefined;
+                    // Auto-populate endTime if empty and startTime is being set
+                    return {
+                      ...prev,
+                      startTime: newStartTime,
+                      endTime: !prev.endTime && val ? newStartTime : prev.endTime,
+                    };
+                  });
+                  if (newActivityErrors.endTime) {
+                    setNewActivityErrors(prev => ({ ...prev, endTime: undefined }));
+                  }
+                }}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1.5">
+                End Time {newActivity.category !== 'accommodation' && '(optional)'}
+              </label>
+              <input
+                type="datetime-local"
+                value={toDatetimeLocal(newActivity.endTime)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setNewActivity(prev => ({
+                    ...prev,
+                    endTime: val ? new Date(val).toISOString() : undefined,
+                  }));
+                  // Clear endTime error when endTime changes
+                  if (newActivityErrors.endTime) {
+                    setNewActivityErrors(prev => ({ ...prev, endTime: undefined }));
+                  }
+                }}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              />
+              {newActivityErrors.endTime && (
+                <p className="mt-1 text-sm text-red-500">{newActivityErrors.endTime}</p>
+              )}
             </div>
           </div>
 
@@ -375,6 +476,7 @@ export default function TripActivities() {
         onClose={() => {
           setShowEditModal(false);
           setEditingActivity(null);
+          setEditActivityErrors({});
         }}
         title="Edit Activity"
         description="Update activity details"
@@ -397,7 +499,13 @@ export default function TripActivities() {
             <Select
               label="Category"
               value={editingActivity.category}
-              onChange={(e) => setEditingActivity({ ...editingActivity, category: e.target.value as ActivityCategory })}
+              onChange={(e) => {
+                const newCategory = e.target.value as ActivityCategory;
+                setEditingActivity({ ...editingActivity, category: newCategory });
+                if (newCategory === 'accommodation' && !editingActivity.endTime) {
+                  setEditActivityErrors(prev => ({ ...prev, endTime: 'End time is required for accommodation activities' }));
+                }
+              }}
               options={categoryOptions}
             />
             <div className="grid grid-cols-2 gap-4">
@@ -418,10 +526,68 @@ export default function TripActivities() {
               </div>
             </div>
 
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1.5">Start Time</label>
+                <input
+                  type="datetime-local"
+                  value={toDatetimeLocal(editingActivity.startTime)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setEditingActivity(prev => {
+                      if (!prev) return prev;
+                      const newStartTime = val ? new Date(val).toISOString() : undefined;
+                      return {
+                        ...prev,
+                        startTime: newStartTime,
+                        endTime: !prev.endTime && val ? newStartTime : prev.endTime,
+                      };
+                    });
+                    if (editActivityErrors.endTime) {
+                      setEditActivityErrors(prev => ({ ...prev, endTime: undefined }));
+                    }
+                  }}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1.5">
+                  End Time {editingActivity.category !== 'accommodation' && '(optional)'}
+                </label>
+                <input
+                  type="datetime-local"
+                  value={toDatetimeLocal(editingActivity.endTime)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setEditingActivity(prev => {
+                      if (!prev) return prev;
+                      const newEndTime = val ? new Date(val).toISOString() : undefined;
+                      // Auto-correct: if endTime is before startTime, set to startTime
+                      const correctedEndTime = newEndTime && prev.startTime && new Date(newEndTime) < new Date(prev.startTime)
+                        ? prev.startTime
+                        : newEndTime;
+                      return {
+                        ...prev,
+                        endTime: correctedEndTime,
+                      };
+                    });
+                    if (editActivityErrors.endTime) {
+                      setEditActivityErrors(prev => ({ ...prev, endTime: undefined }));
+                    }
+                  }}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                />
+                {editActivityErrors.endTime && (
+                  <p className="mt-1 text-sm text-red-500">{editActivityErrors.endTime}</p>
+                )}
+              </div>
+            </div>
+
             <div className="flex justify-end gap-2 pt-2">
               <Button type="button" variant="outline" onClick={() => {
                 setShowEditModal(false);
                 setEditingActivity(null);
+                setEditActivityErrors({});
               }}>
                 Cancel
               </Button>

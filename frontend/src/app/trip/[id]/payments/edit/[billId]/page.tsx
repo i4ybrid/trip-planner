@@ -288,9 +288,10 @@ export default function EditExpense() {
                       className="pr-8 appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                       required
                     />
-                    {costType === 'PER_PERSON' && (
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">/pp</span>
-                    )}
+                    <span className={cn(
+                      "absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground",
+                      costType !== 'PER_PERSON' && "opacity-50"
+                    )}>/pp</span>
                   </div>
                   <button
                     type="button"
@@ -299,10 +300,10 @@ export default function EditExpense() {
                       "px-3 py-1.5 text-xs font-medium rounded-md border border-border transition-colors shrink-0",
                       costType === 'PER_PERSON'
                         ? "bg-primary text-white border-primary"
-                        : "bg-secondary text-muted-foreground border-border dark:bg-secondary-dark"
+                        : "bg-secondary text-muted-foreground border-border dark:bg-secondary-dark opacity-50"
                     )}
                   >
-                    {costType === 'PER_PERSON' ? '/pp' : ''}
+                    /pp
                   </button>
                 </div>
               </div>

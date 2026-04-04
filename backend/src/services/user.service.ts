@@ -1,5 +1,6 @@
 import prisma from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 
 export class UserService {
   async getUserById(id: string) {
@@ -163,6 +164,47 @@ export class UserService {
         ...data,
       },
     });
+  }
+
+  async generatePasswordResetToken(email: string): Promise<{ token: string; userId: string }> {
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user || !user.passwordHash) {
+      // Return dummy success to prevent email enumeration
+      return { token: 'dummy', userId: 'dummy' };
+    }
+
+    const token = crypto.randomUUID();
+    const tokenHash = await bcrypt.hash(token, 10);
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+    await prisma.passwordResetToken.create({
+      data: { email, tokenHash, expiresAt, userId: user.id },
+    });
+
+    return { token, userId: user.id };
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<boolean> {
+    const tokens = await prisma.passwordResetToken.findMany({
+      where: { usedAt: null, expiresAt: { gt: new Date() } },
+      orderBy: { expiresAt: 'desc' },
+    });
+
+    for (const record of tokens) {
+      const valid = await bcrypt.compare(token, record.tokenHash);
+      if (valid) {
+        await prisma.user.update({
+          where: { id: record.userId },
+          data: { passwordHash: await bcrypt.hash(newPassword, 10) },
+        });
+        await prisma.passwordResetToken.update({
+          where: { id: record.id },
+          data: { usedAt: new Date() },
+        });
+        return true;
+      }
+    }
+    return false;
   }
 }
 

@@ -105,6 +105,41 @@ router.patch('/milestones/:id', async (req: AuthRequest, res) => {
   }
 });
 
+// DELETE /api/milestones/:id - Delete a milestone
+router.delete('/milestones/:id', async (req: AuthRequest, res) => {
+  try {
+    const milestoneId = req.params.id;
+    const userId = req.user!.userId;
+
+    // Get milestone to find tripId
+    const { default: prisma } = await import('@/lib/prisma');
+    const existingMilestone = await prisma.milestone.findUnique({
+      where: { id: milestoneId },
+      include: { trip: true },
+    });
+
+    if (!existingMilestone) {
+      res.status(404).json({ error: 'Milestone not found' });
+      return;
+    }
+
+    const tripId = existingMilestone.tripId;
+
+    // Check permission
+    const permission = await tripService.checkMemberPermission(tripId, userId, ['MASTER', 'ORGANIZER']);
+    if (!permission.hasPermission) {
+      res.status(403).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    await milestoneService.deleteMilestone(milestoneId);
+
+    res.status(204).send();
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // POST /api/trips/:id/milestones/actions - Trigger on-demand action
 router.post('/trips/:id/milestones/actions', async (req: AuthRequest, res) => {
   try {
@@ -118,27 +153,16 @@ router.post('/trips/:id/milestones/actions', async (req: AuthRequest, res) => {
       return;
     }
 
-    const { actionType, recipientIds, message } = req.body;
+    const { actionType, recipientIds } = req.body;
 
     if (!actionType || !recipientIds || !Array.isArray(recipientIds)) {
       res.status(400).json({ error: 'actionType and recipientIds array are required' });
       return;
     }
 
-    if (actionType !== 'PAYMENT_REQUEST' && actionType !== 'SETTLEMENT_REMINDER') {
-      res.status(400).json({ error: 'Invalid actionType' });
-      return;
-    }
-
-    await milestoneService.triggerOnDemandAction(
-      tripId,
-      actionType,
-      userId,
-      recipientIds,
-      message
-    );
-
-    res.json({ message: 'Action triggered successfully' });
+    // PAYMENT_REQUEST and SETTLEMENT_REMINDER action types are no longer supported
+    res.status(400).json({ error: 'Invalid actionType. Settlement reminders are now sent via the Payments tab.' });
+    return;
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
@@ -275,12 +299,7 @@ router.post('/trips/:id/milestones/regenerate', async (req: AuthRequest, res) =>
       return;
     }
 
-    await milestoneService.generateDefaultMilestones(
-      tripId,
-      trip.startDate,
-      trip.endDate || trip.startDate,
-      trip.createdAt
-    );
+    await milestoneService.generateIdeaMilestones(tripId, trip.startDate);
 
     const milestones = await milestoneService.getMilestonesWithProgress(tripId);
     res.json({ data: milestones });

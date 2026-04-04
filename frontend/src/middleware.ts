@@ -11,6 +11,8 @@ const PROTECTED_PATHS = [
 const PUBLIC_PATHS = [
   '/login',
   '/invite',
+  '/forgot-password',
+  '/reset-password',
   '/api/auth',
 ];
 

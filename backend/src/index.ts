@@ -21,6 +21,7 @@ import blockedRouter from './routes/blocked';
 import inviteCodesRouter from './routes/invite-codes';
 import emailInviteRouter from './routes/email-invite';
 import milestonesRouter from './routes/milestones';
+import settlementRouter from './routes/settlement';
 import pushRoutes from './routes/push.routes';
 
 // Load environment variables
@@ -108,6 +109,7 @@ app.use('/api', blockedRouter);
 app.use('/api', inviteCodesRouter);
 app.use('/api', emailInviteRouter);
 app.use('/api', milestonesRouter);
+app.use('/api', settlementRouter);
 app.use('/api', pushRoutes);
 
 // 404 handler

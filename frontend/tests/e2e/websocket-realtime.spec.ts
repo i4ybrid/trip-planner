@@ -60,7 +60,7 @@ test.describe('Notification Real-time Updates', () => {
 
   test('should update notification bell count when new notification arrives', async ({ page }) => {
     // This test requires a second user to trigger a notification
-    test.skip('WebSocket notification update - requires second user action; manual test');
+    test.skip(true, 'WebSocket notification update - requires second user action; manual test');
     
     await page.goto('/dashboard');
     await page.waitForLoadState('domcontentloaded');
@@ -83,7 +83,7 @@ test.describe('Notification Real-time Updates', () => {
   });
 
   test('should show new notification in dropdown without page refresh', async ({ page }) => {
-    test.skip('WebSocket notification in dropdown - requires second user; manual test');
+    test.skip(true, 'WebSocket notification in dropdown - requires second user; manual test');
     
     await page.goto('/dashboard');
     await page.waitForLoadState('domcontentloaded');
@@ -106,7 +106,7 @@ test.describe('Notification Real-time Updates', () => {
   });
 
   test('should play sound when new notification arrives', async ({ page }) => {
-    test.skip('Audio notification - requires audio permissions and user preference; manual test');
+    test.skip(true, 'Audio notification - requires audio permissions and user preference; manual test');
     
     await page.goto('/dashboard');
     await page.waitForLoadState('domcontentloaded');
@@ -119,7 +119,7 @@ test.describe('Notification Real-time Updates', () => {
   });
 
   test('should update notification badge in real-time across pages', async ({ page }) => {
-    test.skip('Cross-page notification update - requires second user; manual test');
+    test.skip(true, 'Cross-page notification update - requires second user; manual test');
     
     // Navigate to dashboard
     await page.goto('/dashboard');
@@ -155,7 +155,7 @@ test.describe('Chat Real-time Updates', () => {
   });
 
   test('should receive new chat message without page refresh', async ({ page }) => {
-    test.skip('WebSocket chat message - requires second user to send message; manual test');
+    test.skip(true, 'WebSocket chat message - requires second user to send message; manual test');
     
     // Get initial message count
     const messagesBefore = await page.locator('[class*="message"]').count();
@@ -170,7 +170,7 @@ test.describe('Chat Real-time Updates', () => {
   });
 
   test('should show typing indicator when another user is typing', async ({ page }) => {
-    test.skip('Typing indicator - requires second user to type; manual test');
+    test.skip(true, 'Typing indicator - requires second user to type; manual test');
     
     // Look for typing indicator
     const typingIndicator = page.locator('[class*="typing"], text=/... is typing/i').first();
@@ -184,7 +184,7 @@ test.describe('Chat Real-time Updates', () => {
   });
 
   test('should update chat message status (sent, delivered, read)', async ({ page }) => {
-    test.skip('Message delivery status - requires second user interaction; manual test');
+    test.skip(true, 'Message delivery status - requires second user interaction; manual test');
     
     // Send a message
     const messageInput = page.locator('input[placeholder*="message"], textarea').first();
@@ -201,7 +201,7 @@ test.describe('Chat Real-time Updates', () => {
   });
 
   test('should show online status of chat members', async ({ page }) => {
-    test.skip('Online status - requires presence feature; manual test');
+    test.skip(true, 'Online status - requires presence feature; manual test');
     
     // Look for online indicators
     const onlineIndicator = page.locator('[class*="online"], [class*="presence"]').first();
@@ -218,7 +218,7 @@ test.describe('Timeline Real-time Updates', () => {
   });
 
   test('should display new timeline event without page refresh', async ({ page }) => {
-    test.skip('WebSocket timeline event - requires member action; manual test');
+    test.skip(true, 'WebSocket timeline event - requires member action; manual test');
     
     // Get initial event count
     const eventsBefore = await page.locator('[class*="timeline"] [class*="item"], [class*="event"]').count();
@@ -233,7 +233,7 @@ test.describe('Timeline Real-time Updates', () => {
   });
 
   test('should update milestone status in timeline in real-time', async ({ page }) => {
-    test.skip('Milestone status update - requires milestone action from another user; manual test');
+    test.skip(true, 'Milestone status update - requires milestone action from another user; manual test');
     
     // Look for milestone events in timeline
     const milestoneEvent = page.locator('text=/milestone|deadline/i').first();
@@ -248,7 +248,7 @@ test.describe('Timeline Real-time Updates', () => {
   });
 
   test('should show new member joined event immediately', async ({ page }) => {
-    test.skip('Member join event - requires new member to join; manual test');
+    test.skip(true, 'Member join event - requires new member to join; manual test');
     
     // Get initial timeline state
     const eventsBefore = await page.locator('[class*="timeline"]').count();
@@ -268,7 +268,7 @@ test.describe('Payments Real-time Updates', () => {
   });
 
   test('should update payment status without refresh', async ({ page }) => {
-    test.skip('Payment status update - requires payment action; manual test');
+    test.skip(true, 'Payment status update - requires payment action; manual test');
     
     await navigateToTrip(page, TRIP_IDS.hawaii, 'payments');
     await page.waitForLoadState('domcontentloaded');
@@ -281,7 +281,7 @@ test.describe('Payments Real-time Updates', () => {
   });
 
   test('should show new expense without page refresh', async ({ page }) => {
-    test.skip('New expense update - requires expense creation; manual test');
+    test.skip(true, 'New expense update - requires expense creation; manual test');
     
     await navigateToTrip(page, TRIP_IDS.hawaii, 'payments');
     await page.waitForLoadState('domcontentloaded');
@@ -295,7 +295,7 @@ test.describe('Payments Real-time Updates', () => {
   });
 
   test('should update balance calculations in real-time', async ({ page }) => {
-    test.skip('Balance update - requires payment or expense; manual test');
+    test.skip(true, 'Balance update - requires payment or expense; manual test');
     
     await navigateToTrip(page, TRIP_IDS.hawaii, 'payments');
     await page.waitForLoadState('domcontentloaded');
@@ -316,7 +316,7 @@ test.describe('Presence and Online Status', () => {
   });
 
   test('should show online members in real-time', async ({ page }) => {
-    test.skip('Presence indicators - requires multiple online users; manual test');
+    test.skip(true, 'Presence indicators - requires multiple online users; manual test');
     
     await navigateToTrip(page, TRIP_IDS.hawaii, 'chat');
     await page.waitForLoadState('domcontentloaded');
@@ -329,7 +329,7 @@ test.describe('Presence and Online Status', () => {
   });
 
   test('should update member presence when they join/leave', async ({ page }) => {
-    test.skip('Presence changes - requires member join/leave action; manual test');
+    test.skip(true, 'Presence changes - requires member join/leave action; manual test');
     
     await navigateToTrip(page, TRIP_IDS.hawaii, 'chat');
     await page.waitForLoadState('domcontentloaded');

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { Activity, CreateActivityInput, Vote, VoteOption } from '@/types';
-import { api } from '@/services/api';
+import { api, invalidateCacheByPrefix } from '@/services/api';
 
 interface ActivityState {
   activities: Activity[];
@@ -133,6 +133,7 @@ export const useActivityStore = create<ActivityState>((set) => ({
         set({ error: response.error, isLoading: false });
         return null;
       }
+      invalidateCacheByPrefix(`trip:${tripId}:activities`);
       set((state) => ({
         activities: state.activities.map((a) => (a.id === activityId ? response.data! : a)),
         isLoading: false,
@@ -152,6 +153,7 @@ export const useActivityStore = create<ActivityState>((set) => ({
         set({ error: response.error, isLoading: false });
         return null;
       }
+      invalidateCacheByPrefix(`trip:${tripId}:activities`);
       set((state) => ({
         activities: state.activities.map((a) => (a.id === activityId ? response.data! : a)),
         isLoading: false,
@@ -171,10 +173,16 @@ export const useActivityStore = create<ActivityState>((set) => ({
         set({ error: response.error, isLoading: false });
         return false;
       }
-      set((state) => ({
-        activities: state.activities.filter((a) => a.id !== activityId),
-        isLoading: false,
-      }));
+      set((state) => {
+        const activity = state.activities.find((a) => a.id === activityId);
+        if (activity) {
+          invalidateCacheByPrefix(`trip:${activity.tripId}:activities`);
+        }
+        return {
+          activities: state.activities.filter((a) => a.id !== activityId),
+          isLoading: false,
+        };
+      });
       return true;
     } catch (error) {
       set({ error: 'Failed to delete activity', isLoading: false });

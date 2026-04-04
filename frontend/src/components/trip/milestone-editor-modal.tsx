@@ -28,6 +28,7 @@ export function MilestoneEditorModal({
   const [isLocked, setIsLocked] = useState(false);
   const [isSkipped, setIsSkipped] = useState(false);
   const [isHard, setIsHard] = useState(true);
+  const [priority, setPriority] = useState(5);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,6 +39,7 @@ export function MilestoneEditorModal({
       setIsLocked(milestone.isLocked);
       setIsSkipped(milestone.isSkipped);
       setIsHard(milestone.isHard);
+      setPriority(milestone.priority ?? 5);
     }
   }, [milestone]);
 
@@ -63,6 +65,7 @@ export function MilestoneEditorModal({
         isLocked,
         isSkipped,
         isHard,
+        priority,
       });
       onSuccess?.();
       onClose();
@@ -80,6 +83,7 @@ export function MilestoneEditorModal({
     setIsLocked(false);
     setIsSkipped(false);
     setIsHard(true);
+    setPriority(5);
     onClose();
   };
 
@@ -179,6 +183,20 @@ export function MilestoneEditorModal({
             />
             <div className="peer h-5 w-9 rounded-full bg-gray-200 dark:bg-gray-600 after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:border after:border-gray-300 after:bg-white dark:after:border-gray-500 after:transition-all after:content-[''] peer-checked:bg-red-500 peer-checked:after:translate-x-full peer-checked:after:border-white"></div>
           </label>
+        </div>
+
+        {/* Priority */}
+        <div>
+          <label className="block text-sm font-medium mb-2">Priority</label>
+          <select
+            value={priority}
+            onChange={(e) => setPriority(Number(e.target.value))}
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm dark:bg-[hsl(var(--card))] dark:text-[hsl(var(--foreground))]"
+          >
+            <option value={1}>Low</option>
+            <option value={5}>Medium</option>
+            <option value={10}>High</option>
+          </select>
         </div>
 
         {/* Actions */}

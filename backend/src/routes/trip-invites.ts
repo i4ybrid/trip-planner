@@ -161,6 +161,7 @@ router.post('/invites/code/use', async (req: AuthRequest, res) => {
           ? 'A new member joined via invite code'
           : 'A new member request is pending approval',
         createdBy: userId,
+        effectiveDate: new Date(),
       },
     });
 

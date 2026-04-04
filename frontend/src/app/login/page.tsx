@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { signIn } from 'next-auth/react';
 import { useAuth } from '@/hooks/use-auth';
 import { api } from '@/services/api';
@@ -330,7 +331,7 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="mt-6 text-center">
+          <div className="mt-6 text-center space-y-2">
             <button
               onClick={() => {
                 setIsLogin(!isLogin);
@@ -340,6 +341,11 @@ export default function LoginPage() {
             >
               {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
             </button>
+            <div>
+              <Link href="/forgot-password" className="text-sm text-muted-foreground hover:text-foreground">
+                Forgot password?
+              </Link>
+            </div>
           </div>
 
           {/* Test Credentials */}

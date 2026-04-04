@@ -127,7 +127,7 @@ test.describe.serial('Member & Invite Serial Chain', () => {
       
       const countAfter = await pendingBadgeBefore.count();
       
-      expect(countAfter).toBeLessThan(countBefore) || expect(true).toBe(true);
+      expect(countAfter).toBeLessThan(countBefore);
     } else {
       test.skip();
     }

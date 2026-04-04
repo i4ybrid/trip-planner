@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { authMiddleware, AuthRequest } from '@/middleware/auth';
+import { RefreshState } from '@prisma/client';
 import { tripService } from '@/services/trip.service';
+import { timelineService } from '@/services/timeline.service';
 import { createTripSchema, updateTripSchema } from '@/lib/validations';
 
 const router = Router();
@@ -41,6 +43,10 @@ router.post('/trips', async (req: AuthRequest, res) => {
       endDate: validatedData.endDate ? normalizeDate(validatedData.endDate, true) : undefined,
       coverImage: validatedData.coverImage,
     });
+
+    // Initialize TripTimelineUIState for the new trip
+    await timelineService.upsertNeedsRefresh(trip.id);
+
     res.status(201).json({ data: trip });
   } catch (error: any) {
     if (error.name === 'ZodError') {
@@ -163,7 +169,95 @@ router.get('/trips/:id/timeline', async (req: AuthRequest, res) => {
     }
     
     const timeline = await tripService.getTripTimeline(tripId, limit);
-    res.json({ data: timeline });
+    // getTripTimeline returns TimelineEvent[] — never null. Return [] if undefined for safety.
+    res.json({ data: timeline ?? [] });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/trips/:id/timeline-summary - Get UI-optimized cached timeline subset
+router.get('/trips/:id/timeline-summary', async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.userId;
+    const tripId = req.params.id;
+
+    // Auth: user must be a trip member
+    const permission = await tripService.checkMemberPermission(tripId, userId);
+    if (!permission.hasPermission) {
+      res.status(403).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    const prisma = await import('@/lib/prisma').then(m => m.getPrisma());
+
+    // Attempt atomic claim: set REFRESHING where needsRefresh = TRUE
+    const claimed = await prisma.tripTimelineUIState.updateMany({
+      where: { tripId, needsRefresh: RefreshState.TRUE },
+      data: { needsRefresh: RefreshState.REFRESHING },
+    });
+
+    if (claimed.count === 1) {
+      // We claimed the refresh — recalculate, fetch, and return
+      await timelineService.recalculateUISubset(tripId);
+
+      const uiState = await prisma.tripTimelineUIState.findUnique({
+        where: { tripId },
+      });
+
+      let events: any[] = [];
+      if (uiState?.cachedEventIds) {
+        const cachedIds: string[] = JSON.parse(uiState.cachedEventIds);
+        events = await prisma.timelineEvent.findMany({
+          where: { id: { in: cachedIds } },
+        });
+      }
+
+      res.json({ data: events, needsRefresh: 'false' });
+      return;
+    }
+
+    // No row to claim — either doesn't exist yet OR already being refreshed
+    const existing = await prisma.tripTimelineUIState.findUnique({
+      where: { tripId },
+    });
+
+    if (!existing) {
+      // Row doesn't exist: upsert with TRUE, recalculate, return fresh
+      await prisma.tripTimelineUIState.upsert({
+        where: { tripId },
+        update: { needsRefresh: RefreshState.TRUE },
+        create: { tripId, cachedEventIds: '[]', needsRefresh: RefreshState.TRUE },
+      });
+
+      await timelineService.recalculateUISubset(tripId);
+
+      const uiState = await prisma.tripTimelineUIState.findUnique({
+        where: { tripId },
+      });
+
+      let events: any[] = [];
+      if (uiState?.cachedEventIds) {
+        const cachedIds: string[] = JSON.parse(uiState.cachedEventIds);
+        events = await prisma.timelineEvent.findMany({
+          where: { id: { in: cachedIds } },
+        });
+      }
+
+      res.json({ data: events, needsRefresh: 'false' });
+      return;
+    }
+
+    // Row exists but is REFRESHING (another request claimed it) — return cached data
+    let events: any[] = [];
+    if (existing.cachedEventIds) {
+      const cachedIds: string[] = JSON.parse(existing.cachedEventIds);
+      events = await prisma.timelineEvent.findMany({
+        where: { id: { in: cachedIds } },
+      });
+    }
+
+    res.json({ data: events, needsRefresh: 'false' });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }

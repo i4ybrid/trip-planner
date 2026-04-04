@@ -196,16 +196,16 @@ const SEED_MESSAGES: Message[] = [
 ];
 
 const SEED_TIMELINE: TimelineEvent[] = [
-  { id: 'evt-1', tripId: 'trip-1', eventType: 'trip_created', description: 'Hawaii Beach Vacation was created', createdAt: '2026-01-15T10:00:00Z', createdBy: 'user-1' },
-  { id: 'evt-2', tripId: 'trip-1', eventType: 'member_joined', description: 'Sarah Chen joined the trip', createdAt: '2026-01-16T09:00:00Z', createdBy: 'user-2' },
-  { id: 'evt-3', tripId: 'trip-1', eventType: 'member_joined', description: 'Mike Johnson joined the trip', createdAt: '2026-01-17T08:30:00Z', createdBy: 'user-3' },
-  { id: 'evt-4', tripId: 'trip-1', eventType: 'activity_proposed', description: 'Surfing Lessons proposed', createdAt: '2026-01-20T14:00:00Z', createdBy: 'user-1' },
-  { id: 'evt-5', tripId: 'trip-1', eventType: 'vote_cast', description: 'Voted YES on Surfing Lessons', createdAt: '2026-01-20T14:05:00Z', createdBy: 'user-1' },
-  { id: 'evt-6', tripId: 'trip-1', eventType: 'activity_proposed', description: 'Hotel: Grand Wailea proposed', createdAt: '2026-01-18T11:00:00Z', createdBy: 'user-1' },
-  { id: 'evt-7', tripId: 'trip-1', eventType: 'vote_cast', description: 'Voted YES on Hotel: Grand Wailea', createdAt: '2026-01-19T10:00:00Z', createdBy: 'user-2' },
-  { id: 'evt-8', tripId: 'trip-1', eventType: 'status_changed', description: 'Trip moved to PLANNING', createdAt: '2026-01-19T12:00:00Z', createdBy: 'user-1' },
-  { id: 'evt-9', tripId: 'trip-5', eventType: 'trip_created', description: 'Nashville Trip was created', createdAt: '2026-01-25T10:00:00Z', createdBy: 'user-2' },
-  { id: 'evt-10', tripId: 'trip-5', eventType: 'status_changed', description: 'Trip started!', createdAt: '2026-02-18T08:00:00Z', createdBy: 'user-2' },
+  { id: 'evt-1', tripId: 'trip-1', kind: 'EVENT', eventType: 'trip_created', description: 'Hawaii Beach Vacation was created', createdAt: '2026-01-15T10:00:00Z', effectiveDate: '2026-01-15T10:00:00Z', createdBy: 'user-1' },
+  { id: 'evt-2', tripId: 'trip-1', kind: 'EVENT', eventType: 'member_joined', description: 'Sarah Chen joined the trip', createdAt: '2026-01-16T09:00:00Z', effectiveDate: '2026-01-16T09:00:00Z', createdBy: 'user-2' },
+  { id: 'evt-3', tripId: 'trip-1', kind: 'EVENT', eventType: 'member_joined', description: 'Mike Johnson joined the trip', createdAt: '2026-01-17T08:30:00Z', effectiveDate: '2026-01-17T08:30:00Z', createdBy: 'user-3' },
+  { id: 'evt-4', tripId: 'trip-1', kind: 'EVENT', eventType: 'activity_proposed', description: 'Surfing Lessons proposed', createdAt: '2026-01-20T14:00:00Z', effectiveDate: '2026-01-20T14:00:00Z', createdBy: 'user-1' },
+  { id: 'evt-5', tripId: 'trip-1', kind: 'EVENT', eventType: 'vote_cast', description: 'Voted YES on Surfing Lessons', createdAt: '2026-01-20T14:05:00Z', effectiveDate: '2026-01-20T14:05:00Z', createdBy: 'user-1' },
+  { id: 'evt-6', tripId: 'trip-1', kind: 'EVENT', eventType: 'activity_proposed', description: 'Hotel: Grand Wailea proposed', createdAt: '2026-01-18T11:00:00Z', effectiveDate: '2026-01-18T11:00:00Z', createdBy: 'user-1' },
+  { id: 'evt-7', tripId: 'trip-1', kind: 'EVENT', eventType: 'vote_cast', description: 'Voted YES on Hotel: Grand Wailea', createdAt: '2026-01-19T10:00:00Z', effectiveDate: '2026-01-19T10:00:00Z', createdBy: 'user-2' },
+  { id: 'evt-8', tripId: 'trip-1', kind: 'EVENT', eventType: 'status_changed', description: 'Trip moved to PLANNING', createdAt: '2026-01-19T12:00:00Z', effectiveDate: '2026-01-19T12:00:00Z', createdBy: 'user-1' },
+  { id: 'evt-9', tripId: 'trip-5', kind: 'EVENT', eventType: 'trip_created', description: 'Nashville Trip was created', createdAt: '2026-01-25T10:00:00Z', effectiveDate: '2026-01-25T10:00:00Z', createdBy: 'user-2' },
+  { id: 'evt-10', tripId: 'trip-5', kind: 'EVENT', eventType: 'status_changed', description: 'Trip started!', createdAt: '2026-02-18T08:00:00Z', effectiveDate: '2026-02-18T08:00:00Z', createdBy: 'user-2' },
 ];
 
 const SEED_BILL_SPLITS: BillSplit[] = [

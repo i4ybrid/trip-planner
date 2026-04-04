@@ -10,17 +10,18 @@ router.use(authMiddleware);
 router.get('/notifications', async (req: AuthRequest, res) => {
   try {
     const userId = req.user!.userId;
-    const limit = req.query.limit ? Number(req.query.limit) : 50;
-    const offset = req.query.offset ? Number(req.query.offset) : 0;
+    const cursor = req.query.cursor as string | undefined;
+    const limit = req.query.limit ? Number(req.query.limit) : 10;
     const category = req.query.category as NotificationCategory | undefined;
 
-    const { notifications, unreadCount } = await notificationService.getNotifications(userId, {
+    const { notifications, nextCursor, unreadCount } = await notificationService.getNotifications(userId, {
+      cursor,
       limit,
-      offset,
       category,
     });
 
-    res.json({ data: { notifications, unreadCount } });
+    const hasMore = notifications.length === limit && nextCursor !== null;
+    res.json({ data: { notifications, nextCursor, hasMore }, unreadCount });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }

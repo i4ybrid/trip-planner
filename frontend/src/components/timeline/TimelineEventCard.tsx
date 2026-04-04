@@ -47,7 +47,7 @@ interface TimelineEventCardProps {
 export function TimelineEventCard({ event, milestone, className }: TimelineEventCardProps) {
   // Resolve icon from event or milestone
   const config = event
-    ? EVENT_TYPE_CONFIG[event.eventType] ?? {
+    ? EVENT_TYPE_CONFIG[event.eventType ?? ''] ?? {
         icon: Clock,
         iconClass: 'text-muted-foreground',
       }

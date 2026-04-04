@@ -19,7 +19,7 @@ const VALID_TRANSITIONS: Record<TripStatus, TripStatus[]> = {
 export class TripService {
   private prisma = getPrisma();
   async createTrip(userId: string, data: TripCreateInput) {
-    return this.prisma.trip.create({
+    const createdTrip = await this.prisma.trip.create({
       data: {
         ...data,
         tripMasterId: userId,
@@ -54,6 +54,14 @@ export class TripService {
         },
       },
     });
+
+    // Generate idea-phase milestones at trip creation if startDate exists
+    if (createdTrip.startDate) {
+      const { milestoneService } = await import('./milestone.service');
+      await milestoneService.generateIdeaMilestones(createdTrip.id, createdTrip.startDate);
+    }
+
+    return createdTrip;
   }
 
   async getTripById(tripId: string) {
@@ -207,16 +215,14 @@ export class TripService {
       },
     });
 
-    // If moving to PLANNING and trip has start date, generate milestones
-    if (trip.status === 'IDEA' && newStatus === 'PLANNING' && trip.startDate) {
-      // Import milestone service dynamically to avoid circular dependency
-      const { milestoneService } = await import('./milestone.service');
-      await milestoneService.generateDefaultMilestones(
-        tripId,
-        trip.startDate,
-        trip.endDate || trip.startDate,
-        trip.createdAt
-      );
+    const { milestoneService } = await import('./milestone.service');
+
+    // Generate milestones based on new status
+    if ((newStatus === 'PLANNING' || newStatus === 'CONFIRMED') && trip.startDate) {
+      await milestoneService.generateFinalPaymentMilestone(tripId, trip.startDate);
+    }
+    if (newStatus === 'HAPPENING' && trip.endDate) {
+      await milestoneService.generateSettlementMilestones(tripId, trip.endDate);
     }
 
     return this.prisma.trip.update({
@@ -228,7 +234,7 @@ export class TripService {
   async getTripTimeline(tripId: string, limit = 50) {
     return this.prisma.timelineEvent.findMany({
       where: { tripId },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { effectiveDate: 'asc' },
       take: limit,
     });
   }
@@ -298,6 +304,7 @@ export class TripService {
           metadata: { memberId: userId, oldRole: oldMember.role, newRole: data.role },
           description: `${oldMember.user.name}'s role changed from ${oldMember.role} to ${data.role}`,
         });
+        await timelineService.upsertNeedsRefresh(tripId);
       } catch (e) {
         console.error('Timeline event failed:', e);
       }
@@ -564,8 +571,10 @@ export class TripService {
             ? `${member.user.name} joined the trip`
             : `${member.user.name} requested to join the trip`,
           createdBy: userId,
+          effectiveDate: new Date(),
         },
       });
+      await timelineService.upsertNeedsRefresh(tripId);
     } catch (e) {
       console.error('Timeline event failed:', e);
     }
@@ -631,6 +640,7 @@ export class TripService {
         actorId: userId,
         description: `${user?.name || 'Someone'} requested to join the trip`,
       });
+      await timelineService.upsertNeedsRefresh(tripId);
     } catch (e) {
       console.error('Timeline event failed:', e);
     }
@@ -689,6 +699,7 @@ export class TripService {
         targetId: userId,
         description: 'A join request was approved',
       });
+      await timelineService.upsertNeedsRefresh(tripId);
     } catch (e) {
       console.error('Timeline event failed:', e);
     }
@@ -740,6 +751,7 @@ export class TripService {
         targetId: userId,
         description: 'A join request was denied',
       });
+      await timelineService.upsertNeedsRefresh(tripId);
     } catch (e) {
       console.error('Timeline event failed:', e);
     }
@@ -792,6 +804,7 @@ export class TripService {
         metadata: { memberId: userId, oldRole, newRole },
         description: `${member.user.name}'s role changed from ${oldRole} to ${newRole}`,
       });
+      await timelineService.upsertNeedsRefresh(tripId);
     } catch (e) {
       console.error('Timeline event failed:', e);
     }
@@ -823,6 +836,7 @@ export class TripService {
         actorId: userId,
         description: `${member.user.name} left the trip`,
       });
+      await timelineService.upsertNeedsRefresh(tripId);
     } catch (e) {
       console.error('Timeline event failed:', e);
     }

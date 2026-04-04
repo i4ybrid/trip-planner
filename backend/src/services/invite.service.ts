@@ -126,13 +126,18 @@ export class InviteService {
       data: { status: 'ACCEPTED' },
     });
 
+    // Fetch user name BEFORE emitting timeline event
+    const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { name: true } });
+
     try {
       await timelineService.emitTimelineEvent({
         tripId: invite.tripId,
         eventType: 'member_joined',
-        description: newMemberStatus === 'CONFIRMED' ? 'A new member joined via invite' : 'A new member request is pending approval',
+        description: newMemberStatus === 'CONFIRMED' ? `${user?.name || 'Someone'} joined the trip` : `${user?.name || 'Someone'} requested to join the trip`,
         actorId: userId,
+        effectiveDate: new Date(),
       });
+      await timelineService.upsertNeedsRefresh(invite.tripId);
     } catch (e) {
       // Log but don't fail the request
       console.error('Timeline event failed:', e);
@@ -140,7 +145,7 @@ export class InviteService {
 
     // Notify trip creator/sender about invite accepted
     if (newMemberStatus === 'CONFIRMED') {
-      const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { name: true } });
+      // User already fetched above
       try {
         await notificationService.createNotification({
           userId: invite.sentById,
@@ -178,6 +183,7 @@ export class InviteService {
         actorId: invite.sentById,
         description: 'An invite was declined',
       });
+      await timelineService.upsertNeedsRefresh(invite.tripId);
     } catch (e) {
       console.error('Timeline event failed:', e);
     }

@@ -114,14 +114,14 @@ export const NotificationPanel = forwardRef<HTMLDivElement, NotificationPanelPro
                 const Icon = notificationIcons[notification.category] || Bell;
                 const color = notificationColors[notification.category] || '#6b7280';
                 const link = getNotificationLink(notification);
-                const isInvite = notification.category === 'INVITE';
+                const isInvite = notification.category === 'INVITE' && !notification.title.includes('Invite Accepted') && !notification.title.includes('Invite Declined');
                 const isProcessing = processingInvite === notification.id;
                 return (
                   <div key={notification.id} className={`${styles.item} ${!notification.isRead ? styles.unread : ''} ${isInvite ? styles.inviteItem : ''}`}>
                     <div className={styles.icon} style={{ backgroundColor: color + '20', color }}><Icon size={18} /></div>
                     <div className={styles.itemContentWrapper}>
                       <Link href={link} className={styles.itemContent}
-                        onClick={() => { if (!notification.isRead) { onMarkAsRead(notification.id); } if (!isInvite) { onClose(); } }}>
+                        onClick={() => { if (!notification.isRead) { onMarkAsRead(notification.id); } onClose(); }}>
                         <div className={styles.itemTitle}>{notification.title}</div>
                         <div className={styles.itemBody}>{notification.body}</div>
                         <div className={styles.itemTime}>{formatTimeAgo(notification.createdAt)}</div>

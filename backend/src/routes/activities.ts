@@ -215,7 +215,7 @@ router.patch('/trips/:tripId/activities/:activityId/confirm', async (req: AuthRe
       return;
     }
 
-    const activity = await activityService.confirmActivity(activityId, userId);
+    const activity = await activityService.confirmActivity(activityId, userId, tripId);
     res.json({ data: activity });
   } catch (error: any) {
     res.status(500).json({ error: error.message });

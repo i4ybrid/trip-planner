@@ -193,7 +193,7 @@ test.describe('Notifications', () => {
     test('should update bell badge count in real-time via WebSocket', async ({ page }) => {
       // This test verifies WebSocket real-time updates for notification count
       // Skip if WebSocket timing is unreliable in test environment
-      test.skip('WebSocket real-time badge updates - may be flaky in CI; tested manually');
+      test.skip(true, 'WebSocket real-time badge updates - may be flaky in CI; tested manually');
       
       await page.goto('/dashboard');
       await page.waitForLoadState('domcontentloaded');

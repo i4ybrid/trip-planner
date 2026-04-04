@@ -221,7 +221,7 @@ test.describe('WebSocket Real-time Chat', () => {
   test('should display incoming message from another user without page refresh', async ({ page }) => {
     // This test verifies WebSocket real-time message delivery
     // Skip in CI as it requires a second user to send a message in real-time
-    test.skip('WebSocket real-time messages - requires second user; tested manually');
+    test.skip(true, 'WebSocket real-time messages - requires second user; tested manually');
     
     // Get initial message count
     const messagesBefore = page.locator('[class*="message"]');
@@ -246,7 +246,7 @@ test.describe('WebSocket Real-time Chat', () => {
 
   test('should show typing indicator when another user is typing', async ({ page }) => {
     // Skip as it requires real-time interaction from another user
-    test.skip('Typing indicator - requires second user interaction; tested manually');
+    test.skip(true, 'Typing indicator - requires second user interaction; tested manually');
     
     // Look for typing indicator element
     const typingIndicator = page.locator('[class*="typing"], text=/... is typing|typing.../i').first();
@@ -258,7 +258,7 @@ test.describe('WebSocket Real-time Chat', () => {
 
   test('should maintain chat scroll position on new message via WebSocket', async ({ page }) => {
     // Skip as it requires real-time interaction
-    test.skip('Scroll position on new messages - requires second user; tested manually');
+    test.skip(true, 'Scroll position on new messages - requires second user; tested manually');
     
     // Scroll to bottom of chat
     await page.evaluate(() => {

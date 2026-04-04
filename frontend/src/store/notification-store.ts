@@ -24,10 +24,6 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const response = await api.getNotifications();
-      if (response.error) {
-        set({ error: response.error, isLoading: false });
-        return;
-      }
       const notifications = response.data || [];
       set({ 
         notifications, 

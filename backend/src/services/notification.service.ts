@@ -232,12 +232,12 @@ export class NotificationService {
   async getNotifications(
     userId: string,
     options?: {
+      cursor?: string;
       limit?: number;
-      offset?: number;
       category?: NotificationCategory;
     }
   ) {
-    const { limit = 50, offset = 0, category } = options || {};
+    const { cursor, limit = 10, category } = options || {};
 
     const where: any = { userId };
     if (category) where.category = category;
@@ -247,12 +247,14 @@ export class NotificationService {
         where,
         orderBy: { createdAt: 'desc' },
         take: limit,
-        skip: offset,
+        skip: cursor ? 1 : 0,
+        cursor: cursor ? { id: cursor } : undefined,
       }),
       this.prisma.notification.count({ where: { userId, isRead: false } }),
     ]);
 
-    return { notifications, unreadCount };
+    const nextCursor = notifications.length > 0 ? notifications[notifications.length - 1].id : null;
+    return { notifications, nextCursor, unreadCount };
   }
 
   async getUnreadCount(userId: string) {

@@ -30,7 +30,7 @@ IDEA ────→ PLANNING ────→ CONFIRMED ────→ HAPPENIN
 
 **Endpoint:** `POST /api/trips/:id/status` — accepts `{ status: 'NEW_STATUS' }`
 
-**Service:** `tripService.changeTripStatus(tripId, newStatus)` validates the transition against `VALID_TRANSITIONS`, creates a `status_changed` timeline event, and (for `IDEA → PLANNING`) auto-generates default milestones if the trip has a `startDate`.
+**Service:** `tripService.changeTripStatus(tripId, newStatus)` validates the transition against `VALID_TRANSITIONS`, creates a `status_changed` timeline event, and (for `IDEA → PLANNING`) auto-generates default milestones if the trip has a `startDate`. Each auto-generated milestone is written to the timeline via the write-through pattern (see Timeline section).
 
 **Note on BillSplits:** The BillSplits payment flow (Create → Members mark PAID → Creator confirms → CONFIRMED) is a **per-expense BillSplit status**, not a trip-level status. BillSplits track individual expense settlement state independently of where the trip is in its lifecycle.
 
@@ -87,7 +87,8 @@ Trip `startTime` and `endTime` are optional at creation:
 |-------|-----|
 | `/trip/[id]/overview` | Overview (default) — displays trip details, member list, activities, and expense summary. (Note: milestones are shown in Timeline tab, not Overview.) |
 | `/trip/[id]/activities` | Activities & voting |
-| `/trip/[id]/timeline` | Timeline tab. Shows a chronological event log: votes cast, activities proposed/confirmed, members joining/leaving, payment events, milestone events, etc. |
+| `/trip/[id]/timeline` | Timeline tab. Shows 10 most-recent past + all upcoming events from `timeline-summary` endpoint. Toggle to History view. |
+| `/trip/[id]/history` | History tab. Full chronological event log (all events, oldest-first) from `timeline` endpoint. Filterable by event kind. |
 | `/trip/[id]/chat` | Group chat |
 | `/trip/[id]/payments` | Expenses & settlements |
 | `/trip/[id]/memories` | Photos/videos |
@@ -106,9 +107,154 @@ TripPlanner uses Socket.io for real-time event delivery:
 - **Chat**: Messages are pushed to the trip room in real-time when sent
 - **Timeline**: Trip-scoped events (votes, proposals, member changes) are pushed to the trip room
 
-### Timeline Events
+## Timeline
 
-All timeline events are written to the `timeline_events` table and emitted via WebSocket (`timeline:event`) to the `trip:${tripId}` room. The frontend hook `useTimelineEvents` listens on this room.
+The timeline is a unified, authoritative log of everything that happens on a trip — member events, activity milestones, payment events, and trip status changes. It is the canonical source for the Timeline and History views.
+
+### Architecture — Three Layers
+
+| Layer | What | Driven by |
+|-------|------|----------|
+| **Source tables** | `timeline_events`, `milestones`, `activities` | Real actions (user creates activity, member joins, etc.) |
+| **Timeline canonical store** | `timeline_events` (all events including milestone inserts) | Written to on milestone/activity create/delete |
+| **UI subset cache** | `TripTimelineUIState.cachedEventIds` | Invalidated on any event; recalculated on first UI fetch |
+
+### Data Model
+
+#### `TimelineEvent` — Redesigned (2026-03-31)
+
+```prisma
+enum TimelineEventKind {
+  EVENT            // Original trip event (member joined, activity added, etc.)
+  MILESTONE        // Represents a milestone on the timeline
+  ACTIVITY_START   // Activity start (all activities — startTime)
+  ACTIVITY_END     // Activity end (accommodations only — endTime)
+}
+
+model TimelineEvent {
+  id            String             @id @default(cuid())
+  tripId        String
+  kind          TimelineEventKind  @default(EVENT)
+
+  // Original fields (EVENT kind)
+  eventType     String?            // e.g. 'MEMBER_JOINED', 'ACTIVITY_ADDED'
+  description   String?
+  createdAt     DateTime           @default(now())
+  createdBy     String?
+
+  // Milestone reference (MILESTONE kind)
+  sourceType    String?            // 'MILESTONE'
+  sourceId      String?            // ID of the source milestone
+
+  // Activity reference (ACTIVITY_START/END kinds)
+  activityId    String?
+
+  // Effective date used for sorting
+  effectiveDate DateTime           @default(now())
+
+  // Denormalized display fields
+  icon          String?            // Lucide icon name
+  title         String?            // Short display title
+  meta          String?            // JSON: { amount?, role?, memberName? }
+
+  @@index([tripId, effectiveDate(sort: Desc)])
+  @@index([sourceType, sourceId])
+}
+```
+
+**`effectiveDate` logic:**
+- `EVENT` → `createdAt` of the event
+- `MILESTONE` → `dueDate` from the milestone
+- `ACTIVITY_START` → `startTime` from the activity
+- `ACTIVITY_END` → `endTime` from the activity
+
+**Past/future split:** Not stored. Computed in real-time at render time using `effectiveDate < new Date()`.
+
+#### `TripTimelineUIState` — UI Subset Cache
+
+One row per trip. Stores the pre-filtered list of timeline event IDs for the Timeline view.
+
+```prisma
+enum RefreshState {
+  TRUE        // Data has changed, refresh needed
+  REFRESHING  // A request has claimed the refresh
+  FALSE       // Cache is up to date
+}
+
+model TripTimelineUIState {
+  tripId          String       @id @unique
+  cachedEventIds  String       // JSON array of TimelineEvent.id
+  needsRefresh    RefreshState @default(TRUE)
+  updatedAt       DateTime     @updatedAt
+}
+```
+
+### Timeline Engine — Write-Through
+
+Events are written to the timeline at the moment of the source action:
+
+**Milestone created:**
+1. Insert `TimelineEvent(kind='MILESTONE', sourceType='MILESTONE', sourceId=<id>, effectiveDate=milestone.dueDate, icon, title)`
+2. Upsert `needsRefresh = 'TRUE'` on `TripTimelineUIState`
+
+**Milestone deleted:**
+1. Delete all `TimelineEvent` where `sourceType = 'MILESTONE'` AND `sourceId = <milestoneId>`
+2. Upsert `needsRefresh = 'TRUE'`
+
+**Milestone completed (in-place update):**
+1. Find `TimelineEvent` where `sourceType = 'MILESTONE'` AND `sourceId = <id>`
+2. Update `title` and `icon` in-place (e.g., prepend "Completed:")
+3. Upsert `needsRefresh = 'TRUE'` — no new event created
+
+**Activity created:**
+1. Emit `activity_added` as an EVENT kind `TimelineEvent` (keeps history log complete)
+2. Insert `TimelineEvent(kind='ACTIVITY_START', activityId=<id>, effectiveDate=startTime, title=activity.title)`
+3. If `category === 'accommodation'`: also insert `TimelineEvent(kind='ACTIVITY_END', activityId=<id>, effectiveDate=endTime, title=activity.title)`
+4. Upsert `needsRefresh = 'TRUE'`
+
+**Activity deleted:**
+1. Emit `activity_removed` as an EVENT
+2. Delete all `TimelineEvent` where `activityId = <id>` (removes ACTIVITY_START/END entries)
+3. Upsert `needsRefresh = 'TRUE'`
+
+**Activity updated:**
+1. Find `ACTIVITY_START` event for `activityId` → update `title`, `effectiveDate` in-place
+2. If accommodation: find `ACTIVITY_END` event → update `effectiveDate` in-place
+3. Upsert `needsRefresh = 'TRUE'`
+
+**Accommodation `startTime`/`endTime` edited:**
+1. Update `effectiveDate` of the corresponding `ACTIVITY_START`/`ACTIVITY_END` in-place
+2. Upsert `needsRefresh = 'TRUE'`
+
+### UI Subset Cache — Recalculation
+
+**Trigger:** Every timeline write upsets `needsRefresh = 'TRUE'`.
+
+**On `GET /api/trips/:id/timeline-summary`:**
+
+```
+1. Attempt atomic claim:
+     UPDATE "TripTimelineUIState"
+     SET "needsRefresh" = 'REFRESHING'
+     WHERE "tripId" = :tripId AND "needsRefresh" = 'TRUE'
+   IF row was updated (count = 1):
+     a. Fetch all timeline events, sorted by effectiveDate DESC
+     b. Past (effectiveDate < now): take most recent 10
+     c. Future (effectiveDate >= now): all events
+     d. Merge, sort by effectiveDate DESC
+     e. Update cachedEventIds, set needsRefresh = 'FALSE'
+     f. Return { data: [...], needsRefresh: 'TRUE' }
+   ELSE:
+     // Another request is already refreshing
+     a. Fetch event objects for cachedEventIds
+     b. Return { data: [...], needsRefresh: 'FALSE' }
+```
+
+**Frontend behavior:** When `needsRefresh: 'TRUE'` on initial load, show a centered spinner over the timeline. Re-fetch immediately — the refresh will have completed and the next response returns `needsRefresh: 'FALSE'`.
+
+### Timeline Events — EVENT Kind
+
+All EVENT kind `TimelineEvent` records:
 
 | Event Type | Description | Key Payload Fields |
 |------------|-------------|--------------------|
@@ -125,7 +271,64 @@ All timeline events are written to the `timeline_events` table and emitted via W
 | `status_changed` | Trip stage transitioned (e.g. IDEA→PLANNING) | `oldStatus`, `newStatus` |
 | `INVITE_DECLINED` | An invite was declined | `inviterId` |
 
+### Timeline Views — Timeline vs History
+
+The Timeline tab and History page share the same data but serve different purposes:
+
+| | Timeline | History |
+|---|---|---|
+| **Route** | `/trip/[id]/timeline` | `/trip/[id]/history` |
+| **Data source** | `GET /api/trips/:id/timeline-summary` | `GET /api/trips/:id/timeline` |
+| **Events shown** | 10 most-recent past + all future | ALL events (unconstrained) |
+| **Sort order** | `effectiveDate` DESC (soonest first) | `effectiveDate` ASC (oldest first) |
+| **Past/future split** | Yes — "Looking Back" / "Looking Ahead" with "Now" divider | No — single chronological stream |
+| **Filtering** | No filter | Filter by `kind` (EVENT / MILESTONE / ACTIVITY_START / ACTIVITY_END) |
+| **Milestone actions** | Read-only rows; no inline actions | Read-only rows |
+
+The **Timeline** view uses `useTimelineSummary` (cached subset, 60s polling). The **History** page uses `useTimeline` (full event log, sorted oldest-first).
+
+### Timeline Event Rendering
+
+Line-based rows, ~40–48px tall. No card borders or padding. Icon dot + inline text + right-aligned timestamp:
+
+```
+[icon dot] [title/description --------------------------------] [date]  [badge if milestone]
+```
+
+**By kind:**
+- **EVENT:** icon dot + description + timestamp
+- **MILESTONE:** icon dot + milestone name + due date + type badge + status badge (COMPLETED/OVERDUE/PENDING/SKIPPED)
+- **ACTIVITY_START:** "Check-in: [activity name]" + start date
+- **ACTIVITY_END:** "Check-out: [activity name]" + end date
+
+**"Now" bar:** Computed client-side from `effectiveDate < new Date()` — no `isPast` flag stored. Renders as a dashed horizontal divider with "Now" badge between past and future sections.
+
+### Real-Time Updates
+
+Timeline events are also emitted via WebSocket (`timeline:event`) to the `trip:${tripId}` room. The frontend hook `useTimelineEvents` listens on this room for real-time updates.
+
 See **API.md** for full WebSocket event reference.
+
+## Notifications
+
+### Activity Feed Pagination
+
+The notifications page (`/notifications`) uses cursor-based pagination:
+
+- **Page size:** 10 notifications per request
+- **Hard cap:** 50 notifications maximum (5 pages)
+- **Cursor:** The `id` of the last notification in the current page
+- **Load More:** Visible only when `hasMore && notifications.length < 50`
+- **Backend:** `GET /api/notifications?cursor=<id>&limit=10`
+- **Service:** Uses Prisma cursor pagination — `take: limit`, `skip: cursor ? 1 : 0`, `cursor: cursor ? { id: cursor } : undefined`
+- **Response shape:** `{ data: { notifications, nextCursor, hasMore }, unreadCount }`
+  - `hasMore = notifications.length === 10 && nextCursor !== null`
+
+### Real-time Notification Bell
+
+The notification bell in the UI displays an unread count badge. New notifications appear in real-time via WebSocket on the `user:${userId}` room.
+
+---
 
 ## Push Notifications
 
@@ -146,9 +349,46 @@ TripPlanner supports WebPush for browser push notifications (Chrome, Firefox, Sa
 
 ## Milestones
 
-Auto-generated on `IDEA → PLANNING`. All 6 types: `COMMITMENT_REQUEST` · `COMMITMENT_DEADLINE` · `FINAL_PAYMENT_DUE` · `SETTLEMENT_DUE` · `SETTLEMENT_COMPLETE` · `CUSTOM`
+### Milestone Generation
+
+Milestones are generated based on trip state transitions:
+
+| Trip State | Milestones Created | Timing |
+|---|---|---|
+| **IDEA** (at creation) | `COMMITMENT_REQUEST` | `now + 30% × (startDate - now)` |
+| **IDEA** (at creation) | `COMMITMENT_DEADLINE` | `now + 50% × (startDate - now)` |
+| **PLANNING / CONFIRMED** | `FINAL_PAYMENT_DUE` | `now + 75% × (startDate - now)` — idempotent, only created if not already exists |
+| **HAPPENING** | `SETTLEMENT_DUE` | `endDate + 1 day` |
+| **HAPPENING** | `SETTLEMENT_COMPLETE` | `endDate + 7 days` |
+
+**Implementation details:**
+- All milestone creation methods are idempotent — they check for existing milestones before creating
+- Milestones are written to the timeline via `timelineService.writeMilestoneToTimeline()` when created
+- If a trip's `startDate` changes, existing milestones are recalculated (not recreated)
+
+### On-Demand Milestone Actions
 
 On-demand actions: `PAYMENT_REQUEST` · `SETTLEMENT_REMINDER`
+
+### Milestone Timeline Dropdown
+
+Milestone rows in the Timeline view have a dropdown menu (three dots) accessible to all users, with additional actions gated by role (ORGANIZER/MASTER):
+
+**Available to all users:**
+- **Mark Complete / Mark Incomplete** — toggles milestone completion status for the current user
+- **Settle Up** — for `SETTLEMENT_DUE` milestones; marks the user's own settlement as complete
+- **Mark Paid** — for `PAYMENT_REQUEST` milestones; marks the user's own payment as complete
+
+**ORGANIZER/MASTER only:**
+- **Skip / Unskip** — marks a milestone as skipped
+- **Request Payment** — for `FINAL_PAYMENT_DUE` milestones; opens the Request Payment modal to contact members
+- **Send Reminder** — for `SETTLEMENT_DUE` milestones; opens the Remind to Settle modal
+- **Edit** — redirects to the milestones editor
+- **Delete** — removes the milestone
+
+**Status badges** are shown on milestone rows: COMPLETED (green), OVERDUE (red), PENDING (amber), SKIPPED (gray).
+
+> **Note:** Milestone `TimelineEvent` records store `meta = JSON.stringify({ type: milestone.type })` so the dropdown can determine which actions to display for each milestone type.
 
 ---
 
@@ -247,6 +487,15 @@ Example: A $100 fixed expense paid by Alice means Alice is owed $100 from the gr
 
 Activity `cost`, `costType`, and `currency` are **locked at creation** — these fields cannot be edited via the PATCH endpoint or update form. All other fields (title, description, location, start/end time, category) remain editable.
 
+### Activity Start/End Time
+
+Activities support optional `startTime` and `endTime` fields (ISO 8601 datetime):
+
+- **`startTime`** — when set, auto-populates `endTime` to the same value if `endTime` is empty
+- **`endTime`** — optional for most activity types; **required** for `accommodation` category
+- **Validation (frontend + backend):** If both times are provided, `endTime` must be >= `startTime`. Submitting invalid times is blocked.
+- Both fields are editable after creation (except price fields which are locked)
+
 ### Role-Gated Activity Edit UI
 
 Activity field editing is role-gated:
@@ -276,6 +525,10 @@ The Settings page supports `?tab=` query parameter for direct navigation:
 BillSplits: `EQUAL` · `SHARES` · `PERCENTAGE` · `MANUAL` split types.
 Flow: Create → Members mark PAID → Creator confirms → CONFIRMED
 
+### Add Expense Modal
+
+The "Add Expense" button on the Payments page opens an `AddExpenseModal` instead of navigating to a separate page. The modal contains the full expense form: category, description, subtotal/tax/tip with auto-calculated total, cost type (PER_PERSON / FIXED), paid-by dropdown, date picker, split type selector (EQUAL / SHARES / PERCENTAGE / MANUAL), per-member split inputs with auto-balance logic, and optional notes. The standalone `/trip/[id]/payments/add` page is preserved as a fallback.
+
 ---
 
 ## Testing
@@ -286,4 +539,4 @@ See [TEST_CASES.md](./docs/TEST_CASES.md) for full test file list.
 
 ---
 
-*v1.3 — March 2026*
+*v1.4 — April 2026 (Timeline redesign integrated: TimelineEventKind, effectiveDate, TripTimelineUIState, write-through engine, timeline-summary API, Timeline/History views)*

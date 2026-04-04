@@ -120,12 +120,12 @@ export function AddMilestoneModal({
             className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm dark:bg-[hsl(var(--card))] dark:text-[hsl(var(--foreground))]"
             disabled={isSubmitting}
           >
-            <option value="COMMITMENT_REQUEST">📋 Commitment Request</option>
-            <option value="COMMITMENT_DEADLINE">⏰ Commitment Deadline</option>
-            <option value="FINAL_PAYMENT_DUE">💰 Final Payment Due</option>
-            <option value="SETTLEMENT_DUE">📊 Settlement Due</option>
-            <option value="SETTLEMENT_COMPLETE">✅ Settlement Complete</option>
-            <option value="CUSTOM">🎯 Custom Milestone</option>
+            <option value="COMMITMENT_REQUEST">Commitment Request</option>
+            <option value="COMMITMENT_DEADLINE">Commitment Deadline</option>
+            <option value="FINAL_PAYMENT_DUE">Final Payment Due</option>
+            <option value="SETTLEMENT_DUE">Settlement Due</option>
+            <option value="SETTLEMENT_COMPLETE">Settlement Complete</option>
+            <option value="CUSTOM">Custom Milestone</option>
           </select>
         </div>
 

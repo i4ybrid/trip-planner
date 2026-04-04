@@ -415,7 +415,7 @@ test.describe('Notification Badge', () => {
 
   test('should update badge count in real-time', async ({ page }) => {
     // This test verifies WebSocket updates to badge count
-    test.skip('WebSocket badge updates - requires triggering notification from another session');
+    test.skip(true, 'WebSocket badge updates - requires triggering notification from another session');
     
     const bellButton = page.locator('button[aria-label*="notification" i]').first();
     

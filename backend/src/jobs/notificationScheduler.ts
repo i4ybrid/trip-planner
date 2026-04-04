@@ -47,16 +47,21 @@ async function checkMilestoneDue() {
         isLocked: false,
       },
       include: {
-        trip: { select: { id: true, name: true } },
-        completions: {
-          where: { status: 'PENDING' },
-          select: { userId: true },
+        trip: {
+          select: { id: true, name: true },
+          include: {
+            members: {
+              where: { status: 'CONFIRMED' },
+              select: { userId: true },
+            },
+          },
         },
       },
     });
 
     for (const milestone of milestones) {
-      const memberIds = milestone.completions.map((m: any) => m.userId);
+      // Notify ALL confirmed trip members, not just those with PENDING completions
+      const memberIds = milestone.trip.members.map((m: any) => m.userId);
       for (const userId of memberIds) {
         await notificationService.createNotification({
           userId,
@@ -92,16 +97,21 @@ async function checkMilestoneOverdue() {
         ],
       },
       include: {
-        trip: { select: { id: true, name: true } },
-        completions: {
-          where: { status: 'PENDING' },
-          select: { userId: true },
+        trip: {
+          select: { id: true, name: true },
+          include: {
+            members: {
+              where: { status: 'CONFIRMED' },
+              select: { userId: true },
+            },
+          },
         },
       },
     });
 
     for (const milestone of milestones) {
-      const memberIds = milestone.completions.map((m: any) => m.userId);
+      // Notify ALL confirmed trip members
+      const memberIds = milestone.trip.members.map((m: any) => m.userId);
       for (const userId of memberIds) {
         await notificationService.createNotification({
           userId,
@@ -137,16 +147,21 @@ async function checkMilestoneReminders() {
         isLocked: false,
       },
       include: {
-        trip: { select: { id: true, name: true } },
-        completions: {
-          where: { status: 'PENDING' },
-          select: { userId: true },
+        trip: {
+          select: { id: true, name: true },
+          include: {
+            members: {
+              where: { status: 'CONFIRMED' },
+              select: { userId: true },
+            },
+          },
         },
       },
     });
 
     for (const milestone of milestones) {
-      const memberIds = milestone.completions.map((m: any) => m.userId);
+      // Notify ALL confirmed trip members
+      const memberIds = milestone.trip.members.map((m: any) => m.userId);
       for (const userId of memberIds) {
         await notificationService.createNotification({
           userId,
