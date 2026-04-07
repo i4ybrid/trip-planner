@@ -41,7 +41,7 @@ export default function InvitePage() {
 
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/invite-codes/${inviteCode}/validate`,
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:16198/api'}/invite-codes/${inviteCode}/validate`,
         {
           headers: {
             'Content-Type': 'application/json',

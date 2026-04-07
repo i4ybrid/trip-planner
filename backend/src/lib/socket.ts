@@ -37,7 +37,7 @@ export function getConnectionManager(): Map<string, Socket> {
 export function setupSocketIO(server: HTTPServer) {
   const io = new SocketIOServer(server, {
     cors: {
-      origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+      origin: process.env.FRONTEND_URL || 'http://localhost:16199',
       credentials: true,
     },
   });

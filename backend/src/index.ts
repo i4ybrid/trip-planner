@@ -31,6 +31,7 @@ dotenv.config();
 registerGlobalErrorHandlers();
 
 const app = express();
+app.set('trust proxy', 1); // Trust X-Forwarded-For from nginx/Cloudflare
 app.set('strict routing', true); // Treat /trips and /trips/ as different routes
 const PORT = process.env.PORT || 4000;
 
@@ -39,14 +40,14 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      imgSrc: ["'self'", "data:", "http://localhost:3000", "https://localhost:3000"],
+      imgSrc: ["'self'", "data:", "http://localhost:16199", "https://localhost:16199"],
     },
   },
 }));
 
 // CORS configuration
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: process.env.FRONTEND_URL || 'http://localhost:16199',
   credentials: true,
 }));
 
@@ -69,7 +70,7 @@ if (!storageConfig.isRemote) {
 
   // Add CORS headers for uploaded files and disable restrictive headers
   app.use('/uploads', (_req, res, next) => {
-    res.header('Access-Control-Allow-Origin', process.env.FRONTEND_URL || 'http://localhost:3000');
+    res.header('Access-Control-Allow-Origin', process.env.FRONTEND_URL || 'http://localhost:16199');
     res.header('Access-Control-Allow-Credentials', 'true');
     res.header('Cross-Origin-Resource-Policy', 'cross-origin');
     next();
@@ -145,3 +146,4 @@ server.listen(PORT, () => {
 });
 
 export { app, server, io };
+;

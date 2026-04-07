@@ -121,6 +121,7 @@ export function getStatusColor(status: string): string {
     COMPLETED: 'bg-gray-100 text-gray-600',
     CANCELLED: 'bg-red-100 text-red-800',
     INVITED: 'bg-yellow-100 text-yellow-800',
+    PENDING: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100',
     DECLINED: 'bg-red-100 text-red-800',
     MAYBE: 'bg-orange-100 text-orange-800',
     REMOVED: 'bg-gray-100 text-gray-500',

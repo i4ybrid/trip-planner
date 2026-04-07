@@ -59,7 +59,7 @@ router.post('/trips/:tripId/invites', async (req: AuthRequest, res) => {
     res.status(201).json({
       data: {
         ...invite,
-        inviteUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/invite/${code}`,
+        inviteUrl: `${process.env.FRONTEND_URL || 'http://localhost:16199'}/invite/${code}`,
       },
     });
   } catch (error: any) {
@@ -371,7 +371,7 @@ router.post('/trips/:tripId/invites/email', async (req: AuthRequest, res) => {
         success: true,
         message: 'Invitation link created',
         existingUserNotified: false,
-        inviteUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/invite/${token}`,
+        inviteUrl: `${process.env.FRONTEND_URL || 'http://localhost:16199'}/invite/${token}`,
       },
     });
   } catch (error: any) {

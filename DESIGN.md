@@ -539,4 +539,43 @@ See [TEST_CASES.md](./docs/TEST_CASES.md) for full test file list.
 
 ---
 
+## Deployment
+
+### Network Architecture
+
+```
+Browser → Cloudflare (proxies) → 67.254.222.75 (public IP) 
+                                          ↓
+                               Nginx on Unraid (192.168.0.8)
+                                          ↓
+                               Docker services on Unraid:
+                                 • frontend :16199
+                                 • backend  :16198
+```
+
+- **Cloudflare** proxies both `plan.eric-hu.com` and `plan-api.eric-hu.com`
+- **Nginx** on Unraid handles routing based on domain
+- **Browser calls backend directly** via `plan-api.eric-hu.com/api` (NOT through the frontend domain)
+- **Backend CORS** is configured with `FRONTEND_URL=https://plan.eric-hu.com` so it sends the correct `Access-Control-Allow-Origin` header for browser requests from the frontend
+
+### Build & Deploy Script
+
+```bash
+bash scripts/build-deploy.sh prod   # builds prod images → dist/
+bash scripts/build-deploy.sh staging # builds staging images → dist/
+bash scripts/build-deploy.sh dev    # dev mode, no Docker build
+```
+
+### Environment Configuration
+
+| Env | NEXT_PUBLIC_API_URL | NEXTAUTH_URL | Image tag |
+| -----|---------------------------|--------------------------| --------- |
+| prod | `https://plan-api.eric-hu.com/api` | `https://plan.eric-hu.com` | `:prod` |
+| staging | `http://localhost:16198` | `http://localhost:16199` | `:staging` |
+| dev | `http://localhost:4000` | `http://localhost:3000` | `:dev` |
+
+The `NEXT_PUBLIC_API_URL` is passed as a `--build-arg` so it is baked into the image at build time. No hardcoding in `docker-compose` files.
+
+---
+
 *v1.4 — April 2026 (Timeline redesign integrated: TimelineEventKind, effectiveDate, TripTimelineUIState, write-through engine, timeline-summary API, Timeline/History views)*

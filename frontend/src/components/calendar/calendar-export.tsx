@@ -23,7 +23,7 @@ export function CalendarExport({ tripId, tripName, variant = 'dropdown' }: Calen
       
       switch (type) {
         case 'ics':
-          url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/trips/${tripId}/calendar.ics`;
+          url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:16198/api'}/trips/${tripId}/calendar.ics`;
           filename = `${tripName.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-calendar.ics`;
           
           // Download .ics file
@@ -47,7 +47,7 @@ export function CalendarExport({ tripId, tripName, variant = 'dropdown' }: Calen
           break;
           
         case 'google':
-          url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/trips/${tripId}/calendar/google`;
+          url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:16198/api'}/trips/${tripId}/calendar/google`;
           const googleResponse = await fetch(url, {
             headers: {
               Authorization: `Bearer ${await getAuthToken()}`,
@@ -63,7 +63,7 @@ export function CalendarExport({ tripId, tripName, variant = 'dropdown' }: Calen
           break;
           
         case 'outlook':
-          url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/trips/${tripId}/calendar/outlook`;
+          url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:16198/api'}/trips/${tripId}/calendar/outlook`;
           const outlookResponse = await fetch(url, {
             headers: {
               Authorization: `Bearer ${await getAuthToken()}`,

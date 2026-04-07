@@ -93,7 +93,7 @@ function FriendsPageContent() {
 
   const handleCancelRequest = async (requestId: string) => {
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/friend-requests/${requestId}`, {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:16198/api'}/friend-requests/${requestId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${(session as any)?.accessToken}`,

@@ -40,7 +40,7 @@ export class InviteService {
 
     return {
       ...invite,
-      inviteUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/invite/${token}`,
+      inviteUrl: `${process.env.FRONTEND_URL || 'http://localhost:16199'}/invite/${token}`,
     };
   }
 

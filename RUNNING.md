@@ -34,13 +34,13 @@ cd /mnt/user/development/trip-planner/scripts/
 
 ## Manual Server Commands
 
-### Frontend (port 3000)
+### Frontend (port 16199)
 ```bash
 cd /mnt/user/development/trip-planner/frontend
 npm run dev
 ```
 
-### Backend (port 4000)
+### Backend (port 16198)
 ```bash
 cd /mnt/user/development/trip-planner/backend
 npm run dev

@@ -2,7 +2,7 @@
 
 > Extracted from DESIGN.md Section 4. Complete REST API documentation for TripPlanner.
 
-**Base URL:** `http://localhost:4000/api` (development)
+**Base URL:** `http://localhost:16198/api` (development)
 **Auth:** Bearer token (JWT via NextAuth)
 
 ---
@@ -48,7 +48,7 @@ Response (200 OK):
     "id": "user-123",
     "name": "Sarah Chen",
     "email": "sarah@example.com",
-    "avatarUrl": "http://localhost:4000/uploads/avatar.jpg",
+    "avatarUrl": "http://localhost:16198/uploads/avatar.jpg",
     "venmo": "@sarah-chen",
     ...
   }
@@ -352,7 +352,7 @@ Response (201 Created):
   "data": {
     "id": "media-123",
     "type": "image",
-    "url": "http://localhost:4000/uploads/abc-123.webp",
+    "url": "http://localhost:16198/uploads/abc-123.webp",
     "caption": "Sunset at the beach",
     "createdAt": "2026-02-25T10:30:00Z"
   }

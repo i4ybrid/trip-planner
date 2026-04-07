@@ -57,7 +57,8 @@ export function useAuth() {
 
   const register = useCallback(async (email: string, name: string, password: string, inviteCode?: string) => {
     try {
-      const response = await fetch('/api/auth/register', {
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:16198/api';
+      const response = await fetch(`${API_BASE_URL}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, name, password }),
@@ -86,7 +87,7 @@ export function useAuth() {
         try {
           const session = await fetch('/api/auth/session').then(r => r.json());
           await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/invite-codes/${inviteCode}/use`,
+            `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:16198/api'}/invite-codes/${inviteCode}/use`,
             {
               method: 'POST',
               headers: {

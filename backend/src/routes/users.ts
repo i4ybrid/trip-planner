@@ -132,7 +132,7 @@ router.post('/auth/forgot-password', async (req, res) => {
       return;
     }
     const result = await userService.generatePasswordResetToken(email);
-    const appUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const appUrl = process.env.FRONTEND_URL || 'http://localhost:16199';
     const resetLink = `${appUrl}/reset-password?token=${result.token}`;
     // For now, return the link directly (email not enabled)
     res.json({ 
