@@ -8,14 +8,21 @@ services:
       dockerfile: Dockerfile
       target: runner
       args:
-        - NEXT_PUBLIC_API_URL=http://backend:4000/api
+        - INTERNAL_API_URL=http://192.168.0.189:16198/api
+        - NEXT_PUBLIC_API_URL=http://192.168.0.189:16198/api
+        - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+        - NEXTAUTH_URL=http://192.168.0.189:16199
+        - AUTH_TRUST_HOST=true
     ports:
       - "16199:16199"
     environment:
       - NODE_ENV=production
+      - INTERNAL_API_URL=http://backend:4000/api
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
-      - NEXTAUTH_URL=http://localhost:16199
-      - NEXT_PUBLIC_APP_URL=http://localhost:16199
+      - NEXTAUTH_URL=http://192.168.0.189:16199
+      - NEXT_PUBLIC_API_URL=http://192.168.0.189:16198/api
+      - NEXT_PUBLIC_APP_URL=http://192.168.0.189:16199
+      - AUTH_TRUST_HOST=true
     restart: unless-stopped
 
   backend:
@@ -30,8 +37,11 @@ services:
       - NODE_ENV=production
       - DATABASE_URL=${DATABASE_URL}
       - PORT=4000
+      - FRONTEND_URL=http://192.168.0.189:16199
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
-      - NEXTAUTH_URL=http://localhost:16199
+      - NEXTAUTH_URL=http://192.168.0.189:16199
+      - AUTH_TRUST_HOST=true
+      - RATE_LIMIT_MAX=1000
     depends_on:
       db:
         condition: service_healthy

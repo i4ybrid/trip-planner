@@ -5,6 +5,16 @@ import FacebookProvider from 'next-auth/providers/facebook';
 import { logger } from '@/lib/logger';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:16198/api';
+const INTERNAL_API_URL = process.env.INTERNAL_API_URL || 'http://backend:4000/api';
+
+const nextAuthUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+const isHttps = nextAuthUrl.startsWith('https://');
+const isLocal = !nextAuthUrl.startsWith('http') || 
+                nextAuthUrl.includes('localhost') || 
+                nextAuthUrl.includes('127.0.0.1') ||
+                /^https?:\/\/\d+\.\d+\.\d+\.\d+/.test(nextAuthUrl);
+// Only set cookie domain for the specific production domain
+const isEricHu = nextAuthUrl.includes('eric-hu.com');
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -29,35 +39,39 @@ export const authOptions: NextAuthOptions = {
           throw new Error('Email and password are required');
         }
 
-        const response = await fetch(`${API_BASE_URL}/auth/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: credentials.email,
-            password: credentials.password,
-          }),
-        });
+        try {
+          const response = await fetch('http://localhost:4000/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: credentials.email,
+              password: credentials.password,
+            }),
+          });
 
-        if (!response.ok) {
-          const error = await response.json().catch(() => ({ message: 'Login failed' }));
-          throw new Error(error.message || 'Invalid email or password');
+          if (!response.ok) {
+            const error = await response.json().catch(() => ({ message: 'Login failed' }));
+            throw new Error(error.error || error.message || 'Invalid credentials');
+          }
+
+          const result = await response.json();
+          const user = result.data?.user;
+          const token = result.data?.token;
+
+          if (!user || !token) {
+            throw new Error('Invalid response from server');
+          }
+
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            avatarUrl: user.avatarUrl,
+            token,
+          };
+        } catch (e: any) {
+          throw new Error(e.message || 'Login failed');
         }
-
-        const result = await response.json();
-        const user = result.data?.user;
-        const token = result.data?.token;
-
-        if (!user || !token) {
-          throw new Error('Invalid response from server');
-        }
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          avatarUrl: user.avatarUrl,
-          token,
-        };
       },
     }),
   ],
@@ -79,7 +93,7 @@ export const authOptions: NextAuthOptions = {
           }
           
           // Call backend to create/get user and get our app token
-          const response = await fetch(`${API_BASE_URL}/users/oauth`, {
+          const response = await fetch(`${INTERNAL_API_URL}/users/oauth`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -149,4 +163,16 @@ export const authOptions: NextAuthOptions = {
     maxAge: 7 * 24 * 60 * 60, // 7 days
   },
   secret: process.env.NEXTAUTH_SECRET,
+  cookies: {
+    sessionToken: {
+      name: isHttps ? `__Secure-next-auth.session-token` : `next-auth.session-token`,
+      options: {
+        domain: isEricHu ? '.eric-hu.com' : undefined,
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: isHttps,
+      },
+    },
+  },
 };

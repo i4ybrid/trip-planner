@@ -115,7 +115,7 @@ export const updateMessageSchema = z.object({
 export const createBillSplitSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
-  amount: z.number().positive().optional(),
+  amount: z.number().nonnegative().nullable().optional(),
   currency: z.string().default('USD'),
   splitType: z.enum(['EQUAL', 'SHARES', 'PERCENTAGE', 'MANUAL']).default('EQUAL'),
   costType: z.enum(['PER_PERSON', 'FIXED']).optional(),

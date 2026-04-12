@@ -34,9 +34,9 @@ export const TEST_USERS = {
  * Seeded trip IDs from backend/prisma/seed.ts
  */
 export const TRIP_IDS = {
-  hawaii: 'trip-1',
+  hawaii: 'trip-3',
   nyc: 'trip-2',
-  europe: 'trip-3',
+  europe: 'trip-1',
   ski: 'trip-4',
   nashville: 'trip-5',
 } as const;
@@ -101,6 +101,16 @@ export async function loginTestUser(
     page.waitForURL('**/dashboard', { timeout: 15000 }),
     page.click('button[type="submit"]'),
   ]);
+
+  // Allow session to fully settle before any navigation
+  await page.waitForTimeout(2000);
+
+  // Allow cookie to be fully set before navigating away
+  await page.waitForTimeout(500);
+
+  const cookies = await page.context().cookies();
+  const sessionCookie = cookies.find(c => c.name.includes('session-token'));
+  console.log('[auth] Session cookie:', sessionCookie ? `${sessionCookie.name} domain=${sessionCookie.domain} sameSite=${sessionCookie.sameSite}` : 'NOT FOUND');
 
   if (options?.allowFailure) {
     await page.waitForTimeout(1000);

@@ -58,7 +58,7 @@ const SEED_TRIPS = [
         destination: 'Europe',
         startDate: new Date('2026-09-01'),
         endDate: new Date('2026-09-14'),
-        status: 'IDEA',
+        status: 'PLANNING',
         tripMasterId: 'user-1',
         coverImage: 'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?w=800',
     },
@@ -124,11 +124,74 @@ const SEED_VOTES = [
     { activityId: 'act-5', userId: 'user-1', option: 'YES' },
     { activityId: 'act-5', userId: 'user-2', option: 'YES' },
 ];
+// Generate 50 messages for trip-1 to test pagination
+const generateTripMessages = () => {
+    const messages = [];
+    const tripMessages = [
+        { senderId: 'user-1', content: 'Hey everyone! Excited about this trip! 🏝️' },
+        { senderId: 'user-2', content: 'Me too! I\'ve always wanted to go to Maui!' },
+        { senderId: 'user-3', content: 'Has anyone looked at the surf lessons? I think that would be so fun!' },
+        { senderId: 'user-1', content: 'I added it as an activity - please vote!' },
+        { senderId: 'user-4', content: 'Just voted! Can\'t wait!' },
+        { senderId: 'user-2', content: 'Should we rent a car or use Uber?' },
+        { senderId: 'user-1', content: 'I think renting a car makes more sense for the Road to Hana' },
+        { senderId: 'user-3', content: 'Agreed, plus we can explore at our own pace' },
+        { senderId: 'user-4', content: 'I found a good deal on a convertible!' },
+        { senderId: 'user-2', content: 'Nice! What\'s the daily rate?' },
+        { senderId: 'user-4', content: 'About $80/day including insurance' },
+        { senderId: 'user-1', content: 'That\'s pretty good for Maui' },
+        { senderId: 'user-3', content: 'Should we split the car rental 4 ways?' },
+        { senderId: 'user-2', content: 'Yeah that makes sense' },
+        { senderId: 'user-1', content: 'I\'ll create a bill split for it' },
+        { senderId: 'user-4', content: 'Has anyone been to the Grand Wailea before?' },
+        { senderId: 'user-2', content: 'I heard the pools are amazing!' },
+        { senderId: 'user-1', content: 'Yes! They have a water elevator between pools' },
+        { senderId: 'user-3', content: 'That sounds incredible' },
+        { senderId: 'user-4', content: 'I\'m booking the spa package' },
+        { senderId: 'user-1', content: 'The luau is going to be on night 3' },
+        { senderId: 'user-2', content: 'Perfect! I\'ll bring my camera' },
+        { senderId: 'user-3', content: 'Don\'t forget sunscreen!' },
+        { senderId: 'user-4', content: 'Already packed reef-safe sunscreen' },
+        { senderId: 'user-1', content: 'Good call, Hawaii requires reef-safe now' },
+        { senderId: 'user-2', content: 'What about hiking shoes?' },
+        { senderId: 'user-3', content: 'I\'m bringing both sneakers and sandals' },
+        { senderId: 'user-4', content: 'Same here' },
+        { senderId: 'user-1', content: 'Anyone want to do the zipline activity?' },
+        { senderId: 'user-2', content: 'That sounds scary but fun!' },
+        { senderId: 'user-3', content: 'I\'m in if everyone else is' },
+        { senderId: 'user-4', content: 'Let\'s add it to the activities list' },
+        { senderId: 'user-1', content: 'Done! Go vote on it' },
+        { senderId: 'user-2', content: 'Voted yes!' },
+        { senderId: 'user-3', content: 'Yes from me too' },
+        { senderId: 'user-4', content: 'This is going to be the best trip ever!' },
+        { senderId: 'user-1', content: 'Flight prices are looking good btw' },
+        { senderId: 'user-2', content: 'I set up price alerts, will let you know if they drop' },
+        { senderId: 'user-3', content: 'Thanks Sarah!' },
+        { senderId: 'user-4', content: 'Should we plan a group dinner the first night?' },
+        { senderId: 'user-1', content: 'Great idea! There\'s a great seafood place near the hotel' },
+        { senderId: 'user-2', content: 'I\'ll make a reservation' },
+        { senderId: 'user-3', content: 'Anyone have dietary restrictions?' },
+        { senderId: 'user-4', content: 'I\'m vegetarian but I eat fish' },
+        { senderId: 'user-1', content: 'No restrictions here' },
+        { senderId: 'user-2', content: 'Same, I\'ll find a place with good options' },
+        { senderId: 'user-3', content: 'Can\'t wait to try the poke!' },
+        { senderId: 'user-4', content: 'Poke is a must!' },
+        { senderId: 'user-1', content: 'Alright team, 3 months to go! 🎉' },
+        { senderId: 'user-2', content: 'Time flies! See you all in paradise!' },
+    ];
+    tripMessages.forEach((msg, index) => {
+        messages.push({
+            tripId: 'trip-1',
+            senderId: msg.senderId,
+            content: msg.content,
+            messageType: 'TEXT',
+            createdAt: new Date(Date.now() - (tripMessages.length - index) * 3600000), // 1 hour apart
+        });
+    });
+    return messages;
+};
 const SEED_MESSAGES = [
-    { tripId: 'trip-1', senderId: 'user-1', content: 'Hey everyone! Excited about this trip! 🏝️', messageType: 'TEXT' },
-    { tripId: 'trip-1', senderId: 'user-2', content: 'Me too! I\'ve always wanted to go to Maui!', messageType: 'TEXT' },
-    { tripId: 'trip-1', senderId: 'user-3', content: 'Has anyone looked at the surf lessons? I think that would be so fun!', messageType: 'TEXT' },
-    { tripId: 'trip-1', senderId: 'user-1', content: 'I added it as an activity - please vote!', messageType: 'TEXT' },
+    ...generateTripMessages(),
     { tripId: 'trip-2', senderId: 'user-2', content: 'Birthday trip! Can\'t wait! 🎉', messageType: 'TEXT' },
     { tripId: 'trip-2', senderId: 'user-1', content: 'Going to book us tickets to Hamilton!', messageType: 'TEXT' },
 ];
@@ -189,10 +252,57 @@ const SEED_FRIEND_REQUESTS = [
     { senderId: 'user-4', receiverId: 'user-1', status: 'PENDING' },
 ];
 const SEED_NOTIFICATIONS = [
-    { userId: 'user-1', title: 'Trip coming up!', body: 'Hawaii Beach Vacation starts in 2 weeks', category: 'MILESTONE' },
-    { userId: 'user-1', title: 'Vote needed', body: 'Vote on Surfing Lessons activity for Hawaii trip', category: 'MILESTONE' },
-    { userId: 'user-1', title: 'Payment needed', body: 'You owe $120 for Luau Dinner - please pay Sarah', category: 'PAYMENT' },
-    { userId: 'user-1', title: 'Tagged in chat', body: 'Sarah mentioned you in the Nashville trip chat', category: 'CHAT' },
+    { userId: 'user-1', category: 'MILESTONE', title: 'Trip coming up!', body: 'Hawaii Beach Vacation starts in 2 weeks', referenceId: 'trip-1', referenceType: 'TRIP', link: '/trip/trip-1' },
+    { userId: 'user-1', category: 'MEMBER', title: 'Vote needed', body: 'Vote on Surfing Lessons activity for Hawaii trip', referenceId: 'trip-1', referenceType: 'TRIP', link: '/trip/trip-1' },
+    { userId: 'user-1', category: 'SETTLEMENT', title: 'Payment needed', body: 'You owe $120 for Luau Dinner - please pay Sarah', referenceId: 'trip-1', referenceType: 'BILL_SPLIT', link: '/trip/trip-1/payments' },
+    { userId: 'user-1', category: 'CHAT', title: 'Tagged in chat', body: 'Sarah mentioned you in the Nashville trip chat', referenceId: 'trip-5', referenceType: 'TRIP', link: '/trip/trip-5/chat' },
+];
+const SEED_MILESTONES = [
+    {
+        id: 'milestone-1',
+        tripId: 'trip-1',
+        type: 'COMMITMENT_REQUEST',
+        name: 'Commitment Request',
+        dueDate: new Date('2026-05-01'),
+        priority: 10,
+        isHard: true,
+    },
+    {
+        id: 'milestone-2',
+        tripId: 'trip-1',
+        type: 'COMMITMENT_DEADLINE',
+        name: 'Commitment Deadline',
+        dueDate: new Date('2026-05-15'),
+        priority: 9,
+        isHard: false,
+    },
+    {
+        id: 'milestone-3',
+        tripId: 'trip-1',
+        type: 'FINAL_PAYMENT_DUE',
+        name: 'Final Payment Due',
+        dueDate: new Date('2026-06-01'),
+        priority: 8,
+        isHard: true,
+    },
+    {
+        id: 'milestone-4',
+        tripId: 'trip-1',
+        type: 'SETTLEMENT_DUE',
+        name: 'Settlement Due',
+        dueDate: new Date('2026-06-25'),
+        priority: 7,
+        isHard: true,
+    },
+];
+const SEED_MILESTONE_COMPLETIONS = [
+    { milestoneId: 'milestone-1', userId: 'user-1', status: 'COMPLETED' },
+    { milestoneId: 'milestone-1', userId: 'user-2', status: 'COMPLETED' },
+    { milestoneId: 'milestone-1', userId: 'user-3', status: 'PENDING' },
+    { milestoneId: 'milestone-2', userId: 'user-1', status: 'COMPLETED' },
+    { milestoneId: 'milestone-2', userId: 'user-2', status: 'COMPLETED' },
+    { milestoneId: 'milestone-2', userId: 'user-3', status: 'PENDING' },
+    { milestoneId: 'milestone-2', userId: 'user-4', status: 'PENDING' },
 ];
 const SEED_MEDIA = [
     { tripId: 'trip-5', uploaderId: 'user-2', type: 'image', url: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800', caption: 'Nashville skyline at night' },
@@ -211,6 +321,9 @@ async function main() {
     console.log('🌱 Starting database seed...');
     // Clear existing data (in reverse order of dependencies)
     console.log('🗑️  Clearing existing data...');
+    await prisma.milestoneAction.deleteMany();
+    await prisma.milestoneCompletion.deleteMany();
+    await prisma.milestone.deleteMany();
     await prisma.timelineEvent.deleteMany();
     await prisma.messageReadReceipt.deleteMany();
     await prisma.message.deleteMany();
@@ -351,6 +464,20 @@ async function main() {
             data: notifData,
         });
     }
+    // Create milestones
+    console.log('🏁 Creating milestones...');
+    for (const milestoneData of SEED_MILESTONES) {
+        await prisma.milestone.create({
+            data: milestoneData,
+        });
+    }
+    // Create milestone completions
+    console.log('🏁 Creating milestone completions...');
+    for (const completionData of SEED_MILESTONE_COMPLETIONS) {
+        await prisma.milestoneCompletion.create({
+            data: completionData,
+        });
+    }
     // Create media items
     console.log('📸 Creating media items...');
     for (const mediaData of SEED_MEDIA) {
@@ -368,6 +495,12 @@ async function main() {
                 participant1: p1,
                 participant2: p2,
                 id: `dm-${dmConversationIdMap.size + 1}`,
+                participants: {
+                    connect: [
+                        { id: p1 },
+                        { id: p2 },
+                    ],
+                },
             },
         });
         dmConversationIdMap.set(`dm-${dmConversationIdMap.size + 1}`, conversation.id);
@@ -391,13 +524,15 @@ async function main() {
     console.log(`   - ${SEED_MEMBERS.length} trip members`);
     console.log(`   - ${SEED_ACTIVITIES.length} activities`);
     console.log(`   - ${SEED_VOTES.length} votes`);
-    console.log(`   - ${SEED_MESSAGES.length} trip messages`);
+    console.log(`   - ${SEED_MESSAGES.length} trip messages (${SEED_MESSAGES.length - 2} for trip-1, 2 for trip-2)`);
     console.log(`   - ${SEED_TIMELINE.length} timeline events`);
     console.log(`   - ${SEED_BILL_SPLITS.length} bill splits`);
     console.log(`   - ${SEED_BILL_SPLIT_MEMBERS.length} bill split members`);
     console.log(`   - ${SEED_FRIENDS.length} friendships`);
     console.log(`   - ${SEED_FRIEND_REQUESTS.length} friend requests`);
     console.log(`   - ${SEED_NOTIFICATIONS.length} notifications`);
+    console.log(`   - ${SEED_MILESTONES.length} milestones`);
+    console.log(`   - ${SEED_MILESTONE_COMPLETIONS.length} milestone completions`);
     console.log(`   - ${SEED_MEDIA.length} media items`);
     console.log(`   - ${SEED_DM_CONVERSATIONS.length} DM conversations`);
     console.log(`   - ${SEED_DM_MESSAGES.length} DM messages`);
@@ -410,4 +545,3 @@ main()
     .finally(async () => {
     await prisma.$disconnect();
 });
-//# sourceMappingURL=seed.js.map

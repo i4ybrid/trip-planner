@@ -235,7 +235,7 @@ cd backend && npx vitest run
 cd frontend && npx playwright test
 
 # Full test suite (from project root)
-docker compose -f docker-compose.test.yml up --abort-on-container-exit
+# Run: cd backend && npm run test:unit
 ```
 
 ---

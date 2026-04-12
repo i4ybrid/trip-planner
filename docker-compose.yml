@@ -1,52 +1,41 @@
-version: '3.8'
-
 services:
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      target: runner
+      args:
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+        - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+        - NEXTAUTH_URL=${NEXTAUTH_URL}
+        - AUTH_TRUST_HOST=${AUTH_TRUST_HOST:-true}
+    env_file: .env.${ENV:-staging}
     ports:
-      - "16199:16199"
-    environment:
-      - NODE_ENV=development
-      - NEXT_PUBLIC_API_URL=http://localhost:16198
-      - NEXTAUTH_SECRET=dev-secret-change-in-prod
-      - NEXTAUTH_URL=http://localhost:16199
-      - PORT=16199
-    depends_on:
-      - backend
-      - db
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
+      - "${FRONTEND_PORT:-16199}:16199"
+    restart: unless-stopped
 
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
+      target: runner
+    env_file: .env.${ENV:-staging}
     ports:
-      - "4000:4000"
-    environment:
-      - NODE_ENV=development
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/tripplanner
-      - PORT=4000
+      - "${BACKEND_PORT:-16198}:4000"
     depends_on:
       db:
         condition: service_healthy
-      redis:
-        condition: service_started
-    volumes:
-      - ./backend:/app
-      - /app/node_modules
+    restart: unless-stopped
 
   db:
     image: postgres:15-alpine
+    env_file: .env.${ENV:-staging}
     ports:
-      - "5432:5432"
+      - "${DB_PORT:-16197}:5432"
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: tripplanner
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-tripplanner}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -54,20 +43,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-
-  mailhog:
-    image: mailhog/mailhog
-    ports:
-      - "1025:1025"
-      - "8025:8025"
+    restart: unless-stopped
 
 volumes:
   postgres_data:
-  redis_data:

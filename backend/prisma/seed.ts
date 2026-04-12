@@ -57,7 +57,7 @@ const SEED_TRIPS = [
     destination: 'Europe',
     startDate: new Date('2026-09-01'),
     endDate: new Date('2026-09-14'),
-    status: 'IDEA' as const,
+    status: 'PLANNING' as const,
     tripMasterId: 'user-1',
     coverImage: 'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?w=800',
   },

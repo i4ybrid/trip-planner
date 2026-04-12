@@ -14,13 +14,15 @@ fi
 
 cd "$PROJECT_ROOT"
 
+INFRA_COMPOSE="$PROJECT_ROOT/docker-compose.infra.yml"
+
 echo "🐳 Starting PostgreSQL, Redis, and Mailhog containers..."
-docker compose up -d db redis mailhog
+docker compose -f "$INFRA_COMPOSE" up -d
 
 echo "⏳ Waiting for PostgreSQL to be ready..."
 for i in {1..30}; do
-    DB_CONTAINER=$(docker ps --filter "name=db" --format "{{.Names}}" | head -n1)
-    if docker exec "$DB_CONTAINER" pg_isready -U postgres &>/dev/null; then
+    DB_CONTAINER=$(docker compose -f "$INFRA_COMPOSE" ps -q db 2>/dev/null || true)
+    if [ -n "$DB_CONTAINER" ] && docker exec "$DB_CONTAINER" pg_isready -U postgres &>/dev/null; then
         echo "✅ PostgreSQL is ready!"
         break
     fi

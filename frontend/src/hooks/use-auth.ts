@@ -3,7 +3,7 @@
 import { signIn, signOut, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth-store';
-import { clearSessionCache } from '@/services/api';
+import { clearSessionCache, handleResponse } from '@/services/api';
 import { useCallback, useEffect } from 'react';
 import { User } from '@/types';
 
@@ -49,6 +49,8 @@ export function useAuth() {
       clearSessionCache();
       // Update the session to get the latest data
       await update();
+
+      router.push('/dashboard');
       return { success: true };
     } catch (error: any) {
       return { success: false, error: error.message || 'Login failed' };
@@ -86,7 +88,7 @@ export function useAuth() {
         await update();
         try {
           const session = await fetch('/api/auth/session').then(r => r.json());
-          await fetch(
+          const res = await fetch(
             `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:16198/api'}/invite-codes/${inviteCode}/use`,
             {
               method: 'POST',
@@ -96,6 +98,9 @@ export function useAuth() {
               },
             }
           );
+          // Use skipAuthRedirect: true because 401 here doesn't mean the user's session is invalid
+          // (it could be CORS/preflight failure or invite code already used)
+          await handleResponse(res, { skipAuthRedirect: true });
         } catch {
           // Ignore invite code errors - they can still sign up
         }

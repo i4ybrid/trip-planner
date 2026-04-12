@@ -50,45 +50,11 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [bannerDismissed, setBannerDismissed] = useState(false);
-  const [isValidatingSession, setIsValidatingSession] = useState(false);
-
   useEffect(() => {
     if (inviteCode) {
       setIsLogin(false);
     }
   }, [inviteCode]);
-
-  // Session validation: redirect to dashboard if user already has valid session
-  useEffect(() => {
-    const token = localStorage.getItem('next-auth.session-token');
-    if (!token) return;
-
-    setIsValidatingSession(true);
-
-    // Race getCurrentUser against a 5-second timeout
-    const timeout = new Promise<null>((resolve) =>
-      setTimeout(() => resolve(null), 5000)
-    );
-
-    Promise.race([
-      api.getCurrentUser(),
-      timeout,
-    ])
-      .then((result) => {
-        if (result && result.data) {
-          router.push('/dashboard');
-        }
-        // If timeout (result is null) or no data, fall through to finally
-      })
-      .catch(() => {
-        // Invalid session — clear and stay on login
-        localStorage.removeItem('next-auth.session-token');
-        localStorage.removeItem('next-auth.csrf-token');
-      })
-      .finally(() => {
-        setIsValidatingSession(false);
-      });
-  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -127,18 +93,6 @@ export default function LoginPage() {
     setEmail(credentials[userType].email);
     setPassword(credentials[userType].password);
   };
-
-  // Show loading spinner while validating session
-  if (isValidatingSession) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="text-center">
-          <Loader className="w-8 h-8 animate-spin text-amber-600 mx-auto mb-4" />
-          <p className="text-gray-600">Checking your session...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen flex">

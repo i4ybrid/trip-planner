@@ -1,10 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',
+  output: 'standalone', // Disabled: contributes to OOM during build
   reactStrictMode: true,
   swcMinify: true,
   compiler: {
     styledComponents: false,
+  },
+  experimental: {
+    workerThreads: false,
+    minimize: true,
   },
   // Keep webpack cache enabled (default behavior) for faster rebuilds
   onDemandEntries: {

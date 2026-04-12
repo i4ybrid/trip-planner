@@ -35,9 +35,28 @@ export function getConnectionManager(): Map<string, Socket> {
 }
 
 export function setupSocketIO(server: HTTPServer) {
+  const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:16199').split(',').map(o => o.trim());
+  
   const io = new SocketIOServer(server, {
     cors: {
-      origin: process.env.FRONTEND_URL || 'http://localhost:16199',
+      origin: (origin, callback) => {
+        if (!origin) return callback(null, true);
+        
+        const hostname = new URL(origin).hostname;
+        const baseDomain = hostname.split('.').slice(-2).join('.');
+        
+        const isAllowed = allowedOrigins.some(allowed => {
+          const allowedHostname = new URL(allowed).hostname;
+          const allowedBaseDomain = allowedHostname.split('.').slice(-2).join('.');
+          return hostname === allowedHostname || hostname.endsWith('.' + allowedBaseDomain);
+        });
+        
+        if (isAllowed) {
+          callback(null, true);
+        } else {
+          callback(new Error('Not allowed by CORS'));
+        }
+      },
       credentials: true,
     },
   });

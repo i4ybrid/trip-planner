@@ -21,8 +21,8 @@ export class BillSplitService {
     dueDate?: Date;
     members?: { userId: string; dollarAmount?: number; shares?: number; percentage?: number }[];
   }) {
-    // Auto-calculate amount from members if not provided
-    if (data.amount === undefined) {
+    // Auto-calculate amount from members if not provided or null
+    if (data.amount === undefined || data.amount === null) {
       if (data.members && data.members.length > 0) {
         data.amount = data.members.reduce(
           (sum, m) => sum + (m.dollarAmount || 0) * (m.shares || 1),

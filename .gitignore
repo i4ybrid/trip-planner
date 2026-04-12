@@ -9,6 +9,10 @@ node_modules/
 .env.*
 !.env.example
 
+# Frontend
+frontend/.env.staging
+frontend/.env.local
+
 # Build and Output
 dist/
 build/

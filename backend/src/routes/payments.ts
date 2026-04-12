@@ -51,7 +51,7 @@ router.post('/trips/:tripId/payments', async (req: AuthRequest, res) => {
       createdBy: userId,
       title: validatedData.title,
       description: validatedData.description,
-      amount: validatedData.amount,
+      amount: validatedData.amount ?? undefined,
       currency: validatedData.currency,
       splitType: validatedData.splitType,
       paidBy: validatedData.paidBy,
@@ -119,7 +119,7 @@ router.patch('/payments/:id', async (req: AuthRequest, res) => {
     const updated = await billSplitService.updateBillSplit(billSplitId, {
       title: validatedData.title,
       description: validatedData.description,
-      amount: validatedData.amount,
+      amount: validatedData.amount ?? undefined,
       currency: validatedData.currency,
       splitType: validatedData.splitType,
       status: validatedData.status,

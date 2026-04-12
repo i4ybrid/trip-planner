@@ -35,7 +35,7 @@ import {
 } from '@/types';
 import { logger } from '@/lib/logger';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:16198/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
 // ============================================================================
 // CACHING LAYER
@@ -117,11 +117,12 @@ export async function deduplicatedFetch<T>(key: string, fetcher: () => Promise<T
 // ============================================================================
 export function createAbortableFetch<T>(
   url: string,
-  options?: RequestInit
+  options?: RequestInit,
+  handleOptions?: { skipAuthRedirect?: boolean }
 ): { promise: Promise<T>; controller: AbortController } {
   const controller = new AbortController();
   const promise = fetch(url, { ...options, signal: controller.signal })
-    .then(handleResponse<T>)
+    .then((res) => handleResponse<T>(res, handleOptions))
     .finally(() => inFlightRequests.delete(url));
   
   return { promise, controller };
@@ -138,14 +139,22 @@ class ApiError extends Error {
   }
 }
 
-async function handleResponse<T>(response: Response): Promise<T> {
+export async function handleResponse<T>(response: Response, options?: { skipAuthRedirect?: boolean }): Promise<T> {
   if (!response.ok) {
     const status = response.status;
     
-    // Handle 401 - redirect to login
-    if (status === 401 && typeof window !== 'undefined') {
-      clearSessionCache();
-      window.location.href = '/login?reason=session_expired';
+    // Handle 401 - redirect to login (only if not already on login page and not skipping auth redirect)
+    // Only clear session cache if this is an auth-related 401 (not a general API failure)
+    // This prevents cascading failures when non-auth API calls return 401
+    if (status === 401 && typeof window !== 'undefined' && !options?.skipAuthRedirect) {
+      const isAuthFailure = response.url.includes('/auth/') || response.url.includes('/api/auth/');
+      if (isAuthFailure) {
+        clearSessionCache();
+      }
+      // Avoid infinite redirect loops when already on the login page
+      if (!window.location.pathname.startsWith('/login')) {
+        window.location.href = '/login?reason=session_expired';
+      }
       // Return empty data to prevent error while redirecting
       return {} as T;
     }
@@ -192,10 +201,10 @@ export async function getHeaders(): Promise<HeadersInit> {
           cachedSessionToken = session.accessToken;
           sessionCacheTime = now;
           headers['Authorization'] = `Bearer ${session.accessToken}`;
-        } else {
-          // No token means not authenticated - clear cache
-          cachedSessionToken = null;
         }
+        // NOTE: Do NOT set cachedSessionToken = null when session is empty.
+        // This preserves the valid token so API calls keep authenticating
+        // during the cache window. Only update cache when we have a new valid token.
       }
     } catch (error) {
       // Session fetch failed, continue without auth

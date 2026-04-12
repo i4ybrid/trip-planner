@@ -40,24 +40,21 @@ error() {
 case "$ENVIRONMENT" in
     prod)
         NEXT_PUBLIC_API_URL="https://plan-api.eric-hu.com/api"
-        NEXTAUTH_URL="https://plan.eric-hu.com"
-        NEXT_PUBLIC_APP_URL="https://plan.eric-hu.com"
         IMAGE_TAG="prod"
         ENV_FILE="$PROJECT_ROOT/.env.prod"
+        COMPOSE_FILE="$PROJECT_ROOT/docker-compose.yml"
         ;;
     staging)
-        NEXT_PUBLIC_API_URL="http://localhost:16198"
-        NEXTAUTH_URL="http://localhost:16199"
-        NEXT_PUBLIC_APP_URL="http://localhost:16199"
+        NEXT_PUBLIC_API_URL="http://192.168.0.189:16198/api"
+        NEXTAUTH_URL="http://192.168.0.189:16199"
         IMAGE_TAG="staging"
         ENV_FILE="$PROJECT_ROOT/.env.staging"
+        COMPOSE_FILE="$PROJECT_ROOT/docker-compose.yml"
         ;;
     dev)
-        NEXT_PUBLIC_API_URL="http://localhost:4000"
-        NEXTAUTH_URL="http://localhost:3000"
-        NEXT_PUBLIC_APP_URL="http://localhost:3000"
-        IMAGE_TAG="dev"
-        ENV_FILE="$PROJECT_ROOT/.env"
+        log "Dev environment — skipping Docker builds (using start-dev.sh)"
+        log "Build complete."
+        exit 0
         ;;
     *)
         error "Unknown environment: $ENVIRONMENT. Use: prod, staging, or dev"
@@ -71,27 +68,19 @@ cd "$PROJECT_ROOT"
 
 log "Building for environment: $ENVIRONMENT"
 log "  NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL"
-log "  NEXTAUTH_URL=$NEXTAUTH_URL"
 log "  Image tag: $IMAGE_TAG"
 
-if [ "$ENVIRONMENT" != "dev" ]; then
-    if [ ! -f "$ENV_FILE" ]; then
-        error "$ENV_FILE not found. Please create it before deploying."
-    fi
-    log "Loading environment variables from $ENV_FILE..."
-    source "$ENV_FILE"
+if [ ! -f "$ENV_FILE" ]; then
+    error "$ENV_FILE not found. Please create it before deploying."
 fi
+
+log "Loading environment variables from $ENV_FILE..."
+source "$ENV_FILE"
 
 log "Cleaning previous build artifacts..."
 rm -rf "$PROJECT_ROOT/backend/dist" || true
 rm -rf "$PROJECT_ROOT/frontend/.next" || true
 rm -rf "$PROJECT_ROOT/frontend/node_modules/.cache" || true
-
-if [ "$ENVIRONMENT" = "dev" ]; then
-    log "Dev environment — skipping Docker builds (using source mount)"
-    log "Build complete. Run 'docker compose up' to start."
-    exit 0
-fi
 
 log "Installing backend dependencies..."
 cd "$PROJECT_ROOT/backend"
@@ -106,18 +95,26 @@ npm install --legacy-peer-deps
 
 log "Building frontend..."
 rm -rf .next || true
+export NODE_OPTIONS="--max-old-space-size=2048"
 npm run build
 
 log "Building frontend Docker image..."
 cd "$PROJECT_ROOT"
 docker build \
     --build-arg NEXT_PUBLIC_API_URL="$NEXT_PUBLIC_API_URL" \
+    --build-arg NEXTAUTH_SECRET="$NEXTAUTH_SECRET" \
+    --build-arg NEXTAUTH_URL="$NEXTAUTH_URL" \
+    --build-arg AUTH_TRUST_HOST="$AUTH_TRUST_HOST" \
     -f frontend/Dockerfile \
     -t "$FRONTEND_IMAGE" \
     ./frontend
 
 log "Building backend Docker image..."
 docker build -f backend/Dockerfile -t "$BACKEND_IMAGE" ./backend
+
+# Stop any containers using the warmup port
+log "Cleaning up port 16199..."
+docker ps --filter "publish=16199" -q | xargs -r docker stop 2>/dev/null || true
 
 log "Warming up frontend routes..."
 
@@ -134,7 +131,7 @@ sleep 10
 
 for route in "${FRONTEND_ROUTES[@]}"; do
     log "Warming up $route..."
-    curl -s -o /dev/null -w "%{http_code}" "http://localhost:16199$route" || warn "Failed to warm up $route"
+    curl -s -o /dev/null -w "%{http_code}" "${NEXTAUTH_URL}$route" || warn "Failed to warm up $route"
     sleep 1
 done
 
@@ -152,51 +149,27 @@ docker save "$FRONTEND_IMAGE" | gzip > "$DIST_DIR/trip-planner-frontend-$IMAGE_T
 log "Saving backend Docker image..."
 docker save "$BACKEND_IMAGE" | gzip > "$DIST_DIR/trip-planner-backend-$IMAGE_TAG.tar.gz"
 
-if [ "$ENVIRONMENT" = "prod" ]; then
-    log "Copying deployment configuration..."
-    cp "$PROJECT_ROOT/docker-compose.prod.yml" "$DIST_DIR/docker-compose.yml"
-    if [ -f "$ENV_FILE" ]; then
-        cp "$ENV_FILE" "$DIST_DIR/.env"
-    fi
-
-    # Ensure docker-compose.yml in dist uses images and not builds
-    sed -i 's/build:/# build:/g' "$DIST_DIR/docker-compose.yml" 2>/dev/null || true
-    sed -i 's/context:/# context:/g' "$DIST_DIR/docker-compose.yml" 2>/dev/null || true
-    sed -i 's/dockerfile:/# dockerfile:/g' "$DIST_DIR/docker-compose.yml" 2>/dev/null || true
-    sed -i 's/target:/# target:/g' "$DIST_DIR/docker-compose.yml" 2>/dev/null || true
-    sed -i 's/args:/# args:/g' "$DIST_DIR/docker-compose.yml" 2>/dev/null || true
-
-    # Update image tags to match
-    sed -i "s/trip-planner-frontend:latest/trip-planner-frontend:prod/g" "$DIST_DIR/docker-compose.yml"
-    sed -i "s/trip-planner-backend:latest/trip-planner-backend:prod/g" "$DIST_DIR/docker-compose.yml"
-
-    # Create deploy script in dist
-    cat > "$DIST_DIR/deploy.sh" <<EOF
+# Create deploy script (uses docker-compose.yml in project root)
+log "Creating deploy script..."
+ENV_FILE=".env.$ENVIRONMENT"
+cat > "$DIST_DIR/deploy.sh" <<EOF
 #!/bin/bash
 set -e
+PROJECT_ROOT="/mnt/user/development/trip-planner"
+cd "$PROJECT_ROOT"
+
+# Stop and remove existing containers and volumes for fresh deploy
+echo "🧹 Cleaning up existing containers and volumes..."
+docker compose --env-file .env.$ENVIRONMENT down -v 2>/dev/null || true
+
 echo "🚀 Loading images..."
-docker load < trip-planner-frontend-prod.tar.gz
-docker load < trip-planner-backend-prod.tar.gz
+docker load < dist/trip-planner-frontend-$IMAGE_TAG.tar.gz
+docker load < dist/trip-planner-backend-$IMAGE_TAG.tar.gz
 echo "🚢 Starting services..."
-docker compose up -d
+docker compose --env-file .env.$ENVIRONMENT up -d
 echo "📦 Creating database tables (if needed)..."
 docker compose exec -T backend npx prisma db push --skip-generate
 echo "✅ Deployment complete!"
 EOF
-    chmod +x "$DIST_DIR/deploy.sh"
-fi
+chmod +x "$DIST_DIR/deploy.sh"
 
-echo ""
-echo "Build artifacts:"
-echo "  - trip-planner-frontend-$IMAGE_TAG.tar.gz"
-echo "  - trip-planner-backend-$IMAGE_TAG.tar.gz"
-if [ "$ENVIRONMENT" = "prod" ]; then
-    echo "  - docker-compose.yml (updated for image use)"
-    echo "  - .env"
-    echo "  - deploy.sh"
-fi
-echo ""
-echo "Usage:"
-echo "  bash scripts/build-deploy.sh prod    # builds prod images, saves to dist/"
-echo "  bash scripts/build-deploy.sh staging # builds staging images, saves to dist/"
-echo "  bash scripts/build-deploy.sh dev     # dev mode, no Docker build"

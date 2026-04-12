@@ -23,8 +23,7 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './tests/e2e',
-  globalSetup: './tests/e2e/global-setup',
-  timeout: 60 * 1000,
+timeout: 60 * 1000,
   expect: {
     timeout: 30 * 1000,  // 30s for first assertion on a page (e.g. page.goto + first expect)
   },
@@ -38,7 +37,7 @@ export default defineConfig({
   ],
   
   use: {
-    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000',
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://192.168.0.189:16199',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
