@@ -556,7 +556,7 @@ Browser → Cloudflare (proxies) → 67.254.222.75 (public IP)
 - **Cloudflare** proxies both `plan.eric-hu.com` and `plan-api.eric-hu.com`
 - **Nginx** on Unraid handles routing based on domain
 - **Browser calls backend directly** via `plan-api.eric-hu.com/api` (NOT through the frontend domain)
-- **Backend CORS** is configured with `FRONTEND_URL=https://plan.eric-hu.com` so it sends the correct `Access-Control-Allow-Origin` header for browser requests from the frontend
+- **Backend CORS** uses `origin: true` (permissive) — no origin restriction
 
 ### Environment Configuration
 
@@ -565,6 +565,8 @@ Browser → Cloudflare (proxies) → 67.254.222.75 (public IP)
 | prod | `https://plan-api.eric-hu.com/api` | `http://backend:4000/api` | `https://plan.eric-hu.com` |
 | staging | `http://192.168.0.189:16198/api` | `http://backend:4000/api` | `http://192.168.0.189:16199` |
 | dev | `http://localhost:4000/api` | `http://localhost:4000/api` | `http://localhost:3000` |
+
+`NEXT_PUBLIC_API_URL` and `INTERNAL_API_URL` are passed as `--build-arg` values so they are baked into the Docker images at build time.
 
 #### Dev Environment Setup (April 2025)
 
@@ -586,39 +588,15 @@ Browser → Cloudflare (proxies) → 67.254.222.75 (public IP)
 | `NEXTAUTH_SECRET` | NextAuth JWT signing secret |
 | `JWT_SECRET` | Backend JWT signing secret |
 | `DATABASE_URL` | PostgreSQL connection string |
-| `FRONTEND_URL` | Allowed CORS origins (comma-separated) |
+| `FRONTEND_URL` | Socket.IO CORS — allowed origin hostnames (comma-separated) |
 
 #### CORS Configuration
 
 **Backend CORS** (`backend/src/index.ts`):
-Uses dynamic origin validation to allow any subdomain of the configured `FRONTEND_URL`:
-
-```typescript
-app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true);
-    
-    const hostname = new URL(origin).hostname;
-    const baseDomain = hostname.split('.').slice(-2).join('.');
-    
-    const isAllowed = allowedOrigins.some(allowed => {
-      const allowedHostname = new URL(allowed).hostname;
-      const allowedBaseDomain = allowedHostname.split('.').slice(-2).join('.');
-      return hostname === allowedHostname || hostname.endsWith('.' + allowedBaseDomain);
-    });
-    
-    callback(isAllowed ? null : new Error('Not allowed by CORS'), isAllowed);
-  },
-  credentials: true,
-}));
-```
+Uses `origin: true` for permissive CORS in all environments. Credentials enabled.
 
 **Socket.IO CORS** (`backend/src/lib/socket.ts`):
-Same dynamic validation as backend CORS.
-
-**How it works:**
-1. `FRONTEND_URL=http://localhost:3000` allows requests from `localhost:3000` and any subdomain like `app.localhost:3000`, `dev.localhost:3000`, etc.
-2. When running locally without Docker, `DATABASE_URL` should use `localhost:5432` (not `db:5432` which is for Docker networking).
+Validates origins against `FRONTEND_URL` env var (parsed as hostname). Allows exact hostname matches and subdomain matches within the same base domain.
 
 ### Build & Deploy Script
 
@@ -633,10 +611,10 @@ bash scripts/build-deploy.sh dev    # dev mode, no Docker build
 | Env | NEXT_PUBLIC_API_URL | NEXTAUTH_URL | Image tag |
 | -----|---------------------------|--------------------------| --------- |
 | prod | `https://plan-api.eric-hu.com/api` | `https://plan.eric-hu.com` | `:prod` |
-| staging | `http://192.168.0.8:16198/api` | `http://192.168.0.8:16199` | `:staging` |
+| staging | `http://192.168.0.189:16198/api` | `http://192.168.0.189:16199` | `:staging` |
 | dev | `http://localhost:4000` | `http://localhost:3000` | `:dev` |
 
-The `NEXT_PUBLIC_API_URL` is passed as a `--build-arg` so it is baked into the image at build time. No hardcoding in `docker-compose` files.
+`NEXT_PUBLIC_API_URL` is passed as a `--build-arg` so it is baked into the image at build time.
 
 ### Auth Troubleshooting (April 2025)
 
@@ -651,7 +629,7 @@ The `NEXT_PUBLIC_API_URL` is passed as a `--build-arg` so it is baked into the i
    ```
    If this fails, the user doesn't exist or password is wrong.
 
-2. Verify `.env.dev` has `INTERNAL_API_URL` set. Without it, NextAuth falls back to `http://backend:4000/api` which won't resolve locally.
+2. Verify `.env.dev` has `INTERNAL_API_URL` set. Without it, NextAuth may fail to call the backend.
 
 3. Check the frontend's environment variables:
    ```bash
@@ -664,7 +642,7 @@ The `NEXT_PUBLIC_API_URL` is passed as a `--build-arg` so it is baked into the i
 **How login works:**
 1. User submits form at `/login`
 2. NextAuth calls `authorize(credentials)` in `src/lib/next-auth/options.ts`
-3. `authorize` fetches `http://localhost:4000/api/auth/login`
+3. `authorize` fetches `${INTERNAL_API_URL}/auth/login`
 4. Backend verifies password, returns `{ data: { user, token } }`
 5. NextAuth stores the JWT in the session cookie
 
