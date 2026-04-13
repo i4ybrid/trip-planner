@@ -8,7 +8,6 @@ const nextConfig = {
   },
   experimental: {
     workerThreads: false,
-    minimize: true,
   },
   // Keep webpack cache enabled (default behavior) for faster rebuilds
   onDemandEntries: {

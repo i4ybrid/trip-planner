@@ -37,25 +37,37 @@ export function getConnectionManager(): Map<string, Socket> {
 export function setupSocketIO(server: HTTPServer) {
   const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:16199').split(',').map(o => o.trim());
   
+  function isOriginAllowed(origin: string | undefined): boolean {
+    if (!origin) return true;
+    
+    try {
+      const originUrl = new URL(origin);
+      const originHostname = originUrl.hostname;
+      
+      if (allowedOrigins.some(allowed => new URL(allowed).hostname === originHostname)) {
+        return true;
+      }
+      
+      if (!/^\d+\.\d+\.\d+\.\d+$/.test(originHostname)) {
+        if (allowedOrigins.some(allowed => {
+          const allowedHostname = new URL(allowed).hostname;
+          const allowedBaseDomain = allowedHostname.split('.').slice(-2).join('.');
+          return originHostname.endsWith('.' + allowedBaseDomain);
+        })) {
+          return true;
+        }
+      }
+      
+      return false;
+    } catch {
+      return false;
+    }
+  }
+  
   const io = new SocketIOServer(server, {
     cors: {
       origin: (origin, callback) => {
-        if (!origin) return callback(null, true);
-        
-        const hostname = new URL(origin).hostname;
-        const baseDomain = hostname.split('.').slice(-2).join('.');
-        
-        const isAllowed = allowedOrigins.some(allowed => {
-          const allowedHostname = new URL(allowed).hostname;
-          const allowedBaseDomain = allowedHostname.split('.').slice(-2).join('.');
-          return hostname === allowedHostname || hostname.endsWith('.' + allowedBaseDomain);
-        });
-        
-        if (isAllowed) {
-          callback(null, true);
-        } else {
-          callback(new Error('Not allowed by CORS'));
-        }
+        callback(isOriginAllowed(origin) ? null : new Error('Not allowed by CORS'), isOriginAllowed(origin));
       },
       credentials: true,
     },

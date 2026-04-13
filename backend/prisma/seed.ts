@@ -9,6 +9,7 @@ const SEED_USERS = [
   { id: 'user-2', email: 'sarah@example.com', name: 'Sarah Chen', password: 'password123' },
   { id: 'user-3', email: 'mike@example.com', name: 'Mike Johnson', password: 'password123' },
   { id: 'user-4', email: 'emma@example.com', name: 'Emma Wilson', password: 'password123' },
+  { id: 'user-5', email: 'cryogenicsleep@hotmail.com', name: 'Eric Hu', password: 'password123' },
 ];
 
 const SEED_SETTINGS = {

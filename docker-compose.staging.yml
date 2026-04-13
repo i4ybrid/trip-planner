@@ -8,7 +8,7 @@ services:
       dockerfile: Dockerfile
       target: runner
       args:
-        - INTERNAL_API_URL=http://192.168.0.189:16198/api
+        - INTERNAL_API_URL=http://backend:4000/api
         - NEXT_PUBLIC_API_URL=http://192.168.0.189:16198/api
         - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
         - NEXTAUTH_URL=http://192.168.0.189:16199

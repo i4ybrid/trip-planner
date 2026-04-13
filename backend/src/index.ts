@@ -46,27 +46,10 @@ app.use(helmet({
 }));
 
 // CORS configuration
-const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:16199').split(',').map(o => o.trim());
+// Allow all origins in production (can be restricted later if needed)
 
 app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true);
-    
-    const hostname = new URL(origin).hostname;
-    const baseDomain = hostname.split('.').slice(-2).join('.');
-    
-    const isAllowed = allowedOrigins.some(allowed => {
-      const allowedHostname = new URL(allowed).hostname;
-      const allowedBaseDomain = allowedHostname.split('.').slice(-2).join('.');
-      return hostname === allowedHostname || hostname.endsWith('.' + allowedBaseDomain);
-    });
-    
-    if (isAllowed) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+  origin: true,
   credentials: true,
 }));
 
