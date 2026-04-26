@@ -48,7 +48,6 @@ async function checkMilestoneDue() {
       },
       include: {
         trip: {
-          select: { id: true, name: true },
           include: {
             members: {
               where: { status: 'CONFIRMED' },
@@ -98,7 +97,6 @@ async function checkMilestoneOverdue() {
       },
       include: {
         trip: {
-          select: { id: true, name: true },
           include: {
             members: {
               where: { status: 'CONFIRMED' },
@@ -148,7 +146,6 @@ async function checkMilestoneReminders() {
       },
       include: {
         trip: {
-          select: { id: true, name: true },
           include: {
             members: {
               where: { status: 'CONFIRMED' },

@@ -1,14 +1,21 @@
 import webpush from 'web-push';
 import { getPrisma } from '@/lib/prisma-client';
 
-const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY!;
-const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY!;
-const VAPID_SUBJECT = process.env.VAPID_SUBJECT!;
+let initialized = false;
 
-webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+function ensureInitialized() {
+  if (initialized) return;
+  webpush.setVapidDetails(
+    process.env.VAPID_SUBJECT!,
+    process.env.VAPID_PUBLIC_KEY!,
+    process.env.VAPID_PRIVATE_KEY!
+  );
+  initialized = true;
+}
 
 export const pushService = {
   async subscribe(userId: string, subscription: { endpoint: string; keys: { p256dh: string; auth: string } }) {
+    ensureInitialized();
     const prisma = getPrisma();
     await prisma.pushSubscription.upsert({
       where: { userId },
@@ -32,6 +39,7 @@ export const pushService = {
   },
 
   async sendPush(userId: string, notification: { title: string; body: string; data?: Record<string, unknown> }) {
+    ensureInitialized();
     const prisma = getPrisma();
     const sub = await prisma.pushSubscription.findUnique({ where: { userId } });
     if (!sub) return;
