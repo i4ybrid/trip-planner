@@ -360,6 +360,10 @@ async function main() {
   await prisma.mediaItem.deleteMany();
   await prisma.dmConversation.deleteMany();
   await prisma.settings.deleteMany();
+  await prisma.pushSubscription.deleteMany();
+  await prisma.passwordResetToken.deleteMany();
+  await prisma.blockedUser.deleteMany();
+  await prisma.inviteCode.deleteMany();
   await prisma.user.deleteMany();
 
   // Create users with hashed passwords
