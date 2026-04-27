@@ -72,9 +72,9 @@ export default function LoginPage() {
 
     setIsValidatingSession(true);
 
-    // Race getCurrentUser against a 5-second timeout
+    // Race getCurrentUser against a 1500ms timeout (keep short for E2E test performance)
     const timeout = new Promise<null>((resolve) =>
-      setTimeout(() => resolve(null), 5000)
+      setTimeout(() => resolve(null), 1500)
     );
 
     Promise.race([

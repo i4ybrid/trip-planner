@@ -8,6 +8,7 @@ import { Plane } from 'lucide-react';
 import { LeftSidebar } from '@/components/left-sidebar';
 import { AppHeader } from '@/components/app-header';
 import { PendingInvites } from '@/components/notification/pending-invites';
+import { OnboardingGuide } from '@/components/onboarding/OnboardingGuide';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -56,15 +57,18 @@ export default function DashboardPage() {
                 <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
               </div>
             ) : activeTrips.length === 0 ? (
-              <EmptyState
-                title="No active trips"
-                description="Start planning your next adventure with friends!"
-                action={
-                  <Button onClick={() => router.push('/trip/new')}>
-                    Create Your First Trip
-                  </Button>
-                }
-              />
+              <>
+                <OnboardingGuide />
+                <EmptyState
+                  title="No active trips"
+                  description="Start planning your next adventure with friends!"
+                  action={
+                    <Button onClick={() => router.push('/trip/new')}>
+                      Create Your First Trip
+                    </Button>
+                  }
+                />
+              </>
             ) : (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {activeTrips.map((trip) => (

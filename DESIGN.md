@@ -531,6 +531,30 @@ The "Add Expense" button on the Payments page opens an `AddExpenseModal` instead
 
 ---
 
+## UI Components
+
+### OnboardingGuide
+
+A guided onboarding experience displayed on the dashboard for users with zero trips. Replaces the bare `EmptyState` with a welcoming, actionable multi-step guide.
+
+**Location:** `frontend/src/components/onboarding/OnboardingGuide.tsx`
+
+**Design:**
+- **3-step card grid** (sm: 1-col, lg: 3-col) with staggered fade-in-up animations
+- Each card: icon, title, description, and hover-reveal action button
+- Cards: "Add Friends" (Users icon), "Create a Trip" (Plane icon), "Invite Friends" (Send icon)
+- Dismissible via X button — state persisted to `localStorage` key `tripplanner_onboarding_dismissed`
+- Renders above the `EmptyState` when `activeTrips.length === 0`
+
+**Animation:** CSS keyframes `fade-in` (0.3s) and `fade-in-up` (0.4s, staggered 100ms per card) defined in `frontend/src/app/globals.css` under `@layer utilities`
+
+**Files:**
+- `frontend/src/components/onboarding/OnboardingGuide.tsx` — main container + dismiss logic
+- `frontend/src/components/onboarding/OnboardingCard.tsx` — individual step card
+- `frontend/src/app/dashboard/page.tsx` — imports and renders `OnboardingGuide` above `EmptyState`
+
+---
+
 ## Testing
 
 **Backend:** Vitest + PrismaStub (87/111 passing) · `backend/src/services/*.test.ts`
