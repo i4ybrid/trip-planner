@@ -10,7 +10,7 @@ import { HoverDropdown } from '@/components/hover-dropdown';
 import { formatDateRange, formatCurrency, cn, getNextStatus, getNextStatusLabel, canMoveToHappening } from '@/lib/utils';
 import { format } from 'date-fns';
 import { logger } from '@/lib/logger';
-import { MapPin, Calendar, Users, DollarSign, Share2, Settings, MoreVertical, MoreHorizontal, Shield, Trash2, Check } from 'lucide-react';
+import { MapPin, Calendar, Users, DollarSign, Share2, Settings, MoreVertical, MoreHorizontal, Shield, Trash2, Check, Globe, Download } from 'lucide-react';
 import { api } from '@/services/api';
 import { TripMember, User, Activity, BillSplit, MemberRole, TripStyle, TripStatus } from '@/types';
 import { useAuth } from '@/hooks/use-auth';
@@ -187,6 +187,42 @@ export default function TripOverview() {
           )}
         </div>
         <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={async () => {
+              const result = await api.getCalendarGoogleUrl(tripId);
+              if (result.data?.url) {
+                window.open(result.data.url, '_blank');
+              }
+            }}
+            title="Export to Google Calendar"
+          >
+            <Globe className="mr-2 h-4 w-4" />
+            Google Calendar
+          </Button>
+          <Button
+            variant="outline"
+            onClick={async () => {
+              const result = await api.getCalendarOutlookUrl(tripId);
+              if (result.data?.url) {
+                window.open(result.data.url, '_blank');
+              }
+            }}
+            title="Export to Outlook Calendar"
+          >
+            <Globe className="mr-2 h-4 w-4" />
+            Outlook
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              window.location.href = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/trips/${tripId}/calendar.ics`;
+            }}
+            title="Download .ics file"
+          >
+            <Download className="mr-2 h-4 w-4" />
+            .ics
+          </Button>
           {canInvite && (
             <Button variant="outline" onClick={() => setShowInviteModal(true)}>
               <Share2 className="mr-2 h-4 w-4" />

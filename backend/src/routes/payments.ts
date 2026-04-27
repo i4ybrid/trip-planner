@@ -5,6 +5,8 @@ import { debtSimplifierService } from '@/services/debtSimplifier.service';
 import { createBillSplitSchema, updateBillSplitSchema } from '@/lib/validations';
 import { tripService } from '@/services/trip.service';
 import { checkAndUpdateSettlementMilestones, getSettlementStatus } from '@/services/settlement.service';
+import { upload } from '@/middleware/upload';
+import { storageConfig } from '@/lib/storage';
 
 const router = Router();
 
@@ -328,6 +330,73 @@ router.get('/trips/:tripId/debt-simplify', async (req: AuthRequest, res) => {
 
     const result = await debtSimplifierService.getSimplifiedDebts(tripId);
     res.json({ data: result });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/payments/:id/receipt - Upload receipt image
+router.post('/payments/:id/receipt', authMiddleware, upload.single('receipt'), async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.userId;
+    const billSplitId = req.params.id;
+    const file = req.file;
+
+    if (!file) {
+      res.status(400).json({ error: 'No receipt file provided' });
+      return;
+    }
+
+    // Check bill split exists and user has permission
+    const billSplit = await billSplitService.getBillSplit(billSplitId);
+    if (!billSplit) {
+      res.status(404).json({ error: 'Bill split not found' });
+      return;
+    }
+
+    const permission = await tripService.checkMemberPermission(billSplit.tripId, userId, ['MASTER', 'ORGANIZER', 'MEMBER']);
+    if (!permission.hasPermission) {
+      res.status(403).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    // Build the URL for the uploaded file
+    const receiptUrl = `/uploads/${file.filename}`;
+
+    // Update the bill split with the receipt URL
+    const updated = await billSplitService.updateReceiptUrl(billSplitId, receiptUrl);
+
+    res.json({ data: { receiptUrl, billSplit: updated } });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// DELETE /api/payments/:id/receipt - Remove receipt image
+router.delete('/payments/:id/receipt', authMiddleware, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.userId;
+    const billSplitId = req.params.id;
+
+    const billSplit = await billSplitService.getBillSplit(billSplitId);
+    if (!billSplit) {
+      res.status(404).json({ error: 'Bill split not found' });
+      return;
+    }
+
+    const permission = await tripService.checkMemberPermission(billSplit.tripId, userId, ['MASTER', 'ORGANIZER', 'MEMBER']);
+    if (!permission.hasPermission) {
+      res.status(403).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    if (billSplit.receiptUrl) {
+      await storageConfig.deleteFile(billSplit.receiptUrl);
+    }
+
+    const updated = await billSplitService.updateReceiptUrl(billSplitId, null);
+
+    res.json({ data: { billSplit: updated } });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }

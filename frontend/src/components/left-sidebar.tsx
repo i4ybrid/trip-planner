@@ -8,6 +8,7 @@ import {
   Plus, ChevronRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { SearchBar } from '@/components/search';
 
 interface NavItem {
   icon: React.ReactNode;
@@ -130,6 +131,16 @@ export function LeftSidebar() {
           {!(isMobile && isCollapsed) && (
             <span className="text-lg font-bold whitespace-nowrap">TripPlanner</span>
           )}
+        </div>
+
+        {/* Search */}
+        <div className={cn(
+          "px-3 py-2",
+          isMobile && isCollapsed && "px-2"
+        )}>
+          <SearchBar
+            placeholder={isMobile && isCollapsed ? "Search…" : undefined}
+          />
         </div>
 
         {/* Navigation */}

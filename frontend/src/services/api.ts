@@ -869,6 +869,33 @@ export const api = {
     return result;
   },
 
+  async uploadReceipt(billSplitId: string, file: File): Promise<ApiResponse<{ receiptUrl: string; billSplit: BillSplit }>> {
+    const formData = new FormData();
+    formData.append('receipt', file);
+
+    const headers = await getHeaders();
+    delete (headers as any)['Content-Type']; // Let browser set it for FormData
+
+    const response = await fetch(`${API_BASE_URL}/payments/${billSplitId}/receipt`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+    const result = await handleResponse<ApiResponse<{ receiptUrl: string; billSplit: BillSplit }>>(response);
+    invalidateCacheByPrefix('billsplits');
+    return result;
+  },
+
+  async deleteReceipt(billSplitId: string): Promise<ApiResponse<{ billSplit: BillSplit }>> {
+    const response = await fetch(`${API_BASE_URL}/payments/${billSplitId}/receipt`, {
+      method: 'DELETE',
+      headers: await getHeaders(),
+    });
+    const result = await handleResponse<ApiResponse<{ billSplit: BillSplit }>>(response);
+    invalidateCacheByPrefix('billsplits');
+    return result;
+  },
+
   async getBillSplitMembers(billSplitId: string): Promise<ApiResponse<BillSplitMember[]>> {
     const response = await fetch(`${API_BASE_URL}/payments/${billSplitId}/members`, {
       headers: await getHeaders(),

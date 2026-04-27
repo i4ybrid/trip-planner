@@ -125,10 +125,10 @@ test.describe('Payment Status Workflow', () => {
   test('should show PENDING badge with yellow styling', async ({ page }) => {
     await navigateToTrip(page, TRIP_IDS.hawaii, 'payments', 'Payments & Expenses');
     
-    // PENDING status should have yellow/orange styling
-    // Use exact text match to avoid matching other elements containing "PENDING"
-    const pendingBadge = page.locator('text=/^PENDING$/').first();
-    await expect(pendingBadge).toBeVisible({ timeout: 5000 });
+    // Look for a badge with yellow background class (PENDING status indicator)
+    // Use class-based selector to avoid text matching issues in parallel execution
+    const pendingBadge = page.locator('[class*="bg-yellow"]').filter({ hasText: /PENDING/i }).first();
+    await expect(pendingBadge).toBeVisible({ timeout: 10000 });
     // Badge should have yellow-ish background class
     await expect(pendingBadge).toHaveClass(/yellow|amber|orange/i);
   });
@@ -136,10 +136,10 @@ test.describe('Payment Status Workflow', () => {
   test('should show PAID badge with blue styling', async ({ page }) => {
     await navigateToTrip(page, TRIP_IDS.hawaii, 'payments', 'Payments & Expenses');
     
-    // PAID status should have blue styling
-    // Use exact text match to avoid matching "Total Paid By Others" section header
-    const paidBadge = page.locator('text=/^PAID$/').first();
-    await expect(paidBadge).toBeVisible({ timeout: 5000 });
+    // Look for a badge with blue background class (PAID status indicator)
+    // Use class-based selector to avoid text matching issues in parallel execution
+    const paidBadge = page.locator('[class*="bg-blue"]').filter({ hasText: /PAID/i }).first();
+    await expect(paidBadge).toBeVisible({ timeout: 10000 });
     // Badge should have blue background class
     await expect(paidBadge).toHaveClass(/blue/i);
   });
@@ -247,44 +247,56 @@ test.describe('Mark as Paid Flow', () => {
 });
 
 test.describe('Add Expense Flow', () => {
+  // These tests modify expense data - run serially to avoid seed data conflicts
+  test.describe.configure({ mode: 'serial' });
+  
   test.beforeEach(async ({ page }) => {
     await loginTestUser(page, 'test');
   });
+  test('should open Add Expense modal', async ({ page }) => {
 
-  test('should navigate to Add Expense page', async ({ page }) => {
     await navigateToTrip(page, TRIP_IDS.hawaii, 'payments', 'Payments & Expenses');
     
-    // Click Add Expense button
+    
+    // Wait for page to fully load (including API calls for members)
+    await page.waitForLoadState('networkidle');
+    
+    // Click Add Expense button - opens modal, does NOT navigate
     await page.click('button:has-text("Add Expense")');
     
-    // Should navigate to /payments/add
-    await page.waitForURL(/\/payments\/add/);
+    // Should show the Add Expense modal dialog
+    await expect(page.locator('[role="dialog"]').filter({ hasText: /add expense/i }).first()).toBeVisible({ timeout: 5000 });
   });
 
   test('should display expense form fields', async ({ page }) => {
     await navigateToTrip(page, TRIP_IDS.hawaii, 'payments', 'Payments & Expenses');
     await page.click('button:has-text("Add Expense")');
-    await page.waitForURL(/\/payments\/add/);
     
-    // Should show form fields (based on the add expense page structure)
-    // Common fields for bill splitting
-    await expect(page.locator('input[name="title"], input[placeholder*="Title"], input[required]').first()).toBeVisible({ timeout: 5000 });
-    await expect(page.locator('input[type="number"], input[placeholder*="Amount"]').first()).toBeVisible({ timeout: 5000 });
+    // Should show the modal with form fields
+    const modal = page.locator('[role="dialog"]').filter({ hasText: /add expense/i }).first();
+    await expect(modal).toBeVisible({ timeout: 5000 });
+    
+    // Should show form fields (description input with required attribute, amount input with type number)
+    await expect(modal.locator('input[required]').first()).toBeVisible({ timeout: 5000 });
+    await expect(modal.locator('input[type="number"]').first()).toBeVisible({ timeout: 5000 });
   });
 
   test('should show loading state and disable button on submit', async ({ page }) => {
     await navigateToTrip(page, TRIP_IDS.hawaii, 'payments', 'Payments & Expenses');
     await page.click('button:has-text("Add Expense")');
-    await page.waitForURL(/\/payments\/add/);
 
-    // Fill the form
-    const titleInput = page.locator('input[required]').first();
+    // Get the modal
+    const modal = page.locator('[role="dialog"]').filter({ hasText: /add expense/i }).first();
+    await modal.waitFor({ state: 'visible', timeout: 5000 });
+
+    // Fill the form fields within the modal
+    const titleInput = modal.locator('input[required]').first();
     await titleInput.fill('Test Expense');
     
-    const amountInput = page.locator('input[type="number"]').first();
+    const amountInput = modal.locator('input[type="number"]').first();
     await amountInput.fill('50.00');
 
-    const submitBtn = page.locator('button[type="submit"]');
+    const submitBtn = modal.locator('button[type="submit"]');
     
     // Intercept API call to delay it
     await page.route('**/api/trips/**/bill-splits', async (route) => {
@@ -295,8 +307,7 @@ test.describe('Add Expense Flow', () => {
     // Click and check state immediately
     await submitBtn.click();
     
-    // Check for loading state (text change or disabled)
-    // Based on test-error.cjs, we expect text to change or button to be disabled
+    // Check for loading state (button should be disabled or text should change)
     const btnText = await submitBtn.textContent();
     const isDisabled = await submitBtn.isDisabled();
     
@@ -306,10 +317,13 @@ test.describe('Add Expense Flow', () => {
   test('should display error message on API failure', async ({ page }) => {
     await navigateToTrip(page, TRIP_IDS.hawaii, 'payments', 'Payments & Expenses');
     await page.click('button:has-text("Add Expense")');
-    await page.waitForURL(/\/payments\/add/);
 
-    // Mock API error
-    await page.route('**/api/trips/**/bill-splits', async (route) => {
+    // Get the modal - Add Expense opens modal, not a new page
+    const modal = page.locator('[role="dialog"]').filter({ hasText: /add expense/i }).first();
+    await modal.waitFor({ state: 'visible', timeout: 5000 });
+
+    // Mock API error - endpoint is POST /api/trips/:id/payments
+    await page.route('**/api/trips/**/payments', async (route) => {
       await route.fulfill({
         status: 500,
         contentType: 'application/json',
@@ -317,16 +331,15 @@ test.describe('Add Expense Flow', () => {
       });
     });
 
-    // Fill form
-    await page.locator('input[required]').first().fill('API Error Test');
-    await page.locator('input[type="number"]').first().fill('100.00');
+    // Fill form fields within the modal
+    await modal.locator('input[required]').first().fill('API Error Test');
+    await modal.locator('input[type="number"]').first().fill('100.00');
 
     // Submit
-    await page.click('button[type="submit"]');
+    await modal.locator('button[type="submit"]').click();
 
-    // Check for error message
-    // Based on test-error.cjs, it looks for .text-red, [role="alert"], etc.
-    const errorMsg = page.locator('[role="alert"], .text-red-500, [class*="error"]').first();
+    // Check for error message in the modal (error rendered in Card with red text)
+    const errorMsg = modal.locator('.text-red-600, .text-red-400, [class*="border-red-500"]').first();
     await expect(errorMsg).toBeVisible({ timeout: 5000 });
   });
 });

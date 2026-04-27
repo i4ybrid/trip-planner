@@ -2,6 +2,7 @@ import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import GoogleProvider from 'next-auth/providers/google';
 import FacebookProvider from 'next-auth/providers/facebook';
+import AppleProvider from 'next-auth/providers/apple';
 import { logger } from '@/lib/logger';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
@@ -16,6 +17,10 @@ export const authOptions: NextAuthOptions = {
     FacebookProvider({
       clientId: process.env.FACEBOOK_CLIENT_ID || '',
       clientSecret: process.env.FACEBOOK_CLIENT_SECRET || '',
+    }),
+    AppleProvider({
+      clientId: process.env.APPLE_CLIENT_ID || '',
+      clientSecret: process.env.APPLE_CLIENT_SECRET || '',
     }),
     // Credentials Provider
     CredentialsProvider({
@@ -64,7 +69,7 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async signIn({ user, account, profile }) {
       // For OAuth providers, sync user with backend
-      if (account?.provider === 'google' || account?.provider === 'facebook') {
+      if (account?.provider === 'google' || account?.provider === 'facebook' || account?.provider === 'apple') {
         try {
           // Get OAuth access token from account
           const oauthToken = account.access_token;
@@ -76,6 +81,9 @@ export const authOptions: NextAuthOptions = {
             avatarUrl = (profile as any).picture;
           } else if (provider === 'facebook' && profile) {
             avatarUrl = (profile as any).picture?.data?.url;
+          } else if (provider === 'apple' && profile) {
+            // Apple doesn't provide avatar URL via OAuth; leave undefined
+            avatarUrl = undefined;
           }
           
           // Call backend to create/get user and get our app token
@@ -118,11 +126,13 @@ export const authOptions: NextAuthOptions = {
         token.avatarUrl = (user as any).avatarUrl ?? null;
       }
       // Capture OAuth profile image in token
-      if (account?.provider === 'google' || account?.provider === 'facebook') {
+      if (account?.provider === 'google' || account?.provider === 'facebook' || account?.provider === 'apple') {
         if (profile) {
           const image = account.provider === 'google' 
             ? (profile as any).picture 
-            : (profile as any).picture?.data?.url;
+            : account.provider === 'facebook'
+            ? (profile as any).picture?.data?.url
+            : null; // Apple does not provide avatar via OAuth
           if (image) {
             token.image = image;
           }

@@ -22,7 +22,9 @@ import inviteCodesRouter from './routes/invite-codes';
 import emailInviteRouter from './routes/email-invite';
 import milestonesRouter from './routes/milestones';
 import settlementRouter from './routes/settlement';
+import calendarRouter from './routes/calendar';
 import pushRoutes from './routes/push.routes';
+import searchRouter from './routes/search';
 
 // Load environment variables
 dotenv.config();
@@ -110,7 +112,9 @@ app.use('/api', inviteCodesRouter);
 app.use('/api', emailInviteRouter);
 app.use('/api', milestonesRouter);
 app.use('/api', settlementRouter);
+app.use('/api', calendarRouter);
 app.use('/api', pushRoutes);
+app.use('/api', searchRouter);
 
 // 404 handler
 app.use((_req, res) => {

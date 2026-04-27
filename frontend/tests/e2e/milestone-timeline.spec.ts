@@ -59,7 +59,9 @@ test.describe.serial('Milestone Timeline Integration', () => {
     await page.waitForTimeout(1500);
 
     // Wait for either timeline content OR empty state to render
-    await page.waitForSelector('text="LOOKING BACK", text="LOOKING AHEAD", text="No timeline events yet"', { timeout: 10000 }).catch(() => {});
+    // CSS uppercase transforms "Looking Back"/"Looking Ahead" visually to UPPERCASE
+    // but DOM text remains sentence case, so use case-insensitive regex
+    await page.waitForSelector('text=/LOOKING BACK/i, text=/LOOKING AHEAD/i, text="No timeline events yet"', { timeout: 10000 }).catch(() => {});
 
     // Check if Generate button is visible (empty state)
     const generateBtn = page.locator('button', { hasText: 'Generate Default Milestones' }).first();
@@ -75,13 +77,14 @@ test.describe.serial('Milestone Timeline Integration', () => {
     }
 
     // Now check for "Looking Ahead" section with milestone content
-    const lookingAhead = page.locator('text="LOOKING AHEAD"').first();
+    // Use case-insensitive regex since CSS uppercase transforms display but DOM has sentence case
+    const lookingAhead = page.locator('text=/LOOKING AHEAD/i').first();
     const aheadVisible = await lookingAhead.isVisible({ timeout: 5000 }).catch(() => false);
 
     if (!aheadVisible) {
       // Either still loading or looking back only
       const empty = await page.locator('text="No timeline events yet"').first().isVisible({ timeout: 2000 }).catch(() => false);
-      const lookingBack = await page.locator('text="LOOKING BACK"').first().isVisible({ timeout: 3000 }).catch(() => false);
+      const lookingBack = await page.locator('text=/LOOKING BACK/i').first().isVisible({ timeout: 3000 }).catch(() => false);
       if (empty) {
         throw new Error('Timeline empty after milestone generation — Generate button click may have failed');
       }
@@ -131,15 +134,15 @@ test.describe.serial('Milestone Timeline Integration', () => {
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1500);
 
-    // Verify milestone in "Looking Ahead"
-    const lookingAhead = page.locator('text="LOOKING AHEAD"').first();
+    // Verify milestone in "Looking Ahead" — use case-insensitive regex for CSS uppercase transform
+    const lookingAhead = page.locator('text=/LOOKING AHEAD/i').first();
     const aheadVisible = await lookingAhead.isVisible({ timeout: 5000 }).catch(() => false);
 
     if (aheadVisible) {
       await expect(page.locator('text=/My Custom Booking Deadline/i').first()).toBeVisible({ timeout: 5000 });
     } else {
-      // Check Looking Back fallback
-      const lookingBack = await page.locator('text="LOOKING BACK"').first().isVisible({ timeout: 3000 }).catch(() => false);
+      // Check Looking Back fallback — use case-insensitive regex
+      const lookingBack = await page.locator('text=/LOOKING BACK/i').first().isVisible({ timeout: 3000 }).catch(() => false);
       if (lookingBack) {
         await expect(page.locator('text=/My Custom Booking Deadline/i').first()).toBeVisible({ timeout: 3000 });
         return;
@@ -164,13 +167,14 @@ test.describe.serial('Milestone Timeline Integration', () => {
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1500);
 
-    const lookingAhead = page.locator('text="LOOKING AHEAD"').first();
+    // Use case-insensitive regex for CSS uppercase transform
+    const lookingAhead = page.locator('text=/LOOKING AHEAD/i').first();
     const aheadVisible = await lookingAhead.isVisible({ timeout: 5000 }).catch(() => false);
 
     if (!aheadVisible) {
       const empty = await page.locator('text="No timeline events yet"').first().isVisible({ timeout: 2000 }).catch(() => false);
       if (empty) throw new Error('Timeline empty after API milestone creation');
-      const lookingBack = await page.locator('text="LOOKING BACK"').first().isVisible({ timeout: 3000 }).catch(() => false);
+      const lookingBack = await page.locator('text=/LOOKING BACK/i').first().isVisible({ timeout: 3000 }).catch(() => false);
       if (lookingBack) {
         await expect(page.locator('text=/API Test Milestone/i').first()).toBeVisible({ timeout: 3000 });
         return;
@@ -205,13 +209,14 @@ test.describe.serial('Milestone Timeline Integration', () => {
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1500);
 
-    const lookingAhead = page.locator('text="LOOKING AHEAD"').first();
+    // Use case-insensitive regex for CSS uppercase transform
+    const lookingAhead = page.locator('text=/LOOKING AHEAD/i').first();
     const aheadVisible = await lookingAhead.isVisible({ timeout: 5000 }).catch(() => false);
 
     if (aheadVisible) {
       await expect(page.locator('text=/Completion Test Milestone/i').first()).toBeVisible({ timeout: 5000 });
     } else {
-      const lookingBack = await page.locator('text="LOOKING BACK"').first().isVisible({ timeout: 3000 }).catch(() => false);
+      const lookingBack = await page.locator('text=/LOOKING BACK/i').first().isVisible({ timeout: 3000 }).catch(() => false);
       if (lookingBack) {
         await expect(page.locator('text=/Completion Test Milestone/i').first()).toBeVisible({ timeout: 3000 });
         return;

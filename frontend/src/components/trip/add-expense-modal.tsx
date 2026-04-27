@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Modal } from '@/components/ui/modal';
 import { Button } from '@/components/ui/button';
 import { Input, Textarea } from '@/components/ui/input';
@@ -8,7 +8,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Avatar } from '@/components/ui/avatar';
 import { formatCurrency, cn } from '@/lib/utils';
 import { api } from '@/services/api';
-import { DollarSign, Loader, Utensils, MapPin, Home, Package } from 'lucide-react';
+import { DollarSign, Loader, Utensils, MapPin, Home, Package, Camera, X, ImageIcon } from 'lucide-react';
 import { TripMember, User, CostType } from '@/types';
 import { useFormSubmit } from '@/hooks/useFormSubmit';
 
@@ -42,11 +42,16 @@ export function AddExpenseModal({ isOpen, onClose, tripId, members, onSuccess }:
   const [splitType, setSplitType] = useState<'equal' | 'shares' | 'percentage' | 'custom'>('equal');
   const [costType, setCostType] = useState<CostType>('PER_PERSON');
   const [notes, setNotes] = useState('');
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
+  const [isUploadingReceipt, setIsUploadingReceipt] = useState(false);
+  const [receiptUploadError, setReceiptUploadError] = useState<string | null>(null);
   const [splits, setSplits] = useState<SplitData[]>([]);
   const [lastEditedIndex, setLastEditedIndex] = useState<number | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { isSubmitting, error: hookError, submitForm } = useFormSubmit({
-    waitForNavigation: true,
+    waitForNavigation: false,
   });
 
   // Initialize splits when members change
@@ -70,6 +75,9 @@ export function AddExpenseModal({ isOpen, onClose, tripId, members, onSuccess }:
       setSplitType('equal');
       setCostType('PER_PERSON');
       setNotes('');
+      setReceiptFile(null);
+      setReceiptPreview(null);
+      setReceiptUploadError(null);
       setSplits(members.map(m => ({ userId: m.userId, shares: 1, percentage: 0, customAmount: 0 })));
       setLastEditedIndex(null);
     }
@@ -189,6 +197,23 @@ export function AddExpenseModal({ isOpen, onClose, tripId, members, onSuccess }:
 
       if (billSplitResponse.error) {
         throw new Error(billSplitResponse.error);
+      }
+
+      // If a receipt file was selected, upload it after the bill split is created
+      if (receiptFile && billSplitResponse.data) {
+        setIsUploadingReceipt(true);
+        setReceiptUploadError(null);
+        try {
+          const receiptResponse = await api.uploadReceipt(billSplitResponse.data.id, receiptFile);
+          if (receiptResponse.error) {
+            // Non-fatal: expense was created, just receipt failed
+            console.warn('Receipt upload failed:', receiptResponse.error);
+          }
+        } catch (err) {
+          console.warn('Receipt upload failed:', err);
+        } finally {
+          setIsUploadingReceipt(false);
+        }
       }
 
       // Call success callback and close
@@ -526,6 +551,65 @@ export function AddExpenseModal({ isOpen, onClose, tripId, members, onSuccess }:
               </div>
             </div>
           )}
+
+          {/* Receipt Upload */}
+          <div>
+            <label className="text-sm font-medium">Receipt (optional)</label>
+            <div className="mt-2">
+              {receiptPreview ? (
+                <div className="relative inline-block">
+                  <img
+                    src={receiptPreview}
+                    alt="Receipt preview"
+                    className="h-24 w-auto rounded-lg border border-border object-contain"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setReceiptFile(null);
+                      setReceiptPreview(null);
+                      setReceiptUploadError(null);
+                    }}
+                    className="absolute -top-2 -right-2 rounded-full bg-red-500 p-1 text-white hover:bg-red-600"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                  {isUploadingReceipt && (
+                    <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/50">
+                      <Loader className="h-5 w-5 animate-spin text-white" />
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border p-4 text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+                >
+                  <ImageIcon className="h-5 w-5" />
+                  <span className="text-sm">Attach receipt image</span>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      setReceiptFile(file);
+                      setReceiptPreview(URL.createObjectURL(file));
+                      setReceiptUploadError(null);
+                      e.target.value = '';
+                    }}
+                  />
+                </button>
+              )}
+              {receiptUploadError && (
+                <p className="mt-1 text-xs text-red-500">{receiptUploadError}</p>
+              )}
+            </div>
+          </div>
 
           {/* Notes */}
           <Textarea

@@ -5,6 +5,7 @@ import { notificationService } from '@/services/notification.service';
 import { NotificationCategory, NotificationReferenceType } from '@prisma/client';
 import { timelineService } from '@/services/timeline.service';
 import { MemberRole } from '@prisma/client';
+import { updateTripSearchVector } from './search.service';
 
 // Valid status transitions
 const VALID_TRANSITIONS: Record<TripStatus, TripStatus[]> = {
@@ -60,6 +61,9 @@ export class TripService {
       const { milestoneService } = await import('./milestone.service');
       await milestoneService.generateIdeaMilestones(createdTrip.id, createdTrip.startDate);
     }
+
+    // Keep full-text search index current
+    await updateTripSearchVector(createdTrip.id);
 
     return createdTrip;
   }
@@ -176,6 +180,9 @@ export class TripService {
       const { milestoneService } = await import('./milestone.service');
       await milestoneService.recalculateMilestones(tripId, new Date(data.startDate));
     }
+
+    // Keep full-text search index current
+    await updateTripSearchVector(tripId);
 
     return result;
   }

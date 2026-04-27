@@ -2,6 +2,7 @@ import { getPrisma } from '@/lib/prisma';
 import { ActivityCreateInput, ActivityUpdateInput } from '@/types';
 import { timelineService } from '@/services/timeline.service';
 import { billSplitService } from '@/services/billSplit.service';
+import { updateActivitySearchVector } from './search.service';
 
 export class ActivityService {
   private prisma = getPrisma();
@@ -22,6 +23,9 @@ export class ActivityService {
 
     // Write timeline events for the new activity
     await timelineService.writeActivityEvents(activity);
+
+    // Keep full-text search index current
+    await updateActivitySearchVector(activity.id);
 
     return activity;
   }
@@ -134,6 +138,10 @@ export class ActivityService {
     }
 
     await timelineService.upsertNeedsRefresh(updated.tripId);
+
+    // Keep full-text search index current
+    await updateActivitySearchVector(activityId);
+
     return updated;
   }
 

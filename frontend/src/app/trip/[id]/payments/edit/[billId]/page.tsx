@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardContent, Button, Input, Textarea, Badge, Avatar } from '@/components';
 import { formatCurrency, cn } from '@/lib/utils';
 import { api } from '@/services/api';
-import { DollarSign } from 'lucide-react';
+import { DollarSign, ImageIcon, X, Loader } from 'lucide-react';
 import { TripMember, User, BillSplit, BillSplitMember, CostType } from '@/types';
 import { useFormSubmit } from '@/hooks/useFormSubmit';
 
@@ -38,6 +38,13 @@ export default function EditExpense() {
   const [splits, setSplits] = useState<{ userId: string; shares: number; percentage: number; customAmount: number }[]>([]);
   const [lastEditedIndex, setLastEditedIndex] = useState<number | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
+  const [isUploadingReceipt, setIsUploadingReceipt] = useState(false);
+  const [receiptUploadError, setReceiptUploadError] = useState<string | null>(null);
+  const [removingReceiptBillId, setRemovingReceiptBillId] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { isSubmitting, error: hookError, submitForm } = useFormSubmit({
     waitForNavigation: true,
@@ -63,6 +70,7 @@ export default function EditExpense() {
           setPaidBy(billData.paidBy);
           setSplitType(billData.splitType);
           setCostType(billData.costType || 'PER_PERSON');
+          setReceiptUrl(billData.receiptUrl || null);
 
           if (billData.members) {
             setBillSplits(billData.members);
@@ -263,6 +271,96 @@ export default function EditExpense() {
               <Badge variant="outline" className="capitalize">
                 {bill.status.toLowerCase()}
               </Badge>
+            </div>
+
+            {/* Receipt Upload */}
+            <div>
+              <label className="text-sm font-medium">Receipt (optional)</label>
+              <div className="mt-2">
+                {receiptPreview || receiptUrl ? (
+                  <div className="relative inline-block">
+                    <img
+                      src={receiptPreview || receiptUrl || ''}
+                      alt="Receipt preview"
+                      className="h-24 w-auto rounded-lg border border-border object-contain"
+                    />
+                    {isUploadingReceipt && (
+                      <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/50">
+                        <Loader className="h-5 w-5 animate-spin text-white" />
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (removingReceiptBillId) return;
+                        if (!confirm('Remove receipt from this expense?')) return;
+                        setRemovingReceiptBillId(billId);
+                        try {
+                          const result = await api.deleteReceipt(billId);
+                          if (result.data?.billSplit) {
+                            setReceiptUrl(result.data.billSplit.receiptUrl || null);
+                          } else {
+                            setReceiptUrl(null);
+                          }
+                          setReceiptPreview(null);
+                          setReceiptFile(null);
+                        } catch (err) {
+                          alert('Failed to remove receipt');
+                        } finally {
+                          setRemovingReceiptBillId(null);
+                        }
+                      }}
+                      disabled={removingReceiptBillId === billId || isUploadingReceipt}
+                      className="absolute -top-2 -right-2 rounded-full bg-red-500 p-1 text-white hover:bg-red-600 disabled:opacity-50"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border p-4 text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+                  >
+                    <ImageIcon className="h-5 w-5" />
+                    <span className="text-sm">Attach receipt image</span>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        setReceiptFile(file);
+                        setReceiptPreview(URL.createObjectURL(file));
+                        setReceiptUploadError(null);
+                        e.target.value = '';
+
+                        // Upload immediately (non-blocking)
+                        setIsUploadingReceipt(true);
+                        try {
+                          const result = await api.uploadReceipt(billId, file);
+                          if (result.data?.receiptUrl) {
+                            setReceiptUrl(result.data.receiptUrl);
+                          }
+                          if (result.error) {
+                            setReceiptUploadError('Receipt upload failed. The expense was saved without a receipt.');
+                          }
+                        } catch (err) {
+                          setReceiptUploadError('Receipt upload failed. The expense was saved without a receipt.');
+                        } finally {
+                          setIsUploadingReceipt(false);
+                        }
+                      }}
+                    />
+                  </button>
+                )}
+              </div>
+              {receiptUploadError && (
+                <p className="mt-1 text-xs text-amber-500">{receiptUploadError}</p>
+              )}
             </div>
 
             <Input

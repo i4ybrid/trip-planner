@@ -3,6 +3,7 @@ import { notificationService } from '@/services/notification.service';
 import { NotificationCategory, NotificationReferenceType } from '@prisma/client';
 import { timelineService } from '@/services/timeline.service';
 import { checkAndUpdateSettlementMilestones } from '@/services/settlement.service';
+import { updateExpenseSearchVector } from './search.service';
 
 export class BillSplitService {
   private prisma = getPrisma();
@@ -171,6 +172,9 @@ export class BillSplitService {
       }
     }
 
+    // Keep full-text search index current
+    await updateExpenseSearchVector(billSplit.id);
+
     return billSplit;
   }
 
@@ -273,6 +277,9 @@ export class BillSplitService {
         await this.prisma.milestoneCompletion.deleteMany({ where: { milestoneId: settlementCompleteMilestone.id, userId: { in: affectedUserIds } } });
       }
     }
+
+    // Keep full-text search index current
+    await updateExpenseSearchVector(id);
 
     return updatedBill;
   }
@@ -378,6 +385,17 @@ export class BillSplitService {
     await checkAndUpdateSettlementMilestones(billSplit.tripId);
 
     return billSplit;
+  }
+
+  async updateReceiptUrl(billSplitId: string, receiptUrl: string | null) {
+    return this.prisma.billSplit.update({
+      where: { id: billSplitId },
+      data: { receiptUrl },
+      include: {
+        members: { include: { user: { select: { id: true, name: true, avatarUrl: true } } } },
+        payer: { select: { id: true, name: true } },
+      },
+    });
   }
 }
 

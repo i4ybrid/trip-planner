@@ -6,7 +6,7 @@ import { useSession } from 'next-auth/react';
 import { Card, CardHeader, CardTitle, CardContent, Button, Badge, Avatar } from '@/components';
 import { formatCurrency, cn } from '@/lib/utils';
 import { api } from '@/services/api';
-import { Wallet, CreditCard, Plus, Trash2, CheckCircle2, Circle, Bell } from 'lucide-react';
+import { Wallet, CreditCard, Plus, Trash2, CheckCircle2, Circle, Bell, ImageIcon, X, Loader } from 'lucide-react';
 import { TripMember, User, BillSplit, BillSplitMember, PaymentMethod } from '@/types';
 import { logger } from '@/lib/logger';
 import { AddExpenseModal } from '@/components/trip/add-expense-modal';
@@ -64,6 +64,8 @@ export default function TripPayments() {
 
   const [expenseModalOpen, setExpenseModalOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [receiptLightboxUrl, setReceiptLightboxUrl] = useState<string | null>(null);
+  const [removingReceiptBillId, setRemovingReceiptBillId] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     // Cancel any in-progress request
@@ -238,6 +240,16 @@ export default function TripPayments() {
                           <Badge variant="outline" className="text-xs capitalize">
                             {bill.status.toLowerCase()}
                           </Badge>
+                          {bill.receiptUrl && (
+                            <button
+                              onClick={() => setReceiptLightboxUrl(bill.receiptUrl!)}
+                              className="flex items-center gap-1 rounded-md bg-secondary px-2 py-0.5 text-xs text-muted-foreground hover:bg-secondary/80 transition-colors"
+                              title="View receipt"
+                            >
+                              <ImageIcon className="h-3 w-3" />
+                              Receipt
+                            </button>
+                          )}
                         </div>
                         <p className="text-sm text-muted-foreground">
                           {bill.description}
@@ -383,6 +395,17 @@ export default function TripPayments() {
                       <div className="text-right">
                         <p className="text-lg font-bold">{formatCurrency(Number(bill.amount))}</p>
                         <div className="flex justify-end gap-1 mt-2">
+                          {bill.receiptUrl && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => setReceiptLightboxUrl(bill.receiptUrl!)}
+                              className="h-8 w-8 text-muted-foreground hover:text-primary"
+                              title="View receipt"
+                            >
+                              <ImageIcon className="h-4 w-4" />
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="icon"
@@ -666,6 +689,29 @@ export default function TripPayments() {
           })()}
         </div>
       </div>
+
+      {/* Receipt Lightbox Modal */}
+      {receiptLightboxUrl && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
+          onClick={() => setReceiptLightboxUrl(null)}
+        >
+          <div className="relative max-w-4xl max-h-[90vh] p-4">
+            <button
+              onClick={() => setReceiptLightboxUrl(null)}
+              className="absolute -top-10 right-0 rounded-full bg-white/10 p-2 text-white hover:bg-white/20 transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <img
+              src={receiptLightboxUrl}
+              alt="Receipt"
+              className="max-w-full max-h-[85vh] object-contain rounded-lg"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

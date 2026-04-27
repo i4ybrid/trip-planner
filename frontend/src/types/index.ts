@@ -259,6 +259,7 @@ export interface BillSplit {
   createdBy: string;
   status: PaymentStatus;
   dueDate?: string;
+  receiptUrl?: string;
   createdAt: string;
   updatedAt: string;
   members?: BillSplitMember[];
@@ -540,4 +541,22 @@ export interface PaginatedResponse<T> {
   page: number;
   limit: number;
   hasMore: boolean;
+}
+
+export interface SearchResult {
+  type: 'trip' | 'activity' | 'expense';
+  id: string;
+  title: string;
+  description: string | null;
+  tripId: string;
+  tripTitle: string | null;
+  relevance: number;
+  url: string;
+}
+
+export interface SearchResponse {
+  query: string;
+  results: SearchResult[];
+  total: number;
+  timingMs: number;
 }

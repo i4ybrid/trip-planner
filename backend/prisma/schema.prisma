@@ -276,8 +276,13 @@ model Trip {
   autoMilestonesGenerated Boolean @default(false)
   timelineUIState  TripTimelineUIState?
 
+  // Full-text search vector — populated via updateTripSearchVector()
+  searchVector Unsupported("tsvector")?
+
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
+
+  @@index([searchVector], type: Gin)
 }
 
 model TripMember {
@@ -348,7 +353,12 @@ model Activity {
   mediaItems  MediaItem[]
   billSplits  BillSplit[]
 
+  // Full-text search vector — populated via updateActivitySearchVector()
+  searchVector Unsupported("tsvector")?
+
   createdAt   DateTime  @default(now())
+
+  @@index([searchVector], type: Gin)
 }
 
 model Vote {
@@ -586,6 +596,9 @@ model BillSplit {
   status        PaymentStatus @default(PENDING)
   dueDate       DateTime?
 
+  // Receipt image URL (uploaded via /api/payments/:id/receipt)
+  receiptUrl    String?
+
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
@@ -596,7 +609,11 @@ model BillSplit {
   creator       User          @relation("BillSplitCreator", fields: [createdBy], references: [id])
   members       BillSplitMember[]
 
+  // Full-text search vector — populated via updateExpenseSearchVector()
+  searchVector Unsupported("tsvector")?
+
   @@index([tripId, status])
+  @@index([searchVector], type: Gin)
 }
 
 // Each member's share of a BillSplit
