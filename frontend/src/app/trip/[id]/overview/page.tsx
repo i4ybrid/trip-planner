@@ -4,13 +4,14 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { useTripStore } from '@/store';
 import { Card, CardHeader, CardTitle, CardContent, Button, Badge, Avatar, Modal } from '@/components';
+import { TripMemberCard } from '@/components/trip/TripMemberCard';
 import { InviteModal } from '@/components/trip/invite-modal';
 import { TripSettingsModal } from '@/components/trip/settings-modal';
-import { HoverDropdown } from '@/components/hover-dropdown';
+
 import { formatDateRange, formatCurrency, cn, getNextStatus, getNextStatusLabel, canMoveToHappening } from '@/lib/utils';
 import { format } from 'date-fns';
 import { logger } from '@/lib/logger';
-import { MapPin, Calendar, Users, DollarSign, Share2, Settings, MoreVertical, MoreHorizontal, Shield, Trash2, Check } from 'lucide-react';
+import { MapPin, Calendar, Users, DollarSign, Share2, Settings } from 'lucide-react';
 import { api } from '@/services/api';
 import { TripMember, User, Activity, BillSplit, MemberRole, TripStyle, TripStatus } from '@/types';
 import { useAuth } from '@/hooks/use-auth';
@@ -35,10 +36,10 @@ export default function TripOverview() {
 
   const currentUserMember = members.find(m => m.userId === user?.id);
   const canInvite = !!(currentUserMember && (
-    currentUserMember.role === 'MASTER' ||
-    (currentTrip?.style === 'OPEN' && ['ORGANIZER', 'MEMBER'].includes(currentUserMember.role))
+    currentUserMember.role === 'OWNER' ||
+    (currentTrip?.style === 'OPEN' && ['EDITOR'].includes(currentUserMember.role))
   ));
-  const isMaster = currentUserMember?.role === 'MASTER';
+  const isOwner = currentUserMember?.role === 'OWNER';
 
   const nextStatus = currentTrip ? getNextStatus(currentTrip.status) : null;
   const isTerminal = currentTrip ? (currentTrip.status === 'COMPLETED' || currentTrip.status === 'CANCELLED') : false;
@@ -126,46 +127,6 @@ export default function TripOverview() {
     fetchTrip(tripId);
   }, [tripId, fetchTrip]);
 
-  const handlePromoteToOrganizer = async (userId: string) => {
-    await api.updateTripMember(tripId, userId, { role: 'ORGANIZER' });
-    handleMemberAdded();
-  };
-
-  const handleRemoveMember = async (userId: string) => {
-    if (!confirm('Are you sure you want to remove this member from the trip?')) return;
-    await api.removeTripMember(tripId, userId);
-    handleMemberAdded();
-  };
-
-  const renderMemberActions = (member: TripMember) => {
-    if (!isMaster || member.role === 'MASTER') return null;
-
-    return (
-      <HoverDropdown
-        mode="click"
-        align="right"
-        trigger={
-          <button className="rounded-md p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700">
-            <MoreHorizontal className="h-4 w-4" />
-          </button>
-        }
-        items={[
-          {
-            label: member.role !== 'ORGANIZER' ? 'Make Organizer' : 'Remove Organizer',
-            onClick: () => handlePromoteToOrganizer(member.userId),
-            icon: <Shield className="h-4 w-4" />,
-          },
-          {
-            label: 'Remove from Trip',
-            onClick: () => handleRemoveMember(member.userId),
-            icon: <Trash2 className="h-4 w-4" />,
-            className: 'text-red-600 hover:text-red-700',
-          },
-        ]}
-      />
-    );
-  };
-
   if (isLoading || !currentTrip) {
     return (
       <div className="flex h-64 items-center justify-center">
@@ -193,7 +154,7 @@ export default function TripOverview() {
               Invite
             </Button>
           )}
-          {isMaster && (
+          {isOwner && (
             <Button variant="outline" onClick={() => setShowSettingsModal(true)} data-testid="settings-btn" aria-label="Trip Settings">
               <Settings className="h-4 w-4" />
             </Button>
@@ -241,7 +202,7 @@ export default function TripOverview() {
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <Badge status={currentTrip.status} className="text-sm" />
-                {!isTerminal && isMaster && (
+                {!isTerminal && isOwner && (
                   <Button
                     size="sm"
                     onClick={handleAdvanceStatus}
@@ -286,28 +247,13 @@ export default function TripOverview() {
             <CardContent>
               <div className="grid gap-3 sm:grid-cols-2">
                 {members.map((member) => (
-                  <div key={member.userId} className="flex items-center justify-between rounded-lg border border-border p-3 pr-2">
-                    <div className="flex items-center gap-3">
-                      <Avatar
-                        src={member.user?.avatarUrl || undefined}
-                        name={member.user?.name || 'User'}
-                        size="md"
-                      />
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium">{member.user?.name || 'User'}</p>
-                        {member.status === 'INVITED' && (
-                          <Badge status="INVITED" className="text-xs">Pending</Badge>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        {member.role === 'MASTER' && 'Trip Master'}
-                        {member.role === 'ORGANIZER' && 'Organizer'}
-                        {member.role === 'MEMBER' && 'Member'}
-                        {member.role === 'VIEWER' && 'Viewer'}
-                      </p>
-                    </div>
-                    {renderMemberActions(member)}
-                  </div>
+                  <TripMemberCard
+                    key={member.userId}
+                    member={member}
+                    tripId={tripId}
+                    isOwner={isOwner}
+                    onUpdate={handleMemberAdded}
+                  />
                 ))}
               </div>
             </CardContent>
