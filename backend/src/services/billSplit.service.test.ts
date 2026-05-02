@@ -32,8 +32,8 @@ describe('BillSplitService - Settlement Reset on New Charge', () => {
     prismaInternal.trips.set(trip.id, trip);
 
     // Create confirmed trip members
-    const member1 = { id: 'member-1', tripId: 'trip-1', userId: 'user-1', role: 'ORGANIZER', status: 'CONFIRMED', joinedAt: new Date(), invitedById: null };
-    const member2 = { id: 'member-2', tripId: 'trip-1', userId: 'user-2', role: 'MEMBER', status: 'CONFIRMED', joinedAt: new Date(), invitedById: null };
+    const member1 = { id: 'member-1', tripId: 'trip-1', userId: 'user-1', role: 'EDITOR', status: 'CONFIRMED', joinedAt: new Date(), invitedById: null };
+    const member2 = { id: 'member-2', tripId: 'trip-1', userId: 'user-2', role: 'EDITOR', status: 'CONFIRMED', joinedAt: new Date(), invitedById: null };
     prismaInternal.members.set(`${member1.tripId}-${member1.userId}`, member1);
     prismaInternal.members.set(`${member2.tripId}-${member2.userId}`, member2);
 
@@ -135,7 +135,7 @@ describe('BillSplitService - Settlement Reset on New Charge', () => {
     prismaInternal.trips.set(trip.id, trip);
 
     // Create confirmed trip member
-    const member1 = { id: 'member-1', tripId: 'trip-1', userId: 'user-1', role: 'ORGANIZER', status: 'CONFIRMED', joinedAt: new Date(), invitedById: null };
+    const member1 = { id: 'member-1', tripId: 'trip-1', userId: 'user-1', role: 'EDITOR', status: 'CONFIRMED', joinedAt: new Date(), invitedById: null };
     prismaInternal.members.set(`${member1.tripId}-${member1.userId}`, member1);
 
     // Note: No SETTLEMENT_DUE milestone created - it doesn't exist

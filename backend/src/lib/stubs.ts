@@ -148,7 +148,7 @@ export class PrismaStub {
                 id: `member-${Date.now()}`, 
                 ...m, 
                 tripId: trip.id,
-                role: m.role || 'MEMBER',
+                role: m.role || 'EDITOR',
                 status: m.status || 'INVITED',
                 joinedAt: new Date(), 
               };
@@ -214,7 +214,7 @@ export class PrismaStub {
           const member = { 
             id: `member-${Date.now()}`, 
             ...data, 
-            role: data.role || 'MEMBER',
+            role: data.role || 'EDITOR',
             status: data.status || 'INVITED',
             joinedAt: new Date(), 
           };

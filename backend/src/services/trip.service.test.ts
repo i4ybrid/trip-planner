@@ -79,7 +79,7 @@ describe('TripService', () => {
       const result = await tripService.checkMemberPermission(trip.id, userId);
 
       expect(result.hasPermission).toBe(true);
-      expect(result.role).toBe('MASTER');
+      expect(result.role).toBe('OWNER');
     });
 
     it('should return hasPermission false for non-member', async () => {

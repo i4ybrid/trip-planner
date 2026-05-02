@@ -69,7 +69,7 @@ describe('Messages API - Chat Pagination', () => {
       create: {
         tripId: 'trip-pagination-test',
         userId: testUserId,
-        role: 'MASTER',
+        role: 'OWNER',
         status: 'CONFIRMED',
       },
     });

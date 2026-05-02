@@ -372,10 +372,10 @@ describe('MilestoneService', () => {
         data: { id: tripId, name: 'Test Trip', status: 'PLANNING', tripMasterId: 'user-1' },
       });
       await prisma.tripMember.create({
-        data: { tripId, userId: 'user-1', role: 'MASTER', status: 'CONFIRMED' },
+        data: { tripId, userId: 'user-1', role: 'OWNER', status: 'CONFIRMED' },
       });
       await prisma.tripMember.create({
-        data: { tripId, userId: 'user-2', role: 'MEMBER', status: 'CONFIRMED' },
+        data: { tripId, userId: 'user-2', role: 'EDITOR', status: 'CONFIRMED' },
       });
       await prisma.user.create({
         data: { id: 'user-1', email: 'u1@test.com', name: 'User One', passwordHash: 'x' },
@@ -431,10 +431,10 @@ describe('MilestoneService', () => {
         data: { id: tripId, name: 'Test Trip', status: 'PLANNING', tripMasterId: 'user-1' },
       });
       await prisma.tripMember.create({
-        data: { tripId, userId: 'user-1', role: 'MASTER', status: 'CONFIRMED' },
+        data: { tripId, userId: 'user-1', role: 'OWNER', status: 'CONFIRMED' },
       });
       await prisma.tripMember.create({
-        data: { tripId, userId: 'user-2', role: 'MEMBER', status: 'PENDING' }, // Not confirmed
+        data: { tripId, userId: 'user-2', role: 'EDITOR', status: 'PENDING' }, // Not confirmed
       });
       await prisma.user.create({
         data: { id: 'user-1', email: 'u1@test.com', name: 'User One', passwordHash: 'x' },
@@ -630,10 +630,10 @@ describe('MilestoneService', () => {
         data: { id: tripId, name: 'Test Trip', status: 'PLANNING', tripMasterId: 'user-1' },
       });
       await prisma.tripMember.create({
-        data: { tripId, userId: 'user-1', role: 'MASTER', status: 'CONFIRMED' },
+        data: { tripId, userId: 'user-1', role: 'OWNER', status: 'CONFIRMED' },
       });
       await prisma.tripMember.create({
-        data: { tripId, userId: 'user-2', role: 'MEMBER', status: 'CONFIRMED' },
+        data: { tripId, userId: 'user-2', role: 'EDITOR', status: 'CONFIRMED' },
       });
       await prisma.user.create({
         data: { id: 'user-1', email: 'u1@test.com', name: 'User One', passwordHash: 'x' },
@@ -676,7 +676,7 @@ describe('MilestoneService', () => {
         data: { id: tripId, name: 'Test Trip', status: 'PLANNING', tripMasterId: 'user-1' },
       });
       await prisma.tripMember.create({
-        data: { tripId, userId: 'user-1', role: 'MASTER', status: 'CONFIRMED' },
+        data: { tripId, userId: 'user-1', role: 'OWNER', status: 'CONFIRMED' },
       });
       await prisma.user.create({
         data: { id: 'user-1', email: 'u1@test.com', name: 'User One', passwordHash: 'x' },

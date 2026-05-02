@@ -76,7 +76,7 @@ router.get('/trips/:tripId/invites', authMiddleware, async (req: AuthRequest, re
     const tripId = req.params.tripId;
     
     // Check permission
-    const permission = await tripService.checkMemberPermission(tripId, userId, ['MASTER', 'ORGANIZER']);
+    const permission = await tripService.checkMemberPermission(tripId, userId, ['OWNER', 'EDITOR']);
     if (!permission.hasPermission) {
       res.status(403).json({ error: 'Unauthorized' });
       return;
@@ -96,7 +96,7 @@ router.post('/trips/:tripId/invites', authMiddleware, async (req: AuthRequest, r
     const tripId = req.params.tripId;
     
     // Check permission
-    const permission = await tripService.checkMemberPermission(tripId, userId, ['MASTER', 'ORGANIZER']);
+    const permission = await tripService.checkMemberPermission(tripId, userId, ['OWNER', 'EDITOR']);
     if (!permission.hasPermission) {
       res.status(403).json({ error: 'Unauthorized' });
       return;
