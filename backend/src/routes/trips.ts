@@ -80,7 +80,7 @@ router.patch('/trips/:id', async (req: AuthRequest, res) => {
     const tripId = req.params.id;
 
     // Check permission
-    const permission = await tripService.checkMemberPermission(tripId, userId, ['MASTER', 'ORGANIZER']);
+    const permission = await tripService.checkMemberPermission(tripId, userId, ['OWNER', 'EDITOR']);
     if (!permission.hasPermission) {
       res.status(403).json({ error: 'Unauthorized' });
       return;
@@ -114,8 +114,8 @@ router.delete('/trips/:id', async (req: AuthRequest, res) => {
     const userId = req.user!.userId;
     const tripId = req.params.id;
     
-    // Check permission (only MASTER can delete)
-    const permission = await tripService.checkMemberPermission(tripId, userId, ['MASTER']);
+    // Check permission (only OWNER can delete)
+    const permission = await tripService.checkMemberPermission(tripId, userId, ['OWNER']);
     if (!permission.hasPermission) {
       res.status(403).json({ error: 'Unauthorized' });
       return;
@@ -141,7 +141,7 @@ router.post('/trips/:id/status', async (req: AuthRequest, res) => {
     }
     
     // Check permission
-    const permission = await tripService.checkMemberPermission(tripId, userId, ['MASTER', 'ORGANIZER']);
+    const permission = await tripService.checkMemberPermission(tripId, userId, ['OWNER', 'EDITOR']);
     if (!permission.hasPermission) {
       res.status(403).json({ error: 'Unauthorized' });
       return;
@@ -337,7 +337,7 @@ router.patch('/trips/:id/members/:userId', async (req: AuthRequest, res) => {
       return;
     }
 
-    if (role === 'ORGANIZER') {
+    if (role === 'EDITOR') {
       const canPromote = await tripService.canPromoteToOrganizer(userId, tripId);
       if (!canPromote.canPromote) {
         res.status(403).json({ error: canPromote.reason });

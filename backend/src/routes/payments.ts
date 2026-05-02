@@ -108,8 +108,8 @@ router.patch('/payments/:id', async (req: AuthRequest, res) => {
       return;
     }
 
-    // Check permission - MASTER, ORGANIZER, or MEMBER can update (not VIEWER)
-    const permission = await tripService.checkMemberPermission(billSplit.tripId, userId, ['MASTER', 'ORGANIZER', 'MEMBER']);
+    // Check permission - OWNER or EDITOR can update (not VIEWER)
+    const permission = await tripService.checkMemberPermission(billSplit.tripId, userId, ['OWNER', 'EDITOR']);
     if (!permission.hasPermission) {
       res.status(403).json({ error: 'Unauthorized' });
       return;
@@ -154,7 +154,7 @@ router.delete('/payments/:id', async (req: AuthRequest, res) => {
     }
     
     // Check permission
-    const permission = await tripService.checkMemberPermission(billSplit.tripId, userId, ['MASTER', 'ORGANIZER']);
+    const permission = await tripService.checkMemberPermission(billSplit.tripId, userId, ['OWNER', 'EDITOR']);
     if (!permission.hasPermission && billSplit.createdBy !== userId) {
       res.status(403).json({ error: 'Unauthorized' });
       return;
@@ -247,7 +247,7 @@ router.delete('/payments/:id/members/:userId', async (req: AuthRequest, res) => 
     }
     
     // Check permission
-    const permission = await tripService.checkMemberPermission(billSplit.tripId, userId, ['MASTER', 'ORGANIZER']);
+    const permission = await tripService.checkMemberPermission(billSplit.tripId, userId, ['OWNER', 'EDITOR']);
     if (!permission.hasPermission) {
       res.status(403).json({ error: 'Unauthorized' });
       return;

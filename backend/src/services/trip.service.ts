@@ -26,7 +26,7 @@ export class TripService {
         members: {
           create: {
             userId,
-            role: 'MASTER',
+            role: 'OWNER',
             status: 'CONFIRMED',
           },
         },
@@ -259,7 +259,7 @@ export class TripService {
     });
   }
 
-  async addTripMemberByInvite(tripId: string, userId: string, role = 'MEMBER') {
+  async addTripMemberByInvite(tripId: string, userId: string, role = 'EDITOR') {
     return this.prisma.tripMember.create({
       data: {
         tripId,
@@ -422,11 +422,11 @@ export class TripService {
       return { canInvite: false, reason: 'You are not a member of this trip' };
     }
 
-    if (member.role === 'MASTER') {
+    if (member.role === 'OWNER') {
       return { canInvite: true };
     }
 
-    if (trip.style === 'OPEN' && (member.role === 'ORGANIZER' || member.role === 'MEMBER')) {
+    if (trip.style === 'OPEN' && (member.role === 'EDITOR')) {
       return { canInvite: true };
     }
 
@@ -464,12 +464,12 @@ export class TripService {
       return { canManage: false, reason: 'Target member not found' };
     }
 
-    if (requester.role === 'MASTER') {
+    if (requester.role === 'OWNER') {
       return { canManage: true };
     }
 
-    if (requester.role === 'ORGANIZER') {
-      if (target.role === 'MASTER' || target.role === 'ORGANIZER') {
+    if (requester.role === 'EDITOR') {
+      if (target.role === 'OWNER' || target.role === 'EDITOR') {
         return { canManage: false, reason: 'Organizers cannot manage other organizers or the master' };
       }
       return { canManage: true };
@@ -492,14 +492,14 @@ export class TripService {
       return { canPromote: false, reason: 'You are not a member of this trip' };
     }
 
-    if (requester.role !== 'MASTER') {
+    if (requester.role !== 'OWNER') {
       return { canPromote: false, reason: 'Only the trip master can promote members to organizers' };
     }
 
     return { canPromote: true };
   }
 
-  async addTripMember(tripId: string, userId: string, invitedById: string, role = 'MEMBER') {
+  async addTripMember(tripId: string, userId: string, invitedById: string, role = 'EDITOR') {
     const existingMember = await this.prisma.tripMember.findUnique({
       where: {
         tripId_userId: {
@@ -629,8 +629,8 @@ export class TripService {
 
     const member = await this.prisma.tripMember.upsert({
       where: { tripId_userId: { tripId, userId } },
-      update: { status: 'PENDING_JOIN', role: 'MEMBER' },
-      create: { tripId, userId, role: 'MEMBER', status: 'PENDING_JOIN' },
+      update: { status: 'PENDING_JOIN', role: 'EDITOR' },
+      create: { tripId, userId, role: 'EDITOR', status: 'PENDING_JOIN' },
     });
 
     try {
@@ -645,9 +645,9 @@ export class TripService {
       console.error('Timeline event failed:', e);
     }
 
-    // Notify MASTER and ORGANIZERs
+    // Notify OWNERs and EDITORs
     const managers = await this.prisma.tripMember.findMany({
-      where: { tripId, role: { in: ['MASTER', 'ORGANIZER'] }, status: 'CONFIRMED' },
+      where: { tripId, role: { in: ['OWNER', 'EDITOR'] }, status: 'CONFIRMED' },
       select: { userId: true },
     });
 

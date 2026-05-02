@@ -2,7 +2,7 @@ export type TripStatus = 'IDEA' | 'PLANNING' | 'CONFIRMED' | 'HAPPENING' | 'COMP
 
 export type TripStyle = 'OPEN' | 'MANAGED';
 
-export type MemberRole = 'MASTER' | 'ORGANIZER' | 'MEMBER' | 'VIEWER';
+export type MemberRole = 'OWNER' | 'EDITOR' | 'VIEWER';
 
 export type MemberStatus = 'INVITED' | 'DECLINED' | 'MAYBE' | 'CONFIRMED' | 'REMOVED';
 
@@ -21,6 +21,12 @@ export type PaymentMethod = 'VENMO' | 'PAYPAL' | 'ZELLE' | 'CASHAPP' | 'CASH' | 
 export type SplitType = 'EQUAL' | 'SHARES' | 'PERCENTAGE' | 'MANUAL';
 
 export type CostType = 'PER_PERSON' | 'FIXED';
+
+export type UserLocationSource = 'PROFILE' | 'BROWSER' | 'IP_INFERRED';
+
+export type PublicEventStatus = 'DRAFT' | 'PENDING_PAYMENT' | 'PUBLISHED' | 'ARCHIVED' | 'CANCELLED';
+
+export type PromotionPaymentStatus = 'PENDING' | 'REQUIRES_ACTION' | 'PAID' | 'FAILED' | 'REFUNDED' | 'CANCELLED';
 
 export type FriendRequestStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED';
 
@@ -66,6 +72,12 @@ export interface User {
   avatarUrl?: string;
   image?: string | null;  // For NextAuth compatibility
   phone?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  latitude?: number | string | null;
+  longitude?: number | string | null;
+  locationSource?: UserLocationSource | null;
   venmo?: string;
   paypal?: string;
   zelle?: string;
@@ -115,6 +127,88 @@ export interface Trip {
     messages?: number;
     mediaItems?: number;
   };
+}
+
+export interface PublicEventPromotionPayment {
+  id: string;
+  publicEventId: string;
+  organizerId: string;
+  amount: number | string;
+  currency: string;
+  provider: string;
+  providerCheckoutId?: string;
+  providerPaymentIntentId?: string;
+  checkoutUrl?: string;
+  status: PromotionPaymentStatus;
+  regionCity?: string;
+  regionState?: string;
+  regionCountry?: string;
+  regionRadiusMiles: number;
+  startsAt: string;
+  endsAt: string;
+  paidAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PublicEvent {
+  id: string;
+  organizerId: string;
+  title: string;
+  description?: string;
+  venueName?: string;
+  addressLine?: string;
+  city: string;
+  state?: string;
+  country: string;
+  latitude?: number | string | null;
+  longitude?: number | string | null;
+  regionRadiusMiles: number;
+  startDate: string;
+  endDate?: string;
+  coverImage?: string;
+  status: PublicEventStatus;
+  currency: string;
+  publishedAt?: string;
+  promotionStartsAt?: string;
+  promotionEndsAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  distanceMiles?: number | null;
+  organizer?: Pick<User, 'id' | 'name' | 'avatarUrl'>;
+  promotionPayments?: PublicEventPromotionPayment[];
+}
+
+export interface CreatePublicEventInput {
+  title: string;
+  description?: string;
+  venueName?: string;
+  addressLine?: string;
+  city: string;
+  state?: string;
+  country?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  regionRadiusMiles?: number;
+  startDate: string;
+  endDate?: string;
+  coverImage?: string;
+  currency?: string;
+}
+
+export interface CreatePublicEventPromotionInput {
+  amount?: number;
+  currency?: string;
+  durationDays?: number;
+  regionCity?: string;
+  regionState?: string;
+  regionCountry?: string;
+  regionRadiusMiles?: number;
+}
+
+export interface EventSearchResults {
+  myEvents: Trip[];
+  publicEvents: PublicEvent[];
 }
 
 export interface TripMember {

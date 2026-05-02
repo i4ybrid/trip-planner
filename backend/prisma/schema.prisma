@@ -25,9 +25,8 @@ enum TripStyle {
 }
 
 enum MemberRole {
-  MASTER      // Trip master/owner - full control
-  ORGANIZER   // Can manage activities and payments
-  MEMBER      // Standard member - can vote
+  OWNER       // Trip owner - full control
+  EDITOR      // Can manage activities and payments (former ORGANIZER/MEMBER)
   VIEWER      // Can view only - can't vote or spend
 }
 
@@ -114,6 +113,29 @@ enum PaymentMethod {
   OTHER
 }
 
+enum UserLocationSource {
+  PROFILE
+  BROWSER
+  IP_INFERRED
+}
+
+enum PublicEventStatus {
+  DRAFT
+  PENDING_PAYMENT
+  PUBLISHED
+  ARCHIVED
+  CANCELLED
+}
+
+enum PromotionPaymentStatus {
+  PENDING
+  REQUIRES_ACTION
+  PAID
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
 enum SplitType {
   EQUAL      // Split evenly among all members
   SHARES     // Split by share count (e.g., 2 shares, 1 share)
@@ -153,6 +175,12 @@ model User {
   name            String
   avatarUrl       String?
   phone           String?
+  city            String?
+  state           String?
+  country         String?   @default("US")
+  latitude        Decimal?  @db.Decimal(9, 6)
+  longitude       Decimal?  @db.Decimal(9, 6)
+  locationSource  UserLocationSource?
   venmo           String?
   paypal          String?
   zelle           String?
@@ -192,6 +220,8 @@ model User {
   billSplitsCreated BillSplit[]     @relation("BillSplitCreator")
   billSplitsPaid    BillSplit[]     @relation("BillSplitPayer")
   billSplitMembers BillSplitMember[]
+  organizedPublicEvents PublicEvent[] @relation("PublicEventOrganizer")
+  publicEventPromotionPayments PublicEventPromotionPayment[] @relation("PublicEventPromotionPayer")
 
   // Milestones
   milestoneCompletions MilestoneCompletion[]
@@ -278,6 +308,67 @@ model Trip {
 
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
+}
+
+model PublicEvent {
+  id                  String            @id @default(cuid())
+  organizerId         String
+  title               String
+  description         String?
+  venueName           String?
+  addressLine         String?
+  city                String
+  state               String?
+  country             String            @default("US")
+  latitude            Decimal?          @db.Decimal(9, 6)
+  longitude           Decimal?          @db.Decimal(9, 6)
+  regionRadiusMiles   Int               @default(50)
+  startDate           DateTime
+  endDate             DateTime?
+  coverImage          String?
+  status              PublicEventStatus @default(DRAFT)
+  currency            String            @default("USD")
+  publishedAt         DateTime?
+  promotionStartsAt   DateTime?
+  promotionEndsAt     DateTime?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  organizer           User              @relation("PublicEventOrganizer", fields: [organizerId], references: [id])
+  promotionPayments   PublicEventPromotionPayment[]
+
+  @@index([organizerId])
+  @@index([status, startDate])
+  @@index([country, state, city])
+}
+
+model PublicEventPromotionPayment {
+  id                      String                 @id @default(cuid())
+  publicEventId           String
+  organizerId             String
+  amount                  Decimal                @db.Decimal(10, 2)
+  currency                String                 @default("USD")
+  provider                String                 @default("mock")
+  providerCheckoutId      String?
+  providerPaymentIntentId String?
+  checkoutUrl             String?
+  status                  PromotionPaymentStatus @default(PENDING)
+  regionCity              String?
+  regionState             String?
+  regionCountry           String?                @default("US")
+  regionRadiusMiles       Int                    @default(50)
+  startsAt                DateTime
+  endsAt                  DateTime
+  paidAt                  DateTime?
+  createdAt               DateTime               @default(now())
+  updatedAt               DateTime               @updatedAt
+
+  publicEvent             PublicEvent            @relation(fields: [publicEventId], references: [id], onDelete: Cascade)
+  organizer               User                   @relation("PublicEventPromotionPayer", fields: [organizerId], references: [id])
+
+  @@index([publicEventId, status])
+  @@index([organizerId, createdAt])
+  @@index([regionCountry, regionState, regionCity])
 }
 
 model TripMember {

@@ -34,8 +34,8 @@ router.post('/trips/:id/milestones', async (req: AuthRequest, res) => {
     const tripId = req.params.id;
     const userId = req.user!.userId;
 
-    // Check permission (only MASTER and ORGANIZER can create milestones)
-    const permission = await tripService.checkMemberPermission(tripId, userId, ['MASTER', 'ORGANIZER']);
+    // Check permission (only OWNER and EDITOR can create milestones)
+    const permission = await tripService.checkMemberPermission(tripId, userId, ['OWNER', 'EDITOR']);
     if (!permission.hasPermission) {
       res.status(403).json({ error: 'Unauthorized' });
       return;
@@ -83,7 +83,7 @@ router.patch('/milestones/:id', async (req: AuthRequest, res) => {
     const tripId = existingMilestone.tripId;
 
     // Check permission
-    const permission = await tripService.checkMemberPermission(tripId, userId, ['MASTER', 'ORGANIZER']);
+    const permission = await tripService.checkMemberPermission(tripId, userId, ['OWNER', 'EDITOR']);
     if (!permission.hasPermission) {
       res.status(403).json({ error: 'Unauthorized' });
       return;
@@ -126,7 +126,7 @@ router.delete('/milestones/:id', async (req: AuthRequest, res) => {
     const tripId = existingMilestone.tripId;
 
     // Check permission
-    const permission = await tripService.checkMemberPermission(tripId, userId, ['MASTER', 'ORGANIZER']);
+    const permission = await tripService.checkMemberPermission(tripId, userId, ['OWNER', 'EDITOR']);
     if (!permission.hasPermission) {
       res.status(403).json({ error: 'Unauthorized' });
       return;
@@ -147,7 +147,7 @@ router.post('/trips/:id/milestones/actions', async (req: AuthRequest, res) => {
     const userId = req.user!.userId;
 
     // Check permission
-    const permission = await tripService.checkMemberPermission(tripId, userId, ['MASTER', 'ORGANIZER']);
+    const permission = await tripService.checkMemberPermission(tripId, userId, ['OWNER', 'EDITOR']);
     if (!permission.hasPermission) {
       res.status(403).json({ error: 'Unauthorized' });
       return;
@@ -209,7 +209,7 @@ router.patch('/milestones/:id/completions/:userId', async (req: AuthRequest, res
     const tripId = existingMilestone.tripId;
 
     // Check permission (either the user themselves or organizer/master)
-    const permission = await tripService.checkMemberPermission(tripId, userId, ['MASTER', 'ORGANIZER']);
+    const permission = await tripService.checkMemberPermission(tripId, userId, ['OWNER', 'EDITOR']);
     const isSelf = userId === targetUserId;
 
     if (!permission.hasPermission && !isSelf) {
@@ -243,8 +243,8 @@ router.post('/trips/:id/milestones/generate-default', async (req: AuthRequest, r
     const tripId = req.params.id;
     const userId = req.user!.userId;
 
-    // Check permission (only MASTER and ORGANIZER)
-    const permission = await tripService.checkMemberPermission(tripId, userId, ['MASTER', 'ORGANIZER']);
+    // Check permission (only OWNER and EDITOR)
+    const permission = await tripService.checkMemberPermission(tripId, userId, ['OWNER', 'EDITOR']);
     if (!permission.hasPermission) {
       res.status(403).json({ error: 'Unauthorized' });
       return;
@@ -281,7 +281,7 @@ router.post('/trips/:id/milestones/regenerate', async (req: AuthRequest, res) =>
     const userId = req.user!.userId;
 
     // Check permission
-    const permission = await tripService.checkMemberPermission(tripId, userId, ['MASTER', 'ORGANIZER']);
+    const permission = await tripService.checkMemberPermission(tripId, userId, ['OWNER', 'EDITOR']);
     if (!permission.hasPermission) {
       res.status(403).json({ error: 'Unauthorized' });
       return;

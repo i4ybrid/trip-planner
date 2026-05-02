@@ -108,17 +108,17 @@ export class InviteService {
 
     const newMemberStatus = invite.trip.style === 'OPEN' ? 'CONFIRMED' : 'INVITED';
 
-    // Create as VIEWER first, then upgrade to MEMBER
+    // Create as VIEWER first, then upgrade to EDITOR
     await this.prisma.tripMember.upsert({
       where: { tripId_userId: { tripId: invite.tripId, userId } },
       update: { status: newMemberStatus, role: 'VIEWER' },
       create: { tripId: invite.tripId, userId, role: 'VIEWER', status: newMemberStatus },
     });
 
-    // Promote VIEWER → MEMBER on acceptance
+    // Promote VIEWER → EDITOR on acceptance
     await this.prisma.tripMember.update({
       where: { tripId_userId: { tripId: invite.tripId, userId } },
-      data: { role: 'MEMBER' },
+      data: { role: 'EDITOR' },
     });
 
     await this.prisma.invite.update({

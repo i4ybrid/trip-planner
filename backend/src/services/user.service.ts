@@ -12,6 +12,12 @@ export class UserService {
         name: true,
         avatarUrl: true,
         phone: true,
+        city: true,
+        state: true,
+        country: true,
+        latitude: true,
+        longitude: true,
+        locationSource: true,
         venmo: true,
         paypal: true,
         zelle: true,
@@ -80,6 +86,12 @@ export class UserService {
     name?: string;
     avatarUrl?: string;
     phone?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    latitude?: number | null;
+    longitude?: number | null;
+    locationSource?: 'PROFILE' | 'BROWSER' | 'IP_INFERRED' | null;
     venmo?: string;
     paypal?: string;
     zelle?: string;

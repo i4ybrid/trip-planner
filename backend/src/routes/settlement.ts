@@ -16,7 +16,7 @@ router.post('/trips/:tripId/settlements/remind-all', async (req: AuthRequest, re
       return;
     }
 
-    const perm = await tripService.checkMemberPermission(tripId, userId, ['MASTER', 'ORGANIZER']);
+    const perm = await tripService.checkMemberPermission(tripId, userId, ['OWNER', 'EDITOR']);
     if (!perm.hasPermission) {
       res.status(403).json({ error: 'Unauthorized' });
       return;
@@ -40,7 +40,7 @@ router.post('/trips/:tripId/settlements/:userId/remind', async (req: AuthRequest
       return;
     }
 
-    const perm = await tripService.checkMemberPermission(tripId, senderId, ['MASTER', 'ORGANIZER']);
+    const perm = await tripService.checkMemberPermission(tripId, senderId, ['OWNER', 'EDITOR']);
     if (!perm.hasPermission) {
       res.status(403).json({ error: 'Unauthorized' });
       return;

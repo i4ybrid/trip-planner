@@ -96,7 +96,7 @@ router.patch('/activities/:id', async (req: AuthRequest, res) => {
     }
 
     // Check permission (only proposer or trip organizer can edit)
-    const permission = await tripService.checkMemberPermission(activity.tripId, userId, ['MASTER', 'ORGANIZER']);
+    const permission = await tripService.checkMemberPermission(activity.tripId, userId, ['OWNER', 'EDITOR']);
     if (!permission.hasPermission && activity.proposedBy !== userId) {
       res.status(403).json({ error: 'Unauthorized' });
       return;
@@ -136,8 +136,8 @@ router.delete('/activities/:id', async (req: AuthRequest, res) => {
       return;
     }
     
-    // Check permission — only ORGANIZER or MASTER can delete
-    const permission = await tripService.checkMemberPermission(activity.tripId, userId, ['MASTER', 'ORGANIZER']);
+    // Check permission — only EDITOR or OWNER can delete
+    const permission = await tripService.checkMemberPermission(activity.tripId, userId, ['OWNER', 'EDITOR']);
     if (!permission.hasPermission) {
       res.status(403).json({ error: 'Unauthorized' });
       return;
@@ -209,7 +209,7 @@ router.patch('/trips/:tripId/activities/:activityId/confirm', async (req: AuthRe
     const { tripId, activityId } = req.params;
 
     // Check permission
-    const permission = await tripService.checkMemberPermission(tripId, userId, ['MASTER', 'ORGANIZER']);
+    const permission = await tripService.checkMemberPermission(tripId, userId, ['OWNER', 'EDITOR']);
     if (!permission.hasPermission) {
       res.status(403).json({ error: 'Unauthorized' });
       return;
@@ -229,7 +229,7 @@ router.patch('/trips/:tripId/activities/:activityId/reject', async (req: AuthReq
     const { tripId, activityId } = req.params;
 
     // Check permission
-    const permission = await tripService.checkMemberPermission(tripId, userId, ['MASTER', 'ORGANIZER']);
+    const permission = await tripService.checkMemberPermission(tripId, userId, ['OWNER', 'EDITOR']);
     if (!permission.hasPermission) {
       res.status(403).json({ error: 'Unauthorized' });
       return;

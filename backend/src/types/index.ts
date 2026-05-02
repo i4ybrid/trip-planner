@@ -36,9 +36,51 @@ export interface TripUpdateInput {
   style?: 'OPEN' | 'MANAGED';
 }
 
+export interface PublicEventCreateInput {
+  title: string;
+  description?: string;
+  venueName?: string;
+  addressLine?: string;
+  city: string;
+  state?: string;
+  country?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  regionRadiusMiles?: number;
+  startDate: Date;
+  endDate?: Date;
+  coverImage?: string;
+  currency?: string;
+}
+
+export interface PublicEventUpdateInput extends Partial<PublicEventCreateInput> {
+  status?: 'DRAFT' | 'PENDING_PAYMENT' | 'PUBLISHED' | 'ARCHIVED' | 'CANCELLED';
+}
+
+export interface PublicEventPromotionInput {
+  amount: number;
+  currency?: string;
+  durationDays?: number;
+  regionCity?: string;
+  regionState?: string;
+  regionCountry?: string;
+  regionRadiusMiles?: number;
+}
+
+export interface EventSearchInput {
+  query?: string;
+  scope?: 'all' | 'my' | 'public';
+  city?: string;
+  state?: string;
+  country?: string;
+  latitude?: number;
+  longitude?: number;
+  limit?: number;
+}
+
 export interface MemberRoleUpdateInput {
-  role?: 'MASTER' | 'ORGANIZER' | 'MEMBER' | 'VIEWER';
-  status?: 'INVITED' | 'DECLINED' | 'MAYBE' | 'CONFIRMED' | 'REMOVED';
+  role?: 'OWNER' | 'EDITOR' | 'VIEWER';
+  status?: 'INVITED' | 'DECLINED' | 'MAYBE' | 'CONFIRMED' | 'REMOVED' | 'PENDING_JOIN';
 }
 
 export interface MemberInviteInput {
