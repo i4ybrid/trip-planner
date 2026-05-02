@@ -32,6 +32,11 @@ import {
   MilestoneProgress,
   MilestoneActionType,
   MilestoneStatus,
+  PublicEvent,
+  CreatePublicEventInput,
+  CreatePublicEventPromotionInput,
+  PublicEventPromotionPayment,
+  EventSearchResults,
 } from '@/types';
 import { logger } from '@/lib/logger';
 
@@ -321,6 +326,107 @@ export const api = {
     invalidateCacheByPrefix(`trip:${id}`);
     invalidateCacheByPrefix('trips:');
     return result;
+  },
+
+  // Universal event search
+  async searchEvents(params: {
+    q?: string;
+    scope?: 'all' | 'my' | 'public';
+    city?: string;
+    state?: string;
+    country?: string;
+    latitude?: number;
+    longitude?: number;
+    limit?: number;
+  }): Promise<ApiResponse<EventSearchResults>> {
+    const url = new URL(`${API_BASE_URL}/search/events`);
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        url.searchParams.set(key, String(value));
+      }
+    });
+    const response = await fetch(url.toString(), {
+      headers: await getHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  // Public events
+  async getPublicEvents(params: {
+    q?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    latitude?: number;
+    longitude?: number;
+    limit?: number;
+  } = {}): Promise<ApiResponse<PublicEvent[]>> {
+    const url = new URL(`${API_BASE_URL}/public-events`);
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        url.searchParams.set(key, String(value));
+      }
+    });
+    const response = await fetch(url.toString(), {
+      headers: await getHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  async getPublicEvent(id: string): Promise<ApiResponse<PublicEvent>> {
+    const response = await fetch(`${API_BASE_URL}/public-events/${id}`, {
+      headers: await getHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  async createPublicEvent(data: CreatePublicEventInput): Promise<ApiResponse<PublicEvent>> {
+    const response = await fetch(`${API_BASE_URL}/public-events`, {
+      method: 'POST',
+      headers: await getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(response);
+  },
+
+  async updatePublicEvent(id: string, data: Partial<CreatePublicEventInput> & { status?: string }): Promise<ApiResponse<PublicEvent>> {
+    const response = await fetch(`${API_BASE_URL}/public-events/${id}`, {
+      method: 'PATCH',
+      headers: await getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(response);
+  },
+
+  async createPublicEventPromotionCheckout(
+    id: string,
+    data: CreatePublicEventPromotionInput
+  ): Promise<ApiResponse<PublicEventPromotionPayment>> {
+    const response = await fetch(`${API_BASE_URL}/public-events/${id}/promotion-checkout`, {
+      method: 'POST',
+      headers: await getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(response);
+  },
+
+  async confirmPublicEventPromotionPayment(
+    id: string,
+    paymentId: string
+  ): Promise<ApiResponse<PublicEventPromotionPayment>> {
+    const response = await fetch(`${API_BASE_URL}/public-events/${id}/promotion-payments/${paymentId}/confirm`, {
+      method: 'POST',
+      headers: await getHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  async publishPublicEvent(id: string): Promise<ApiResponse<PublicEvent>> {
+    const response = await fetch(`${API_BASE_URL}/public-events/${id}/publish`, {
+      method: 'POST',
+      headers: await getHeaders(),
+    });
+    return handleResponse(response);
   },
 
   async changeTripStatus(id: string, status: string): Promise<ApiResponse<Trip>> {
