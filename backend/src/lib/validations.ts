@@ -17,6 +17,12 @@ export const updateUserSchema = z.object({
   name: z.string().min(1).optional(),
   avatarUrl: z.string().url().optional(),
   phone: z.string().optional(),
+  city: z.string().trim().min(1).optional().or(z.literal('')),
+  state: z.string().trim().min(1).optional().or(z.literal('')),
+  country: z.string().trim().min(2).max(2).optional().or(z.literal('')),
+  latitude: z.number().min(-90).max(90).optional().nullable(),
+  longitude: z.number().min(-180).max(180).optional().nullable(),
+  locationSource: z.enum(['PROFILE', 'BROWSER', 'IP_INFERRED']).optional().nullable(),
   venmo: z.string().optional(),
   paypal: z.string().optional(),
   zelle: z.string().optional(),
@@ -42,6 +48,52 @@ export const updateTripSchema = z.object({
   coverImage: z.string().url().optional(),
   status: z.enum(['IDEA', 'PLANNING', 'CONFIRMED', 'HAPPENING', 'COMPLETED', 'CANCELLED']).optional(),
   style: z.enum(['OPEN', 'MANAGED']).optional(),
+});
+
+// Public event schemas
+export const createPublicEventSchema = z.object({
+  title: z.string().min(1),
+  description: z.string().optional(),
+  venueName: z.string().optional(),
+  addressLine: z.string().optional(),
+  city: z.string().min(1),
+  state: z.string().optional(),
+  country: z.string().min(2).max(2).default('US'),
+  latitude: z.number().min(-90).max(90).optional().nullable(),
+  longitude: z.number().min(-180).max(180).optional().nullable(),
+  regionRadiusMiles: z.number().int().min(5).max(500).default(50),
+  startDate: z.string().min(1),
+  endDate: z.string().optional(),
+  coverImage: z.string().url().optional(),
+  currency: z.string().default('USD'),
+}).refine(
+  (data) => !data.endDate || new Date(data.endDate) >= new Date(data.startDate),
+  { message: 'End date must be on or after start date', path: ['endDate'] }
+);
+
+export const updatePublicEventSchema = createPublicEventSchema.partial().extend({
+  status: z.enum(['DRAFT', 'PENDING_PAYMENT', 'PUBLISHED', 'ARCHIVED', 'CANCELLED']).optional(),
+});
+
+export const createPublicEventPromotionSchema = z.object({
+  amount: z.number().positive().default(49),
+  currency: z.string().default('USD'),
+  durationDays: z.number().int().min(1).max(90).default(30),
+  regionCity: z.string().optional(),
+  regionState: z.string().optional(),
+  regionCountry: z.string().min(2).max(2).default('US'),
+  regionRadiusMiles: z.number().int().min(5).max(500).default(50),
+});
+
+export const searchEventsSchema = z.object({
+  q: z.string().optional().default(''),
+  scope: z.enum(['all', 'my', 'public']).optional().default('all'),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  country: z.string().optional(),
+  latitude: z.coerce.number().min(-90).max(90).optional(),
+  longitude: z.coerce.number().min(-180).max(180).optional(),
+  limit: z.coerce.number().int().min(1).max(25).optional().default(8),
 });
 
 // Activity schemas
