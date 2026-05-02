@@ -44,18 +44,18 @@ export const Modal: React.FC<ModalProps> = ({
   const sizes = {
     sm: 'max-w-sm',
     md: 'max-w-md',
-    lg: 'max-w-lg',
-    xl: 'max-w-xl',
+    lg: 'max-w-2xl',
+    xl: 'max-w-4xl',
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm pointer-events-none" />
       <div
         role="dialog"
         aria-modal="true"
         className={cn(
-          'relative z-50 w-full rounded-lg bg-background p-6 shadow-lg',
+          'relative z-50 w-full rounded-lg border border-border/70 bg-card p-5 shadow-2xl sm:p-6',
           sizes[size],
           className
         )}

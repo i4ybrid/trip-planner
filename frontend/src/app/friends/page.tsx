@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { PageLayout } from '@/components/page-layout';
-import { Users, UserPlus, Search, Ban, Clock, Send, Loader2 } from 'lucide-react';
+import { Users, UserPlus, Search, Ban, Clock, Send, Loader2, Sparkles } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -172,62 +172,92 @@ function FriendsPageContent() {
 
   return (
     <PageLayout title="Friends">
-      <div className="mx-auto max-w-4xl space-y-6">
-        <div className="flex items-center justify-between gap-4">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+      <div className="mx-auto max-w-6xl space-y-6">
+        <section className="overflow-hidden rounded-lg border border-border/70 bg-card/85 p-5 shadow-[var(--travel-card-shadow)] backdrop-blur md:p-7">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-2xl space-y-3">
+              <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/60 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
+                <Sparkles className="h-3.5 w-3.5" />
+                Travel Crew
+              </div>
+              <div>
+                <h1 className="font-display text-4xl font-bold leading-tight text-foreground md:text-5xl">
+                  Keep your trip people close.
+                </h1>
+                <p className="mt-2 max-w-xl text-base text-muted-foreground">
+                  Search, invite, and manage the friends you plan with most often.
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-2 sm:min-w-[22rem]">
+              <div className="rounded-lg border border-border/70 bg-background/70 p-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Friends</p>
+                <p className="mt-1 text-2xl font-bold text-foreground">{friends.length}</p>
+              </div>
+              <div className="rounded-lg border border-border/70 bg-background/70 p-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Pending</p>
+                <p className="mt-1 text-2xl font-bold text-foreground">{receivedRequests.length}</p>
+              </div>
+              <div className="rounded-lg border border-border/70 bg-background/70 p-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Blocked</p>
+                <p className="mt-1 text-2xl font-bold text-foreground">{blockedUsers.length}</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div className="flex flex-col gap-3 rounded-lg border border-border/70 bg-card/80 p-3 shadow-[var(--travel-card-shadow)] backdrop-blur sm:flex-row sm:items-center sm:justify-between">
+          <div className="relative flex-1">
+            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-primary" />
             <Input
               placeholder="Search friends..."
-              className="pl-10"
+              className="h-12 rounded-lg border-border/70 bg-background/80 pl-11"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <Button onClick={() => setShowAddModal(true)}>
+          <Button className="h-12 shrink-0 rounded-lg px-5" onClick={() => setShowAddModal(true)}>
             <UserPlus className="mr-2 h-4 w-4" />
             Add Friend
           </Button>
         </div>
 
-        <div className="flex gap-1 border-b">
+        <div className="grid gap-2 rounded-lg border border-border/70 bg-card/80 p-2 shadow-[var(--travel-card-shadow)] backdrop-blur sm:grid-cols-2 lg:grid-cols-4">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => handleTabChange(tab.id)}
               className={cn(
-                'flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors relative',
+                'flex items-center justify-between gap-3 rounded-lg px-4 py-3 text-sm font-semibold transition-all',
                 activeTab === tab.id
-                  ? 'text-primary'
-                  : 'text-muted-foreground hover:text-foreground'
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'text-muted-foreground hover:bg-background/80 hover:text-foreground'
               )}
             >
-              <tab.icon className="h-4 w-4" />
-              {tab.label}
-              {tab.count > 0 && (
-                <span className={cn(
-                  'ml-1 rounded-full px-2 py-0.5 text-xs',
-                  activeTab === tab.id
-                    ? 'bg-primary/10 text-primary'
-                    : 'bg-muted text-muted-foreground'
-                )}>
-                  {tab.count}
-                </span>
-              )}
-              {activeTab === tab.id && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-              )}
+              <span className="flex items-center gap-2">
+                <tab.icon className="h-4 w-4" />
+                {tab.label}
+              </span>
+              <span className={cn(
+                'rounded-full px-2 py-0.5 text-xs',
+                activeTab === tab.id
+                  ? 'bg-primary-foreground/20 text-primary-foreground'
+                  : 'bg-muted text-muted-foreground'
+              )}>
+                {tab.count}
+              </span>
             </button>
           ))}
         </div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-12">
+          <div className="flex items-center justify-center rounded-lg border border-border/70 bg-card/80 py-16 shadow-[var(--travel-card-shadow)] backdrop-blur">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : (
           <>
             {activeTab === 'friends' && (
-              <Card className="p-4">
+              <Card className="border-border/70 bg-card/85 p-4 shadow-[var(--travel-card-shadow)] backdrop-blur">
                 {filteredFriends.length === 0 ? (
                   <EmptyState
                     title={searchQuery ? 'No friends found' : 'No friends yet'}
@@ -242,7 +272,7 @@ function FriendsPageContent() {
                     }
                   />
                 ) : (
-                  <div className="space-y-3">
+                  <div className="grid gap-3 lg:grid-cols-2">
                     {filteredFriends.map((friend) => (
                       <FriendCard
                         key={friend.id}
@@ -258,15 +288,15 @@ function FriendsPageContent() {
             )}
 
             {activeTab === 'pending' && (
-              <Card className="p-4">
-                <h2 className="mb-4 text-lg font-semibold">Friend Requests</h2>
+              <Card className="border-border/70 bg-card/85 p-4 shadow-[var(--travel-card-shadow)] backdrop-blur">
+                <h2 className="mb-4 font-display text-2xl font-bold">Friend Requests</h2>
                 {receivedRequests.length === 0 ? (
                   <EmptyState
                     title="No pending requests"
                     description="When you receive friend requests, they'll appear here"
                   />
                 ) : (
-                  <div className="space-y-3">
+                  <div className="grid gap-3 lg:grid-cols-2">
                     {receivedRequests.map((request) => (
                       <FriendRequestCard
                         key={request.id}
@@ -283,15 +313,15 @@ function FriendsPageContent() {
             )}
 
             {activeTab === 'sent' && (
-              <Card className="p-4">
-                <h2 className="mb-4 text-lg font-semibold">Sent Requests</h2>
+              <Card className="border-border/70 bg-card/85 p-4 shadow-[var(--travel-card-shadow)] backdrop-blur">
+                <h2 className="mb-4 font-display text-2xl font-bold">Sent Requests</h2>
                 {sentRequests.length === 0 ? (
                   <EmptyState
                     title="No sent requests"
                     description="Sent friend requests will appear here"
                   />
                 ) : (
-                  <div className="space-y-3">
+                  <div className="grid gap-3 lg:grid-cols-2">
                     {sentRequests.map((request) => (
                       <FriendRequestCard
                         key={request.id}
@@ -306,15 +336,15 @@ function FriendsPageContent() {
             )}
 
             {activeTab === 'blocked' && (
-              <Card className="p-4">
-                <h2 className="mb-4 text-lg font-semibold">Blocked Users</h2>
+              <Card className="border-border/70 bg-card/85 p-4 shadow-[var(--travel-card-shadow)] backdrop-blur">
+                <h2 className="mb-4 font-display text-2xl font-bold">Blocked Users</h2>
                 {blockedUsers.length === 0 ? (
                   <EmptyState
                     title="No blocked users"
                     description="Blocked users won't appear in search results or be able to send you messages"
                   />
                 ) : (
-                  <div className="space-y-3">
+                  <div className="grid gap-3 lg:grid-cols-2">
                     {blockedUsers.map((blocked) => (
                       <BlockedUserCard
                         key={blocked.id}

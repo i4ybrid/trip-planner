@@ -30,7 +30,7 @@ export function PageLayout({
         onBack={onBack}
         actions={actions}
       />
-      <div className={`ml-sidebar ${className || 'p-6'}`}>
+      <div className={`ml-sidebar ${className || 'px-6 pb-24 pt-6 lg:pb-6'}`}>
         {children}
       </div>
     </div>

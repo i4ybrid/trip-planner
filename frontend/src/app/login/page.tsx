@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { signIn } from 'next-auth/react';
 import { useAuth } from '@/hooks/use-auth';
 import { api } from '@/services/api';
-import { Compass, Mail, Lock, User, ArrowRight, UserPlus, Gift, Loader } from 'lucide-react';
+import { Compass, Mail, Lock, User, ArrowRight, Gift, Loader, MapPin, Users, Wallet, MessageCircle } from 'lucide-react';
 
 // Simple OAuth button icons (SVG)
 const GoogleIcon = () => (
@@ -131,67 +131,84 @@ export default function LoginPage() {
   // Show loading spinner while validating session
   if (isValidatingSession) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="flex min-h-screen items-center justify-center bg-gradient-farmhouse">
         <div className="text-center">
-          <Loader className="w-8 h-8 animate-spin text-amber-600 mx-auto mb-4" />
-          <p className="text-gray-600">Checking your session...</p>
+          <Loader className="mx-auto mb-4 h-8 w-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">Checking your session...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex">
-      {/* Left Side - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-amber-100 to-orange-50 items-center justify-center p-12">
-        <div className="max-w-md text-center">
-          <div className="flex items-center justify-center gap-3 mb-6">
-            <Compass className="w-16 h-16 text-amber-600" />
-            <h1 className="text-5xl font-bold text-amber-800">TripPlanner</h1>
-          </div>
-          <p className="text-xl text-amber-700 mb-8">
-            Plan unforgettable trips with friends. Vote on activities, split costs, and create lasting memories together.
-          </p>
-          <div className="grid grid-cols-2 gap-4 text-left">
-            <div className="bg-white/60 p-4 rounded-lg">
-              <h3 className="font-semibold text-amber-800 mb-2">🗳️ Group Voting</h3>
-              <p className="text-sm text-amber-600">Decide on activities together</p>
+    <div className="min-h-screen bg-gradient-farmhouse px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto grid min-h-[calc(100vh-3rem)] max-w-6xl overflow-hidden rounded-lg border border-white/55 bg-card/82 shadow-2xl shadow-accent/10 backdrop-blur-xl lg:grid-cols-[minmax(0,1.08fr)_minmax(420px,0.92fr)]">
+        {/* Brand panel */}
+        <section className="relative hidden min-h-full overflow-hidden bg-[#163a3a] lg:block">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_24%_18%,rgba(91,216,207,0.24),transparent_28%),radial-gradient(circle_at_84%_76%,rgba(244,93,60,0.24),transparent_30%)]" />
+          <div className="absolute left-12 right-12 top-28 h-px bg-white/14" />
+          <div className="absolute bottom-28 left-12 right-12 h-px bg-white/14" />
+          <div className="relative flex h-full flex-col justify-between p-10 text-white">
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-white/15 backdrop-blur">
+                <Compass className="h-6 w-6" />
+              </div>
+              <span className="font-display text-3xl font-bold">TripPlanner</span>
             </div>
-            <div className="bg-white/60 p-4 rounded-lg">
-              <h3 className="font-semibold text-amber-800 mb-2">💰 Split Payments</h3>
-              <p className="text-sm text-amber-600">Easy bill splitting</p>
-            </div>
-            <div className="bg-white/60 p-4 rounded-lg">
-              <h3 className="font-semibold text-amber-800 mb-2">💬 Group Chat</h3>
-              <p className="text-sm text-amber-600">Stay connected with your trip</p>
-            </div>
-            <div className="bg-white/60 p-4 rounded-lg">
-              <h3 className="font-semibold text-amber-800 mb-2">📸 Share Memories</h3>
-              <p className="text-sm text-amber-600">Photos and videos together</p>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Right Side - Login Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-white">
-        <div className="w-full max-w-md">
+            <div className="max-w-xl">
+              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/15 px-3 py-1 text-sm font-semibold backdrop-blur">
+                <MapPin className="h-4 w-4" />
+                Group trips, calmly coordinated
+              </div>
+              <h1 className="font-display text-6xl font-bold leading-[0.98]">
+                One place for the whole crew.
+              </h1>
+              <p className="mt-5 max-w-lg text-lg leading-8 text-white/82">
+                Vote on plans, split shared costs, chat with the crew, and keep each trip moving from idea to memory.
+              </p>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-3">
+              {[
+                { icon: Users, title: 'Invite crew', copy: 'Friends, roles, and RSVPs' },
+                { icon: Wallet, title: 'Split costs', copy: 'Bills stay transparent' },
+                { icon: MessageCircle, title: 'Stay synced', copy: 'Plans and chat together' },
+              ].map((item) => {
+                const Icon = item.icon;
+                return (
+                  <div key={item.title} className="rounded-lg border border-white/18 bg-white/14 p-4 backdrop-blur">
+                    <Icon className="mb-3 h-5 w-5 text-white" />
+                    <p className="font-semibold">{item.title}</p>
+                    <p className="mt-1 text-sm text-white/70">{item.copy}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        {/* Login Form */}
+        <section className="flex items-center justify-center px-5 py-8 sm:px-8 lg:px-10">
+          <div className="w-full max-w-md">
           {/* Mobile Logo */}
-          <div className="lg:hidden flex items-center justify-center gap-2 mb-8">
-            <Compass className="w-10 h-10 text-amber-600" />
-            <h1 className="text-2xl font-bold text-amber-800">TripPlanner</h1>
+          <div className="mb-8 flex items-center justify-center gap-3 lg:hidden">
+            <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-accent text-accent-foreground">
+              <Compass className="h-6 w-6" />
+            </div>
+            <h1 className="font-display text-3xl font-bold">TripPlanner</h1>
           </div>
 
           {/* Session Expired Banner */}
           {searchParams.get('reason') === 'session_expired' && !bannerDismissed && (
-            <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-3">
+            <div className="mb-6 flex items-start gap-3 rounded-lg border border-warning/25 bg-warning/10 p-4">
               <div className="flex-1">
-                <p className="text-sm font-medium text-amber-800">Your session expired.</p>
-                <p className="text-sm text-amber-700 mt-0.5">Please log back in to continue.</p>
+                <p className="text-sm font-semibold text-foreground">Your session expired.</p>
+                <p className="mt-0.5 text-sm text-muted-foreground">Please log back in to continue.</p>
               </div>
               <button
                 onClick={() => setBannerDismissed(true)}
-                className="text-amber-600 hover:text-amber-800 p-1 rounded transition-colors"
+                className="rounded bg-transparent p-1 text-muted-foreground transition-colors hover:text-foreground"
                 aria-label="Dismiss"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -202,16 +219,19 @@ export default function LoginPage() {
           )}
 
           <div className="mb-8">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">
-              {isLogin ? 'Welcome back' : 'Create an account'}
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
+              {isLogin ? 'TripPlanner' : 'Join the trip'}
+            </p>
+            <h2 className="mt-2 font-display text-4xl font-bold leading-tight text-foreground">
+              {isLogin ? 'Welcome' : 'Create an account'}
             </h2>
-            <p className="text-gray-600">
+            <p className="mt-2 text-muted-foreground">
               {isLogin ? 'Sign in to continue planning your trips' : 'Start planning your next adventure'}
             </p>
             {inviteCode && (
-              <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-2">
-                <Gift className="h-4 w-4 text-amber-600" />
-                <span className="text-sm text-amber-800">
+              <div className="mt-4 flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/10 p-3">
+                <Gift className="h-4 w-4 text-primary" />
+                <span className="text-sm text-foreground">
                   You've been invited! You'll become friends after signing up.
                 </span>
               </div>
@@ -223,45 +243,45 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => signIn('google', { callbackUrl: '/dashboard' })}
-              className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors bg-white"
+              className="flex w-full items-center justify-center gap-3 rounded-lg border border-border bg-card px-4 py-3 text-card-foreground transition-colors hover:bg-secondary"
             >
               <GoogleIcon />
-              <span className="font-medium text-gray-700">Continue with Google</span>
+              <span className="font-semibold">Continue with Google</span>
             </button>
             <button
               type="button"
               onClick={() => signIn('facebook', { callbackUrl: '/dashboard' })}
-              className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors bg-white"
+              className="flex w-full items-center justify-center gap-3 rounded-lg border border-border bg-card px-4 py-3 text-card-foreground transition-colors hover:bg-secondary"
             >
               <FacebookIcon />
-              <span className="font-medium text-gray-700">Continue with Facebook</span>
+              <span className="font-semibold">Continue with Facebook</span>
             </button>
           </div>
 
           {/* Divider */}
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
+              <div className="w-full border-t border-border"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">or continue with email</span>
+              <span className="bg-card px-3 text-muted-foreground">or continue with email</span>
             </div>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {!isLogin && (
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="name" className="mb-2 block text-sm font-semibold text-foreground">
                   Name
                 </label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <User className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
                   <input
                     id="name"
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                    className="w-full rounded-lg border border-input bg-background py-3 pl-10 pr-4 text-foreground placeholder:text-muted-foreground focus:border-transparent focus:ring-2 focus:ring-primary"
                     placeholder="Your name"
                     required={!isLogin}
                   />
@@ -270,17 +290,17 @@ export default function LoginPage() {
             )}
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="email" className="mb-2 block text-sm font-semibold text-foreground">
                 Email
               </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Mail className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
                 <input
                   id="email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  className="w-full rounded-lg border border-input bg-background py-3 pl-10 pr-4 text-foreground placeholder:text-muted-foreground focus:border-transparent focus:ring-2 focus:ring-primary"
                   placeholder="you@example.com"
                   required
                 />
@@ -288,17 +308,17 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="password" className="mb-2 block text-sm font-semibold text-foreground">
                 Password
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Lock className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
                 <input
                   id="password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  className="w-full rounded-lg border border-input bg-background py-3 pl-10 pr-4 text-foreground placeholder:text-muted-foreground focus:border-transparent focus:ring-2 focus:ring-primary"
                   placeholder="••••••••"
                   required
                   minLength={8}
@@ -307,7 +327,7 @@ export default function LoginPage() {
             </div>
 
             {error && (
-              <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+              <div className="rounded-lg border border-error/20 bg-error/10 p-3 text-sm text-error">
                 {error}
               </div>
             )}
@@ -315,7 +335,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-amber-600 text-white py-3 rounded-lg font-medium hover:bg-amber-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary py-3 font-semibold text-primary-foreground transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isSubmitting ? (
                 <>
@@ -337,7 +357,7 @@ export default function LoginPage() {
                 setIsLogin(!isLogin);
                 setError('');
               }}
-              className="text-amber-600 hover:text-amber-700 font-medium"
+              className="bg-transparent font-semibold text-primary hover:opacity-80"
             >
               {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
             </button>
@@ -350,38 +370,39 @@ export default function LoginPage() {
 
           {/* Test Credentials */}
           {isLogin && (
-            <div className="mt-8 p-4 bg-gray-50 rounded-lg">
-              <p className="text-sm font-medium text-gray-700 mb-3">Quick login (test accounts):</p>
+            <div className="mt-8 rounded-lg border border-border bg-muted/45 p-4">
+              <p className="mb-3 text-sm font-semibold text-foreground">Quick login (test accounts):</p>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={() => fillTestCredentials('test')}
-                  className="px-3 py-2 text-xs bg-white border border-gray-200 rounded hover:bg-gray-100 transition-colors"
+                  className="rounded border border-border bg-card px-3 py-2 text-xs transition-colors hover:bg-secondary"
                 >
                   Test User
                 </button>
                 <button
                   onClick={() => fillTestCredentials('sarah')}
-                  className="px-3 py-2 text-xs bg-white border border-gray-200 rounded hover:bg-gray-100 transition-colors"
+                  className="rounded border border-border bg-card px-3 py-2 text-xs transition-colors hover:bg-secondary"
                 >
                   Sarah Chen
                 </button>
                 <button
                   onClick={() => fillTestCredentials('mike')}
-                  className="px-3 py-2 text-xs bg-white border border-gray-200 rounded hover:bg-gray-100 transition-colors"
+                  className="rounded border border-border bg-card px-3 py-2 text-xs transition-colors hover:bg-secondary"
                 >
                   Mike Johnson
                 </button>
                 <button
                   onClick={() => fillTestCredentials('emma')}
-                  className="px-3 py-2 text-xs bg-white border border-gray-200 rounded hover:bg-gray-100 transition-colors"
+                  className="rounded border border-border bg-card px-3 py-2 text-xs transition-colors hover:bg-secondary"
                 >
                   Emma Wilson
                 </button>
               </div>
-              <p className="text-xs text-gray-500 mt-2">Password: password123</p>
+              <p className="mt-2 text-xs text-muted-foreground">Password: password123</p>
             </div>
           )}
-        </div>
+          </div>
+        </section>
       </div>
     </div>
   );

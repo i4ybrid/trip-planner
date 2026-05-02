@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, usePathname } from 'next/navigation';
-import { HelpCircle, Clock, MessageCircle, Wallet, Images, Star } from 'lucide-react';
+import { Clock, MessageCircle, Wallet, Images, Star, Map } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export interface Tab {
@@ -12,7 +12,7 @@ export interface Tab {
 }
 
 const defaultIconMap: Record<string, React.ReactNode> = {
-  overview: <HelpCircle className="h-4 w-4 text-current" />,
+  overview: <Map className="h-4 w-4 text-current" />,
   activities: <Star className="h-4 w-4 text-current" />,
   timeline: <Clock className="h-4 w-4 text-current" />,
   chat: <MessageCircle className="h-4 w-4 text-current" />,
@@ -34,16 +34,16 @@ export function Tabs({ tabs, basePath, iconMap = defaultIconMap, className }: Ta
   const currentTab = tabs.find(t => t.href && pathname.endsWith(`${basePath}${t.href}`))?.id || tabs[0]?.id || '';
 
   return (
-    <nav className={cn("flex gap-1 px-6 py-2", className)}>
+    <nav className={cn("flex gap-2 overflow-x-auto px-4 py-3 sm:px-6", className)}>
       {tabs.map((tab) => (
         <button
           key={tab.id}
           onClick={() => router.push(`${basePath}${tab.href}`)}
           className={cn(
-            "flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors",
+            "flex shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-all",
             currentTab === tab.id
-              ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+              ? "border-primary bg-primary text-primary-foreground shadow-md shadow-primary/20"
+              : "border-border/70 bg-card/70 text-muted-foreground hover:border-primary/40 hover:bg-secondary hover:text-foreground"
           )}
         >
           {iconMap[tab.id] || tab.icon}

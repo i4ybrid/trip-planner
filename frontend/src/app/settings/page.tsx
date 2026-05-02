@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardContent, Button, Input, Label, Avatar } from '@/components';
 import { LeftSidebar } from '@/components/left-sidebar';
 import { AppHeader } from '@/components/app-header';
-import { Mail, Lock, Bell, Wallet, Save, Trash2, Plus, Check, MessageSquare, Smartphone, Camera, Image, Loader2, Clock, BellOff } from 'lucide-react';
+import { Mail, Lock, Bell, Wallet, Save, Trash2, Plus, Check, MessageSquare, Smartphone, Camera, Image, Loader2, Clock, BellOff, Crosshair, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { api } from '@/services/api';
 import { Settings } from '@/types';
@@ -95,6 +95,12 @@ export default function SettingsPage() {
     email: '',
     phone: '',
     avatarUrl: '',
+    city: '',
+    state: '',
+    country: 'US',
+    latitude: null as number | null,
+    longitude: null as number | null,
+    locationSource: null as 'PROFILE' | 'BROWSER' | 'IP_INFERRED' | null,
   });
 
   const [passwords, setPasswords] = useState({
@@ -148,6 +154,12 @@ export default function SettingsPage() {
           email: userResult.data.email || '',
           phone: userResult.data.phone || '',
           avatarUrl: userResult.data.avatarUrl || '',
+          city: userResult.data.city || '',
+          state: userResult.data.state || '',
+          country: userResult.data.country || 'US',
+          latitude: userResult.data.latitude != null ? Number(userResult.data.latitude) : null,
+          longitude: userResult.data.longitude != null ? Number(userResult.data.longitude) : null,
+          locationSource: userResult.data.locationSource || null,
         });
         const methods: PaymentMethod[] = [];
         if (userResult.data.venmo) methods.push({ id: 'venmo', type: 'venmo', handle: userResult.data.venmo });
@@ -170,12 +182,41 @@ export default function SettingsPage() {
       name: profile.name,
       email: profile.email,
       phone: profile.phone,
+      city: profile.city,
+      state: profile.state,
+      country: profile.country || 'US',
+      latitude: profile.latitude,
+      longitude: profile.longitude,
+      locationSource: profile.locationSource || (profile.city ? 'PROFILE' : null),
     });
     setIsSaving(false);
     if (!result.error) {
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     }
+  };
+
+  const handleUseBrowserLocation = () => {
+    if (!navigator.geolocation) {
+      setError('Browser location is not available.');
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setProfile({
+          ...profile,
+          latitude: Number(position.coords.latitude.toFixed(6)),
+          longitude: Number(position.coords.longitude.toFixed(6)),
+          locationSource: 'BROWSER',
+        });
+        setSuccessMessage('Browser location captured. Add city/state labels for clearer regional search.');
+      },
+      () => {
+        setError('Could not access browser location.');
+      },
+      { enableHighAccuracy: false, timeout: 8000 }
+    );
   };
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -346,12 +387,18 @@ export default function SettingsPage() {
       
       <AppHeader title="Settings" />
 
-      <main className="ml-sidebar p-6">
+      <main className="ml-sidebar px-6 pb-24 pt-6 lg:pb-6">
         <div className="mx-auto max-w-4xl">
 
           {error && (
             <div className="mb-4 rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-600">
               {error}
+            </div>
+          )}
+
+          {successMessage && (
+            <div className="mb-4 rounded-md border border-primary/20 bg-primary/10 p-3 text-sm text-foreground">
+              {successMessage}
             </div>
           )}
 
@@ -463,6 +510,57 @@ export default function SettingsPage() {
                           onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
                           className="mt-1"
                         />
+                      </div>
+                      <div className="rounded-lg border border-border/70 bg-muted/35 p-4">
+                        <div className="mb-4 flex items-start justify-between gap-4">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <MapPin className="h-4 w-4 text-primary" />
+                              <h3 className="font-semibold">Regional Search Location</h3>
+                            </div>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                              Used to show public events promoted near you. Browser coordinates are stored only after you choose to capture them.
+                            </p>
+                          </div>
+                          <Button type="button" variant="outline" size="sm" onClick={handleUseBrowserLocation}>
+                            <Crosshair className="mr-2 h-4 w-4" />
+                            Use Browser
+                          </Button>
+                        </div>
+                        <div className="grid gap-4 md:grid-cols-[1fr_1fr_7rem]">
+                          <div>
+                            <Label htmlFor="city">City</Label>
+                            <Input
+                              id="city"
+                              value={profile.city}
+                              onChange={(e) => setProfile({ ...profile, city: e.target.value, locationSource: 'PROFILE' })}
+                              className="mt-1"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="state">State</Label>
+                            <Input
+                              id="state"
+                              value={profile.state}
+                              onChange={(e) => setProfile({ ...profile, state: e.target.value, locationSource: 'PROFILE' })}
+                              className="mt-1"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="country">Country</Label>
+                            <Input
+                              id="country"
+                              value={profile.country}
+                              onChange={(e) => setProfile({ ...profile, country: e.target.value.toUpperCase(), locationSource: 'PROFILE' })}
+                              className="mt-1"
+                            />
+                          </div>
+                        </div>
+                        {profile.latitude != null && profile.longitude != null && (
+                          <p className="mt-3 text-xs text-muted-foreground">
+                            Coordinates saved from {profile.locationSource === 'BROWSER' ? 'browser location' : 'profile'}: {profile.latitude}, {profile.longitude}
+                          </p>
+                        )}
                       </div>
                       <Button onClick={handleProfileSave} disabled={isSaving}>
                         {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

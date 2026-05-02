@@ -72,7 +72,7 @@ export default function PendingInvitesPage() {
       <div className="min-h-screen bg-theme-gradient">
         <LeftSidebar />
         <AppHeader />
-        <main className="ml-sidebar p-6">
+        <main className="ml-sidebar px-6 pb-24 pt-6 lg:pb-6">
           <div className="mx-auto max-w-2xl">
             <div className={styles.loading}>
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -89,7 +89,7 @@ export default function PendingInvitesPage() {
       <LeftSidebar />
       <AppHeader />
 
-      <main className="ml-sidebar p-6">
+      <main className="ml-sidebar px-6 pb-24 pt-6 lg:pb-6">
         <div className="mx-auto max-w-2xl">
           <div className={styles.header}>
             <Link href="/dashboard" className={styles.backLink}>

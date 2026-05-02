@@ -4,10 +4,9 @@ import { useState, useRef, useEffect, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
 import { useSearchParams } from 'next/navigation';
 import { PageLayout } from '@/components/page-layout';
-import { MessageCircle, Search, Send, MoreVertical, Phone, Video, Plus, Loader2, Loader } from 'lucide-react';
+import { ArrowLeft, MessageCircle, Search, Send, MoreVertical, Phone, Video, Plus, Loader2, Loader } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { NewConversationModal } from '@/components/messages/new-conversation-modal';
 import { api } from '@/services/api';
 import { DmConversation, Message, User } from '@/types';
@@ -208,18 +207,18 @@ function MessagesPageContent() {
   };
 
   return (
-    <PageLayout title="Messages" className="p-0">
-      <div className="flex h-[calc(100vh-4.5rem)] w-full">
-        <aside className="w-80 border-r border-border shrink-0 flex flex-col">
-          <div className="p-4 border-b border-border flex items-center justify-between">
+    <PageLayout title="Messages" className="px-3 pb-24 pt-4 sm:px-6 lg:pb-6">
+      <div className="mx-auto flex h-[calc(100vh-8.5rem)] max-w-6xl overflow-hidden rounded-lg border border-border/70 bg-card/85 shadow-[var(--travel-card-shadow)] backdrop-blur">
+        <aside className={`w-full shrink-0 flex-col border-border lg:flex lg:w-80 lg:border-r ${selectedConversation ? 'hidden' : 'flex'}`}>
+          <div className="flex items-center justify-between border-b border-border/70 p-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="Search messages..." className="pl-10" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary" />
+              <Input placeholder="Search messages..." className="h-11 rounded-lg border-border/70 bg-background/80 pl-10" />
             </div>
             <Button 
               variant="ghost" 
               size="icon" 
-              className="ml-2 shrink-0"
+              className="ml-2 shrink-0 rounded-lg"
               onClick={() => setShowNewMessageModal(true)}
             >
               <Plus className="h-4 w-4" />
@@ -237,13 +236,13 @@ function MessagesPageContent() {
                       <button
                         key={convo.id}
                         onClick={() => setSelectedConversation(convo.id)}
-                        className={`flex w-full items-center gap-3 rounded-lg p-3 text-left transition-colors ${
+                        className={`flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-all ${
                           selectedConversation === convo.id
-                            ? 'bg-primary/10'
-                            : 'hover:bg-secondary'
+                            ? 'border-primary/40 bg-primary/10 shadow-sm'
+                            : 'border-transparent hover:border-border/70 hover:bg-background/70'
                         }`}
                       >
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
                           <MessageCircle className="h-5 w-5 text-primary" />
                         </div>
                         <div className="flex-1 min-w-0">
@@ -260,12 +259,20 @@ function MessagesPageContent() {
             </div>
           </aside>
 
-            <div className="flex-1 flex flex-col min-w-0">
+            <div className={`min-w-0 flex-1 flex-col ${selectedConversation ? 'flex' : 'hidden lg:flex'}`}>
               {selectedConvo ? (
                 <>
-                  <div className="flex items-center justify-between border-b border-border p-4">
+                  <div className="flex items-center justify-between border-b border-border/70 bg-card/90 p-4">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="mr-1 rounded-lg lg:hidden"
+                        onClick={() => setSelectedConversation(null)}
+                      >
+                        <ArrowLeft className="h-4 w-4" />
+                      </Button>
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
                         <MessageCircle className="h-5 w-5 text-primary" />
                       </div>
                       <div>
@@ -274,13 +281,13 @@ function MessagesPageContent() {
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="ghost" size="icon">
+                      <Button variant="ghost" size="icon" className="rounded-lg">
                         <Phone className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon">
+                      <Button variant="ghost" size="icon" className="rounded-lg">
                         <Video className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon">
+                      <Button variant="ghost" size="icon" className="rounded-lg">
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </div>
@@ -288,7 +295,7 @@ function MessagesPageContent() {
 
                   <div 
                     ref={messagesContainerRef}
-                    className="flex-1 overflow-y-auto p-4 space-y-4"
+                    className="flex-1 space-y-4 overflow-y-auto bg-background/30 p-4"
                     onScroll={handleScroll}
                   >
                     {hasMoreMessages && (
@@ -312,10 +319,10 @@ function MessagesPageContent() {
                           className={`flex ${message.senderId === currentUserId ? 'justify-end' : 'justify-start'}`}
                         >
                           <div
-                            className={`max-w-[70%] rounded-lg p-3 ${
+                            className={`max-w-[82%] rounded-lg px-4 py-3 shadow-sm sm:max-w-[70%] ${
                               message.senderId === currentUserId
                                 ? 'bg-primary text-primary-foreground'
-                                : 'bg-secondary'
+                                : 'border border-border/70 bg-card text-card-foreground'
                             }`}
                           >
                             <p className="whitespace-pre-wrap">{message.content}</p>
@@ -333,15 +340,15 @@ function MessagesPageContent() {
                     <div ref={messagesEndRef} />
                   </div>
 
-                  <div className="border-t border-border p-4">
+                  <div className="border-t border-border/70 bg-card/95 p-4 backdrop-blur">
                     <div className="flex gap-2">
                       <Input
                         placeholder="Type a message..."
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
-                        className="flex-1"
+                        className="h-11 flex-1 rounded-lg border-border/70 bg-background/80"
                       />
-                      <Button size="icon" onClick={handleSendMessage} disabled={isSubmitting}>
+                      <Button size="icon" className="h-11 w-11 rounded-lg" onClick={handleSendMessage} disabled={isSubmitting}>
                         {isSubmitting ? (
                           <Loader className="h-4 w-4 animate-spin" />
                         ) : (
@@ -355,13 +362,16 @@ function MessagesPageContent() {
                   </div>
                 </>
               ) : (
-                <div className="flex-1 flex items-center justify-center">
-                  <div className="text-center">
-                    <MessageCircle className="mx-auto h-12 w-12 text-muted-foreground" />
-                    <p className="mt-2 text-muted-foreground">Select a conversation to start messaging</p>
+                <div className="flex flex-1 items-center justify-center p-6">
+                  <div className="max-w-sm text-center">
+                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-lg bg-primary/10">
+                      <MessageCircle className="h-7 w-7 text-primary" />
+                    </div>
+                    <h2 className="mt-4 font-display text-3xl font-bold">Choose a conversation</h2>
+                    <p className="mt-2 text-muted-foreground">Pick a friend from the list or start a fresh chat for your next plan.</p>
                     <Button 
                       variant="outline" 
-                      className="mt-4"
+                      className="mt-4 rounded-lg bg-background/70"
                       onClick={() => setShowNewMessageModal(true)}
                     >
                       <Plus className="mr-2 h-4 w-4" />

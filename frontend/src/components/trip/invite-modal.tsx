@@ -5,8 +5,7 @@ import { Modal } from '@/components/ui/modal';
 import { Button, Input, Avatar, Badge } from '@/components';
 import { api } from '@/services/api';
 import { User, TripMember, TripStyle, Friend } from '@/types';
-import { Search, Users, Link, Mail, Copy, Check, X, Loader2 } from 'lucide-react';
-import { useAuth } from '@/hooks/use-auth';
+import { Search, Users, Link, Mail, Copy, Check, Loader2 } from 'lucide-react';
 
 interface InviteModalProps {
   isOpen: boolean;
@@ -28,7 +27,7 @@ export function InviteModal({ isOpen, onClose, tripId, tripStyle, onMemberAdded 
   const [emailInput, setEmailInput] = useState('');
   const [emailStatus, setEmailStatus] = useState<{ success: boolean; message: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const { user } = useAuth();
+  const canUseFriends = tripStyle === 'OPEN' || tripStyle === 'MANAGED';
 
   useEffect(() => {
     if (isOpen) {
@@ -118,14 +117,24 @@ export function InviteModal({ isOpen, onClose, tripId, tripStyle, onMemberAdded 
     .filter(Boolean) as User[];
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Invite to Trip" className="max-w-lg">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Invite to Trip"
+      description="Bring friends into this plan by email, friend list, or invite link."
+      size="lg"
+    >
       <div className="space-y-4">
         {error && (
           <div className="rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-600">
             {error}
           </div>
         )}
-        <div>
+        <section className="rounded-lg border border-border/70 bg-card/80 p-4">
+          <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+            <Search className="h-4 w-4" />
+            Find by Email
+          </h4>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -167,27 +176,21 @@ export function InviteModal({ isOpen, onClose, tripId, tripStyle, onMemberAdded 
                       Invite
                     </Button>
                   )}
-                </div>
-              ))}
-            </div>
+              </div>
+            ))}
+          </div>
           )}
-        </div>
+        </section>
 
-        <div className="relative flex items-center py-2">
-          <div className="flex-grow border-t border-border" />
-          <span className="flex-shrink-0 mx-4 text-muted-foreground">OR</span>
-          <div className="flex-grow border-t border-border" />
-        </div>
-
-        <div>
-          <h4 className="mb-2 flex items-center gap-2 text-sm font-medium">
+        <section className="rounded-lg border border-border/70 bg-card/80 p-4">
+          <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.14em] text-muted-foreground">
             <Users className="h-4 w-4" />
             Select from Friends
           </h4>
-          {displayFriends.length > 0 ? (
+          {canUseFriends && displayFriends.length > 0 ? (
             <div className="max-h-48 space-y-2 overflow-y-auto">
               {displayFriends.map(friend => (
-                <div key={friend.id} className="flex items-center justify-between rounded-lg border border-border p-3">
+                <div key={friend.id} className="flex items-center justify-between rounded-md border border-border/70 bg-muted/35 p-3">
                   <div className="flex items-center gap-3">
                     <Avatar src={friend.avatarUrl} name={friend.name} size="sm" />
                     <div>
@@ -213,18 +216,12 @@ export function InviteModal({ isOpen, onClose, tripId, tripStyle, onMemberAdded 
               ))}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">No friends yet. Add some friends first!</p>
+            <p className="rounded-md bg-muted/50 p-3 text-sm text-muted-foreground">No friends yet. Search by email or generate an invite link.</p>
           )}
-        </div>
+        </section>
 
-        <div className="relative flex items-center py-2">
-          <div className="flex-grow border-t border-border" />
-          <span className="flex-shrink-0 mx-4 text-muted-foreground">OR</span>
-          <div className="flex-grow border-t border-border" />
-        </div>
-
-        <div>
-          <h4 className="mb-2 flex items-center gap-2 text-sm font-medium">
+        <section className="rounded-lg border border-border/70 bg-card/80 p-4">
+          <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.14em] text-muted-foreground">
             <Link className="h-4 w-4" />
             Generate Invite Link
           </h4>
@@ -244,21 +241,15 @@ export function InviteModal({ isOpen, onClose, tripId, tripStyle, onMemberAdded 
               </Button>
             </div>
           )}
-        </div>
+        </section>
 
-        <div className="relative flex items-center py-2">
-          <div className="flex-grow border-t border-border" />
-          <span className="flex-shrink-0 mx-4 text-muted-foreground">OR</span>
-          <div className="flex-grow border-t border-border" />
-        </div>
-
-        <div>
-          <h4 className="mb-2 flex items-center gap-2 text-sm font-medium">
+        <section className="rounded-lg border border-border/70 bg-card/80 p-4">
+          <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.14em] text-muted-foreground">
             <Mail className="h-4 w-4" />
             Invite by Email
             <Badge variant="secondary" className="text-xs">Coming Soon</Badge>
           </h4>
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row">
             <Input
               placeholder="Enter email address..."
               value={emailInput}
@@ -274,7 +265,7 @@ export function InviteModal({ isOpen, onClose, tripId, tripStyle, onMemberAdded 
               {emailStatus.message}
             </p>
           )}
-        </div>
+        </section>
       </div>
     </Modal>
   );

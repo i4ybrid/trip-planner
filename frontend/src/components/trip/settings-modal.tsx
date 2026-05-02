@@ -114,8 +114,8 @@ export function TripSettingsModal({ isOpen, onClose, trip, onTripUpdated }: Trip
     }
   };
 
-  const handlePromoteToOrganizer = async (userId: string, currentRole: MemberRole) => {
-    const newRole = currentRole === 'ORGANIZER' ? 'MEMBER' : 'ORGANIZER';
+  const handlePromoteToEditor = async (userId: string, currentRole: MemberRole) => {
+    const newRole = currentRole === 'EDITOR' ? 'VIEWER' : 'EDITOR';
     try {
       await api.updateTripMember(trip.id, userId, { role: newRole });
       loadMembers();
@@ -127,8 +127,8 @@ export function TripSettingsModal({ isOpen, onClose, trip, onTripUpdated }: Trip
   const handleTransferMaster = async (userId: string) => {
     if (!confirm('Are you sure you want to transfer trip master role? You will lose master access.')) return;
     try {
-      await api.updateTripMember(trip.id, userId, { role: 'MASTER' });
-      await api.updateTripMember(trip.id, user!.id, { role: 'MEMBER' });
+      await api.updateTripMember(trip.id, userId, { role: 'OWNER' });
+      await api.updateTripMember(trip.id, user!.id, { role: 'EDITOR' });
       loadMembers();
       onTripUpdated?.();
     } catch (error: any) {
@@ -137,17 +137,17 @@ export function TripSettingsModal({ isOpen, onClose, trip, onTripUpdated }: Trip
   };
 
   const currentUserMember = members.find(m => m.userId === user?.id);
-  const isMaster = currentUserMember?.role === 'MASTER';
-  const isOrganizer = currentUserMember?.role === 'ORGANIZER' || isMaster;
+  const isOwner = currentUserMember?.role === 'OWNER';
+  const isOrganizer = currentUserMember?.role === 'EDITOR' || isOwner;
 
   const confirmedMembers = members.filter(m => m.status === 'CONFIRMED');
   const pendingMembers = members.filter(m => m.status === 'INVITED' || m.status === 'MAYBE');
 
   const getRoleBadgeColor = (role: MemberRole) => {
     switch (role) {
-      case 'MASTER': return 'bg-yellow-500 text-white';
-      case 'ORGANIZER': return 'bg-blue-500 text-white';
-      case 'MEMBER': return 'bg-green-500 text-white';
+      case 'OWNER': return 'bg-yellow-500 text-white';
+      case 'EDITOR': return 'bg-blue-500 text-white';
+      case 'EDITOR': return 'bg-green-500 text-white';
       case 'VIEWER': return 'bg-gray-500 text-white';
       default: return 'bg-secondary text-secondary-foreground';
     }
@@ -185,7 +185,7 @@ export function TripSettingsModal({ isOpen, onClose, trip, onTripUpdated }: Trip
               <Input
                 value={tripData.name}
                 onChange={(e) => setTripData({ ...tripData, name: e.target.value })}
-                disabled={!isMaster}
+                disabled={!isOwner}
               />
             </div>
             
@@ -196,7 +196,7 @@ export function TripSettingsModal({ isOpen, onClose, trip, onTripUpdated }: Trip
                 rows={3}
                 value={tripData.description}
                 onChange={(e) => setTripData({ ...tripData, description: e.target.value })}
-                disabled={!isMaster}
+                disabled={!isOwner}
               />
             </div>
             
@@ -206,7 +206,7 @@ export function TripSettingsModal({ isOpen, onClose, trip, onTripUpdated }: Trip
                 <Input
                   value={tripData.destination}
                   onChange={(e) => setTripData({ ...tripData, destination: e.target.value })}
-                  disabled={!isMaster}
+                  disabled={!isOwner}
                 />
               </div>
               
@@ -215,7 +215,7 @@ export function TripSettingsModal({ isOpen, onClose, trip, onTripUpdated }: Trip
                 <Select
                   value={tripData.style}
                   onChange={(e) => setTripData({ ...tripData, style: e.target.value as TripStyle })}
-                  disabled={!isMaster}
+                  disabled={!isOwner}
                   options={[
                     { value: 'OPEN', label: 'Open - Anyone can invite' },
                     { value: 'MANAGED', label: 'Managed - Only organizers can invite' },
@@ -231,7 +231,7 @@ export function TripSettingsModal({ isOpen, onClose, trip, onTripUpdated }: Trip
                   type="datetime-local"
                   value={tripData.startDate}
                   onChange={(e) => setTripData({ ...tripData, startDate: e.target.value })}
-                  disabled={!isMaster}
+                  disabled={!isOwner}
                 />
               </div>
               
@@ -248,7 +248,7 @@ export function TripSettingsModal({ isOpen, onClose, trip, onTripUpdated }: Trip
                     }
                   }}
                   onChange={(e) => setTripData({ ...tripData, endDate: e.target.value })}
-                  disabled={!isMaster}
+                  disabled={!isOwner}
                 />
               </div>
             </div>
@@ -285,8 +285,8 @@ export function TripSettingsModal({ isOpen, onClose, trip, onTripUpdated }: Trip
                       </div>
                       <div className="flex items-center gap-2 mt-1">
                         <Badge className={getRoleBadgeColor(member.role)}>
-                          {member.role === 'MASTER' && <Crown className="h-3 w-3 mr-1" />}
-                          {member.role === 'ORGANIZER' && <Shield className="h-3 w-3 mr-1" />}
+                          {member.role === 'OWNER' && <Crown className="h-3 w-3 mr-1" />}
+                          {member.role === 'EDITOR' && <Shield className="h-3 w-3 mr-1" />}
                           {member.role}
                         </Badge>
                         <Badge className={getStatusBadgeColor(member.status)}>
@@ -296,7 +296,7 @@ export function TripSettingsModal({ isOpen, onClose, trip, onTripUpdated }: Trip
                     </div>
                   </div>
                   
-                  {isMaster && member.role !== 'MASTER' && (
+                  {isOwner && member.role !== 'OWNER' && (
                     <HoverDropdown
                       mode="click"
                       align="right"
@@ -307,8 +307,8 @@ export function TripSettingsModal({ isOpen, onClose, trip, onTripUpdated }: Trip
                       }
                       items={[
                         {
-                          label: member.role !== 'ORGANIZER' ? 'Make Organizer' : 'Remove Organizer',
-                          onClick: () => handlePromoteToOrganizer(member.userId, member.role),
+                          label: member.role !== 'EDITOR' ? 'Make Editor' : 'Remove Editor',
+                          onClick: () => handlePromoteToEditor(member.userId, member.role),
                           icon: <Shield className="h-4 w-4" />,
                         },
                         {
@@ -391,7 +391,7 @@ export function TripSettingsModal({ isOpen, onClose, trip, onTripUpdated }: Trip
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          {isMaster && (
+          {isOwner && (
             <Button onClick={handleSave} disabled={isSaving}>
               {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Save Changes

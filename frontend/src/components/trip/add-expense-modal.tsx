@@ -8,7 +8,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Avatar } from '@/components/ui/avatar';
 import { formatCurrency, cn } from '@/lib/utils';
 import { api } from '@/services/api';
-import { DollarSign, Loader, Utensils, MapPin, Home, Package } from 'lucide-react';
+import { DollarSign, Loader, Utensils, MapPin, Home, Package, ReceiptText } from 'lucide-react';
 import { TripMember, User, CostType } from '@/types';
 import { useFormSubmit } from '@/hooks/useFormSubmit';
 
@@ -211,27 +211,37 @@ export function AddExpenseModal({ isOpen, onClose, tripId, members, onSuccess }:
       isOpen={isOpen}
       onClose={handleClose}
       size="xl"
-      className="max-h-[90vh] overflow-y-auto"
+      className="max-h-[92vh] overflow-hidden p-0"
     >
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-xl font-semibold">Add Expense</h2>
-          <p className="text-sm text-muted-foreground">Add a restaurant bill, excursion fee, or other expense</p>
+      <div className="flex max-h-[92vh] flex-col">
+        <div className="border-b border-border/70 bg-accent px-5 py-5 text-accent-foreground sm:px-6">
+          <div className="flex items-start gap-3 pr-9">
+            <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/15">
+              <ReceiptText className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="font-display text-2xl font-bold">Add Expense</h2>
+              <p className="mt-1 text-sm leading-6 text-accent-foreground/78">
+                Add a restaurant bill, excursion fee, or other shared trip cost.
+              </p>
+            </div>
+          </div>
         </div>
 
-        {hookError && (
-          <Card className="border-red-500 bg-red-50 dark:bg-red-900/20">
-            <CardContent className="py-4 text-sm text-red-600 dark:text-red-400">
-              {hookError}
-            </CardContent>
-          </Card>
-        )}
+        <div className="overflow-y-auto px-5 py-5 sm:px-6">
+          {hookError && (
+            <Card className="mb-5 border-red-500 bg-red-50 dark:bg-red-900/20">
+              <CardContent className="py-4 text-sm text-red-600 dark:text-red-400">
+                {hookError}
+              </CardContent>
+            </Card>
+          )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
           {/* Category selector */}
-          <div>
-            <label className="text-sm font-medium">Category</label>
-            <div className="mt-2 grid grid-cols-4 gap-2">
+          <section className="rounded-lg border border-border/70 bg-muted/30 p-4">
+            <label className="text-sm font-semibold uppercase tracking-[0.14em] text-muted-foreground">Category</label>
+            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
               {[
                 { value: 'restaurant', label: 'Restaurant', icon: <Utensils className="h-5 w-5" /> },
                 { value: 'excursion', label: 'Excursion', icon: <MapPin className="h-5 w-5" /> },
@@ -243,10 +253,10 @@ export function AddExpenseModal({ isOpen, onClose, tripId, members, onSuccess }:
                   type="button"
                   onClick={() => setCategory(cat.value as typeof category)}
                   className={cn(
-                    "flex flex-col items-center gap-1 rounded-lg border-2 p-2 transition-all",
+                    "flex min-h-20 flex-col items-center justify-center gap-2 rounded-md border bg-card px-3 py-3 text-sm font-semibold transition-all",
                     category === cat.value
-                      ? "border-primary bg-primary/5"
-                      : "border-border hover:border-primary/50"
+                      ? "border-primary bg-primary/10 text-primary shadow-sm"
+                      : "border-border/70 text-muted-foreground hover:border-primary/50 hover:text-foreground"
                   )}
                 >
                   <span>{cat.icon}</span>
@@ -254,21 +264,23 @@ export function AddExpenseModal({ isOpen, onClose, tripId, members, onSuccess }:
                 </button>
               ))}
             </div>
-          </div>
+          </section>
 
           {/* Description */}
-          <Input
-            label="Description"
-            placeholder={category === 'restaurant' ? "Dinner at Restaurant X" : category === 'excursion' ? "Scuba diving tour" : category === 'house' ? "Beach house rental" : "Expense description"}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            required
-          />
+          <section className="grid gap-4 rounded-lg border border-border/70 bg-card/80 p-4 lg:grid-cols-[minmax(0,1fr)_300px]">
+            <div className="space-y-4">
+              <Input
+                label="Description"
+                placeholder={category === 'restaurant' ? "Dinner at Restaurant X" : category === 'excursion' ? "Scuba diving tour" : category === 'house' ? "Beach house rental" : "Expense description"}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                required
+              />
 
-          {/* Subtotal, Tax, Tip */}
-          <div className="grid grid-cols-3 gap-3">
-            <div className="col-span-1">
-              <label className="text-sm font-medium mb-1.5 block">Subtotal</label>
+              {/* Subtotal, Tax, Tip */}
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div>
+                  <label className="text-sm font-medium mb-1.5 block">Subtotal</label>
               <div className="flex items-center gap-2">
                 <div className="relative flex-1">
                   <Input
@@ -293,51 +305,54 @@ export function AddExpenseModal({ isOpen, onClose, tripId, members, onSuccess }:
                     "px-3 py-1.5 text-xs font-medium rounded-md border border-border transition-colors shrink-0",
                     costType === 'PER_PERSON'
                       ? "bg-primary text-white border-primary"
-                      : "bg-secondary text-muted-foreground border-border dark:bg-secondary-dark opacity-50"
+                      : "bg-secondary text-muted-foreground border-border opacity-50"
                   )}
                 >
                   /pp
                 </button>
+                  </div>
+                </div>
+                <Input
+                  label="Tax"
+                  type="number"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={tax}
+                  onChange={(e) => setTax(e.target.value)}
+                  onBlur={(e) => { const v = parseFloat(e.target.value); if (isNaN(v)) e.target.value = ''; }}
+                  className="appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                />
+                <Input
+                  label="Tip"
+                  type="number"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={tip}
+                  onChange={(e) => setTip(e.target.value)}
+                  onBlur={(e) => { const v = parseFloat(e.target.value); if (isNaN(v)) e.target.value = ''; }}
+                  className="appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                />
               </div>
             </div>
-            <Input
-              label="Tax"
-              type="number"
-              step="0.01"
-              placeholder="0.00"
-              value={tax}
-              onChange={(e) => setTax(e.target.value)}
-              onBlur={(e) => { const v = parseFloat(e.target.value); if (isNaN(v)) e.target.value = ''; }}
-              className="appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-            />
-            <Input
-              label="Tip"
-              type="number"
-              step="0.01"
-              placeholder="0.00"
-              value={tip}
-              onChange={(e) => setTip(e.target.value)}
-              onBlur={(e) => { const v = parseFloat(e.target.value); if (isNaN(v)) e.target.value = ''; }}
-              className="appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-            />
-          </div>
 
-          {/* Total display */}
-          <div className="rounded-lg bg-muted p-3">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Total</span>
-              <span className="font-bold">{formatCurrency(totalAmount)}</span>
+            {/* Total display */}
+            <div className="flex flex-col justify-between rounded-lg bg-muted p-4">
+              <span className="text-sm font-medium text-muted-foreground">Total</span>
+              <span className="mt-2 text-3xl font-bold">{formatCurrency(totalAmount)}</span>
+              <span className="mt-3 text-xs leading-5 text-muted-foreground">
+                {costType === 'PER_PERSON' ? 'Subtotal is treated as a per-person cost.' : 'Subtotal is treated as a fixed bill total.'}
+              </span>
             </div>
-          </div>
+          </section>
 
           {/* Paid By & Date */}
-          <div className="grid grid-cols-2 gap-3">
+          <section className="grid gap-4 rounded-lg border border-border/70 bg-card/80 p-4 sm:grid-cols-2">
             <div>
               <label className="text-sm font-medium">Paid By</label>
               <select
                 value={paidBy}
                 onChange={(e) => setPaidBy(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+                className="mt-1.5 h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
                 {members.map(m => (
                   <option key={m.userId} value={m.userId}>{m.user?.name || 'User'}</option>
@@ -350,44 +365,44 @@ export function AddExpenseModal({ isOpen, onClose, tripId, members, onSuccess }:
               value={date}
               onChange={(e) => setDate(e.target.value)}
             />
-          </div>
+          </section>
 
           {/* Split Type selector */}
-          <div>
-            <label className="text-sm font-medium">Split Type</label>
-            <div className="mt-2 grid grid-cols-4 gap-2">
+          <section className="rounded-lg border border-border/70 bg-card/80 p-4">
+            <label className="text-sm font-semibold uppercase tracking-[0.14em] text-muted-foreground">Split Type</label>
+            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
               {['equal', 'shares', 'percentage', 'custom'].map((type) => (
                 <button
                   key={type}
                   type="button"
                   onClick={() => setSplitType(type as typeof splitType)}
                   className={cn(
-                    "rounded-lg border-2 p-2 text-xs capitalize transition-all",
+                    "rounded-md border px-3 py-2 text-sm font-semibold capitalize transition-all",
                     splitType === type
-                      ? "border-primary bg-primary/5"
-                      : "border-border hover:border-primary/50"
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border/70 text-muted-foreground hover:border-primary/50 hover:text-foreground"
                   )}
                 >
                   {type}
                 </button>
               ))}
             </div>
-          </div>
+          </section>
 
           {/* Split Details */}
           {costType === 'FIXED' ? (
             // FIXED cost type: only the payer owes the full amount
-            <div className="space-y-2">
+            <section className="space-y-3 rounded-lg border border-border/70 bg-card/80 p-4">
               <div className="flex items-center justify-between">
                 <label className="text-sm font-medium">Split Details</label>
                 <span className="text-xs text-muted-foreground">Fixed cost — payer covers total</span>
               </div>
-              <div className="space-y-2 rounded-lg border border-border p-3">
+              <div className="space-y-2">
                 {members.map((member) => {
                   const isPayer = member.userId === paidBy;
                   const splitAmount = isPayer ? totalAmount : 0;
                   return (
-                    <div key={member.userId} className="flex items-center justify-between">
+                    <div key={member.userId} className="flex items-center justify-between rounded-md bg-muted/50 px-3 py-2">
                       <div className="flex items-center gap-2">
                         <Avatar
                           src={member.user?.avatarUrl || undefined}
@@ -407,10 +422,10 @@ export function AddExpenseModal({ isOpen, onClose, tripId, members, onSuccess }:
                   );
                 })}
               </div>
-            </div>
+            </section>
           ) : (
             // PER_PERSON cost type: normal split configuration
-            <div className="space-y-2">
+            <section className="space-y-3 rounded-lg border border-border/70 bg-card/80 p-4">
               <div className="flex items-center justify-between">
                 <label className="text-sm font-medium">Split Details</label>
                 {splitType === 'percentage' && (
@@ -430,7 +445,7 @@ export function AddExpenseModal({ isOpen, onClose, tripId, members, onSuccess }:
                   </span>
                 )}
               </div>
-              <div className="space-y-2 rounded-lg border border-border p-3">
+              <div className="space-y-2">
                 {members.map((member) => {
                   const split = splits.find(s => s.userId === member.userId);
                   let splitAmount = 0;
@@ -452,16 +467,16 @@ export function AddExpenseModal({ isOpen, onClose, tripId, members, onSuccess }:
                   }
 
                   return (
-                    <div key={member.userId} className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
+                    <div key={member.userId} className="grid gap-3 rounded-md bg-muted/50 px-3 py-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+                      <div className="flex min-w-0 items-center gap-2">
                         <Avatar
                           src={member.user?.avatarUrl || undefined}
                           name={member.user?.name || 'User'}
                           size="sm"
                         />
-                        <span className="text-sm">{member.user?.name || 'User'}</span>
+                        <span className="min-w-0 truncate text-sm font-medium">{member.user?.name || 'User'}</span>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center justify-start gap-2 sm:justify-end">
                         {splitType === 'shares' && (
                           <input
                             type="number"
@@ -524,20 +539,22 @@ export function AddExpenseModal({ isOpen, onClose, tripId, members, onSuccess }:
                   );
                 })}
               </div>
-            </div>
+            </section>
           )}
 
           {/* Notes */}
-          <Textarea
-            label="Notes (optional)"
-            placeholder="Add notes about this expense..."
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            rows={2}
-          />
+          <section className="rounded-lg border border-border/70 bg-card/80 p-4">
+            <Textarea
+              label="Notes (optional)"
+              placeholder="Add notes about this expense..."
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={2}
+            />
+          </section>
 
           {/* Actions */}
-          <div className="flex justify-end gap-2 pt-2">
+          <div className="sticky bottom-0 -mx-5 flex justify-end gap-2 border-t border-border/70 bg-card/95 px-5 py-4 backdrop-blur sm:-mx-6 sm:px-6">
             <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting}>Cancel</Button>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? (
@@ -551,6 +568,7 @@ export function AddExpenseModal({ isOpen, onClose, tripId, members, onSuccess }:
             </Button>
           </div>
         </form>
+        </div>
       </div>
     </Modal>
   );

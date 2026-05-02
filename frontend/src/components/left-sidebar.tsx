@@ -113,7 +113,7 @@ export function LeftSidebar() {
     <>
       {/* Sidebar */}
       <aside className={cn(
-        "fixed left-0 top-0 z-40 h-full border-r border-border bg-background transition-all duration-200",
+        "fixed left-0 top-0 z-40 hidden h-full border-r border-white/55 bg-card/88 shadow-2xl shadow-accent/5 backdrop-blur-xl transition-all duration-200 lg:block",
         isMobile && isCollapsed ? "w-20" : "w-64"
       )}
       onMouseEnter={handleMouseEnter}
@@ -121,14 +121,14 @@ export function LeftSidebar() {
       >
         {/* Logo */}
         <div className={cn(
-          "flex h-16 items-center border-b border-border",
+          "flex h-16 items-center border-b border-border/70",
           isMobile && isCollapsed ? "justify-center px-2" : "gap-3 px-6"
         )}>
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground shadow-lg shadow-accent/25">
             <Compass className="h-5 w-5" />
           </div>
           {!(isMobile && isCollapsed) && (
-            <span className="text-lg font-bold whitespace-nowrap">TripPlanner</span>
+            <span className="font-display text-xl font-bold whitespace-nowrap">TripPlanner</span>
           )}
         </div>
 
@@ -139,7 +139,7 @@ export function LeftSidebar() {
           {navSections.map((section) => (
             <div key={section.title}>
               {!(isMobile && isCollapsed) && (
-                <h3 className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <h3 className="mb-2 px-3 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                   {section.title}
                 </h3>
               )}
@@ -149,12 +149,12 @@ export function LeftSidebar() {
                     <button
                       onClick={() => handleNavClick(item.href)}
                       className={cn(
-                        "flex w-full items-center rounded-lg transition-colors text-sm font-medium",
+                        "flex w-full items-center rounded-lg bg-transparent transition-colors text-sm font-semibold",
                         isMobile && isCollapsed 
                           ? "justify-center p-2.5" 
                           : "justify-start gap-3 px-3 py-2.5",
                         pathname === item.href
-                          ? "bg-primary/10 text-primary"
+                          ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
                           : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                       )}
                       title={isMobile && isCollapsed ? item.label : undefined}

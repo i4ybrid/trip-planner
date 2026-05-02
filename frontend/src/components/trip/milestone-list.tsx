@@ -32,7 +32,7 @@ export function MilestoneListPanel({
   const [isGenerating, setIsGenerating] = useState(false);
   // Look up role from members array to handle initial render before role was loaded from API
   const myMember = members.find(m => m.userId === currentUserId);
-  const canManage = myMember?.role === 'MASTER' || myMember?.role === 'ORGANIZER';
+  const canManage = myMember?.role === 'OWNER' || myMember?.role === 'EDITOR';
   const confirmedMembers = members.filter(m => m.status === 'CONFIRMED');
 
   const handleGenerateDefaults = async () => {

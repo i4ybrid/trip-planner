@@ -6,7 +6,7 @@ import { useSession } from 'next-auth/react';
 import { Card, CardHeader, CardTitle, CardContent, Button, Badge, Avatar } from '@/components';
 import { formatCurrency, cn } from '@/lib/utils';
 import { api } from '@/services/api';
-import { Wallet, CreditCard, Plus, Trash2, CheckCircle2, Circle, Bell } from 'lucide-react';
+import { Wallet, CreditCard, Plus, Trash2, CheckCircle2, Circle, Bell, ReceiptText } from 'lucide-react';
 import { TripMember, User, BillSplit, BillSplitMember, PaymentMethod } from '@/types';
 import { logger } from '@/lib/logger';
 import { AddExpenseModal } from '@/components/trip/add-expense-modal';
@@ -197,9 +197,64 @@ export default function TripPayments() {
 
   return (
     <div className="space-y-6">
+      <div className="overflow-hidden rounded-lg bg-accent text-accent-foreground travel-card-shadow">
+        <div className="flex flex-col gap-5 px-5 py-6 sm:flex-row sm:items-center sm:justify-between sm:px-7">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-accent-foreground/70">Group Money</p>
+            <h2 className="font-display text-3xl font-bold">Payments & Expenses</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-accent-foreground/78">
+              Track shared bills, settlement status, and who owes what without digging through chat threads.
+            </p>
+          </div>
+          <Button
+            onClick={() => setExpenseModalOpen(true)}
+            className="gap-2 bg-white text-foreground shadow-lg shadow-black/10 hover:bg-white/95"
+          >
+            <Plus className="h-4 w-4 text-primary" />
+            Add Expense
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Card className="bg-card/80">
+          <CardContent className="flex items-center justify-between p-4">
+            <div>
+              <p className="text-sm text-muted-foreground">Total expenses</p>
+              <p className="mt-1 text-2xl font-bold">{formatCurrency(totalExpenses)}</p>
+            </div>
+            <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <ReceiptText className="h-5 w-5" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="bg-card/80">
+          <CardContent className="flex items-center justify-between p-4">
+            <div>
+              <p className="text-sm text-muted-foreground">Shared bills</p>
+              <p className="mt-1 text-2xl font-bold">{billSplits.length}</p>
+            </div>
+            <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-secondary text-accent">
+              <Wallet className="h-5 w-5" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="bg-card/80">
+          <CardContent className="flex items-center justify-between p-4">
+            <div>
+              <p className="text-sm text-muted-foreground">Travelers</p>
+              <p className="mt-1 text-2xl font-bold">{members.length}</p>
+            </div>
+            <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-muted text-accent">
+              <CreditCard className="h-5 w-5" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">Payments & Expenses</h2>
-        <Button onClick={() => setExpenseModalOpen(true)}>
+        <h3 className="font-display text-2xl font-bold">Expense Ledger</h3>
+        <Button variant="outline" onClick={() => setExpenseModalOpen(true)} className="gap-2 bg-card/70">
           <Plus className="mr-2 h-4 w-4" />
           Add Expense
         </Button>
@@ -216,8 +271,8 @@ export default function TripPayments() {
         }}
       />
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2 space-y-4">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="space-y-4">
           {expenses.length === 0 && billSplits.length === 0 ? (
             <Card>
               <CardContent className="py-12 text-center text-muted-foreground">
@@ -229,26 +284,26 @@ export default function TripPayments() {
           ) : (
             <>
               {billSplits.map((bill) => (
-                <Card key={bill.id}>
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between">
+                <Card key={bill.id} className="overflow-hidden bg-card/88 travel-card-shadow">
+                  <CardContent className="p-0">
+                    <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_150px]">
                       <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-medium">{bill.title}</h3>
-                          <Badge variant="outline" className="text-xs capitalize">
-                            {bill.status.toLowerCase()}
-                          </Badge>
+                        <div className="border-b border-border/70 p-4">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h3 className="font-display text-xl font-bold">{bill.title}</h3>
+                            <Badge variant="outline" className="text-xs capitalize">
+                              {bill.status.toLowerCase()}
+                            </Badge>
+                          </div>
+                          {bill.description && (
+                            <p className="mt-1 text-sm text-muted-foreground">{bill.description}</p>
+                          )}
+                          <p className="mt-1 text-sm text-muted-foreground">Paid by {getUserName(bill.paidBy)}</p>
                         </div>
-                        <p className="text-sm text-muted-foreground">
-                          {bill.description}
-                        </p>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Paid by {getUserName(bill.paidBy)}
-                        </p>
                         
                         {/* Member payment status */}
-                        <div className="mt-3 space-y-2">
-                          <p className="text-xs font-medium text-muted-foreground">Payment Status:</p>
+                        <div className="space-y-2 p-4">
+                          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Payment Status</p>
                           {bill.members?.map((member) => {
                             const isCurrentUser = member.userId === currentUserId;
                             const isPayer = member.userId === bill.paidBy;
@@ -258,15 +313,15 @@ export default function TripPayments() {
                             return (
                               <div
                                 key={member.id || member.userId}
-                                className="flex items-center justify-between rounded-md bg-secondary/50 px-3 py-2"
+                                className="grid gap-3 rounded-md border border-border/70 bg-secondary/35 px-3 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"
                               >
-                                <div className="flex items-center gap-2">
+                                <div className="flex min-w-0 flex-wrap items-center gap-2">
                                   {isPaid ? (
                                     <CheckCircle2 className="h-4 w-4 text-green-600" />
                                   ) : (
                                     <Circle className="h-4 w-4 text-muted-foreground" />
                                   )}
-                                  <span className="text-sm">{getUserName(member.userId)}</span>
+                                  <span className="min-w-0 text-sm font-medium">{getUserName(member.userId)}</span>
                                   <Badge
                                     variant="outline"
                                     className={cn(
@@ -285,104 +340,106 @@ export default function TripPayments() {
                                 </div>
                                 
                                 {/* Mark as Paid button - only show for current user who is not the payer and hasn't paid */}
-                                {!isPayer && !isPaid && isCurrentUser && (
-                                  <div className="flex items-center gap-2">
-                                    {isMarkingPaid ? (
-                                      <>
-                                        <select
-                                          value={selectedPaymentMethod}
-                                          onChange={(e) => setSelectedPaymentMethod(e.target.value as PaymentMethod)}
-                                          className="rounded-md border border-input bg-background px-2 py-1 text-xs"
-                                          autoFocus
-                                        >
-                                          <option value="">Select method</option>
-                                          {PAYMENT_METHODS.map((method) => (
-                                            <option key={method.value} value={method.value}>
-                                              {method.label}
-                                            </option>
-                                          ))}
-                                        </select>
+                                <div className="flex flex-wrap items-center justify-start gap-2 sm:justify-end">
+                                  {!isPayer && !isPaid && isCurrentUser && (
+                                    <>
+                                      {isMarkingPaid ? (
+                                        <>
+                                          <select
+                                            value={selectedPaymentMethod}
+                                            onChange={(e) => setSelectedPaymentMethod(e.target.value as PaymentMethod)}
+                                            className="rounded-md border border-input bg-background px-2 py-1 text-xs"
+                                            autoFocus
+                                          >
+                                            <option value="">Select method</option>
+                                            {PAYMENT_METHODS.map((method) => (
+                                              <option key={method.value} value={method.value}>
+                                                {method.label}
+                                              </option>
+                                            ))}
+                                          </select>
+                                          <Button
+                                            size="sm"
+                                            onClick={() => handleMarkAsPaid(bill.id, member.userId)}
+                                            className="h-7 text-xs"
+                                          >
+                                            Confirm
+                                          </Button>
+                                          <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            onClick={() => {
+                                              setMarkingPaid(null);
+                                              setSelectedPaymentMethod('');
+                                            }}
+                                            className="h-7 text-xs"
+                                          >
+                                            Cancel
+                                          </Button>
+                                        </>
+                                      ) : (
                                         <Button
                                           size="sm"
-                                          onClick={() => handleMarkAsPaid(bill.id, member.userId)}
+                                          variant="outline"
+                                          onClick={() => setMarkingPaid({ billId: bill.id, userId: member.userId })}
                                           className="h-7 text-xs"
                                         >
-                                          Confirm
+                                          Mark Settled
                                         </Button>
-                                        <Button
-                                          size="sm"
-                                          variant="ghost"
-                                          onClick={() => {
-                                            setMarkingPaid(null);
-                                            setSelectedPaymentMethod('');
-                                          }}
-                                          className="h-7 text-xs"
-                                        >
-                                          Cancel
-                                        </Button>
-                                      </>
-                                    ) : (
-                                      <Button
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={() => setMarkingPaid({ billId: bill.id, userId: member.userId })}
-                                        className="h-7 text-xs"
-                                      >
-                                        Mark Settled
-                                      </Button>
-                                    )}
-                                  </div>
-                                )}
+                                      )}
+                                    </>
+                                  )}
 
-                                {/* Confirm Receipt button - show for payer when member has marked as PAID */}
-                                {!isCurrentUser && isPayer && member.status === 'PAID' && (
-                                  <div className="flex items-center gap-2">
-                                    {confirmingPaymentId === bill.id ? (
-                                      <>
+                                  {/* Confirm Receipt button - show for payer when member has marked as PAID */}
+                                  {!isCurrentUser && isPayer && member.status === 'PAID' && (
+                                    <>
+                                      {confirmingPaymentId === bill.id ? (
+                                        <>
+                                          <Button
+                                            size="sm"
+                                            onClick={() => handleConfirmReceipt(bill.id)}
+                                            className="h-7 text-xs bg-green-600 hover:bg-green-700"
+                                          >
+                                            <CheckCircle2 className="mr-1 h-3 w-3" />
+                                            Yes, Confirm
+                                          </Button>
+                                          <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            onClick={() => setConfirmingPaymentId(null)}
+                                            className="h-7 text-xs"
+                                          >
+                                            Cancel
+                                          </Button>
+                                        </>
+                                      ) : (
                                         <Button
                                           size="sm"
-                                          onClick={() => handleConfirmReceipt(bill.id)}
-                                          className="h-7 text-xs bg-green-600 hover:bg-green-700"
+                                          variant="outline"
+                                          onClick={() => setConfirmingPaymentId(bill.id)}
+                                          className="h-7 text-xs border-green-600 text-green-600 hover:bg-green-50"
                                         >
-                                          <CheckCircle2 className="mr-1 h-3 w-3" />
-                                          Yes, Confirm
+                                          Confirm Receipt
                                         </Button>
-                                        <Button
-                                          size="sm"
-                                          variant="ghost"
-                                          onClick={() => setConfirmingPaymentId(null)}
-                                          className="h-7 text-xs"
-                                        >
-                                          Cancel
-                                        </Button>
-                                      </>
-                                    ) : (
-                                      <Button
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={() => setConfirmingPaymentId(bill.id)}
-                                        className="h-7 text-xs border-green-600 text-green-600 hover:bg-green-50"
-                                      >
-                                        Confirm Receipt
-                                      </Button>
-                                    )}
-                                  </div>
-                                )}
+                                      )}
+                                    </>
+                                  )}
 
-                                {/* Show payment method if paid */}
-                                {isPaid && member.paymentMethod && (
-                                  <Badge variant="secondary" className="text-xs">
-                                    {member.paymentMethod}
-                                  </Badge>
-                                )}
+                                  {/* Show payment method if paid */}
+                                  {isPaid && member.paymentMethod && (
+                                    <Badge variant="secondary" className="text-xs">
+                                      {member.paymentMethod}
+                                    </Badge>
+                                  )}
+                                </div>
                               </div>
                             );
                           })}
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-lg font-bold">{formatCurrency(Number(bill.amount))}</p>
-                        <div className="flex justify-end gap-1 mt-2">
+                      <div className="flex items-center justify-between border-t border-border/70 bg-muted/45 p-4 lg:flex-col lg:items-end lg:border-l lg:border-t-0">
+                        <p className="text-2xl font-bold">{formatCurrency(Number(bill.amount))}</p>
+                        <div className="flex justify-end gap-1 lg:mt-3">
                           <Button
                             variant="ghost"
                             size="icon"
@@ -578,10 +635,10 @@ export default function TripPayments() {
             </Card>
           )}
 
-          {/* Settlement Reminders — only visible to ORGANIZER/MASTER */}
+          {/* Settlement Reminders — only visible to EDITOR/OWNER */}
           {(() => {
             const myMember = members.find(m => m.userId === currentUserId);
-            const canManage = myMember?.role === 'MASTER' || myMember?.role === 'ORGANIZER';
+            const canManage = myMember?.role === 'OWNER' || myMember?.role === 'EDITOR';
             if (!canManage) return null;
 
             // Members with outstanding balances (status !== 'CONFIRMED')

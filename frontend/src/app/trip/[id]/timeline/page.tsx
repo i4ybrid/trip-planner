@@ -22,7 +22,7 @@ export default function TripTimeline() {
   const { user } = useAuth();
 
   const currentUserMember = members.find(m => m.userId === user?.id);
-  const canManageMilestones = currentUserMember?.role === 'MASTER' || currentUserMember?.role === 'ORGANIZER';
+  const canManageMilestones = currentUserMember?.role === 'OWNER' || currentUserMember?.role === 'EDITOR';
 
   useEffect(() => {
     api.getTripMembers(tripId).then(result => {

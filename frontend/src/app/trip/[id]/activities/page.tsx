@@ -36,7 +36,7 @@ export default function TripActivities() {
   const [editActivityErrors, setEditActivityErrors] = useState<{ startTime?: string; endTime?: string }>({});
 
   const currentUserMember = members.find(m => m.userId === user?.id);
-  const canEdit = currentUserMember?.role === 'MASTER' || currentUserMember?.role === 'ORGANIZER';
+  const canEdit = currentUserMember?.role === 'OWNER' || currentUserMember?.role === 'EDITOR';
 
   useEffect(() => {
     const loadMembers = async () => {

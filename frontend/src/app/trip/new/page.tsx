@@ -58,7 +58,7 @@ export default function NewTripPage() {
       <LeftSidebar />
       <AppHeader title="Create New Trip" />
 
-      <main className="ml-sidebar p-6">
+      <main className="ml-sidebar px-6 pb-24 pt-6 lg:pb-6">
         <div className="mx-auto max-w-2xl">
             <Button variant="ghost" onClick={() => router.back()} className="mb-4">
               <ArrowLeft className="mr-2 h-4 w-4" />

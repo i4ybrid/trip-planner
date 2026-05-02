@@ -60,18 +60,22 @@ export default function TripLayout({
   const visibleTabs = userRole === 'VIEWER' ? viewerTabs : allTripTabs;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-farmhouse">
       <LeftSidebar />
       <AppHeader 
         title={trip?.name || `Trip ${tripId}`}
       />
 
-      <div className="border-b border-border bg-background ml-sidebar">
-        <Tabs tabs={visibleTabs} basePath={`/trip/${tripId}`} />
+      <div className="ml-sidebar border-b border-white/55 bg-card/75 backdrop-blur-xl">
+        <div className="mx-auto max-w-6xl">
+          <Tabs tabs={visibleTabs} basePath={`/trip/${tripId}`} />
+        </div>
       </div>
 
-      <main className="ml-sidebar p-6">
-        {children}
+      <main className="ml-sidebar px-4 pb-24 pt-5 sm:px-6 lg:px-8 lg:pb-8">
+        <div className="mx-auto max-w-6xl">
+          {children}
+        </div>
       </main>
     </div>
   );

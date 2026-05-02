@@ -73,7 +73,7 @@ export function UnifiedTimeline({ tripId, members = [] }: UnifiedTimelineProps) 
   const { user } = useAuth();
   const userId = user?.id ?? '';
   const currentMember = members.find((m) => m.userId === userId);
-  const isOrganizer = currentMember?.role === 'MASTER' || currentMember?.role === 'ORGANIZER';
+  const isOrganizer = currentMember?.role === 'OWNER' || currentMember?.role === 'EDITOR';
   const memberIds = members.map((m) => m.userId);
 
   const handleOpenEditMilestone = (milestoneId: string) => {
