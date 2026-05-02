@@ -8,6 +8,50 @@
 
 Collaborative trip planning app for groups. Tech: Next.js 14 · Express · PostgreSQL/Prisma · Socket.io · NextAuth.js · Vitest · Playwright
 
+### UI Styling System
+
+TripPlanner is moving from the legacy plain amber/white UI to a warm, polished travel-planning workspace inspired by the Figma travel agency direction. The UI should feel calm, coordinated, and useful: editorial enough for travel, but still dense and predictable for repeated planning workflows.
+
+**Global visual language:**
+- App pages should generally sit on `bg-gradient-farmhouse` with `text-foreground`. This background has an explicit dark-mode override, so avoid hard-coded light page backgrounds.
+- Primary surfaces use `bg-card/80` to `bg-card/95`, `border-border/70`, `rounded-lg`, `backdrop-blur`, and `shadow-[var(--travel-card-shadow)]`.
+- Use `font-display` for first-level page headings and hero-like section headings. Keep compact panels, tabs, nav items, cards, and form labels in normal body sizing.
+- Prefer the existing coral primary, teal accents, warm paper neutrals, and semantic token colors. Do not recreate the old amber-only palette.
+- Use Lucide icons for buttons, nav, status markers, and empty states whenever an icon exists.
+
+**Application shell:**
+- Use `PageLayout` for standard authenticated pages. It renders `LeftSidebar`, `AppHeader`, and mobile `BottomTabBar`.
+- Desktop layout reserves sidebar space via `.ml-sidebar` / `.pl-sidebar` at `lg` and above. Mobile must not reserve sidebar space; content starts at `ml-0`.
+- On mobile, primary navigation lives in the bottom tab bar. Do not design mobile pages as if a left sidebar is still present.
+- `AppHeader` should stay translucent/card-like (`bg-card/82`, border, blur) and should remain theme-aware.
+
+**Cards and sections:**
+- Cards are for repeated items, modals, and framed tools. Page sections should be full-width bands or unframed constrained layouts, not cards inside cards.
+- Keep radius at `rounded-lg` or smaller unless an existing component requires otherwise.
+- Dashboard/friends/feed/message surfaces should use translucent cards with tokenized borders and shadows instead of flat white boxes.
+- Loading and empty states should live inside the same styled surface that will contain real data.
+
+**Route-specific patterns:**
+- `/dashboard`: uses the travel hero pattern, trip-planner panels, and card grids. It must remain readable in dark mode; the page background should use the dark `bg-gradient-farmhouse` override. Prefer destination imagery that feels specific rather than generic beach stock.
+- `/login`: uses neutral copy (`Welcome`) and a non-photo brand/product panel. Do not reuse the beach hero image here.
+- `/friends`: uses a “Travel Crew” header, stat blocks, search/action toolbar, and pill-style tab grid.
+- `/feed`: uses a “Live Updates” header, filter pills, and richer activity cards with category chips.
+- `/messages`: uses a framed chat workspace. On mobile, show the conversation list first; once a conversation is selected, show chat detail with a back button.
+
+**Mobile and responsive behavior:**
+- Bottom navigation labels and badges must stay within fixed-height tab items.
+- Message, notification, and nav badges render only when the unread/count value is greater than `0`. For zero, render no red dot, no number, and no placeholder.
+- Fixed-format UI elements such as tab bars, toolbar buttons, counters, and chat controls should use stable sizing so hover states and dynamic counts do not shift layout.
+
+**Dark mode requirements:**
+- Use theme tokens (`background`, `card`, `foreground`, `muted-foreground`, `border`, `primary`) rather than raw light colors.
+- Every major page background must be verified in dark mode. A light `bg-gradient-farmhouse` or `bg-white` leaking through dark mode is a bug.
+- Panels in dark mode should use `hsl(var(--card) / opacity)` and token borders. Avoid text opacity combinations that make hero/body copy unreadable.
+
+**Imagery:**
+- Use real imagery sparingly and only where it adds context. Avoid repeated or generic beach imagery, especially on login and utility pages.
+- Utility pages such as login, friends, feed, settings, and messages should lean on product panels, icons, typography, and tokenized surfaces rather than stock scenic photography.
+
 ### Trip Status Flow
 
 ```
