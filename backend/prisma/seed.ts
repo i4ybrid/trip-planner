@@ -86,19 +86,19 @@ const SEED_TRIPS = [
 ];
 
 const SEED_MEMBERS = [
-  { tripId: 'trip-1', userId: 'user-1', role: 'MASTER' as const, status: 'CONFIRMED' as const },
-  { tripId: 'trip-1', userId: 'user-2', role: 'MEMBER' as const, status: 'CONFIRMED' as const },
-  { tripId: 'trip-1', userId: 'user-3', role: 'MEMBER' as const, status: 'CONFIRMED' as const },
-  { tripId: 'trip-1', userId: 'user-4', role: 'MEMBER' as const, status: 'MAYBE' as const },
-  { tripId: 'trip-2', userId: 'user-2', role: 'MASTER' as const, status: 'CONFIRMED' as const },
-  { tripId: 'trip-2', userId: 'user-1', role: 'MEMBER' as const, status: 'CONFIRMED' as const },
-  { tripId: 'trip-3', userId: 'user-1', role: 'MASTER' as const, status: 'CONFIRMED' as const },
-  { tripId: 'trip-4', userId: 'user-3', role: 'MASTER' as const, status: 'CONFIRMED' as const },
-  { tripId: 'trip-4', userId: 'user-1', role: 'MEMBER' as const, status: 'CONFIRMED' as const },
-  { tripId: 'trip-4', userId: 'user-2', role: 'MEMBER' as const, status: 'CONFIRMED' as const },
-  { tripId: 'trip-5', userId: 'user-2', role: 'MASTER' as const, status: 'CONFIRMED' as const },
-  { tripId: 'trip-5', userId: 'user-1', role: 'MEMBER' as const, status: 'CONFIRMED' as const },
-  { tripId: 'trip-5', userId: 'user-4', role: 'MEMBER' as const, status: 'CONFIRMED' as const },
+  { tripId: 'trip-1', userId: 'user-1', role: 'OWNER' as const, status: 'CONFIRMED' as const },
+  { tripId: 'trip-1', userId: 'user-2', role: 'EDITOR' as const, status: 'CONFIRMED' as const },
+  { tripId: 'trip-1', userId: 'user-3', role: 'EDITOR' as const, status: 'CONFIRMED' as const },
+  { tripId: 'trip-1', userId: 'user-4', role: 'EDITOR' as const, status: 'MAYBE' as const },
+  { tripId: 'trip-2', userId: 'user-2', role: 'OWNER' as const, status: 'CONFIRMED' as const },
+  { tripId: 'trip-2', userId: 'user-1', role: 'EDITOR' as const, status: 'CONFIRMED' as const },
+  { tripId: 'trip-3', userId: 'user-1', role: 'OWNER' as const, status: 'CONFIRMED' as const },
+  { tripId: 'trip-4', userId: 'user-3', role: 'OWNER' as const, status: 'CONFIRMED' as const },
+  { tripId: 'trip-4', userId: 'user-1', role: 'EDITOR' as const, status: 'CONFIRMED' as const },
+  { tripId: 'trip-4', userId: 'user-2', role: 'EDITOR' as const, status: 'CONFIRMED' as const },
+  { tripId: 'trip-5', userId: 'user-2', role: 'OWNER' as const, status: 'CONFIRMED' as const },
+  { tripId: 'trip-5', userId: 'user-1', role: 'EDITOR' as const, status: 'CONFIRMED' as const },
+  { tripId: 'trip-5', userId: 'user-4', role: 'EDITOR' as const, status: 'CONFIRMED' as const },
 ];
 
 const SEED_ACTIVITIES = [
