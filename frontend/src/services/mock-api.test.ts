@@ -26,7 +26,7 @@ describe('MockDatabase', () => {
 
       expect(membersResult.data).toHaveLength(1);
       expect(membersResult.data?.[0].userId).toBe('user-1');
-      expect(membersResult.data?.[0].role).toBe('MASTER');
+      expect(membersResult.data?.[0].role).toBe('OWNER');
     });
   });
 

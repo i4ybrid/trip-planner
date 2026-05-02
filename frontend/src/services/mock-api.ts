@@ -145,19 +145,19 @@ const SEED_TRIPS: Trip[] = [
 ];
 
 const SEED_MEMBERS: TripMember[] = [
-  { id: 'm1', tripId: 'trip-1', userId: 'user-1', role: 'MASTER', status: 'CONFIRMED', joinedAt: '2026-01-15T00:00:00Z' },
-  { id: 'm2', tripId: 'trip-1', userId: 'user-2', role: 'MEMBER', status: 'CONFIRMED', joinedAt: '2026-01-16T00:00:00Z' },
-  { id: 'm3', tripId: 'trip-1', userId: 'user-3', role: 'MEMBER', status: 'CONFIRMED', joinedAt: '2026-01-17T00:00:00Z' },
-  { id: 'm4', tripId: 'trip-1', userId: 'user-4', role: 'MEMBER', status: 'MAYBE', joinedAt: '2026-01-18T00:00:00Z' },
-  { id: 'm5', tripId: 'trip-2', userId: 'user-2', role: 'MASTER', status: 'CONFIRMED', joinedAt: '2026-01-20T00:00:00Z' },
-  { id: 'm6', tripId: 'trip-2', userId: 'user-1', role: 'MEMBER', status: 'CONFIRMED', joinedAt: '2026-01-21T00:00:00Z' },
-  { id: 'm7', tripId: 'trip-3', userId: 'user-1', role: 'MASTER', status: 'CONFIRMED', joinedAt: '2026-02-01T00:00:00Z' },
-  { id: 'm8', tripId: 'trip-4', userId: 'user-3', role: 'MASTER', status: 'CONFIRMED', joinedAt: '2025-10-01T00:00:00Z' },
-  { id: 'm9', tripId: 'trip-4', userId: 'user-1', role: 'MEMBER', status: 'CONFIRMED', joinedAt: '2025-10-02T00:00:00Z' },
-  { id: 'm10', tripId: 'trip-4', userId: 'user-2', role: 'MEMBER', status: 'CONFIRMED', joinedAt: '2025-10-03T00:00:00Z' },
-  { id: 'm11', tripId: 'trip-5', userId: 'user-2', role: 'MASTER', status: 'CONFIRMED', joinedAt: '2026-01-25T10:00:00Z' },
-  { id: 'm12', tripId: 'trip-5', userId: 'user-1', role: 'MEMBER', status: 'CONFIRMED', joinedAt: '2026-01-25T11:00:00Z' },
-  { id: 'm13', tripId: 'trip-5', userId: 'user-4', role: 'MEMBER', status: 'CONFIRMED', joinedAt: '2026-01-26T09:00:00Z' },
+  { id: 'm1', tripId: 'trip-1', userId: 'user-1', role: 'OWNER', status: 'CONFIRMED', joinedAt: '2026-01-15T00:00:00Z' },
+  { id: 'm2', tripId: 'trip-1', userId: 'user-2', role: 'EDITOR', status: 'CONFIRMED', joinedAt: '2026-01-16T00:00:00Z' },
+  { id: 'm3', tripId: 'trip-1', userId: 'user-3', role: 'EDITOR', status: 'CONFIRMED', joinedAt: '2026-01-17T00:00:00Z' },
+  { id: 'm4', tripId: 'trip-1', userId: 'user-4', role: 'EDITOR', status: 'MAYBE', joinedAt: '2026-01-18T00:00:00Z' },
+  { id: 'm5', tripId: 'trip-2', userId: 'user-2', role: 'OWNER', status: 'CONFIRMED', joinedAt: '2026-01-20T00:00:00Z' },
+  { id: 'm6', tripId: 'trip-2', userId: 'user-1', role: 'EDITOR', status: 'CONFIRMED', joinedAt: '2026-01-21T00:00:00Z' },
+  { id: 'm7', tripId: 'trip-3', userId: 'user-1', role: 'OWNER', status: 'CONFIRMED', joinedAt: '2026-02-01T00:00:00Z' },
+  { id: 'm8', tripId: 'trip-4', userId: 'user-3', role: 'OWNER', status: 'CONFIRMED', joinedAt: '2025-10-01T00:00:00Z' },
+  { id: 'm9', tripId: 'trip-4', userId: 'user-1', role: 'EDITOR', status: 'CONFIRMED', joinedAt: '2025-10-02T00:00:00Z' },
+  { id: 'm10', tripId: 'trip-4', userId: 'user-2', role: 'EDITOR', status: 'CONFIRMED', joinedAt: '2025-10-03T00:00:00Z' },
+  { id: 'm11', tripId: 'trip-5', userId: 'user-2', role: 'OWNER', status: 'CONFIRMED', joinedAt: '2026-01-25T10:00:00Z' },
+  { id: 'm12', tripId: 'trip-5', userId: 'user-1', role: 'EDITOR', status: 'CONFIRMED', joinedAt: '2026-01-25T11:00:00Z' },
+  { id: 'm13', tripId: 'trip-5', userId: 'user-4', role: 'EDITOR', status: 'CONFIRMED', joinedAt: '2026-01-26T09:00:00Z' },
 ];
 
 const SEED_ACTIVITIES: Activity[] = [
@@ -432,7 +432,7 @@ export const mockApi = {
       id: generateId(),
       tripId: trip.id,
       userId: CURRENT_USER_ID,
-      role: 'MASTER',
+      role: 'OWNER',
       status: 'CONFIRMED',
       joinedAt: new Date().toISOString(),
     };
@@ -476,7 +476,7 @@ export const mockApi = {
       id: generateId(),
       tripId,
       userId,
-      role: 'MEMBER',
+      role: 'EDITOR',
       status: 'INVITED',
       joinedAt: new Date().toISOString(),
     };
