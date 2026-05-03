@@ -47,6 +47,27 @@ export default function DashboardPage() {
             <PendingInvites onInviteProcessed={fetchTrips} />
           </section>
 
+          <section className="mb-8 rounded-lg border border-border/70 bg-gradient-to-r from-primary/8 via-primary/5 to-accent/8 p-5 shadow-[var(--travel-card-shadow)] backdrop-blur">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/15 text-primary shadow-sm">
+                  <Compass className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="font-display text-lg font-bold text-foreground">Discover Public Events</p>
+                  <p className="text-sm text-muted-foreground">Browse promoted events near you or anywhere in the US.</p>
+                </div>
+              </div>
+              <Button
+                onClick={() => router.push('/browse')}
+                className="gap-2 shrink-0 h-11 rounded-lg px-5"
+              >
+                <Compass className="h-4 w-4" />
+                Browse Events
+              </Button>
+            </div>
+          </section>
+
           {!isLoading && activeTrips.length === 0 && (
             <section className="travel-hero mb-8 overflow-hidden rounded-lg travel-card-shadow">
               <div className="px-5 py-8 sm:px-8 lg:px-10 lg:py-12">
