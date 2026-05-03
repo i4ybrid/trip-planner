@@ -5,10 +5,54 @@ const prisma = new PrismaClient();
 
 // Seed data based on frontend mock-api.ts
 const SEED_USERS = [
-  { id: 'user-1', email: 'test@example.com', name: 'Test User', password: 'password123' },
-  { id: 'user-2', email: 'sarah@example.com', name: 'Sarah Chen', password: 'password123' },
-  { id: 'user-3', email: 'mike@example.com', name: 'Mike Johnson', password: 'password123' },
-  { id: 'user-4', email: 'emma@example.com', name: 'Emma Wilson', password: 'password123' },
+  {
+    id: 'user-1',
+    email: 'test@example.com',
+    name: 'Test User',
+    password: 'password123',
+    city: 'San Francisco',
+    state: 'CA',
+    country: 'US',
+    latitude: 37.7749,
+    longitude: -122.4194,
+    locationSource: 'PROFILE' as const,
+  },
+  {
+    id: 'user-2',
+    email: 'sarah@example.com',
+    name: 'Sarah Chen',
+    password: 'password123',
+    city: 'New York',
+    state: 'NY',
+    country: 'US',
+    latitude: 40.7128,
+    longitude: -74.006,
+    locationSource: 'PROFILE' as const,
+  },
+  {
+    id: 'user-3',
+    email: 'mike@example.com',
+    name: 'Mike Johnson',
+    password: 'password123',
+    city: 'Denver',
+    state: 'CO',
+    country: 'US',
+    latitude: 39.7392,
+    longitude: -104.9903,
+    locationSource: 'PROFILE' as const,
+  },
+  {
+    id: 'user-4',
+    email: 'emma@example.com',
+    name: 'Emma Wilson',
+    password: 'password123',
+    city: 'Austin',
+    state: 'TX',
+    country: 'US',
+    latitude: 30.2672,
+    longitude: -97.7431,
+    locationSource: 'PROFILE' as const,
+  },
 ];
 
 const SEED_SETTINGS = {
@@ -37,6 +81,7 @@ const SEED_TRIPS = [
     endDate: new Date('2026-06-22'),
     status: 'PLANNING' as const,
     tripMasterId: 'user-1',
+    budget: 5200,
     coverImage: 'https://images.unsplash.com/photo-1505852679233-d9fd70aff56d?w=800',
   },
   {
@@ -48,6 +93,7 @@ const SEED_TRIPS = [
     endDate: new Date('2026-04-20'),
     status: 'CONFIRMED' as const,
     tripMasterId: 'user-2',
+    budget: 1800,
     coverImage: 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=800',
   },
   {
@@ -59,6 +105,7 @@ const SEED_TRIPS = [
     endDate: new Date('2026-09-14'),
     status: 'IDEA' as const,
     tripMasterId: 'user-1',
+    budget: 7600,
     coverImage: 'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?w=800',
   },
   {
@@ -70,6 +117,7 @@ const SEED_TRIPS = [
     endDate: new Date('2025-12-23'),
     status: 'COMPLETED' as const,
     tripMasterId: 'user-3',
+    budget: 2400,
     coverImage: 'https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=800',
   },
   {
@@ -81,6 +129,7 @@ const SEED_TRIPS = [
     endDate: new Date('2026-02-22'),
     status: 'HAPPENING' as const,
     tripMasterId: 'user-2',
+    budget: 2200,
     coverImage: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800',
   },
 ];
@@ -252,6 +301,45 @@ const SEED_BILL_SPLIT_MEMBERS = [
   { billSplitId: 'bill-2', userId: 'user-4', dollarAmount: 90, type: 'EQUAL' as const, status: 'PENDING' as const },
 ];
 
+const SEED_EXPENSES = [
+  {
+    tripId: 'trip-1',
+    amount: 84.5,
+    description: 'Airport breakfast before Maui flight',
+    category: 'FOOD' as const,
+    payerId: 'user-1',
+    date: new Date('2026-06-15T14:30:00.000Z'),
+    splitType: 'EQUAL' as const,
+  },
+  {
+    tripId: 'trip-1',
+    amount: 320,
+    description: 'Rental car deposit',
+    category: 'TRANSPORT' as const,
+    payerId: 'user-2',
+    date: new Date('2026-06-16T17:00:00.000Z'),
+    splitType: 'EQUAL' as const,
+  },
+  {
+    tripId: 'trip-2',
+    amount: 68,
+    description: 'Birthday cupcakes',
+    category: 'FOOD' as const,
+    payerId: 'user-1',
+    date: new Date('2026-04-18T20:00:00.000Z'),
+    splitType: 'EQUAL' as const,
+  },
+  {
+    tripId: 'trip-5',
+    amount: 42,
+    description: 'Rideshare to Broadway',
+    category: 'TRANSPORT' as const,
+    payerId: 'user-4',
+    date: new Date('2026-02-18T23:45:00.000Z'),
+    splitType: 'EQUAL' as const,
+  },
+];
+
 const SEED_FRIENDS = [
   { userId: 'user-1', friendId: 'user-2' },
   { userId: 'user-1', friendId: 'user-3' },
@@ -325,6 +413,248 @@ const SEED_MEDIA = [
   { tripId: 'trip-5', uploaderId: 'user-1', type: 'image' as const, url: 'https://images.unsplash.com/photo-1544542900-1af4c07e98d8?w=800', caption: 'Guitar shop on Broadway' },
 ];
 
+const SEED_PUBLIC_EVENTS = [
+  {
+    id: 'public-event-1',
+    organizerId: 'user-2',
+    title: 'Brooklyn Rooftop Travel Mixer',
+    description: 'A hosted evening for travelers, creators, and local organizers to meet future trip crews over music, food, and skyline views.',
+    venueName: 'Williamsburg Terrace',
+    addressLine: '111 N 12th St',
+    city: 'New York',
+    state: 'NY',
+    country: 'US',
+    latitude: 40.7219,
+    longitude: -73.9568,
+    regionRadiusMiles: 35,
+    startDate: new Date('2026-06-05T23:00:00.000Z'),
+    endDate: new Date('2026-06-06T03:00:00.000Z'),
+    coverImage: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=1200',
+    status: 'PUBLISHED' as const,
+    currency: 'USD',
+    publishedAt: new Date('2026-05-01T15:00:00.000Z'),
+    promotionStartsAt: new Date('2026-05-01T15:00:00.000Z'),
+    promotionEndsAt: new Date('2026-06-06T04:00:00.000Z'),
+  },
+  {
+    id: 'public-event-2',
+    organizerId: 'user-1',
+    title: 'Bay Area Weekend Escape Expo',
+    description: 'Regional operators showcase small-group weekend getaways, train-friendly itineraries, and outdoorsy city breaks around Northern California.',
+    venueName: 'Fort Mason Center',
+    addressLine: '2 Marina Blvd',
+    city: 'San Francisco',
+    state: 'CA',
+    country: 'US',
+    latitude: 37.8066,
+    longitude: -122.4319,
+    regionRadiusMiles: 60,
+    startDate: new Date('2026-06-12T18:00:00.000Z'),
+    endDate: new Date('2026-06-12T23:00:00.000Z'),
+    coverImage: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200',
+    status: 'PUBLISHED' as const,
+    currency: 'USD',
+    publishedAt: new Date('2026-05-01T16:00:00.000Z'),
+    promotionStartsAt: new Date('2026-05-01T16:00:00.000Z'),
+    promotionEndsAt: new Date('2026-06-13T02:00:00.000Z'),
+  },
+  {
+    id: 'public-event-3',
+    organizerId: 'user-3',
+    title: 'Denver Alpine Planning Night',
+    description: 'A public planning night for hiking, skiing, and mountain-town weekends, hosted by regional outdoor guides.',
+    venueName: 'Union Station Loft',
+    addressLine: '1701 Wynkoop St',
+    city: 'Denver',
+    state: 'CO',
+    country: 'US',
+    latitude: 39.7528,
+    longitude: -104.9998,
+    regionRadiusMiles: 75,
+    startDate: new Date('2026-07-10T00:00:00.000Z'),
+    endDate: new Date('2026-07-10T03:00:00.000Z'),
+    coverImage: 'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=1200',
+    status: 'PENDING_PAYMENT' as const,
+    currency: 'USD',
+  },
+  {
+    id: 'public-event-4',
+    organizerId: 'user-1',
+    title: 'Oakland Rail-Friendly Weekend Fair',
+    description: 'Local hosts highlight car-light Bay Area weekends, ferry day trips, food crawls, and small-group regional escapes.',
+    venueName: 'Jack London Square Pavilion',
+    addressLine: '472 Water St',
+    city: 'Oakland',
+    state: 'CA',
+    country: 'US',
+    latitude: 37.7955,
+    longitude: -122.2776,
+    regionRadiusMiles: 45,
+    startDate: new Date('2026-06-20T18:00:00.000Z'),
+    endDate: new Date('2026-06-20T23:00:00.000Z'),
+    coverImage: 'https://images.unsplash.com/photo-1518005020951-eccb494ad742?w=1200',
+    status: 'PUBLISHED' as const,
+    currency: 'USD',
+    publishedAt: new Date('2026-05-02T15:00:00.000Z'),
+    promotionStartsAt: new Date('2026-05-02T15:00:00.000Z'),
+    promotionEndsAt: new Date('2026-06-21T03:00:00.000Z'),
+  },
+  {
+    id: 'public-event-5',
+    organizerId: 'user-1',
+    title: 'San Jose South Bay Group Travel Night',
+    description: 'A meetup for South Bay travelers comparing coastal cabins, wine country weekends, and quick flights from SJC.',
+    venueName: 'San Pedro Square Market',
+    addressLine: '87 N San Pedro St',
+    city: 'San Jose',
+    state: 'CA',
+    country: 'US',
+    latitude: 37.3362,
+    longitude: -121.8906,
+    regionRadiusMiles: 55,
+    startDate: new Date('2026-06-27T01:00:00.000Z'),
+    endDate: new Date('2026-06-27T04:00:00.000Z'),
+    coverImage: 'https://images.unsplash.com/photo-1494526585095-c41746248156?w=1200',
+    status: 'PUBLISHED' as const,
+    currency: 'USD',
+    publishedAt: new Date('2026-05-02T16:00:00.000Z'),
+    promotionStartsAt: new Date('2026-05-02T16:00:00.000Z'),
+    promotionEndsAt: new Date('2026-06-27T05:00:00.000Z'),
+  },
+  {
+    id: 'public-event-6',
+    organizerId: 'user-2',
+    title: 'Hudson Valley Escape Planning Social',
+    description: 'Regional guides and hosts present train-friendly cabin stays, river towns, and group-friendly food weekends north of NYC.',
+    venueName: 'Beacon Roundhouse',
+    addressLine: '2 E Main St',
+    city: 'Beacon',
+    state: 'NY',
+    country: 'US',
+    latitude: 41.5048,
+    longitude: -73.9696,
+    regionRadiusMiles: 70,
+    startDate: new Date('2026-06-28T19:00:00.000Z'),
+    endDate: new Date('2026-06-28T23:00:00.000Z'),
+    coverImage: 'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=1200',
+    status: 'PUBLISHED' as const,
+    currency: 'USD',
+    publishedAt: new Date('2026-05-02T17:00:00.000Z'),
+    promotionStartsAt: new Date('2026-05-02T17:00:00.000Z'),
+    promotionEndsAt: new Date('2026-06-29T02:00:00.000Z'),
+  },
+];
+
+const SEED_PUBLIC_EVENT_PROMOTION_PAYMENTS = [
+  {
+    id: 'public-payment-1',
+    publicEventId: 'public-event-1',
+    organizerId: 'user-2',
+    amount: 79,
+    currency: 'USD',
+    provider: 'mock',
+    providerCheckoutId: 'mock_public_event_public-payment-1',
+    checkoutUrl: 'http://localhost:3000/public-events/public-event-1/promotion?payment=public-payment-1',
+    status: 'PAID' as const,
+    regionCity: 'New York',
+    regionState: 'NY',
+    regionCountry: 'US',
+    regionRadiusMiles: 35,
+    startsAt: new Date('2026-05-01T15:00:00.000Z'),
+    endsAt: new Date('2026-06-06T04:00:00.000Z'),
+    paidAt: new Date('2026-05-01T15:02:00.000Z'),
+  },
+  {
+    id: 'public-payment-2',
+    publicEventId: 'public-event-2',
+    organizerId: 'user-1',
+    amount: 99,
+    currency: 'USD',
+    provider: 'mock',
+    providerCheckoutId: 'mock_public_event_public-payment-2',
+    checkoutUrl: 'http://localhost:3000/public-events/public-event-2/promotion?payment=public-payment-2',
+    status: 'PAID' as const,
+    regionCity: 'San Francisco',
+    regionState: 'CA',
+    regionCountry: 'US',
+    regionRadiusMiles: 60,
+    startsAt: new Date('2026-05-01T16:00:00.000Z'),
+    endsAt: new Date('2026-06-13T02:00:00.000Z'),
+    paidAt: new Date('2026-05-01T16:04:00.000Z'),
+  },
+  {
+    id: 'public-payment-3',
+    publicEventId: 'public-event-3',
+    organizerId: 'user-3',
+    amount: 49,
+    currency: 'USD',
+    provider: 'mock',
+    providerCheckoutId: 'mock_public_event_public-payment-3',
+    checkoutUrl: 'http://localhost:3000/public-events/public-event-3/promotion?payment=public-payment-3',
+    status: 'PENDING' as const,
+    regionCity: 'Denver',
+    regionState: 'CO',
+    regionCountry: 'US',
+    regionRadiusMiles: 75,
+    startsAt: new Date('2026-05-01T17:00:00.000Z'),
+    endsAt: new Date('2026-07-10T04:00:00.000Z'),
+  },
+  {
+    id: 'public-payment-4',
+    publicEventId: 'public-event-4',
+    organizerId: 'user-1',
+    amount: 59,
+    currency: 'USD',
+    provider: 'mock',
+    providerCheckoutId: 'mock_public_event_public-payment-4',
+    checkoutUrl: 'http://localhost:3000/public-events/public-event-4/promotion?payment=public-payment-4',
+    status: 'PAID' as const,
+    regionCity: 'Oakland',
+    regionState: 'CA',
+    regionCountry: 'US',
+    regionRadiusMiles: 45,
+    startsAt: new Date('2026-05-02T15:00:00.000Z'),
+    endsAt: new Date('2026-06-21T03:00:00.000Z'),
+    paidAt: new Date('2026-05-02T15:05:00.000Z'),
+  },
+  {
+    id: 'public-payment-5',
+    publicEventId: 'public-event-5',
+    organizerId: 'user-1',
+    amount: 69,
+    currency: 'USD',
+    provider: 'mock',
+    providerCheckoutId: 'mock_public_event_public-payment-5',
+    checkoutUrl: 'http://localhost:3000/public-events/public-event-5/promotion?payment=public-payment-5',
+    status: 'PAID' as const,
+    regionCity: 'San Jose',
+    regionState: 'CA',
+    regionCountry: 'US',
+    regionRadiusMiles: 55,
+    startsAt: new Date('2026-05-02T16:00:00.000Z'),
+    endsAt: new Date('2026-06-27T05:00:00.000Z'),
+    paidAt: new Date('2026-05-02T16:08:00.000Z'),
+  },
+  {
+    id: 'public-payment-6',
+    publicEventId: 'public-event-6',
+    organizerId: 'user-2',
+    amount: 79,
+    currency: 'USD',
+    provider: 'mock',
+    providerCheckoutId: 'mock_public_event_public-payment-6',
+    checkoutUrl: 'http://localhost:3000/public-events/public-event-6/promotion?payment=public-payment-6',
+    status: 'PAID' as const,
+    regionCity: 'Beacon',
+    regionState: 'NY',
+    regionCountry: 'US',
+    regionRadiusMiles: 70,
+    startsAt: new Date('2026-05-02T17:00:00.000Z'),
+    endsAt: new Date('2026-06-29T02:00:00.000Z'),
+    paidAt: new Date('2026-05-02T17:03:00.000Z'),
+  },
+];
+
 const SEED_DM_CONVERSATIONS = [
   { participant1: 'user-1', participant2: 'user-2' },
   { participant1: 'user-1', participant2: 'user-3' },
@@ -346,6 +676,7 @@ async function main() {
   await prisma.timelineEvent.deleteMany();
   await prisma.messageReadReceipt.deleteMany();
   await prisma.message.deleteMany();
+  await prisma.expense.deleteMany();
   await prisma.billSplitMember.deleteMany();
   await prisma.billSplit.deleteMany();
   await prisma.vote.deleteMany();
@@ -358,6 +689,8 @@ async function main() {
   await prisma.friendRequest.deleteMany();
   await prisma.notification.deleteMany();
   await prisma.mediaItem.deleteMany();
+  await prisma.publicEventPromotionPayment.deleteMany();
+  await prisma.publicEvent.deleteMany();
   await prisma.dmConversation.deleteMany();
   await prisma.settings.deleteMany();
   await prisma.user.deleteMany();
@@ -372,6 +705,12 @@ async function main() {
         email: userData.email,
         name: userData.name,
         passwordHash,
+        city: userData.city,
+        state: userData.state,
+        country: userData.country,
+        latitude: userData.latitude,
+        longitude: userData.longitude,
+        locationSource: userData.locationSource,
       },
     });
   }
@@ -474,6 +813,13 @@ async function main() {
     });
   }
 
+  console.log('🧾 Creating simple expenses...');
+  for (const expenseData of SEED_EXPENSES) {
+    await prisma.expense.create({
+      data: expenseData,
+    });
+  }
+
   // Create friends
   console.log('🤝 Creating friends...');
   for (const friendData of SEED_FRIENDS) {
@@ -519,6 +865,21 @@ async function main() {
   for (const mediaData of SEED_MEDIA) {
     await prisma.mediaItem.create({
       data: mediaData,
+    });
+  }
+
+  // Create public events and paid promotion records
+  console.log('📣 Creating public events...');
+  for (const publicEventData of SEED_PUBLIC_EVENTS) {
+    await prisma.publicEvent.create({
+      data: publicEventData,
+    });
+  }
+
+  console.log('💳 Creating public event promotion payments...');
+  for (const paymentData of SEED_PUBLIC_EVENT_PROMOTION_PAYMENTS) {
+    await prisma.publicEventPromotionPayment.create({
+      data: paymentData,
     });
   }
 
@@ -568,12 +929,15 @@ async function main() {
   console.log(`   - ${SEED_TIMELINE.length} timeline events`);
   console.log(`   - ${SEED_BILL_SPLITS.length} bill splits`);
   console.log(`   - ${SEED_BILL_SPLIT_MEMBERS.length} bill split members`);
+  console.log(`   - ${SEED_EXPENSES.length} simple expenses`);
   console.log(`   - ${SEED_FRIENDS.length} friendships`);
   console.log(`   - ${SEED_FRIEND_REQUESTS.length} friend requests`);
   console.log(`   - ${SEED_NOTIFICATIONS.length} notifications`);
   console.log(`   - ${SEED_MILESTONES.length} milestones`);
   console.log(`   - ${SEED_MILESTONE_COMPLETIONS.length} milestone completions`);
   console.log(`   - ${SEED_MEDIA.length} media items`);
+  console.log(`   - ${SEED_PUBLIC_EVENTS.length} public events`);
+  console.log(`   - ${SEED_PUBLIC_EVENT_PROMOTION_PAYMENTS.length} public event promotion payments`);
   console.log(`   - ${SEED_DM_CONVERSATIONS.length} DM conversations`);
   console.log(`   - ${SEED_DM_MESSAGES.length} DM messages`);
 }

@@ -1,7 +1,9 @@
 import { getPrisma } from '@/lib/prisma';
+import { eventService, normalizeEventLocation } from '@/services/event.service';
 import {
-  EventSearchInput,
+  PublicEventBrowseInput,
   PublicEventCreateInput,
+  PublicEventLocationSuggestion,
   PublicEventPromotionInput,
   PublicEventUpdateInput,
 } from '@/types';
@@ -13,24 +15,6 @@ function addDays(date: Date, days: number): Date {
   const result = new Date(date);
   result.setDate(result.getDate() + days);
   return result;
-}
-
-function milesBetween(
-  start: { latitude: number; longitude: number },
-  end: { latitude: number; longitude: number }
-): number {
-  const earthRadiusMiles = 3958.8;
-  const toRadians = (value: number) => (value * Math.PI) / 180;
-  const deltaLat = toRadians(end.latitude - start.latitude);
-  const deltaLon = toRadians(end.longitude - start.longitude);
-  const lat1 = toRadians(start.latitude);
-  const lat2 = toRadians(end.latitude);
-
-  const a =
-    Math.sin(deltaLat / 2) ** 2 +
-    Math.cos(lat1) * Math.cos(lat2) * Math.sin(deltaLon / 2) ** 2;
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return earthRadiusMiles * c;
 }
 
 function normalizeText(value?: string | null): string | undefined {
@@ -188,39 +172,64 @@ export class PublicEventService {
     });
   }
 
-  async searchMyEvents(userId: string, input: EventSearchInput) {
-    const query = input.query?.trim();
-    const where: any = {
-      members: {
-        some: {
-          userId,
-          status: { not: 'DECLINED' },
-        },
-      },
-    };
+  async browsePublicEvents(input: PublicEventBrowseInput) {
+    const location = normalizeEventLocation(input);
 
-    if (query) {
-      where.OR = [
-        { name: { contains: query, mode: 'insensitive' } },
-        { description: { contains: query, mode: 'insensitive' } },
-        { destination: { contains: query, mode: 'insensitive' } },
-      ];
+    if (
+      location.city &&
+      location.state &&
+      (location.latitude == null || location.longitude == null)
+    ) {
+      const referenceEvent = await this.prisma.publicEvent.findFirst({
+        where: {
+          status: 'PUBLISHED',
+          promotionEndsAt: { gte: new Date() },
+          country: { equals: location.country || 'US', mode: 'insensitive' },
+          state: { equals: location.state, mode: 'insensitive' },
+          city: { equals: location.city, mode: 'insensitive' },
+          latitude: { not: null },
+          longitude: { not: null },
+        },
+        select: { latitude: true, longitude: true },
+      });
+
+      if (referenceEvent?.latitude != null && referenceEvent.longitude != null) {
+        location.latitude = Number(referenceEvent.latitude);
+        location.longitude = Number(referenceEvent.longitude);
+      }
     }
 
-    return this.prisma.trip.findMany({
-      where,
-      take: input.limit || 8,
-      orderBy: { updatedAt: 'desc' },
-      include: {
-        tripMaster: { select: { id: true, name: true, avatarUrl: true } },
-        _count: { select: { members: true, activities: true } },
-      },
+    const candidates = await this.prisma.publicEvent.findMany({
+      where: eventService.buildPublicEventBrowseWhere(location),
+      take: Math.max((input.limit || 8) * 4, 20),
+      orderBy: [{ startDate: 'asc' }, { updatedAt: 'desc' }],
+      include: this.defaultInclude(),
     });
+
+    const orderedEvents = eventService.applyPublicBrowseOrdering(candidates, location);
+
+    return orderedEvents
+      .slice(0, input.limit || 8)
+      .map((event: any) => ({
+        ...event,
+        distanceMiles: event.distanceMiles,
+      }));
   }
 
-  async searchPublicEvents(userId: string, input: EventSearchInput) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
+  async listBrowseLocations(city: string, limit = 8): Promise<PublicEventLocationSuggestion[]> {
+    const normalizedCity = normalizeText(city);
+
+    if (!normalizedCity || normalizedCity.length < 2) {
+      return [];
+    }
+
+    const locations = await this.prisma.publicEvent.findMany({
+      where: {
+        status: 'PUBLISHED',
+        promotionEndsAt: { gte: new Date() },
+        city: { contains: normalizedCity, mode: 'insensitive' },
+      },
+      distinct: ['city', 'state', 'country'],
       select: {
         city: true,
         state: true,
@@ -228,94 +237,17 @@ export class PublicEventService {
         latitude: true,
         longitude: true,
       },
+      orderBy: [{ city: 'asc' }, { state: 'asc' }],
+      take: limit,
     });
 
-    const query = input.query?.trim();
-    const location = {
-      city: normalizeText(input.city) || normalizeText(user?.city),
-      state: normalizeText(input.state) || normalizeText(user?.state),
-      country: normalizeText(input.country) || normalizeText(user?.country) || 'US',
-      latitude: input.latitude ?? (user?.latitude != null ? Number(user.latitude) : undefined),
-      longitude: input.longitude ?? (user?.longitude != null ? Number(user.longitude) : undefined),
-    };
-
-    const where: any = {
-      status: 'PUBLISHED',
-      promotionEndsAt: { gte: new Date() },
-    };
-
-    if (query) {
-      where.OR = [
-        { title: { contains: query, mode: 'insensitive' } },
-        { description: { contains: query, mode: 'insensitive' } },
-        { venueName: { contains: query, mode: 'insensitive' } },
-        { city: { contains: query, mode: 'insensitive' } },
-        { state: { contains: query, mode: 'insensitive' } },
-      ];
-    }
-
-    if (location.country) {
-      where.country = { equals: location.country, mode: 'insensitive' };
-    }
-
-    const candidates = await this.prisma.publicEvent.findMany({
-      where,
-      take: Math.max((input.limit || 8) * 4, 20),
-      orderBy: [{ startDate: 'asc' }, { updatedAt: 'desc' }],
-      include: this.defaultInclude(),
-    });
-
-    const regionFiltered = candidates
-      .map((event: any) => {
-        const eventLat = event.latitude != null ? Number(event.latitude) : undefined;
-        const eventLng = event.longitude != null ? Number(event.longitude) : undefined;
-        const hasDistance = location.latitude != null && location.longitude != null && eventLat != null && eventLng != null;
-        const distanceMiles = hasDistance
-          ? milesBetween(
-              { latitude: location.latitude!, longitude: location.longitude! },
-              { latitude: eventLat!, longitude: eventLng! }
-            )
-          : null;
-
-        const cityMatch = location.city
-          ? event.city?.toLowerCase() === location.city.toLowerCase()
-          : true;
-        const stateMatch = location.state
-          ? event.state?.toLowerCase() === location.state.toLowerCase()
-          : true;
-
-        return {
-          event,
-          distanceMiles,
-          isRegionalMatch: distanceMiles != null
-            ? distanceMiles <= event.regionRadiusMiles
-            : cityMatch && stateMatch,
-        };
-      })
-      .filter((item: any) => item.isRegionalMatch)
-      .sort((a: any, b: any) => {
-        if (a.distanceMiles == null && b.distanceMiles == null) return 0;
-        if (a.distanceMiles == null) return 1;
-        if (b.distanceMiles == null) return -1;
-        return a.distanceMiles - b.distanceMiles;
-      })
-      .slice(0, input.limit || 8)
-      .map((item: any) => ({
-        ...item.event,
-        distanceMiles: item.distanceMiles,
-      }));
-
-    return regionFiltered;
-  }
-
-  async searchEvents(userId: string, input: EventSearchInput) {
-    const scope = input.scope || 'all';
-    const [myEvents, publicEvents] = await Promise.all([
-      scope === 'public' ? Promise.resolve([]) : this.searchMyEvents(userId, input),
-      scope === 'my' ? Promise.resolve([]) : this.searchPublicEvents(userId, input),
-    ]);
-
-    return { myEvents, publicEvents };
+    return locations.map((location) => ({
+      city: location.city,
+      state: location.state,
+      country: location.country,
+      latitude: location.latitude != null ? Number(location.latitude) : null,
+      longitude: location.longitude != null ? Number(location.longitude) : null,
+    }));
   }
 
   private async assertOrganizer(publicEventId: string, organizerId: string) {

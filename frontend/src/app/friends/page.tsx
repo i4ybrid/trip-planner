@@ -163,11 +163,11 @@ function FriendsPageContent() {
     );
   }
 
-  const tabs = [
-    { id: 'friends' as Tab, label: 'All Friends', count: friends.length, icon: Users },
-    { id: 'pending' as Tab, label: 'Pending', count: receivedRequests.length, icon: Clock },
-    { id: 'sent' as Tab, label: 'Sent', count: sentRequests.length, icon: Send },
-    { id: 'blocked' as Tab, label: 'Blocked', count: blockedUsers.length, icon: Ban },
+  const tabs: Array<{ id: Tab; label: string; icon: typeof Users }> = [
+    { id: 'friends', label: 'All Friends', icon: Users },
+    { id: 'pending', label: 'Pending', icon: Clock },
+    { id: 'sent', label: 'Sent', icon: Send },
+    { id: 'blocked', label: 'Blocked', icon: Ban },
   ];
 
   return (
@@ -189,7 +189,7 @@ function FriendsPageContent() {
                 </p>
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-2 sm:min-w-[22rem]">
+            <div className="grid grid-cols-2 gap-2 sm:min-w-[26rem] lg:grid-cols-4">
               <div className="rounded-lg border border-border/70 bg-background/70 p-3">
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Friends</p>
                 <p className="mt-1 text-2xl font-bold text-foreground">{friends.length}</p>
@@ -197,6 +197,10 @@ function FriendsPageContent() {
               <div className="rounded-lg border border-border/70 bg-background/70 p-3">
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Pending</p>
                 <p className="mt-1 text-2xl font-bold text-foreground">{receivedRequests.length}</p>
+              </div>
+              <div className="rounded-lg border border-border/70 bg-background/70 p-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Sent</p>
+                <p className="mt-1 text-2xl font-bold text-foreground">{sentRequests.length}</p>
               </div>
               <div className="rounded-lg border border-border/70 bg-background/70 p-3">
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Blocked</p>
@@ -222,30 +226,20 @@ function FriendsPageContent() {
           </Button>
         </div>
 
-        <div className="grid gap-2 rounded-lg border border-border/70 bg-card/80 p-2 shadow-[var(--travel-card-shadow)] backdrop-blur sm:grid-cols-2 lg:grid-cols-4">
+        <div className="flex flex-wrap gap-2">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => handleTabChange(tab.id)}
               className={cn(
-                'flex items-center justify-between gap-3 rounded-lg px-4 py-3 text-sm font-semibold transition-all',
+                'flex h-10 items-center gap-2 rounded-lg border px-3 text-sm font-semibold transition-all',
                 activeTab === tab.id
-                  ? 'bg-primary text-primary-foreground shadow-sm'
-                  : 'text-muted-foreground hover:bg-background/80 hover:text-foreground'
+                  ? 'border-primary bg-primary text-primary-foreground shadow-sm'
+                  : 'border-border/70 bg-card/65 text-muted-foreground hover:border-primary/40 hover:bg-background/80 hover:text-foreground'
               )}
             >
-              <span className="flex items-center gap-2">
-                <tab.icon className="h-4 w-4" />
-                {tab.label}
-              </span>
-              <span className={cn(
-                'rounded-full px-2 py-0.5 text-xs',
-                activeTab === tab.id
-                  ? 'bg-primary-foreground/20 text-primary-foreground'
-                  : 'bg-muted text-muted-foreground'
-              )}>
-                {tab.count}
-              </span>
+              <tab.icon className="h-4 w-4" />
+              {tab.label}
             </button>
           ))}
         </div>

@@ -51,7 +51,7 @@ export const updateTripSchema = z.object({
 });
 
 // Public event schemas
-export const createPublicEventSchema = z.object({
+const publicEventBaseSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
   venueName: z.string().optional(),
@@ -66,14 +66,22 @@ export const createPublicEventSchema = z.object({
   endDate: z.string().optional(),
   coverImage: z.string().url().optional(),
   currency: z.string().default('USD'),
-}).refine(
+});
+
+export const createPublicEventSchema = publicEventBaseSchema.refine(
   (data) => !data.endDate || new Date(data.endDate) >= new Date(data.startDate),
   { message: 'End date must be on or after start date', path: ['endDate'] }
 );
 
-export const updatePublicEventSchema = createPublicEventSchema.partial().extend({
-  status: z.enum(['DRAFT', 'PENDING_PAYMENT', 'PUBLISHED', 'ARCHIVED', 'CANCELLED']).optional(),
-});
+export const updatePublicEventSchema = publicEventBaseSchema
+  .partial()
+  .extend({
+    status: z.enum(['DRAFT', 'PENDING_PAYMENT', 'PUBLISHED', 'ARCHIVED', 'CANCELLED']).optional(),
+  })
+  .refine(
+    (data) => !data.endDate || !data.startDate || new Date(data.endDate) >= new Date(data.startDate),
+    { message: 'End date must be on or after start date', path: ['endDate'] }
+  );
 
 export const createPublicEventPromotionSchema = z.object({
   amount: z.number().positive().default(49),
@@ -85,14 +93,10 @@ export const createPublicEventPromotionSchema = z.object({
   regionRadiusMiles: z.number().int().min(5).max(500).default(50),
 });
 
-export const searchEventsSchema = z.object({
-  q: z.string().optional().default(''),
-  scope: z.enum(['all', 'my', 'public']).optional().default('all'),
+export const browsePublicEventsSchema = z.object({
   city: z.string().optional(),
   state: z.string().optional(),
   country: z.string().optional(),
-  latitude: z.coerce.number().min(-90).max(90).optional(),
-  longitude: z.coerce.number().min(-180).max(180).optional(),
   limit: z.coerce.number().int().min(1).max(25).optional().default(8),
 });
 

@@ -33,10 +33,12 @@ import {
   MilestoneActionType,
   MilestoneStatus,
   PublicEvent,
+  PublicEventLocationSuggestion,
   CreatePublicEventInput,
   CreatePublicEventPromotionInput,
   PublicEventPromotionPayment,
-  EventSearchResults,
+  Expense,
+  CreateExpenseInput,
 } from '@/types';
 import { logger } from '@/lib/logger';
 
@@ -143,22 +145,18 @@ class ApiError extends Error {
   }
 }
 
+export function isApiError(error: unknown, status?: number): error is ApiError {
+  return error instanceof ApiError && (status === undefined || error.status === status);
+}
+
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
     const status = response.status;
-    
-    // Handle 401 - redirect to login
-    if (status === 401 && typeof window !== 'undefined') {
-      clearSessionCache();
-      window.location.href = '/login?reason=session_expired';
-      // Return empty data to prevent error while redirecting
-      return {} as T;
-    }
-    
+
     let errorMessage = 'An error occurred';
     try {
       const error = await response.json();
-      errorMessage = error.message || errorMessage;
+      errorMessage = error.error || error.message || errorMessage;
     } catch {
       // Response might not be JSON
     }
@@ -198,8 +196,13 @@ export async function getHeaders(): Promise<HeadersInit> {
           sessionCacheTime = now;
           headers['Authorization'] = `Bearer ${session.accessToken}`;
         } else {
-          // No token means not authenticated - clear cache
-          cachedSessionToken = null;
+          // A transient/partial NextAuth session response should not discard a
+          // previously valid backend token. Explicit logout calls
+          // clearSessionCache(); confirmed 401s are handled by AuthProvider.
+          if (cachedSessionToken) {
+            sessionCacheTime = now;
+            headers['Authorization'] = `Bearer ${cachedSessionToken}`;
+          }
         }
       }
     } catch (error) {
@@ -328,18 +331,14 @@ export const api = {
     return result;
   },
 
-  // Universal event search
-  async searchEvents(params: {
-    q?: string;
-    scope?: 'all' | 'my' | 'public';
+  // Public event browse
+  async browsePublicEvents(params: {
     city?: string;
     state?: string;
     country?: string;
-    latitude?: number;
-    longitude?: number;
     limit?: number;
-  }): Promise<ApiResponse<EventSearchResults>> {
-    const url = new URL(`${API_BASE_URL}/search/events`);
+  }): Promise<ApiResponse<PublicEvent[]>> {
+    const url = new URL(`${API_BASE_URL}/public-events/browse`);
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== '') {
         url.searchParams.set(key, String(value));
@@ -351,14 +350,21 @@ export const api = {
     return handleResponse(response);
   },
 
+  async getPublicEventLocationSuggestions(city: string, limit = 8): Promise<ApiResponse<PublicEventLocationSuggestion[]>> {
+    const url = new URL(`${API_BASE_URL}/public-events/locations`);
+    url.searchParams.set('city', city);
+    url.searchParams.set('limit', String(limit));
+    const response = await fetch(url.toString(), {
+      headers: await getHeaders(),
+    });
+    return handleResponse(response);
+  },
+
   // Public events
   async getPublicEvents(params: {
-    q?: string;
     city?: string;
     state?: string;
     country?: string;
-    latitude?: number;
-    longitude?: number;
     limit?: number;
   } = {}): Promise<ApiResponse<PublicEvent[]>> {
     const url = new URL(`${API_BASE_URL}/public-events`);
@@ -975,6 +981,31 @@ export const api = {
     return result;
   },
 
+  async createExpense(tripId: string, data: CreateExpenseInput): Promise<ApiResponse<Expense>> {
+    const response = await fetch(`${API_BASE_URL}/trips/${tripId}/expenses`, {
+      method: 'POST',
+      headers: await getHeaders(),
+      body: JSON.stringify(data),
+    });
+    const result = await handleResponse<ApiResponse<Expense>>(response);
+    invalidateCacheByPrefix(`trip:${tripId}:expenses`);
+    invalidateCacheByPrefix(`trip:${tripId}:billsplits`);
+    invalidateCacheByPrefix(`trip:${tripId}:debts`);
+    return result;
+  },
+
+  async updateTripBudget(tripId: string, budget: number): Promise<ApiResponse<Pick<Trip, 'id' | 'budget' | 'updatedAt'>>> {
+    const response = await fetch(`${API_BASE_URL}/trips/${tripId}/budget`, {
+      method: 'PATCH',
+      headers: await getHeaders(),
+      body: JSON.stringify({ budget }),
+    });
+    const result = await handleResponse<ApiResponse<Pick<Trip, 'id' | 'budget' | 'updatedAt'>>>(response);
+    invalidateCacheByPrefix(`trip:${tripId}`);
+    invalidateCacheByPrefix('trips:');
+    return result;
+  },
+
   async getBillSplitMembers(billSplitId: string): Promise<ApiResponse<BillSplitMember[]>> {
     const response = await fetch(`${API_BASE_URL}/payments/${billSplitId}/members`, {
       headers: await getHeaders(),
@@ -1178,6 +1209,17 @@ export const api = {
       method: 'PATCH',
       headers: await getHeaders(),
       body: JSON.stringify(data),
+    });
+    return handleResponse(response);
+  },
+
+  async reverseGeocodeLocation(latitude: number, longitude: number): Promise<ApiResponse<{ city: string; state: string; country: string }>> {
+    const url = new URL(`${API_BASE_URL}/locations/reverse`);
+    url.searchParams.set('latitude', String(latitude));
+    url.searchParams.set('longitude', String(longitude));
+
+    const response = await fetch(url, {
+      headers: await getHeaders(),
     });
     return handleResponse(response);
   },

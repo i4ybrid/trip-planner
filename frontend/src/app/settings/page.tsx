@@ -28,6 +28,7 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<SettingsTab>(tabParam || 'profile');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isCapturingLocation, setIsCapturingLocation] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [saved, setSaved] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -202,17 +203,49 @@ export default function SettingsPage() {
       return;
     }
 
+    setError(null);
+    setSuccessMessage(null);
+    setIsCapturingLocation(true);
+
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setProfile({
-          ...profile,
-          latitude: Number(position.coords.latitude.toFixed(6)),
-          longitude: Number(position.coords.longitude.toFixed(6)),
-          locationSource: 'BROWSER',
-        });
-        setSuccessMessage('Browser location captured. Add city/state labels for clearer regional search.');
+      async (position) => {
+        const latitude = Number(position.coords.latitude.toFixed(6));
+        const longitude = Number(position.coords.longitude.toFixed(6));
+
+        try {
+          const result = await api.reverseGeocodeLocation(latitude, longitude);
+          const location = result.data;
+
+          setProfile((currentProfile) => ({
+            ...currentProfile,
+            city: location?.city || currentProfile.city,
+            state: location?.state || currentProfile.state,
+            country: location?.country || currentProfile.country || 'US',
+            latitude,
+            longitude,
+            locationSource: 'BROWSER',
+          }));
+
+          if (location?.city || location?.state) {
+            setSuccessMessage('Browser location captured and city/state updated.');
+          } else {
+            setSuccessMessage('Browser location captured, but city/state labels could not be resolved.');
+          }
+        } catch (error) {
+          logger.warn('Failed to resolve browser location labels:', error);
+          setProfile((currentProfile) => ({
+            ...currentProfile,
+            latitude,
+            longitude,
+            locationSource: 'BROWSER',
+          }));
+          setSuccessMessage('Browser location captured, but city/state labels could not be resolved.');
+        } finally {
+          setIsCapturingLocation(false);
+        }
       },
       () => {
+        setIsCapturingLocation(false);
         setError('Could not access browser location.');
       },
       { enableHighAccuracy: false, timeout: 8000 }
@@ -522,9 +555,13 @@ export default function SettingsPage() {
                               Used to show public events promoted near you. Browser coordinates are stored only after you choose to capture them.
                             </p>
                           </div>
-                          <Button type="button" variant="outline" size="sm" onClick={handleUseBrowserLocation}>
-                            <Crosshair className="mr-2 h-4 w-4" />
-                            Use Browser
+                          <Button type="button" variant="outline" size="sm" onClick={handleUseBrowserLocation} disabled={isCapturingLocation}>
+                            {isCapturingLocation ? (
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                              <Crosshair className="mr-2 h-4 w-4" />
+                            )}
+                            {isCapturingLocation ? 'Finding...' : 'Use Browser'}
                           </Button>
                         </div>
                         <div className="grid gap-4 md:grid-cols-[1fr_1fr_7rem]">

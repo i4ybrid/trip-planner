@@ -7,6 +7,98 @@ import { createUserSchema, updateUserSchema, updateSettingsSchema } from '@/lib/
 
 const router = Router();
 
+interface NominatimAddress {
+  city?: string;
+  town?: string;
+  village?: string;
+  hamlet?: string;
+  municipality?: string;
+  suburb?: string;
+  borough?: string;
+  county?: string;
+  state?: string;
+  country?: string;
+  country_code?: string;
+}
+
+interface NominatimReverseResponse {
+  address?: NominatimAddress;
+}
+
+const US_STATE_CODES: Record<string, string> = {
+  Alabama: 'AL',
+  Alaska: 'AK',
+  Arizona: 'AZ',
+  Arkansas: 'AR',
+  California: 'CA',
+  Colorado: 'CO',
+  Connecticut: 'CT',
+  Delaware: 'DE',
+  Florida: 'FL',
+  Georgia: 'GA',
+  Hawaii: 'HI',
+  Idaho: 'ID',
+  Illinois: 'IL',
+  Indiana: 'IN',
+  Iowa: 'IA',
+  Kansas: 'KS',
+  Kentucky: 'KY',
+  Louisiana: 'LA',
+  Maine: 'ME',
+  Maryland: 'MD',
+  Massachusetts: 'MA',
+  Michigan: 'MI',
+  Minnesota: 'MN',
+  Mississippi: 'MS',
+  Missouri: 'MO',
+  Montana: 'MT',
+  Nebraska: 'NE',
+  Nevada: 'NV',
+  'New Hampshire': 'NH',
+  'New Jersey': 'NJ',
+  'New Mexico': 'NM',
+  'New York': 'NY',
+  'North Carolina': 'NC',
+  'North Dakota': 'ND',
+  Ohio: 'OH',
+  Oklahoma: 'OK',
+  Oregon: 'OR',
+  Pennsylvania: 'PA',
+  'Rhode Island': 'RI',
+  'South Carolina': 'SC',
+  'South Dakota': 'SD',
+  Tennessee: 'TN',
+  Texas: 'TX',
+  Utah: 'UT',
+  Vermont: 'VT',
+  Virginia: 'VA',
+  Washington: 'WA',
+  'West Virginia': 'WV',
+  Wisconsin: 'WI',
+  Wyoming: 'WY',
+  'District of Columbia': 'DC',
+};
+
+function getCityFromAddress(address: NominatimAddress): string {
+  return (
+    address.city ||
+    address.town ||
+    address.village ||
+    address.hamlet ||
+    address.municipality ||
+    address.suburb ||
+    address.borough ||
+    address.county ||
+    ''
+  );
+}
+
+function getStateFromAddress(address: NominatimAddress): string {
+  if (!address.state) return '';
+  if (address.country_code?.toUpperCase() !== 'US') return address.state;
+  return US_STATE_CODES[address.state] || address.state;
+}
+
 // POST /api/auth/register - Register new user
 router.post('/auth/register', async (req, res) => {
   try {
@@ -162,6 +254,57 @@ router.post('/auth/reset-password', async (req, res) => {
       return;
     }
     res.json({ success: true });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/locations/reverse - Resolve coordinates to profile location labels
+router.get('/locations/reverse', authMiddleware, async (req: AuthRequest, res) => {
+  try {
+    const latitude = Number(req.query.latitude);
+    const longitude = Number(req.query.longitude);
+
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      res.status(400).json({ error: 'Latitude and longitude are required.' });
+      return;
+    }
+
+    if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+      res.status(400).json({ error: 'Coordinates are out of range.' });
+      return;
+    }
+
+    const url = new URL('https://nominatim.openstreetmap.org/reverse');
+    url.searchParams.set('format', 'jsonv2');
+    url.searchParams.set('lat', String(latitude));
+    url.searchParams.set('lon', String(longitude));
+    url.searchParams.set('zoom', '10');
+    url.searchParams.set('addressdetails', '1');
+
+    const response = await fetch(url, {
+      headers: {
+        'Accept': 'application/json',
+        'Accept-Language': 'en',
+        'User-Agent': 'TripPlanner/1.0 (local development)',
+      },
+    });
+
+    if (!response.ok) {
+      res.status(502).json({ error: 'Could not resolve browser location.' });
+      return;
+    }
+
+    const data = await response.json() as NominatimReverseResponse;
+    const address = data.address || {};
+
+    res.json({
+      data: {
+        city: getCityFromAddress(address),
+        state: getStateFromAddress(address),
+        country: address.country_code?.toUpperCase() || '',
+      },
+    });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }

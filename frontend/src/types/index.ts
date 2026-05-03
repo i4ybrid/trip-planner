@@ -22,6 +22,8 @@ export type SplitType = 'EQUAL' | 'SHARES' | 'PERCENTAGE' | 'MANUAL';
 
 export type CostType = 'PER_PERSON' | 'FIXED';
 
+export type ExpenseCategory = 'FOOD' | 'TRANSPORT' | 'LODGING' | 'ACTIVITIES' | 'OTHER';
+
 export type UserLocationSource = 'PROFILE' | 'BROWSER' | 'IP_INFERRED';
 
 export type PublicEventStatus = 'DRAFT' | 'PENDING_PAYMENT' | 'PUBLISHED' | 'ARCHIVED' | 'CANCELLED';
@@ -117,6 +119,7 @@ export interface Trip {
   coverImage?: string;
   status: TripStatus;
   style: TripStyle;
+  budget?: number | string | null;
   tripMasterId: string;
   createdAt: string;
   updatedAt: string;
@@ -179,6 +182,14 @@ export interface PublicEvent {
   promotionPayments?: PublicEventPromotionPayment[];
 }
 
+export interface PublicEventLocationSuggestion {
+  city: string;
+  state?: string | null;
+  country: string;
+  latitude?: number | null;
+  longitude?: number | null;
+}
+
 export interface CreatePublicEventInput {
   title: string;
   description?: string;
@@ -204,11 +215,6 @@ export interface CreatePublicEventPromotionInput {
   regionState?: string;
   regionCountry?: string;
   regionRadiusMiles?: number;
-}
-
-export interface EventSearchResults {
-  myEvents: Trip[];
-  publicEvents: PublicEvent[];
 }
 
 export interface TripMember {
@@ -371,6 +377,20 @@ export interface BillSplitMember {
   paymentMethod?: PaymentMethod;
   transactionId?: string;
   user?: User;
+}
+
+export interface Expense {
+  id: string;
+  tripId: string;
+  amount: number | string;
+  description: string;
+  category: ExpenseCategory;
+  payerId: string;
+  date: string;
+  splitType: SplitType;
+  createdAt: string;
+  updatedAt: string;
+  payer?: Pick<User, 'id' | 'name' | 'email' | 'avatarUrl'>;
 }
 
 export interface Friend {
@@ -598,6 +618,15 @@ export interface CreateBillSplitInput {
     percentage?: number;
     dollarAmount?: number;
   }[];
+}
+
+export interface CreateExpenseInput {
+  amount: number;
+  description: string;
+  category: ExpenseCategory;
+  payerId: string;
+  date?: string;
+  splitType?: SplitType;
 }
 
 export interface UpdateBillSplitInput {

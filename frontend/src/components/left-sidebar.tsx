@@ -25,6 +25,7 @@ const navSections: NavSection[] = [
     title: 'Menu',
     items: [
       { icon: <Home className="h-5 w-5" />, label: 'Dashboard', href: '/dashboard' },
+      { icon: <Compass className="h-5 w-5" />, label: 'Browse Events', href: '/browse' },
       { icon: <Plus className="h-5 w-5" />, label: 'New Trip', href: '/trip/new' },
     ],
   },

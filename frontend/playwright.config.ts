@@ -40,7 +40,7 @@ export default defineConfig({
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000',
     trace: 'retain-on-failure',
-    screenshot: 'always',
+    screenshot: 'on',
   },
 
   projects: [

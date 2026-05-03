@@ -67,15 +67,27 @@ export interface PublicEventPromotionInput {
   regionRadiusMiles?: number;
 }
 
-export interface EventSearchInput {
-  query?: string;
-  scope?: 'all' | 'my' | 'public';
+export interface PublicEventBrowseInput {
+  city?: string;
+  state?: string;
+  country?: string;
+  limit?: number;
+}
+
+export interface PublicEventLocationSuggestion {
+  city: string;
+  state?: string | null;
+  country: string;
+  latitude?: number | null;
+  longitude?: number | null;
+}
+
+export interface EventLocationInput {
   city?: string;
   state?: string;
   country?: string;
   latitude?: number;
   longitude?: number;
-  limit?: number;
 }
 
 export interface MemberRoleUpdateInput {

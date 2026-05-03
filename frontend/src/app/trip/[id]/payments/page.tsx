@@ -256,7 +256,6 @@ export default function TripPayments() {
         <h3 className="font-display text-2xl font-bold">Expense Ledger</h3>
         <Button variant="outline" onClick={() => setExpenseModalOpen(true)} className="gap-2 bg-card/70">
           <Plus className="mr-2 h-4 w-4" />
-          Add Expense
         </Button>
       </div>
 

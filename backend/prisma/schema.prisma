@@ -143,6 +143,14 @@ enum SplitType {
   MANUAL     // Custom amount per member
 }
 
+enum ExpenseCategory {
+  FOOD
+  TRANSPORT
+  LODGING
+  ACTIVITIES
+  OTHER
+}
+
 enum CostType {
   PER_PERSON  // Cost is split per person (default)
   FIXED       // Fixed total cost — only payer owes the full amount
@@ -220,6 +228,7 @@ model User {
   billSplitsCreated BillSplit[]     @relation("BillSplitCreator")
   billSplitsPaid    BillSplit[]     @relation("BillSplitPayer")
   billSplitMembers BillSplitMember[]
+  expensesPaid      Expense[]       @relation("ExpensePayer")
   organizedPublicEvents PublicEvent[] @relation("PublicEventOrganizer")
   publicEventPromotionPayments PublicEventPromotionPayment[] @relation("PublicEventPromotionPayer")
 
@@ -292,11 +301,13 @@ model Trip {
   status        TripStatus  @default(IDEA)
   tripMasterId  String
   style         TripStyle   @default(OPEN)
+  budget        Decimal?    @db.Decimal(10, 2)
 
   tripMaster    User        @relation("TripMaster", fields: [tripMasterId], references: [id])
   members       TripMember[]
   invites       Invite[]
   activities    Activity[]
+  expenses      Expense[]
   messages      Message[]
   mediaItems    MediaItem[]
   timelineEvents TimelineEvent[]
@@ -688,6 +699,25 @@ model BillSplit {
   members       BillSplitMember[]
 
   @@index([tripId, status])
+}
+
+model Expense {
+  id          String          @id @default(cuid())
+  tripId      String
+  amount      Decimal         @db.Decimal(10, 2)
+  description String
+  category    ExpenseCategory @default(OTHER)
+  payerId     String
+  date        DateTime        @default(now())
+  splitType   SplitType       @default(EQUAL)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  trip        Trip            @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  payer       User            @relation("ExpensePayer", fields: [payerId], references: [id])
+
+  @@index([tripId, date])
+  @@index([payerId])
 }
 
 // Each member's share of a BillSplit

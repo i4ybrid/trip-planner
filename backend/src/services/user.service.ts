@@ -1,31 +1,52 @@
 import prisma from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
+import { logger } from '@/lib/logger';
 
 export class UserService {
   async getUserById(id: string) {
-    return prisma.user.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        avatarUrl: true,
-        phone: true,
-        city: true,
-        state: true,
-        country: true,
-        latitude: true,
-        longitude: true,
-        locationSource: true,
-        venmo: true,
-        paypal: true,
-        zelle: true,
-        cashapp: true,
-        createdAt: true,
-        settings: true,
-      },
-    });
+    try {
+      return await prisma.user.findUnique({
+        where: { id },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          avatarUrl: true,
+          phone: true,
+          city: true,
+          state: true,
+          country: true,
+          latitude: true,
+          longitude: true,
+          locationSource: true,
+          venmo: true,
+          paypal: true,
+          zelle: true,
+          cashapp: true,
+          createdAt: true,
+          settings: true,
+        },
+      });
+    } catch (error) {
+      logger.warn('Extended user location fields are unavailable; falling back to base user profile select.', error);
+      return prisma.user.findUnique({
+        where: { id },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          avatarUrl: true,
+          phone: true,
+          venmo: true,
+          paypal: true,
+          zelle: true,
+          cashapp: true,
+          createdAt: true,
+          settings: true,
+        },
+      });
+    }
   }
 
   async getUserByEmail(email: string) {
@@ -97,10 +118,22 @@ export class UserService {
     zelle?: string;
     cashapp?: string;
   }) {
-    return prisma.user.update({
-      where: { id: userId },
-      data,
-    });
+    try {
+      return await prisma.user.update({
+        where: { id: userId },
+        data,
+      });
+    } catch (error) {
+      const { city, state, country, latitude, longitude, locationSource, ...baseData } = data;
+      if (city !== undefined || state !== undefined || country !== undefined || latitude !== undefined || longitude !== undefined || locationSource !== undefined) {
+        logger.warn('Extended user location fields are unavailable; saving base profile fields only.', error);
+        return prisma.user.update({
+          where: { id: userId },
+          data: baseData,
+        });
+      }
+      throw error;
+    }
   }
 
   async updatePassword(userId: string, currentPassword: string, newPassword: string) {

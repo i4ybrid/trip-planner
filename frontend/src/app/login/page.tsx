@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { signIn } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 import { useAuth } from '@/hooks/use-auth';
 import { api } from '@/services/api';
 import { Compass, Mail, Lock, User, ArrowRight, Gift, Loader, MapPin, Users, Wallet, MessageCircle } from 'lucide-react';
@@ -39,6 +39,7 @@ const FacebookIcon = () => (
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { status } = useSession();
   const { login, register, isLoading } = useAuth();
 
   const inviteCode = searchParams.get('invite');
@@ -60,8 +61,7 @@ export default function LoginPage() {
 
   // Session validation: redirect to dashboard if user already has valid session
   useEffect(() => {
-    const token = localStorage.getItem('next-auth.session-token');
-    if (!token) return;
+    if (status !== 'authenticated') return;
 
     setIsValidatingSession(true);
 
@@ -88,7 +88,7 @@ export default function LoginPage() {
       .finally(() => {
         setIsValidatingSession(false);
       });
-  }, [router]);
+  }, [router, status]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

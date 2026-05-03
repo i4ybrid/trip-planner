@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Plus, Users, MessageCircle, Settings } from 'lucide-react';
+import { Compass, Home, Plus, Users, MessageCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface BottomTabBarProps {
@@ -27,10 +27,10 @@ export function BottomTabBar({ unreadCount = 0 }: BottomTabBarProps) {
 
   const tabs = [
     { href: '/dashboard', icon: Home, label: 'Home' },
+    { href: '/browse', icon: Compass, label: 'Browse' },
     { href: '/trip/new', icon: Plus, label: 'New' },
     { href: '/friends', icon: Users, label: 'Friends' },
     { href: '/messages', icon: MessageCircle, label: 'Messages', badge: unreadCount },
-    { href: '/settings', icon: Settings, label: 'Settings' },
   ];
 
   return (

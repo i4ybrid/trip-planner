@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { api } from '@/services/api';
+import { api, isApiError } from '@/services/api';
 import { useAuthStore } from '@/store/auth-store';
+import { logger } from '@/lib/logger';
 
 const PUBLIC_PATHS = ['/login', '/invite', '/forgot-password', '/reset-password'];
 
@@ -41,8 +42,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!cancelled) {
         setIsBackendValidated(true);
       }
-    }).catch(async () => {
+    }).catch(async (error) => {
       if (cancelled) return;
+
+      if (!isApiError(error, 401)) {
+        logger.warn('Backend session validation failed without 401; keeping local session active.', error);
+        setIsBackendValidated(false);
+        return;
+      }
+
       // Session is invalid — call signout endpoint to clear server-side cookie
       // and clear localStorage tokens, then redirect
       try {

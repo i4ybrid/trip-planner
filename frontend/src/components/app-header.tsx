@@ -4,7 +4,7 @@ import { ThemeSwitcher } from '@/components/theme-switcher';
 import { NotificationBell } from '@/components/notification/notification-bell';
 import { UserMenu } from '@/components/user-menu';
 import { BottomTabBar } from '@/components/layout/BottomTabBar';
-import { UniversalSearch } from '@/components/search/universal-search';
+import { PublicEventBrowse } from '@/components/browse/public-event-browse';
 import { ArrowLeft } from 'lucide-react';
 
 interface AppHeaderProps {
@@ -33,7 +33,7 @@ export function AppHeader({ title, showBack, onBack, actions, className }: AppHe
             {title ? (
               <h1 className="truncate font-display text-xl font-bold">{title}</h1>
             ) : (
-              <UniversalSearch />
+              <PublicEventBrowse />
             )}
           </div>
           <div className="flex items-center gap-3">

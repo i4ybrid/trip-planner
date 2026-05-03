@@ -34,13 +34,19 @@ export function Tabs({ tabs, basePath, iconMap = defaultIconMap, className }: Ta
   const currentTab = tabs.find(t => t.href && pathname.endsWith(`${basePath}${t.href}`))?.id || tabs[0]?.id || '';
 
   return (
-    <nav className={cn("flex gap-2 overflow-x-auto px-4 py-3 sm:px-6", className)}>
+    <nav
+      className={cn(
+        "flex snap-x gap-1.5 overflow-x-auto px-3 py-2.5 [scrollbar-width:none] sm:gap-2 sm:px-6 sm:py-3 [&::-webkit-scrollbar]:hidden",
+        className
+      )}
+    >
       {tabs.map((tab) => (
         <button
           key={tab.id}
           onClick={() => router.push(`${basePath}${tab.href}`)}
+          aria-current={currentTab === tab.id ? 'page' : undefined}
           className={cn(
-            "flex shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-all",
+            "flex shrink-0 snap-start items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-xs font-semibold transition-all sm:gap-2 sm:px-4 sm:py-2 sm:text-sm",
             currentTab === tab.id
               ? "border-primary bg-primary text-primary-foreground shadow-md shadow-primary/20"
               : "border-border/70 bg-card/70 text-muted-foreground hover:border-primary/40 hover:bg-secondary hover:text-foreground"

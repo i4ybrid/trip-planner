@@ -35,13 +35,46 @@ TripPlanner is moving from the legacy plain amber/white UI to a warm, polished t
 - `/dashboard`: uses the travel hero pattern, trip-planner panels, and card grids. It must remain readable in dark mode; the page background should use the dark `bg-gradient-farmhouse` override. Prefer destination imagery that feels specific rather than generic beach stock.
 - `/login`: uses neutral copy (`Welcome`) and a non-photo brand/product panel. Do not reuse the beach hero image here.
 - `/friends`: uses a “Travel Crew” header, stat blocks, search/action toolbar, and pill-style tab grid.
+- `/trip/new`: uses the standard `PageLayout` shell and opens directly on the trip form. Do not add a hero/preview banner above the form. The invite style panel contains only real `TripStyle` values (`OPEN`, `MANAGED`). Public events are a separate object and should be linked as a separate action to `/public-events/new`, not represented as a third trip style.
 - `/feed`: uses a “Live Updates” header, filter pills, and richer activity cards with category chips.
 - `/messages`: uses a framed chat workspace. On mobile, show the conversation list first; once a conversation is selected, show chat detail with a back button.
+- `/browse`: uses shared event presentation components for promoted `PublicEvent` records with extension labels.
+- `/public-events/*`: public events reuse the same visual workflow language as trip creation, but they are a separate object with separate APIs, permissions, lifecycle, and commerce. Reuse shared event cards, rows, hero treatment, date/location metadata, and tokenized surfaces. Public-only concerns such as paid promotion, regional reach, and organizer controls should appear as extension panels or badges.
+
+**Public event browsing:**
+- Keep `Trip` and `PublicEvent` in separate tables because their permissions, commerce, and lifecycle rules differ.
+- Public event browse helpers live in `backend/src/services/event.service.ts`.
+- Public events are browsed by city and/or state, not keyword search. State-only browsing returns promoted events in that state; city + state browsing ranks events by distance when city coordinates are available.
+- `GET /api/public-events/browse` returns promoted public event records for browse consumers.
+- `GET /api/public-events/locations` returns city autocomplete suggestions for browse controls.
+- The legacy `/search/events` endpoint and `universal-search` component have been removed. The new browse flow lives at `/browse`.
+- `/browse` empty state should offer a `Based on my location` action. This captures browser coordinates, calls reverse geocoding, fills city/state/country, updates the URL query, and then browses public events for that place.
+
+**User location:**
+- `User.latitude` and `User.longitude` store the user's geo-coordinates (Decimal, nullable).
+- Settings → Profile → `Use Browser` captures `navigator.geolocation` coordinates and calls `GET /api/locations/reverse` to fill city/state/country labels. US states should be normalized to two-letter codes for consistency with public event browsing.
+- User location is used to rank browse results by distance when coordinates are available for both the user and the event's city.
+- The `PublicEventLocationSuggestion` type carries city, state, country, and optional lat/lng for autocomplete and ranking.
+
+**Shared event presentation contract:**
+- `frontend/src/components/events/event-ui.tsx` exports `EventPresentation`, `privateTripToEventPresentation()`, and `publicEventToEventPresentation()`.
+- This maps both `Trip` (kind: `private`) and `PublicEvent` (kind: `public`) to a unified `EventPresentation` shape used by `EventResultCard` and `EventResultRow`.
+- Public events add an `extensionLabel: 'Promoted'` and show `regionRadiusMiles` in `countLabel`.
+- Both `EventResultCard` and `EventResultRow` render from `EventPresentation`, not from raw types.
+
+**Expense model:**
+- `Expense` model tracks individual trip expenses with fields: `id`, `tripId`, `amount` (Decimal), `description`, `category` (FOOD / TRANSPORT / LODGING / ACTIVITIES / OTHER), `payerId`, `date`, `splitType` (EQUAL / SHARES / PERCENTAGE / MANUAL), `createdAt`, `updatedAt`
+- `Trip.budget` (Decimal, nullable) stores an optional per-trip budget
+- `api.createExpense(tripId, data)` — `POST /api/trips/:tripId/expenses`
+- `api.updateTripBudget(tripId, budget)` — `PATCH /api/trips/:tripId/budget`
+- `GET /api/locations/reverse` — resolves browser geo-coordinates to city/state/country labels using Nominatim; US states are normalized to two-letter codes
 
 **Mobile and responsive behavior:**
 - Bottom navigation labels and badges must stay within fixed-height tab items.
 - Message, notification, and nav badges render only when the unread/count value is greater than `0`. For zero, render no red dot, no number, and no placeholder.
 - Fixed-format UI elements such as tab bars, toolbar buttons, counters, and chat controls should use stable sizing so hover states and dynamic counts do not shift layout.
+- Trip tab navigation uses compact mobile pills with swipe scrolling and hidden scrollbars. Do not show a horizontal scrollbar for the trip tab rail on mobile.
+- On `/trip/new`, the trip details form must keep enough width for date/time controls. The invite style and next-up panels should sit below the details card at medium widths and only move into a side column on extra-wide layouts.
 
 **Dark mode requirements:**
 - Use theme tokens (`background`, `card`, `foreground`, `muted-foreground`, `border`, `primary`) rather than raw light colors.
@@ -123,6 +156,7 @@ Trip `startTime` and `endTime` are optional at creation:
 - If omitted at creation: `startTime` defaults to `12:00 AM`, `endTime` defaults to `11:59 PM`
 - Frontend uses `normalizeDateForSubmit()` to prepare dates before API calls
 - Backend uses `normalizeDate()` to normalize incoming dates (fills in defaults for missing time components)
+- `/trip/new` uses a custom tokenized date picker instead of the browser-native calendar UI. When start date/time is set and the user interacts with the empty end date/time field, the end value auto-copies the full start datetime.
 
 ---
 
@@ -583,4 +617,4 @@ See [TEST_CASES.md](./docs/TEST_CASES.md) for full test file list.
 
 ---
 
-*v1.4 — April 2026 (Timeline redesign integrated: TimelineEventKind, effectiveDate, TripTimelineUIState, write-through engine, timeline-summary API, Timeline/History views)*
+*v1.5 — May 2026 (Browse/events refactor: public event browsing, user location, distance ranking, Expense model, Trip.budget, event-ui.tsx shared contract, migrate-non-destructive.js)*

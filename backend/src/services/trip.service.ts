@@ -180,6 +180,18 @@ export class TripService {
     return result;
   }
 
+  async updateTripBudget(tripId: string, budget: number) {
+    return this.prisma.trip.update({
+      where: { id: tripId },
+      data: { budget },
+      select: {
+        id: true,
+        budget: true,
+        updatedAt: true,
+      },
+    });
+  }
+
   async deleteTrip(tripId: string) {
     return this.prisma.trip.delete({
       where: { id: tripId },

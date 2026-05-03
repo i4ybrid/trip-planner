@@ -2,9 +2,9 @@ import { Router } from 'express';
 import { authMiddleware, AuthRequest } from '@/middleware/auth';
 import { publicEventService } from '@/services/public-event.service';
 import {
+  browsePublicEventsSchema,
   createPublicEventPromotionSchema,
   createPublicEventSchema,
-  searchEventsSchema,
   updatePublicEventSchema,
 } from '@/lib/validations';
 
@@ -16,20 +16,14 @@ function parseDate(value?: string): Date | undefined {
   return value ? new Date(value) : undefined;
 }
 
-// GET /api/search/events - Universal event search across my events and promoted public events
-router.get('/search/events', async (req: AuthRequest, res) => {
+// GET /api/public-events/browse - Browse promoted public events by city and/or state
+router.get('/public-events/browse', async (req: AuthRequest, res) => {
   try {
-    const userId = req.user!.userId;
-    const params = searchEventsSchema.parse(req.query);
-
-    const results = await publicEventService.searchEvents(userId, {
-      query: params.q,
-      scope: params.scope,
+    const params = browsePublicEventsSchema.parse(req.query);
+    const results = await publicEventService.browsePublicEvents({
       city: params.city,
       state: params.state,
       country: params.country,
-      latitude: params.latitude,
-      longitude: params.longitude,
       limit: params.limit,
     });
 
@@ -43,18 +37,14 @@ router.get('/search/events', async (req: AuthRequest, res) => {
   }
 });
 
-// GET /api/public-events - Search/list promoted public events
+// GET /api/public-events - List promoted public events
 router.get('/public-events', async (req: AuthRequest, res) => {
   try {
-    const userId = req.user!.userId;
-    const params = searchEventsSchema.parse({ ...req.query, scope: 'public' });
-    const results = await publicEventService.searchPublicEvents(userId, {
-      query: params.q,
+    const params = browsePublicEventsSchema.parse(req.query);
+    const results = await publicEventService.browsePublicEvents({
       city: params.city,
       state: params.state,
       country: params.country,
-      latitude: params.latitude,
-      longitude: params.longitude,
       limit: params.limit,
     });
 
@@ -64,6 +54,18 @@ router.get('/public-events', async (req: AuthRequest, res) => {
       res.status(400).json({ error: 'Validation error', details: error.errors });
       return;
     }
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/public-events/locations - City autocomplete for browse controls
+router.get('/public-events/locations', async (req: AuthRequest, res) => {
+  try {
+    const city = typeof req.query.city === 'string' ? req.query.city : '';
+    const limit = req.query.limit ? Number(req.query.limit) : 8;
+    const results = await publicEventService.listBrowseLocations(city, limit);
+    res.json({ data: results });
+  } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 });
