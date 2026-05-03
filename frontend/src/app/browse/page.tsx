@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Compass, Crosshair, Loader2, MapPin } from 'lucide-react';
+import { Compass, Loader2, MapPin } from 'lucide-react';
 import { EventResultCard, publicEventToEventPresentation } from '@/components/events/event-ui';
 import { PublicBrowseLocationPanel } from '@/components/browse/public-browse-location-panel';
 import { PageLayout } from '@/components/page-layout';
@@ -150,8 +150,13 @@ function BrowsePageContent() {
                 setLocationState('');
                 setLocationCountry('US');
               }}
+              onUseBrowserLocation={handleUseBrowserLocation}
+              isCapturingLocation={isCapturingLocation}
             />
           </div>
+          {locationError && (
+            <p className="mt-2 text-sm text-destructive">{locationError}</p>
+          )}
         </div>
 
         {isLoading ? (
@@ -169,26 +174,7 @@ function BrowsePageContent() {
                 <p className="font-semibold text-foreground">
                   {hasLocation ? 'No public events found nearby.' : 'Browse public events near you.'}
                 </p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Use your browser location to auto-fill city and state.
-                </p>
               </div>
-              <Button
-                type="button"
-                className="h-11 rounded-lg px-5"
-                onClick={handleUseBrowserLocation}
-                disabled={isCapturingLocation}
-              >
-                {isCapturingLocation ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Crosshair className="mr-2 h-4 w-4" />
-                )}
-                {isCapturingLocation ? 'Finding...' : 'Based on my location'}
-              </Button>
-              {locationError && (
-                <p className="text-sm text-destructive">{locationError}</p>
-              )}
             </div>
           </div>
         ) : (
