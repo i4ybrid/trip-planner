@@ -16,8 +16,6 @@ interface PublicBrowseLocationPanelProps {
   onStateChange: (value: string) => void;
   onCountryChange: (value: string) => void;
   onClearLocation?: () => void;
-  onUseBrowserLocation?: () => void;
-  isCapturingLocation?: boolean;
 }
 
 export function PublicBrowseLocationPanel({
@@ -29,8 +27,6 @@ export function PublicBrowseLocationPanel({
   onStateChange,
   onCountryChange,
   onClearLocation,
-  onUseBrowserLocation,
-  isCapturingLocation = false,
 }: PublicBrowseLocationPanelProps) {
   const [suggestions, setSuggestions] = useState<PublicEventLocationSuggestion[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
@@ -105,19 +101,10 @@ export function PublicBrowseLocationPanel({
             Enter a city, state, or both. A state-only browse shows all promoted events in that state; adding a city brings nearby places forward when coordinates are available.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={onUseBrowserLocation}
-          disabled={isCapturingLocation}
-          className="flex shrink-0 items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary transition-colors hover:bg-primary/20 disabled:opacity-50"
-        >
-          {isCapturingLocation ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : (
-            <Crosshair className="h-3.5 w-3.5" />
-          )}
-          {isCapturingLocation ? 'Finding...' : 'Enter a city or state'}
-        </button>
+        <div className="flex shrink-0 items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+          <Crosshair className="h-3.5 w-3.5" />
+          {locationHint}
+        </div>
       </div>
 
       <div className={cn(

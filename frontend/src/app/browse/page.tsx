@@ -1,31 +1,44 @@
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { Compass, Loader2, MapPin } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
+import { Loader2, MapPin } from 'lucide-react';
 import { EventResultCard, publicEventToEventPresentation } from '@/components/events/event-ui';
 import { PublicBrowseLocationPanel } from '@/components/browse/public-browse-location-panel';
 import { PageLayout } from '@/components/page-layout';
-import { Button } from '@/components/ui/button';
 import { api } from '@/services/api';
 import { PublicEvent } from '@/types';
 
+async function loadUserLocation(): Promise<{ city: string; state: string; country: string } | null> {
+  try {
+    const user = await api.getCurrentUser();
+    const { city, state, country } = user.data || {};
+    if (city || state) {
+      return { city: city || '', state: state || '', country: country || 'US' };
+    }
+  } catch {}
+  return null;
+}
+
 function BrowsePageContent() {
-  const router = useRouter();
   const browseParams = useSearchParams();
   const [locationCity, setLocationCity] = useState(browseParams.get('city') || '');
   const [locationState, setLocationState] = useState(browseParams.get('state') || '');
   const [locationCountry, setLocationCountry] = useState(browseParams.get('country') || 'US');
   const [events, setEvents] = useState<PublicEvent[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isCapturingLocation, setIsCapturingLocation] = useState(false);
-  const [locationError, setLocationError] = useState<string | null>(null);
 
+  // Pre-fill from user profile on mount when no URL params are set
   useEffect(() => {
-    setLocationCity(browseParams.get('city') || '');
-    setLocationState(browseParams.get('state') || '');
-    setLocationCountry(browseParams.get('country') || 'US');
-  }, [browseParams]);
+    if (browseParams.get('city') || browseParams.get('state')) return;
+    loadUserLocation().then((loc) => {
+      if (loc && !locationCity && !locationState) {
+        setLocationCity(loc.city);
+        setLocationState(loc.state);
+        setLocationCountry(loc.country);
+      }
+    });
+  }, []);
 
   useEffect(() => {
     const city = locationCity.trim();
@@ -57,68 +70,6 @@ function BrowsePageContent() {
     };
   }, [locationCity, locationCountry, locationState]);
 
-  const handleBrowse = () => {
-    const params = new URLSearchParams();
-    if (!locationCity.trim() && !locationState.trim()) return;
-    if (locationCity.trim()) params.set('city', locationCity.trim());
-    if (locationState.trim()) params.set('state', locationState.trim());
-    if (locationCountry.trim()) params.set('country', locationCountry.trim());
-    router.push(`/browse?${params.toString()}`);
-  };
-
-  const applyLocation = (city: string, state: string, country: string) => {
-    setLocationCity(city);
-    setLocationState(state);
-    setLocationCountry(country || 'US');
-
-    const params = new URLSearchParams();
-    if (city) params.set('city', city);
-    if (state) params.set('state', state);
-    if (country) params.set('country', country);
-    router.push(`/browse?${params.toString()}`);
-  };
-
-  const handleUseBrowserLocation = () => {
-    if (!navigator.geolocation) {
-      setLocationError('Browser location is not available.');
-      return;
-    }
-
-    setLocationError(null);
-    setIsCapturingLocation(true);
-
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const latitude = Number(position.coords.latitude.toFixed(6));
-        const longitude = Number(position.coords.longitude.toFixed(6));
-
-        try {
-          const result = await api.reverseGeocodeLocation(latitude, longitude);
-          const location = result.data;
-          const city = location?.city || '';
-          const state = location?.state || '';
-          const country = location?.country || 'US';
-
-          if (!city && !state) {
-            setLocationError('Your browser location was found, but city/state could not be resolved.');
-            return;
-          }
-
-          applyLocation(city, state, country);
-        } catch {
-          setLocationError('Your browser location was found, but city/state could not be resolved.');
-        } finally {
-          setIsCapturingLocation(false);
-        }
-      },
-      () => {
-        setIsCapturingLocation(false);
-        setLocationError('Could not access browser location.');
-      },
-      { enableHighAccuracy: false, timeout: 8000 }
-    );
-  };
-
   const activeResults = events.map(publicEventToEventPresentation);
   const hasLocation = Boolean(locationCity.trim() || locationState.trim());
 
@@ -131,10 +82,6 @@ function BrowsePageContent() {
               <MapPin className="h-4 w-4 shrink-0 text-primary" />
               Public events are browsed by city and state.
             </div>
-            <Button className="h-12 rounded-lg px-5" onClick={handleBrowse}>
-              <Compass className="mr-2 h-4 w-4" />
-              Browse
-            </Button>
           </div>
 
           <div className="mt-3">
@@ -150,13 +97,8 @@ function BrowsePageContent() {
                 setLocationState('');
                 setLocationCountry('US');
               }}
-              onUseBrowserLocation={handleUseBrowserLocation}
-              isCapturingLocation={isCapturingLocation}
             />
           </div>
-          {locationError && (
-            <p className="mt-2 text-sm text-destructive">{locationError}</p>
-          )}
         </div>
 
         {isLoading ? (
@@ -172,7 +114,7 @@ function BrowsePageContent() {
               </div>
               <div>
                 <p className="font-semibold text-foreground">
-                  {hasLocation ? 'No public events found nearby.' : 'Browse public events near you.'}
+                  {hasLocation ? 'No public events found for this location.' : 'Enter a location to browse public events.'}
                 </p>
               </div>
             </div>
