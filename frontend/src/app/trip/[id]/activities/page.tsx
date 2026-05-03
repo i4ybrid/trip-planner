@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useActivityStore } from '@/store';
 import { Card, CardHeader, CardTitle, CardContent, Button, Badge, Input, Textarea, Select, Modal, EmptyState } from '@/components';
+import { DateTimeField } from '@/components/ui/date-time-field';
 import { formatCurrency, cn } from '@/lib/utils';
-import { MapPin, Check, X, HelpCircle, Plus, Loader, Lock, Pencil, Trash2 } from 'lucide-react';
+import { CalendarDays, Check, DollarSign, HelpCircle, Loader, Lock, MapPin, Pencil, Plus, Sparkles, Tags, Trash2, X } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { api } from '@/services/api';
 import { TripMember } from '@/types';
@@ -143,6 +144,8 @@ export default function TripActivities() {
     const pad = (n: number) => n.toString().padStart(2, '0');
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   };
+
+  const fromDatetimeLocal = (value: string) => value ? new Date(value).toISOString() : undefined;
 
   // Validate time fields for a given activity data
   const validateTimes = (startTime?: string, endTime?: string, category?: string): { startTime?: string; endTime?: string } => {
@@ -332,46 +335,113 @@ export default function TripActivities() {
           setNewActivityErrors({});
         }}
         title="Add Activity"
-        description="Propose an activity for the trip"
+        description="Propose something the group can vote on."
+        size="lg"
+        className="max-h-[90vh] overflow-y-auto bg-card/95 shadow-[var(--travel-card-shadow)] backdrop-blur"
       >
-        <form onSubmit={handleCreateActivity} className="space-y-4">
-          <Input
-            label="Title"
-            placeholder="Surfing lessons"
-            value={newActivity.title}
-            onChange={(e) => setNewActivity({ ...newActivity, title: e.target.value })}
-            required
-          />
-          <Textarea
-            label="Description (optional)"
-            placeholder="What's this activity about?"
-            value={newActivity.description || ''}
-            onChange={(e) => setNewActivity({ ...newActivity, description: e.target.value })}
-          />
-          <Select
-            label="Category"
-            value={newActivity.category}
-            onChange={(e) => {
-              const newCategory = e.target.value as ActivityCategory;
-              // Default to FIXED cost type for accommodation, PER_PERSON for everything else
-              const defaultCostType = newCategory === 'accommodation' ? 'FIXED' : 'PER_PERSON';
-              setNewActivity({ ...newActivity, category: newCategory, costType: defaultCostType });
-              // If switching to accommodation, require endTime
-              if (newCategory === 'accommodation' && !newActivity.endTime) {
-                setNewActivityErrors(prev => ({ ...prev, endTime: 'End time is required for accommodation activities' }));
-              }
-            }}
-            options={categoryOptions}
-          />
-          <div className="grid grid-cols-2 gap-4">
-            <Input
-              label="Location (optional)"
-              placeholder="Location"
-              value={newActivity.location || ''}
-              onChange={(e) => setNewActivity({ ...newActivity, location: e.target.value })}
-            />
-            <div>
-              <label className="text-sm font-medium mb-1.5 block">Cost (optional)</label>
+        <form onSubmit={handleCreateActivity} className="space-y-5">
+          <div className="rounded-lg border border-border/70 bg-background/55 p-4">
+            <div className="mb-4 flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <h3 className="font-semibold">Activity details</h3>
+            </div>
+            <div className="grid gap-4">
+              <Input
+                label="Title"
+                placeholder="Surfing lessons"
+                value={newActivity.title}
+                onChange={(e) => setNewActivity({ ...newActivity, title: e.target.value })}
+                className="h-12 rounded-lg border-border/70 bg-card/80"
+                required
+              />
+              <Textarea
+                label="Description"
+                placeholder="What should the group know?"
+                value={newActivity.description || ''}
+                onChange={(e) => setNewActivity({ ...newActivity, description: e.target.value })}
+                className="min-h-24 rounded-lg border-border/70 bg-card/80"
+              />
+              <div className="grid gap-4 md:grid-cols-2">
+                <Select
+                  label="Category"
+                  value={newActivity.category}
+                  onChange={(e) => {
+                    const newCategory = e.target.value as ActivityCategory;
+                    const defaultCostType = newCategory === 'accommodation' ? 'FIXED' : 'PER_PERSON';
+                    setNewActivity({ ...newActivity, category: newCategory, costType: defaultCostType });
+                    if (newCategory === 'accommodation' && !newActivity.endTime) {
+                      setNewActivityErrors(prev => ({ ...prev, endTime: 'End time is required for accommodation activities' }));
+                    }
+                  }}
+                  options={categoryOptions}
+                  className="h-12 rounded-lg border-border/70 bg-card/80"
+                />
+                <Input
+                  label="Location"
+                  placeholder="Beach, museum, dinner spot..."
+                  value={newActivity.location || ''}
+                  onChange={(e) => setNewActivity({ ...newActivity, location: e.target.value })}
+                  className="h-12 rounded-lg border-border/70 bg-card/80"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
+            <div className="rounded-lg border border-border/70 bg-background/55 p-4">
+              <div className="mb-4 flex items-center gap-2">
+                <CalendarDays className="h-4 w-4 text-primary" />
+                <h3 className="font-semibold">Timing</h3>
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                <DateTimeField
+                  label="Start"
+                  value={toDatetimeLocal(newActivity.startTime)}
+                  onChange={(value) => {
+                    setNewActivity(prev => {
+                      const newStartTime = fromDatetimeLocal(value);
+                      return {
+                        ...prev,
+                        startTime: newStartTime,
+                        endTime: !prev.endTime && value ? newStartTime : prev.endTime,
+                      };
+                    });
+                    if (newActivityErrors.endTime) {
+                      setNewActivityErrors(prev => ({ ...prev, endTime: undefined }));
+                    }
+                  }}
+                />
+                <DateTimeField
+                  label="End"
+                  optional={newActivity.category !== 'accommodation'}
+                  value={toDatetimeLocal(newActivity.endTime)}
+                  onInteract={() => {
+                    if (!newActivity.endTime && newActivity.startTime) {
+                      const startValue = toDatetimeLocal(newActivity.startTime);
+                      setNewActivity(prev => ({ ...prev, endTime: prev.startTime }));
+                      return startValue;
+                    }
+                  }}
+                  onChange={(value) => {
+                    setNewActivity(prev => ({
+                      ...prev,
+                      endTime: fromDatetimeLocal(value),
+                    }));
+                    if (newActivityErrors.endTime) {
+                      setNewActivityErrors(prev => ({ ...prev, endTime: undefined }));
+                    }
+                  }}
+                  error={newActivityErrors.endTime}
+                />
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-border/70 bg-background/55 p-4">
+              <div className="mb-4 flex items-center gap-2">
+                <DollarSign className="h-4 w-4 text-accent" />
+                <h3 className="font-semibold">Cost</h3>
+              </div>
+              <label className="mb-1.5 block text-sm font-medium">Estimated cost</label>
               <div className="flex items-center gap-2">
                 <div className="relative flex-1">
                   <Input
@@ -380,84 +450,38 @@ export default function TripActivities() {
                     value={newActivity.cost || ''}
                     onChange={(e) => setNewActivity({ ...newActivity, cost: Number(e.target.value) })}
                     onBlur={(e) => { const v = parseFloat(e.target.value); if (isNaN(v)) e.target.value = ''; }}
-                    className="pr-8 appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                    className="h-12 rounded-lg border-border/70 bg-card/80 pr-9 appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                   />
                   <span className={cn(
-                    "absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground",
-                    (newActivity.costType || 'PER_PERSON') !== 'PER_PERSON' && "opacity-50"
+                    'absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground',
+                    (newActivity.costType || 'PER_PERSON') !== 'PER_PERSON' && 'opacity-50'
                   )}>/pp</span>
                 </div>
                 <button
                   type="button"
                   onClick={() => setNewActivity({ ...newActivity, costType: (newActivity.costType || 'PER_PERSON') === 'PER_PERSON' ? 'FIXED' : 'PER_PERSON' })}
                   className={cn(
-                    "px-3 py-1.5 text-xs font-medium rounded-md border transition-colors shrink-0",
+                    'h-12 rounded-lg border px-3 text-xs font-semibold transition-colors',
                     (newActivity.costType || 'PER_PERSON') === 'PER_PERSON'
-                      ? "bg-primary text-white border-primary"
-                      : "bg-gray-100 text-gray-400 border-gray-200 dark:bg-gray-800 dark:text-gray-500 dark:border-gray-700 opacity-50"
+                      ? 'border-primary bg-primary text-primary-foreground'
+                      : 'border-border/70 bg-card/80 text-muted-foreground hover:text-foreground'
                   )}
                 >
                   /pp
                 </button>
               </div>
+              <p className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Tags className="h-3.5 w-3.5" />
+                Toggle per-person or fixed group cost.
+              </p>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1.5">Start Time</label>
-              <input
-                type="datetime-local"
-                value={toDatetimeLocal(newActivity.startTime)}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setNewActivity(prev => {
-                    const newStartTime = val ? new Date(val).toISOString() : undefined;
-                    // Auto-populate endTime if empty and startTime is being set
-                    return {
-                      ...prev,
-                      startTime: newStartTime,
-                      endTime: !prev.endTime && val ? newStartTime : prev.endTime,
-                    };
-                  });
-                  if (newActivityErrors.endTime) {
-                    setNewActivityErrors(prev => ({ ...prev, endTime: undefined }));
-                  }
-                }}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1.5">
-                End Time {newActivity.category !== 'accommodation' && '(optional)'}
-              </label>
-              <input
-                type="datetime-local"
-                value={toDatetimeLocal(newActivity.endTime)}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setNewActivity(prev => ({
-                    ...prev,
-                    endTime: val ? new Date(val).toISOString() : undefined,
-                  }));
-                  // Clear endTime error when endTime changes
-                  if (newActivityErrors.endTime) {
-                    setNewActivityErrors(prev => ({ ...prev, endTime: undefined }));
-                  }
-                }}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              />
-              {newActivityErrors.endTime && (
-                <p className="mt-1 text-sm text-red-500">{newActivityErrors.endTime}</p>
-              )}
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={() => setShowModal(false)}>
+          <div className="flex flex-col-reverse gap-2 border-t border-border/70 pt-4 sm:flex-row sm:justify-end">
+            <Button type="button" variant="outline" onClick={() => setShowModal(false)} className="rounded-lg">
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting} className="rounded-lg">
               {isSubmitting ? (
                 <>
                   <Loader className="mr-2 h-4 w-4 animate-spin" />
@@ -527,60 +551,56 @@ export default function TripActivities() {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-1.5">Start Time</label>
-                <input
-                  type="datetime-local"
-                  value={toDatetimeLocal(editingActivity.startTime)}
-                  onChange={(e) => {
-                    const val = e.target.value;
+              <DateTimeField
+                label="Start"
+                value={toDatetimeLocal(editingActivity.startTime)}
+                onChange={(value) => {
+                  setEditingActivity(prev => {
+                    if (!prev) return prev;
+                    const newStartTime = fromDatetimeLocal(value);
+                    return {
+                      ...prev,
+                      startTime: newStartTime,
+                      endTime: !prev.endTime && value ? newStartTime : prev.endTime,
+                    };
+                  });
+                  if (editActivityErrors.endTime) {
+                    setEditActivityErrors(prev => ({ ...prev, endTime: undefined }));
+                  }
+                }}
+              />
+              <DateTimeField
+                label="End"
+                optional={editingActivity.category !== 'accommodation'}
+                value={toDatetimeLocal(editingActivity.endTime)}
+                onInteract={() => {
+                  if (!editingActivity.endTime && editingActivity.startTime) {
+                    const startValue = toDatetimeLocal(editingActivity.startTime);
                     setEditingActivity(prev => {
                       if (!prev) return prev;
-                      const newStartTime = val ? new Date(val).toISOString() : undefined;
-                      return {
-                        ...prev,
-                        startTime: newStartTime,
-                        endTime: !prev.endTime && val ? newStartTime : prev.endTime,
-                      };
+                      return { ...prev, endTime: prev.startTime };
                     });
-                    if (editActivityErrors.endTime) {
-                      setEditActivityErrors(prev => ({ ...prev, endTime: undefined }));
-                    }
-                  }}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1.5">
-                  End Time {editingActivity.category !== 'accommodation' && '(optional)'}
-                </label>
-                <input
-                  type="datetime-local"
-                  value={toDatetimeLocal(editingActivity.endTime)}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setEditingActivity(prev => {
-                      if (!prev) return prev;
-                      const newEndTime = val ? new Date(val).toISOString() : undefined;
-                      // Auto-correct: if endTime is before startTime, set to startTime
-                      const correctedEndTime = newEndTime && prev.startTime && new Date(newEndTime) < new Date(prev.startTime)
-                        ? prev.startTime
-                        : newEndTime;
-                      return {
-                        ...prev,
-                        endTime: correctedEndTime,
-                      };
-                    });
-                    if (editActivityErrors.endTime) {
-                      setEditActivityErrors(prev => ({ ...prev, endTime: undefined }));
-                    }
-                  }}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                />
-                {editActivityErrors.endTime && (
-                  <p className="mt-1 text-sm text-red-500">{editActivityErrors.endTime}</p>
-                )}
-              </div>
+                    return startValue;
+                  }
+                }}
+                onChange={(value) => {
+                  setEditingActivity(prev => {
+                    if (!prev) return prev;
+                    const newEndTime = fromDatetimeLocal(value);
+                    const correctedEndTime = newEndTime && prev.startTime && new Date(newEndTime) < new Date(prev.startTime)
+                      ? prev.startTime
+                      : newEndTime;
+                    return {
+                      ...prev,
+                      endTime: correctedEndTime,
+                    };
+                  });
+                  if (editActivityErrors.endTime) {
+                    setEditActivityErrors(prev => ({ ...prev, endTime: undefined }));
+                  }
+                }}
+                error={editActivityErrors.endTime}
+              />
             </div>
 
             <div className="flex justify-end gap-2 pt-2">

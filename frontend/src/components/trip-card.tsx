@@ -4,7 +4,7 @@ import { Card } from './ui/card';
 import { Badge } from './ui/badge';
 import { Avatar, AvatarGroup } from './ui/avatar';
 import { formatDateRange, cn } from '@/lib/utils';
-import { ArrowUpRight, Calendar, MapPin, Users } from 'lucide-react';
+import { Calendar, MapPin, Users } from 'lucide-react';
 
 interface MemberInfo {
   name: string;
@@ -52,9 +52,7 @@ export const TripCard: React.FC<TripCardProps> = ({
           className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-        <div className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-foreground shadow-lg transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
-          <ArrowUpRight className="h-4 w-4" />
-        </div>
+
         <div className="absolute bottom-4 left-4 right-4">
           <h3 className="font-display text-2xl font-bold leading-tight text-white line-clamp-1">{trip.name}</h3>
           {trip.destination && (
