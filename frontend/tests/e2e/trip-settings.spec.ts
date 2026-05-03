@@ -107,7 +107,7 @@ test.describe('Invite Flow', () => {
     await expect(inviteButton).toBeVisible();
     await inviteButton.click();
     
-    await expect(page.locator('text=Invite to Trip')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole('heading', { name: 'Invite to Trip' })).toBeVisible({ timeout: 5000 });
     
     const searchInput = page.locator('input[placeholder="Search by email..."]');
     await expect(searchInput).toBeVisible();

@@ -25,7 +25,7 @@ test.describe('Payments Page - View Expenses', () => {
   test('should display Add Expense button', async ({ page }) => {
     await navigateToTrip(page, TRIP_IDS.hawaii, 'payments', 'Payments & Expenses');
     
-    const addExpenseButton = page.locator('button').filter({ hasText: /add expense/i });
+    const addExpenseButton = page.locator('button').filter({ hasText: /add expense/i }).first();
     await expect(addExpenseButton).toBeVisible({ timeout: 5000 });
   });
 
