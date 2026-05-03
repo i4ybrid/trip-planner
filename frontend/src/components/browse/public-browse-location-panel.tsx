@@ -93,10 +93,7 @@ export function PublicBrowseLocationPanel({
     )}>
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div className="min-w-0">
-          <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-            <MapPin className="h-4 w-4 text-primary" />
-            Public events are browsed by location
-          </div>
+          <div className="mb-1 text-sm font-semibold text-foreground">Public events are browsed by location</div>
           <p className={cn('mt-1 text-muted-foreground', compact ? 'text-xs' : 'text-sm')}>
             Enter a city, state, or both. A state-only browse shows all promoted events in that state; adding a city brings nearby places forward when coordinates are available.
           </p>
