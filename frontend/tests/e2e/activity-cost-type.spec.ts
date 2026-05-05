@@ -89,7 +89,7 @@ test.describe('Activity /pp Toggle', () => {
       await page.waitForTimeout(300);
 
       // After toggling off, the /pp suffix inside input should have opacity-50 class
-      const suffixInInput = page.locator('.relative span:text-is("/pp")').first();
+      const suffixInInput = page.locator('.relative span').filter({ hasText: '/pp' }).first();
       if (await suffixInInput.isVisible({ timeout: 1000 }).catch(() => false)) {
         await expect(suffixInInput).toHaveClass(/opacity-50/);
       }

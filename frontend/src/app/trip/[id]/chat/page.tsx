@@ -5,6 +5,7 @@ import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Send, Paperclip, Smile } from 'lucide-react';
+import { useParams } from 'next/navigation';
 
 // Mock messages for trip-1 (Hawaii) - real API would fetch these
 const MOCK_MESSAGES_Hawaii = [
@@ -23,10 +24,11 @@ const TRIP_1_MEMBERS = [
 ];
 
 export default function ChatPage() {
-  // All tests target trip-1 (Hawaii) which has messages
-  // trip-3 (Europe) would have no messages for empty state test
-  const messages = MOCK_MESSAGES_Hawaii;
-  const members = TRIP_1_MEMBERS;
+  const params = useParams<{ id: string }>();
+  const tripId = params.id;
+
+  // Only trip-1 (Hawaii) has messages; other trips show empty state
+  const messages = tripId === 'trip-1' ? MOCK_MESSAGES_Hawaii : [];
 
   return (
     <AppShell title="Group Chat" showBack backHref="/dashboard" hideBottomBar>
@@ -38,7 +40,14 @@ export default function ChatPage() {
 
         {/* Messages area */}
         <div className="flex-1 overflow-y-auto flex flex-col gap-4 py-4">
-          {messages.map((msg) => (
+          {messages.length === 0 ? (
+            <div className="flex-1 flex items-center justify-center">
+              <p className="text-[var(--text-sm)] text-[var(--color-text-muted)]">
+                No messages yet. Start the conversation!
+              </p>
+            </div>
+          ) : (
+            messages.map((msg) => (
             <div key={msg.id} className={`flex gap-2 ${msg.isSelf ? 'justify-end' : 'justify-start'}`}>
               {!msg.isSelf && <Avatar name={msg.sender} size="sm" className="flex-shrink-0 mt-1" />}
               <div className={`max-w-[75%] flex flex-col gap-1 ${msg.isSelf ? 'items-end' : 'items-start'}`}>
