@@ -81,7 +81,6 @@ const SEED_TRIPS = [
     endDate: new Date('2026-06-22'),
     status: 'PLANNING' as const,
     tripMasterId: 'user-1',
-    budget: 5200,
     coverImage: 'https://images.unsplash.com/photo-1505852679233-d9fd70aff56d?w=800',
   },
   {
@@ -93,7 +92,6 @@ const SEED_TRIPS = [
     endDate: new Date('2026-04-20'),
     status: 'CONFIRMED' as const,
     tripMasterId: 'user-2',
-    budget: 1800,
     coverImage: 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=800',
   },
   {
@@ -105,7 +103,6 @@ const SEED_TRIPS = [
     endDate: new Date('2026-09-14'),
     status: 'IDEA' as const,
     tripMasterId: 'user-1',
-    budget: 7600,
     coverImage: 'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?w=800',
   },
   {
@@ -117,7 +114,6 @@ const SEED_TRIPS = [
     endDate: new Date('2025-12-23'),
     status: 'COMPLETED' as const,
     tripMasterId: 'user-3',
-    budget: 2400,
     coverImage: 'https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=800',
   },
   {
@@ -129,7 +125,6 @@ const SEED_TRIPS = [
     endDate: new Date('2026-02-22'),
     status: 'HAPPENING' as const,
     tripMasterId: 'user-2',
-    budget: 2200,
     coverImage: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800',
   },
 ];
@@ -695,12 +690,14 @@ async function main() {
   await prisma.settings.deleteMany();
   await prisma.user.deleteMany();
 
-  // Create users with hashed passwords
+  // Create users with hashed passwords (upsert for idempotency)
   console.log('👥 Creating users...');
   for (const userData of SEED_USERS) {
     const passwordHash = await bcrypt.hash(userData.password, 10);
-    await prisma.user.create({
-      data: {
+    await prisma.user.upsert({
+      where: { id: userData.id },
+      update: { passwordHash },
+      create: {
         id: userData.id,
         email: userData.email,
         name: userData.name,
@@ -715,39 +712,49 @@ async function main() {
     });
   }
 
-  // Create settings for user-1
+  // Create settings for user-1 (upsert for idempotency)
   console.log('⚙️  Creating settings...');
-  await prisma.settings.create({
-    data: SEED_SETTINGS,
+  await prisma.settings.upsert({
+    where: { userId: 'user-1' },
+    update: {},
+    create: SEED_SETTINGS,
   });
 
-  // Create trips
+  // Create trips (upsert for idempotency)
   console.log('🏝️  Creating trips...');
   for (const tripData of SEED_TRIPS) {
-    await prisma.trip.create({
-      data: tripData,
+    await prisma.trip.upsert({
+      where: { id: tripData.id },
+      update: {},
+      create: tripData,
     });
   }
 
-  // Create trip members
+  // Create trip members (upsert for idempotency — handles re-runs after db push)
   console.log('👥 Creating trip members...');
   for (const memberData of SEED_MEMBERS) {
-    await prisma.tripMember.create({
-      data: {
-        ...memberData,
+    await prisma.tripMember.upsert({
+      where: {
+        tripId_userId: { tripId: memberData.tripId, userId: memberData.userId },
+      },
+      update: {},
+      create: {
+        ...(memberData as any),
         joinedAt: new Date(),
       },
     });
   }
 
-  // Create activities (need to track IDs for votes)
+  // Create activities (upsert for idempotency, need to track IDs for votes)
   console.log('📅 Creating activities...');
   const activityIdMap = new Map<string, string>();
   let activityIndex = 1;
   for (const activityData of SEED_ACTIVITIES) {
     const activityId = `act-${activityIndex++}`;
-    const activity = await prisma.activity.create({
-      data: {
+    const activity = await prisma.activity.upsert({
+      where: { id: activityId },
+      update: {},
+      create: {
         ...activityData,
         id: activityId,
       },
@@ -779,39 +786,47 @@ async function main() {
     });
   }
 
-  // Create bill splits (need to track IDs for members)
+  // Create bill splits (upsert for idempotency, need to track IDs for members)
   console.log('💰 Creating bill splits...');
+  // Create ALL bill splits first with Promise.all so we have stable IDs before building the map
+  const billSplitResults = await Promise.all(
+    SEED_BILL_SPLITS.map((billData, i) => {
+      const billId = `bill-${i + 1}`;
+      return prisma.billSplit.upsert({
+        where: { id: billId },
+        update: {},
+        create: { ...billData, id: billId },
+      });
+    })
+  );
+  // Build the map using the original hardcoded IDs as keys and the returned real IDs as values
   const billSplitIdMap = new Map<string, string>();
-  let billIndex = 1;
-  for (const billData of SEED_BILL_SPLITS) {
-    const billId = `bill-${billIndex++}`;
-    const bill = await prisma.billSplit.create({
-      data: {
-        ...billData,
-        id: billId,
-      },
-    });
-    billSplitIdMap.set(`bill-${billIndex - 1}`, bill.id);
-  }
+  billSplitResults.forEach((bill, i) => {
+    billSplitIdMap.set(`bill-${i + 1}`, bill.id);
+  });
 
-  // Create bill split members
+  // Create bill split members (upsert for idempotency)
   console.log('🧾 Creating bill split members...');
   const billSplitMemberData = [
-    { ...SEED_BILL_SPLIT_MEMBERS[0], billSplitId: billSplitIdMap.get('bill-1')! },
-    { ...SEED_BILL_SPLIT_MEMBERS[1], billSplitId: billSplitIdMap.get('bill-1')! },
-    { ...SEED_BILL_SPLIT_MEMBERS[2], billSplitId: billSplitIdMap.get('bill-1')! },
-    { ...SEED_BILL_SPLIT_MEMBERS[3], billSplitId: billSplitIdMap.get('bill-1')! },
-    { ...SEED_BILL_SPLIT_MEMBERS[4], billSplitId: billSplitIdMap.get('bill-2')! },
-    { ...SEED_BILL_SPLIT_MEMBERS[5], billSplitId: billSplitIdMap.get('bill-2')! },
-    { ...SEED_BILL_SPLIT_MEMBERS[6], billSplitId: billSplitIdMap.get('bill-2')! },
-    { ...SEED_BILL_SPLIT_MEMBERS[7], billSplitId: billSplitIdMap.get('bill-2')! },
+    { billSplitId: billSplitIdMap.get('bill-1')!, userId: SEED_BILL_SPLIT_MEMBERS[0].userId, dollarAmount: SEED_BILL_SPLIT_MEMBERS[0].dollarAmount, type: SEED_BILL_SPLIT_MEMBERS[0].type, status: SEED_BILL_SPLIT_MEMBERS[0].status, paymentMethod: SEED_BILL_SPLIT_MEMBERS[0].paymentMethod },
+    { billSplitId: billSplitIdMap.get('bill-1')!, userId: SEED_BILL_SPLIT_MEMBERS[1].userId, dollarAmount: SEED_BILL_SPLIT_MEMBERS[1].dollarAmount, type: SEED_BILL_SPLIT_MEMBERS[1].type, status: SEED_BILL_SPLIT_MEMBERS[1].status },
+    { billSplitId: billSplitIdMap.get('bill-1')!, userId: SEED_BILL_SPLIT_MEMBERS[2].userId, dollarAmount: SEED_BILL_SPLIT_MEMBERS[2].dollarAmount, type: SEED_BILL_SPLIT_MEMBERS[2].type, status: SEED_BILL_SPLIT_MEMBERS[2].status, paymentMethod: SEED_BILL_SPLIT_MEMBERS[2].paymentMethod },
+    { billSplitId: billSplitIdMap.get('bill-1')!, userId: SEED_BILL_SPLIT_MEMBERS[3].userId, dollarAmount: SEED_BILL_SPLIT_MEMBERS[3].dollarAmount, type: SEED_BILL_SPLIT_MEMBERS[3].type, status: SEED_BILL_SPLIT_MEMBERS[3].status },
+    { billSplitId: billSplitIdMap.get('bill-2')!, userId: SEED_BILL_SPLIT_MEMBERS[4].userId, dollarAmount: SEED_BILL_SPLIT_MEMBERS[4].dollarAmount, type: SEED_BILL_SPLIT_MEMBERS[4].type, status: SEED_BILL_SPLIT_MEMBERS[4].status, paymentMethod: SEED_BILL_SPLIT_MEMBERS[4].paymentMethod },
+    { billSplitId: billSplitIdMap.get('bill-2')!, userId: SEED_BILL_SPLIT_MEMBERS[5].userId, dollarAmount: SEED_BILL_SPLIT_MEMBERS[5].dollarAmount, type: SEED_BILL_SPLIT_MEMBERS[5].type, status: SEED_BILL_SPLIT_MEMBERS[5].status, paymentMethod: SEED_BILL_SPLIT_MEMBERS[5].paymentMethod },
+    { billSplitId: billSplitIdMap.get('bill-2')!, userId: SEED_BILL_SPLIT_MEMBERS[6].userId, dollarAmount: SEED_BILL_SPLIT_MEMBERS[6].dollarAmount, type: SEED_BILL_SPLIT_MEMBERS[6].type, status: SEED_BILL_SPLIT_MEMBERS[6].status, paymentMethod: SEED_BILL_SPLIT_MEMBERS[6].paymentMethod },
+    { billSplitId: billSplitIdMap.get('bill-2')!, userId: SEED_BILL_SPLIT_MEMBERS[7].userId, dollarAmount: SEED_BILL_SPLIT_MEMBERS[7].dollarAmount, type: SEED_BILL_SPLIT_MEMBERS[7].type, status: SEED_BILL_SPLIT_MEMBERS[7].status },
   ];
 
-  for (const memberData of billSplitMemberData) {
-    await prisma.billSplitMember.create({
-      data: memberData,
-    });
-  }
+  await Promise.all(
+    billSplitMemberData.map((memberData) =>
+      prisma.billSplitMember.upsert({
+        where: { billSplitId_userId: { billSplitId: memberData.billSplitId, userId: memberData.userId } },
+        update: {},
+        create: memberData,
+      })
+    )
+  );
 
   console.log('🧾 Creating simple expenses...');
   for (const expenseData of SEED_EXPENSES) {
@@ -844,11 +859,13 @@ async function main() {
     });
   }
 
-  // Create milestones
+  // Create milestones (upsert for idempotency)
   console.log('🏁 Creating milestones...');
   for (const milestoneData of SEED_MILESTONES) {
-    await prisma.milestone.create({
-      data: milestoneData,
+    await prisma.milestone.upsert({
+      where: { id: milestoneData.id },
+      update: {},
+      create: milestoneData,
     });
   }
 
@@ -868,31 +885,38 @@ async function main() {
     });
   }
 
-  // Create public events and paid promotion records
+  // Create public events (upsert for idempotency)
   console.log('📣 Creating public events...');
   for (const publicEventData of SEED_PUBLIC_EVENTS) {
-    await prisma.publicEvent.create({
-      data: publicEventData,
+    await prisma.publicEvent.upsert({
+      where: { id: publicEventData.id },
+      update: {},
+      create: publicEventData,
     });
   }
 
   console.log('💳 Creating public event promotion payments...');
   for (const paymentData of SEED_PUBLIC_EVENT_PROMOTION_PAYMENTS) {
-    await prisma.publicEventPromotionPayment.create({
-      data: paymentData,
+    await prisma.publicEventPromotionPayment.upsert({
+      where: { id: paymentData.id },
+      update: {},
+      create: paymentData,
     });
   }
 
-  // Create DM conversations
+  // Create DM conversations (upsert for idempotency)
   console.log('💭 Creating DM conversations...');
   const dmConversationIdMap = new Map<string, string>();
   for (const dmData of SEED_DM_CONVERSATIONS) {
     const [p1, p2] = [dmData.participant1, dmData.participant2].sort();
-    const conversation = await prisma.dmConversation.create({
-      data: {
+    const conversationId = `dm-${dmConversationIdMap.size + 1}`;
+    const conversation = await prisma.dmConversation.upsert({
+      where: { id: conversationId },
+      update: {},
+      create: {
         participant1: p1,
         participant2: p2,
-        id: `dm-${dmConversationIdMap.size + 1}`,
+        id: conversationId,
         participants: {
           connect: [
             { id: p1 },
@@ -901,7 +925,7 @@ async function main() {
         },
       },
     });
-    dmConversationIdMap.set(`dm-${dmConversationIdMap.size + 1}`, conversation.id);
+    dmConversationIdMap.set(conversationId, conversation.id);
   }
 
   // Create DM messages
