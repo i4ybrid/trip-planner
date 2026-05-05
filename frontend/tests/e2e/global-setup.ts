@@ -4,6 +4,10 @@ import { promisify } from 'util';
 const execAsync = promisify(exec);
 
 export default async () => {
+  if (process.env.SKIP_DB_SETUP === '1') {
+    console.log('🌱 SKIP_DB_SETUP=1 — skipping database setup');
+    return;
+  }
   console.log('🌱 Setting up E2E test database...');
 
   try {
