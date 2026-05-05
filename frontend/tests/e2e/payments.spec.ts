@@ -339,7 +339,8 @@ test.describe('Edit Expense Flow', () => {
   test('should navigate to edit page and show current values', async ({ page }) => {
     // Navigate directly to edit page for bill-1 (Hotel: Grand Wailea)
     await page.goto(`/trip/${TRIP_IDS.hawaii}/payments/edit/${BILL_SPLIT_IDS.hotelBill}`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(1000);
 
     // Check if title is filled correctly
     const titleInput = page.locator('input[required]').first();
@@ -352,7 +353,8 @@ test.describe('Edit Expense Flow', () => {
 
   test('should show loading state and disable button on update', async ({ page }) => {
     await page.goto(`/trip/${TRIP_IDS.hawaii}/payments/edit/${BILL_SPLIT_IDS.hotelBill}`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(1000);
 
     const titleInput = page.locator('input[required]').first();
     await titleInput.fill('Updated Hotel');

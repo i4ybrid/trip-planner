@@ -70,7 +70,7 @@ test.describe('Chat Page - View Messages', () => {
     
     // Members should have a green status indicator (online)
     // The green dot should be visible for online members
-    await expect(page.locator('span[class*="bg-green"]').first()).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('span[class*="bg-green-500"]').first()).toBeVisible({ timeout: 5000 });
   });
 
   test('should display empty state when no messages', async ({ page }) => {
@@ -87,6 +87,7 @@ test.describe('Chat Page - View Messages', () => {
     
     // Should show message input textarea
     const input = page.locator('#chat-input');
+    await input.waitFor({ state: 'visible', timeout: 10000 });
     await expect(input).toBeVisible({ timeout: 5000 });
     
     // Should show send button

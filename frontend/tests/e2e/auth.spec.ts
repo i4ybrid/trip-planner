@@ -17,33 +17,23 @@ import { loginTestUser, logoutUser, TEST_USERS } from './helpers/auth';
  */
 
 test.describe('Registration', () => {
-  test('should display registration page', async ({ page }) => {
-    await page.goto('/login');
-    await page.waitForLoadState('domcontentloaded');
+  test('should navigate to registration page', async ({ page }) => {
+    await page.goto('/register');
+    await page.waitForLoadState('networkidle');
     
-    // Click on "Sign up" link if available (since registration is on the login page)
-    const signUpLink = page.locator('text=/sign up|register|create account/i').first();
-    if (await signUpLink.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await signUpLink.click();
-      await page.waitForTimeout(500);
-    }
-    
-    // Should show registration form elements or toggle to registration mode
-    const heading = page.locator('text=/register|sign up|create account/i');
-    await expect(heading.first()).toBeVisible({ timeout: 5000 });
+    // Wait for the name input to appear in registration form (React hydration)
+    const nameInput = page.locator('input[id="name"]');
+    await nameInput.waitFor({ state: 'attached', timeout: 15000 });
+    await expect(nameInput).toBeVisible();
   });
 
   test('should show registration form fields', async ({ page }) => {
-    await page.goto('/login');
-    await page.waitForLoadState('domcontentloaded');
-    
-    // Click on "Sign up" toggle button to switch to registration mode
-    const signUpLink = page.locator('button:has-text("Sign up"), button:has-text("Don\'t have an account")').first();
-    await signUpLink.click();
+    await page.goto('/register');
+    await page.waitForLoadState('networkidle');
     
     // Wait for the name input to appear in registration form
     const nameInput = page.locator('input[id="name"]');
-    await nameInput.waitFor({ state: 'visible', timeout: 10000 });
+    await nameInput.waitFor({ state: 'attached', timeout: 15000 });
     await expect(nameInput).toBeVisible();
     
     // Should have email input
@@ -56,16 +46,12 @@ test.describe('Registration', () => {
   });
 
   test('should register a new user successfully', async ({ page }) => {
-    await page.goto('/login');
-    await page.waitForLoadState('domcontentloaded');
-    
-    // Click on "Sign up" toggle button to switch to registration mode
-    const signUpLink = page.locator('button:has-text("Sign up"), button:has-text("Don\'t have an account")').first();
-    await signUpLink.click();
+    await page.goto('/register');
+    await page.waitForLoadState('networkidle');
     
     // Wait for name input to appear
     const nameInput = page.locator('input[id="name"]');
-    await nameInput.waitFor({ state: 'visible', timeout: 10000 });
+    await nameInput.waitFor({ state: 'attached', timeout: 15000 });
     
     // Generate unique email
     const timestamp = Date.now();
@@ -87,16 +73,12 @@ test.describe('Registration', () => {
   });
 
   test('should validate email format', async ({ page }) => {
-    await page.goto('/login');
-    await page.waitForLoadState('domcontentloaded');
-    
-    // Click on "Sign up" toggle button to switch to registration mode
-    const signUpLink = page.locator('button:has-text("Sign up"), button:has-text("Don\'t have an account")').first();
-    await signUpLink.click();
+    await page.goto('/register');
+    await page.waitForLoadState('networkidle');
     
     // Wait for name input to appear
     const nameInput = page.locator('input[id="name"]');
-    await nameInput.waitFor({ state: 'visible', timeout: 10000 });
+    await nameInput.waitFor({ state: 'attached', timeout: 15000 });
     
     // Fill in form with invalid email
     await page.fill('input[id="name"]', 'Test User');
@@ -114,17 +96,13 @@ test.describe('Registration', () => {
   });
 
   test('should link to login page', async ({ page }) => {
-    await page.goto('/login');
-    await page.waitForLoadState('domcontentloaded');
+    await page.goto('/register');
+    await page.waitForLoadState('networkidle');
     
-    // Click on "Sign up" toggle button to switch to registration mode
-    const signUpLink = page.locator('button:has-text("Sign up"), button:has-text("Don\'t have an account")').first();
-    await signUpLink.click();
-    await page.waitForTimeout(300);
-    
-    // Look for link back to login - should now show "Already have an account? Sign in"
-    const loginLink = page.locator('button:has-text("Already have an account"), button:has-text("Sign in")').first();
-    await expect(loginLink).toBeVisible({ timeout: 5000 });
+    // Look for link back to login - should show "Already have an account? Sign in"
+    const signInLink = page.locator('text="Sign in"').first();
+    await signInLink.waitFor({ state: 'attached', timeout: 15000 });
+    await expect(signInLink).toBeVisible({ timeout: 5000 });
   });
 });
 

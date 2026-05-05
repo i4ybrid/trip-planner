@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTripStore } from '@/store';
 import { TripCard, EmptyState, Button } from '@/components';
-import { CalendarDays, Compass, MapPin, Plane, Sparkles, Users } from 'lucide-react';
+import { ArrowRight, Compass, Plane, PlusCircle } from 'lucide-react';
 import { LeftSidebar } from '@/components/left-sidebar';
 import { AppHeader } from '@/components/app-header';
 import { PendingInvites } from '@/components/notification/pending-invites';
@@ -23,7 +23,7 @@ export default function DashboardPage() {
   const pastTrips = trips.filter((t) =>
     ['COMPLETED', 'CANCELLED'].includes(t.status)
   );
-  const totalMembers = trips.reduce((sum, trip) => sum + (trip._count?.members || 0), 0);
+  const hasTrips = trips.length > 0;
 
   const handleTripClick = (tripId: string) => {
     router.push(`/trip/${tripId}`);
@@ -47,64 +47,60 @@ export default function DashboardPage() {
             <PendingInvites onInviteProcessed={fetchTrips} />
           </section>
 
-          <section className="mb-8 rounded-lg border border-border/70 bg-gradient-to-r from-primary/8 via-primary/5 to-accent/8 p-5 shadow-[var(--travel-card-shadow)] backdrop-blur">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/15 text-primary shadow-sm">
-                  <Compass className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="font-display text-lg font-bold text-foreground">Discover Public Events</p>
-                  <p className="text-sm text-muted-foreground">Browse promoted events near you or anywhere in the US.</p>
-                </div>
-              </div>
-              <Button
-                onClick={() => router.push('/browse')}
-                className="gap-2 shrink-0 h-11 rounded-lg px-5"
-              >
-                <Compass className="h-4 w-4" />
-                Browse Events
-              </Button>
-            </div>
-          </section>
-
-          {!isLoading && activeTrips.length === 0 && (
-            <section className="travel-hero mb-8 overflow-hidden rounded-lg travel-card-shadow">
-              <div className="px-5 py-8 sm:px-8 lg:px-10 lg:py-12">
+          <section className="travel-hero mb-8 overflow-hidden rounded-lg travel-card-shadow">
+            <div className="relative min-h-[280px]">
+              <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(12,64,52,0.92)_0%,rgba(20,91,70,0.74)_48%,rgba(30,124,92,0.36)_100%)]" />
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_22%,rgba(190,239,211,0.34),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.05),rgba(0,0,0,0.08))]" />
+              <div className="relative flex min-h-[280px] flex-col justify-between gap-8 px-5 py-7 text-white sm:px-8 lg:flex-row lg:items-end lg:px-10 lg:py-10">
                 <div className="max-w-2xl">
-                  <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/15 px-3 py-1 text-sm font-medium text-white backdrop-blur">
-                    <Sparkles className="h-4 w-4" />
-                    Plan the next shared escape
+                  <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/15 px-3 py-1 text-sm font-semibold backdrop-blur">
+                    {hasTrips ? <Compass className="h-4 w-4" /> : <Plane className="h-4 w-4" />}
+                    {hasTrips ? 'Keep the next idea moving' : 'Start with the first destination'}
                   </div>
-                  <h1 className="font-display text-4xl font-bold leading-tight text-white sm:text-5xl lg:text-6xl">
-                    Find the trip everyone says yes to.
+                  <h1 className="font-display text-4xl font-bold leading-tight sm:text-5xl">
+                    {hasTrips ? 'Find fresh plans for your next group trip.' : 'Create the first trip everyone can plan around.'}
                   </h1>
                   <p className="mt-4 max-w-xl text-base leading-7 text-white/82 sm:text-lg">
-                    Build beautiful group plans, collect decisions, and keep every booking detail in one calm place.
+                    {hasTrips
+                      ? 'Browse public events, nearby ideas, and promoted plans when your crew is ready to add something new.'
+                      : 'Set up a trip space first, then invite friends, compare ideas, and turn loose travel talk into a shared plan.'}
                   </p>
-                  <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+                </div>
+
+                <div className="w-full max-w-sm rounded-lg border border-white/20 bg-white/14 p-4 backdrop-blur-md lg:mb-1">
+                  <div className="mb-4 flex items-center gap-3">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white/18 text-white">
+                      {hasTrips ? <Compass className="h-5 w-5" /> : <PlusCircle className="h-5 w-5" />}
+                    </div>
+                    <div>
+                      <p className="font-semibold">{hasTrips ? 'Browse for new trips' : 'Create your first trip'}</p>
+                      <p className="text-sm text-white/70">
+                        {hasTrips ? 'Explore what is happening nearby.' : 'Open a planning space for the crew.'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-3">
                     <Button
-                      size="lg"
-                      className="gap-2 bg-card text-card-foreground shadow-xl shadow-black/10 hover:bg-card/95"
-                      onClick={() => router.push('/trip/new')}
+                      onClick={() => router.push(hasTrips ? '/browse' : '/trip/new')}
+                      className="h-11 w-full gap-2 bg-card text-card-foreground shadow-lg shadow-black/10 hover:bg-card/95"
                     >
-                      <Plane className="h-5 w-5 text-primary" />
-                      Create a Trip
+                      {hasTrips ? <Compass className="h-4 w-4 text-primary" /> : <Plane className="h-4 w-4 text-primary" />}
+                      {hasTrips ? 'Browse Events' : 'Create a Trip'}
+                      <ArrowRight className="h-4 w-4" />
                     </Button>
                     <Button
-                      size="lg"
+                      onClick={() => router.push(hasTrips ? '/trip/new' : '/browse')}
                       variant="outline"
-                      className="gap-2 border-white/35 bg-white/10 text-white backdrop-blur hover:bg-white/20"
-                      onClick={() => router.push('/browse')}
+                      className="h-11 w-full gap-2 border-white/30 bg-white/10 text-white hover:bg-white/20"
                     >
-                      <Compass className="h-5 w-5" />
-                      Browse Events
+                      {hasTrips ? <Plane className="h-4 w-4" /> : <Compass className="h-4 w-4" />}
+                      {hasTrips ? 'Create New Trip' : 'Browse Events'}
                     </Button>
                   </div>
                 </div>
               </div>
-            </section>
-          )}
+            </div>
+          </section>
 
           <section className="mb-10">
             <div className="mb-4 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">

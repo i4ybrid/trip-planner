@@ -55,8 +55,8 @@ test.describe.serial('Milestone Timeline Integration', () => {
 
   test('T1: default milestones should appear in "Looking Ahead" section of timeline', async ({ page }) => {
     await navigateToTrip(page, TRIP_IDS.hawaii, 'timeline', 'Timeline');
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(1000);
 
     // Wait for either timeline content OR empty state to render
     await page.waitForSelector('text="LOOKING BACK", text="LOOKING AHEAD", text="No timeline events yet"', { timeout: 10000 }).catch(() => {});
@@ -70,8 +70,8 @@ test.describe.serial('Milestone Timeline Integration', () => {
       await generateBtn.click();
       // After API call, page reloads. Wait for it to settle.
       await page.waitForURL('**/timeline**', { timeout: 10000 });
-      await page.waitForLoadState('networkidle');
-      await page.waitForTimeout(1500);
+      await page.waitForLoadState('domcontentloaded');
+      await page.waitForTimeout(1000);
     }
 
     // Now check for "Looking Ahead" section with milestone content
@@ -102,8 +102,8 @@ test.describe.serial('Milestone Timeline Integration', () => {
 
   test('T2: creating a custom milestone via Add Milestone modal should appear in timeline', async ({ page }) => {
     await navigateToTrip(page, TRIP_IDS.hawaii, 'timeline', 'Timeline');
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(1000);
 
     // Open Add Milestone modal
     const addBtn = page.locator('button', { hasText: 'Add Milestone' }).first();
@@ -128,8 +128,8 @@ test.describe.serial('Milestone Timeline Integration', () => {
 
     // Modal closes and page reloads — wait for reload to settle
     await page.waitForURL('**/timeline**', { timeout: 10000 });
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(1000);
 
     // Verify milestone in "Looking Ahead"
     const lookingAhead = page.locator('text="LOOKING AHEAD"').first();
@@ -161,8 +161,8 @@ test.describe.serial('Milestone Timeline Integration', () => {
 
     // Navigate to timeline — fresh page load picks up new milestone
     await navigateToTrip(page, TRIP_IDS.hawaii, 'timeline', 'Timeline');
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(1000);
 
     const lookingAhead = page.locator('text="LOOKING AHEAD"').first();
     const aheadVisible = await lookingAhead.isVisible({ timeout: 5000 }).catch(() => false);
@@ -202,8 +202,8 @@ test.describe.serial('Milestone Timeline Integration', () => {
 
     // Navigate to timeline — milestone event should still appear
     await navigateToTrip(page, TRIP_IDS.hawaii, 'timeline', 'Timeline');
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(1000);
 
     // The milestone may appear in either "Looking Ahead" or "Looking Back" depending on
     // whether completing it moves the event to "Looking Back". We only need to confirm
@@ -231,8 +231,8 @@ test.describe.serial('Milestone Timeline Integration', () => {
 
     // Navigate to timeline — milestone should be GONE
     await navigateToTrip(page, TRIP_IDS.hawaii, 'timeline', 'Timeline');
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(1000);
 
     // The deleted milestone should NOT appear
     const deleted = page.locator('text=/To Be Deleted Milestone/i').first();
