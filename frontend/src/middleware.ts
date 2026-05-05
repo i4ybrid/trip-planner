@@ -10,6 +10,7 @@ const PROTECTED_PATHS = [
 
 const PUBLIC_PATHS = [
   '/login',
+  '/register',
   '/invite',
   '/forgot-password',
   '/reset-password',

@@ -1053,6 +1053,23 @@ export const api = {
     return result;
   },
 
+  // Receipt upload
+  async uploadReceipt(billSplitId: string, file: File): Promise<ApiResponse<{ receiptUrl: string; filename: string }>> {
+    const formData = new FormData();
+    formData.append('billSplitId', billSplitId);
+    formData.append('receipt', file);
+    const response = await fetch(`${API_BASE_URL}/payments/receipt-upload`, {
+      method: 'POST',
+      credentials: 'include',
+      body: formData,
+    });
+    return handleResponse(response);
+  },
+
+  getReceiptUrl(billSplitId: string): string {
+    return `${API_BASE_URL}/payments/${billSplitId}/receipt`;
+  },
+
   // Debt Simplification
   async getSimplifiedDebts(tripId: string): Promise<ApiResponse<{ balances: { userId: string; name: string; balance: number }[]; settlements: { from: string; fromName: string; to: string; toName: string; amount: number }[] }>> {
     const cacheKey = `trip:${tripId}:debts`;

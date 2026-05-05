@@ -7,7 +7,7 @@ import { api, isApiError } from '@/services/api';
 import { useAuthStore } from '@/store/auth-store';
 import { logger } from '@/lib/logger';
 
-const PUBLIC_PATHS = ['/login', '/invite', '/forgot-password', '/reset-password'];
+const PUBLIC_PATHS = ['/login', '/register', '/invite', '/forgot-password', '/reset-password'];
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();

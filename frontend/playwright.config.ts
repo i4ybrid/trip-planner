@@ -28,7 +28,7 @@ export default defineConfig({
   expect: {
     timeout: 30 * 1000,  // 30s for first assertion on a page (e.g. page.goto + first expect)
   },
-  fullyParallel: true,
+  fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,

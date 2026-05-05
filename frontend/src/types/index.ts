@@ -359,6 +359,7 @@ export interface BillSplit {
   createdBy: string;
   status: PaymentStatus;
   dueDate?: string;
+  receiptUrl?: string | null;
   createdAt: string;
   updatedAt: string;
   members?: BillSplitMember[];
