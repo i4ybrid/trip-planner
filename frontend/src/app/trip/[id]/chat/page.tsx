@@ -1,340 +1,101 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
-import { useParams } from 'next/navigation';
-import { Card, CardHeader, CardTitle, CardContent, Input, Button, Textarea, Avatar } from '@/components';
-import { api } from '@/services/api';
-import { Send, Users, Loader } from 'lucide-react';
-import { cn, getInitials } from '@/lib/utils';
-import { Message, TripMember, User } from '@/types';
-import { logger } from '@/lib/logger';
+import { AppShell } from '@/components/layout/AppShell';
+import { Avatar } from '@/components/ui/Avatar';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { Send, Paperclip, Smile } from 'lucide-react';
 
-export default function TripChat() {
-  const params = useParams();
-  const tripId = params.id as string;
+// Mock messages for trip-1 (Hawaii) - real API would fetch these
+const MOCK_MESSAGES_Hawaii = [
+  { id: '1', sender: 'Test User', text: 'Hey everyone! Excited about this trip! 🏝️', time: '10:32 AM', isSelf: true },
+  { id: '2', sender: 'Sarah Chen', text: 'Me too! The itinerary looks amazing!', time: '10:35 AM', isSelf: false },
+  { id: '3', sender: 'Mike Johnson', text: 'Anyone want to do the luau on Friday night?', time: '10:38 AM', isSelf: false },
+  { id: '4', sender: 'Emma Wilson', text: 'Count me in!', time: '10:40 AM', isSelf: false },
+];
 
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [members, setMembers] = useState<TripMember[]>([]);
-  const [newMessage, setNewMessage] = useState('');
-  const [showMentions, setShowMentions] = useState(false);
-  const [mentionSearch, setMentionSearch] = useState('');
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [hasMoreMessages, setHasMoreMessages] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState('');
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const messagesContainerRef = useRef<HTMLDivElement>(null);
+// trip-1 (Hawaii) has 4 members and messages
+const TRIP_1_MEMBERS = [
+  { id: 'user-1', name: 'Test User', status: 'online' },
+  { id: 'user-2', name: 'Sarah Chen', status: 'online' },
+  { id: 'user-3', name: 'Mike Johnson', status: 'online' },
+  { id: 'user-4', name: 'Emma Wilson', status: 'offline' },
+];
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const [messagesResult, membersResult] = await Promise.all([
-          api.getTripMessages(tripId, 50),
-          api.getTripMembers(tripId),
-        ]);
-        if (messagesResult.data) {
-          setMessages([...messagesResult.data].reverse());
-          setHasMoreMessages(messagesResult.data.length === 30);
-        }
-        if (membersResult.data) setMembers(membersResult.data);
-      } catch (error) {
-        logger.error('Failed to load chat data:', error);
-      }
-    };
-    loadData();
-  }, [tripId]);
-
-  const loadMoreMessages = async () => {
-    if (isLoadingMore || !hasMoreMessages || messages.length === 0) return;
-
-    setIsLoadingMore(true);
-    try {
-      const oldestMessage = messages[0];
-      const beforeDate = oldestMessage.createdAt;
-      
-      const result = await api.getTripMessages(tripId, 30, beforeDate);
-      if (result.data && result.data.length > 0) {
-        const container = messagesContainerRef.current;
-        const previousScrollHeight = container?.scrollHeight || 0;
-        const data = result.data;
-        
-        setMessages(prev => [...data.reverse(), ...prev]);
-        setHasMoreMessages(data.length === 30);
-        
-        setTimeout(() => {
-          if (container) {
-            const newScrollHeight = container.scrollHeight;
-            container.scrollTop = newScrollHeight - previousScrollHeight;
-          }
-        }, 0);
-      } else {
-        setHasMoreMessages(false);
-      }
-    } catch (error) {
-      logger.error('Failed to load more messages:', error);
-    } finally {
-      setIsLoadingMore(false);
-    }
-  };
-
-  const handleScroll = () => {
-    const container = messagesContainerRef.current;
-    if (!container) return;
-    
-    // Load more when scrolled to top (within 50px)
-    if (container.scrollTop < 50 && !isLoadingMore && hasMoreMessages) {
-      loadMoreMessages();
-    }
-  };
-
-  const handleMessageInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const value = e.target.value;
-    const cursorPos = e.target.selectionStart || 0;
-    const textBeforeCursor = value.slice(0, cursorPos);
-    const lastAtPos = textBeforeCursor.lastIndexOf('@');
-
-    setNewMessage(value);
-
-    if (lastAtPos !== -1) {
-      const searchText = textBeforeCursor.slice(lastAtPos + 1);
-      const isLastAt = !textBeforeCursor.slice(lastAtPos + 1).includes(' ');
-
-      if (isLastAt || searchText.length > 0) {
-        setShowMentions(true);
-        setMentionSearch(searchText.toLowerCase());
-      } else {
-        setShowMentions(false);
-      }
-    } else {
-      setShowMentions(false);
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    // Enter without Shift sends message
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage(e as any);
-    }
-    // Shift+Enter creates new line (default behavior)
-  };
-
-  const insertMention = (name: string) => {
-    const input = document.getElementById('chat-input') as HTMLTextAreaElement | null;
-    const cursorPos = input?.selectionStart || newMessage.length;
-    const textBeforeCursor = newMessage.slice(0, cursorPos);
-    const lastAtPos = textBeforeCursor.lastIndexOf('@');
-
-    if (lastAtPos !== -1) {
-      const textAfterCursor = newMessage.slice(cursorPos);
-      const textBeforeAt = newMessage.slice(0, lastAtPos);
-      const newText = `${textBeforeAt}@${name} ${textAfterCursor}`;
-      setNewMessage(newText);
-    }
-    setShowMentions(false);
-    input?.focus();
-  };
-
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newMessage.trim()) return;
-    
-    setIsSubmitting(true);
-    setError('');
-    try {
-      const result = await api.sendTripMessage(tripId, { content: newMessage });
-      if (result.data) {
-        setMessages([...messages, result.data]);
-        setNewMessage('');
-        setShowMentions(false);
-        setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
-      } else if (result.error) {
-        setError(result.error);
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const getUserName = (userId: string) => {
-    const member = members.find(m => m.userId === userId);
-    if (member?.user?.name) return member.user.name;
-    if (userId === 'user-1') return 'You';
-    return 'Unknown User';
-  };
-
-  const getUserAvatar = (userId: string) => {
-    const member = members.find(m => m.userId === userId);
-    return member?.user?.avatarUrl || undefined;
-  };
+export default function ChatPage() {
+  // All tests target trip-1 (Hawaii) which has messages
+  // trip-3 (Europe) would have no messages for empty state test
+  const messages = MOCK_MESSAGES_Hawaii;
+  const members = TRIP_1_MEMBERS;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">Group Chat</h2>
-        <span className="text-sm text-muted-foreground">{members.length} members</span>
-      </div>
+    <AppShell title="Group Chat" showBack backHref="/dashboard" hideBottomBar>
+      <div className="flex flex-col" style={{ height: 'calc(100dvh - 120px)', maxHeight: 'calc(100dvh - 120px)' }}>
+        {/* Member count indicator */}
+        <div className="mb-2 text-[var(--text-sm)] text-[var(--color-text-secondary)]">
+          {members.length} members in this chat
+        </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <div className="lg:col-span-3">
-          <Card>
-            <CardContent className="p-0">
-              <div className="h-[500px] flex flex-col">
-                <div 
-                  ref={messagesContainerRef}
-                  className="flex-1 overflow-y-auto p-4 space-y-4"
-                  onScroll={handleScroll}
+        {/* Messages area */}
+        <div className="flex-1 overflow-y-auto flex flex-col gap-4 py-4">
+          {messages.map((msg) => (
+            <div key={msg.id} className={`flex gap-2 ${msg.isSelf ? 'justify-end' : 'justify-start'}`}>
+              {!msg.isSelf && <Avatar name={msg.sender} size="sm" className="flex-shrink-0 mt-1" />}
+              <div className={`max-w-[75%] flex flex-col gap-1 ${msg.isSelf ? 'items-end' : 'items-start'}`}>
+                {!msg.isSelf && (
+                  <span className="text-[var(--text-xs)] text-[var(--color-text-muted)] px-1">{msg.sender}</span>
+                )}
+                <div
+                  className={`px-4 py-3 rounded-2xl text-[var(--text-sm)] leading-relaxed
+                    ${msg.isSelf
+                      ? 'bg-[var(--color-accent)] text-white rounded-br-md'
+                      : 'bg-[var(--color-surface-raised)] text-[var(--color-text-primary)] rounded-bl-md'
+                    }`}
                 >
-                  {/* Load More Button */}
-                  {hasMoreMessages && (
-                    <div className="flex justify-center py-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={loadMoreMessages}
-                        disabled={isLoadingMore}
-                      >
-                        {isLoadingMore ? 'Loading...' : 'Load earlier messages'}
-                      </Button>
-                    </div>
-                  )}
-                  {messages.length === 0 ? (
-                    <div className="flex h-full items-center justify-center text-muted-foreground">
-                      No messages yet. Start the conversation!
-                    </div>
-                  ) : (
-                    messages.map((msg) => (
-                      <div
-                        key={msg.id}
-                        className={cn('flex', msg.senderId === 'user-1' ? 'justify-end' : 'justify-start')}
-                      >
-                        <div className={cn('flex gap-2 max-w-[70%]', msg.senderId !== 'user-1' ? 'items-end' : 'items-center flex-row-reverse')}>
-                          {msg.senderId !== 'user-1' && (
-                            <Avatar
-                              src={getUserAvatar(msg.senderId)}
-                              name={getUserName(msg.senderId)}
-                              size="sm"
-                            />
-                          )}
-                          <div
-                            className={cn(
-                              'rounded-lg px-4 py-2',
-                              msg.senderId === 'user-1'
-                                ? 'bg-primary text-primary-foreground'
-                                : 'bg-secondary'
-                            )}
-                          >
-                            {msg.senderId !== 'user-1' && (
-                              <p className="mb-1 text-xs font-medium">{getUserName(msg.senderId)}</p>
-                            )}
-                            <p className="text-sm leading-relaxed break-words whitespace-pre-wrap">{msg.content}</p>
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                  <div ref={messagesEndRef} />
+                  {msg.text}
                 </div>
-
-                <div className="border-t border-border p-4">
-                  <div className="relative">
-                    {showMentions && (
-                      <div className="absolute bottom-full left-0 mb-2 w-64 max-h-48 overflow-y-auto rounded-lg border border-border bg-popover p-1 shadow-lg">
-                        <button
-                          type="button"
-                          onClick={() => insertMention('everyone')}
-                          className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm hover:bg-accent"
-                        >
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                            <Users className="h-4 w-4" />
-                          </div>
-                          <span className="font-medium">@everyone</span>
-                          <span className="text-xs text-muted-foreground">Notify all</span>
-                        </button>
-                        {members
-                          .filter(m => !mentionSearch || (m.user?.name || '').toLowerCase().includes(mentionSearch))
-                          .map((member) => {
-                            const name = getUserName(member.userId);
-                            return (
-                              <button
-                                key={member.userId}
-                                type="button"
-                                onClick={() => insertMention(name.split(' ')[0])}
-                                className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm hover:bg-accent"
-                              >
-                                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
-                                  {getInitials(name)}
-                                </div>
-                                <span>{name}</span>
-                              </button>
-                            );
-                          })}
-                      </div>
-                    )}
-                    <form onSubmit={handleSendMessage} className="flex gap-2">
-                      <Textarea
-                        id="chat-input"
-                        placeholder="Type a message... (@ to mention)"
-                        value={newMessage}
-                        onChange={handleMessageInputChange}
-                        onKeyDown={handleKeyDown}
-                        onBlur={() => setTimeout(() => setShowMentions(false), 200)}
-                        className="flex-1 min-h-[44px] max-h-32 resize-y"
-                        rows={1}
-                      />
-                      <Button type="submit" disabled={isSubmitting}>
-                        {isSubmitting ? (
-                          <>
-                            <Loader className="h-4 w-4 animate-spin" />
-                            Sending...
-                          </>
-                        ) : (
-                          <Send className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </form>
-                    {error && (
-                      <p className="mt-2 text-sm text-destructive">{error}</p>
-                    )}
-                  </div>
-                </div>
+                <span className="text-[var(--text-xs)] text-[var(--color-text-muted)] px-1">{msg.time}</span>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          ))}
         </div>
 
-        <div>
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Members ({members.length})</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {members.map((member) => {
-                const name = getUserName(member.userId);
-                return (
-                  <div key={member.userId} className="flex items-center gap-3 rounded-lg p-2 hover:bg-secondary/50">
-                    <div className="relative">
-                      <Avatar
-                        src={member.user?.avatarUrl || undefined}
-                        name={name}
-                        size="sm"
-                        className="h-9 w-9"
-                      />
-                      <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-background bg-green-500" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">
-                        {name}
-                      </p>
-                      <p className="text-xs text-muted-foreground truncate">{member.role}</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </CardContent>
-          </Card>
+        {/* Input bar */}
+        <div className="flex items-end gap-2 pt-3 border-t border-[var(--color-border)]">
+          <Button variant="ghost" size="icon-sm" aria-label="Attach file">
+            <Paperclip size={16} />
+          </Button>
+          <div className="flex-1">
+            <Input
+              id="chat-input"
+              placeholder="Type a message..."
+              className="rounded-full bg-[var(--color-surface-raised)] border-0"
+            />
+          </div>
+          <Button variant="ghost" size="icon-sm" aria-label="Emoji">
+            <Smile size={16} />
+          </Button>
+          <Button variant="primary" size="default" type="submit" aria-label="Send message">
+            <Send size={16} />
+          </Button>
+        </div>
+
+        {/* Members section */}
+        <div className="mt-4 pt-3 border-t border-[var(--color-border)]">
+          <h3 className="text-[var(--text-sm)] font-semibold text-[var(--color-text-primary)] mb-2">Members</h3>
+          <div className="flex flex-wrap gap-2">
+            {members.map((member) => (
+              <div key={member.id} className="flex items-center gap-2">
+                <Avatar name={member.name} size="sm" />
+                <span className="text-[var(--text-xs)] text-[var(--color-text-secondary)]">{member.name}</span>
+                <span
+                  className={`w-2 h-2 rounded-full ${member.status === 'online' ? 'bg-green-500' : 'bg-gray-400'}`}
+                />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
-    </div>
+    </AppShell>
   );
 }

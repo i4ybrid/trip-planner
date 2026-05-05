@@ -6,10 +6,11 @@ import { useSession } from 'next-auth/react';
 import { Card, CardHeader, CardTitle, CardContent, Button, Badge, Avatar } from '@/components';
 import { formatCurrency, cn } from '@/lib/utils';
 import { api } from '@/services/api';
-import { Wallet, CreditCard, Plus, Trash2, CheckCircle2, Circle, Bell, ReceiptText } from 'lucide-react';
+import { Wallet, CreditCard, Plus, Trash2, CheckCircle2, Circle, Bell, ReceiptText, Paperclip } from 'lucide-react';
 import { TripMember, User, BillSplit, BillSplitMember, PaymentMethod } from '@/types';
 import { logger } from '@/lib/logger';
 import { AddExpenseModal } from '@/components/trip/add-expense-modal';
+import { ReceiptUpload } from '@/components/payments/receipt-upload';
 
 interface Expense {
   id: string;
@@ -184,6 +185,13 @@ export default function TripPayments() {
     }
   };
 
+  const [receiptUploadFor, setReceiptUploadFor] = useState<string | null>(null);
+
+  const handleReceiptUploadComplete = (billSplitId: string, receiptUrl: string) => {
+    setBillSplits(prev => prev.map(b => b.id === billSplitId ? { ...b, receiptUrl } : b));
+    setReceiptUploadFor(null);
+  };
+
   const deleteExpense = (id: string) => {
     setExpenses(expenses.filter(e => e.id !== id));
   };
@@ -298,6 +306,34 @@ export default function TripPayments() {
                             <p className="mt-1 text-sm text-muted-foreground">{bill.description}</p>
                           )}
                           <p className="mt-1 text-sm text-muted-foreground">Paid by {getUserName(bill.paidBy)}</p>
+                          {/* Receipt upload trigger */}
+                          {receiptUploadFor === bill.id ? (
+                            <div className="mt-3">
+                              <ReceiptUpload
+                                billSplitId={bill.id}
+                                currentReceiptUrl={bill.receiptUrl}
+                                onUploadComplete={(url) => handleReceiptUploadComplete(bill.id, url)}
+                              />
+                            </div>
+                          ) : bill.receiptUrl ? (
+                            <a
+                              href={api.getReceiptUrl(bill.id)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="mt-2 flex items-center gap-1.5 text-xs text-accent hover:underline"
+                            >
+                              <Paperclip size={12} />
+                              View Receipt
+                            </a>
+                          ) : (
+                            <button
+                              onClick={() => setReceiptUploadFor(bill.id)}
+                              className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground hover:text-accent transition-colors"
+                            >
+                              <Paperclip size={12} />
+                              Attach Receipt
+                            </button>
+                          )}
                         </div>
                         
                         {/* Member payment status */}
