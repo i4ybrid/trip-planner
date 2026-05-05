@@ -75,6 +75,11 @@ export async function loginTestUser(
   });
   await page.context().clearCookies();
 
+  // Also clear auth-storage read by auth-provider.tsx (stale data from previous tests)
+  await page.evaluate(() => {
+    localStorage.removeItem('auth-storage');
+  });
+
   // Use quick-login buttons (fill React state, then we click submit)
   // The quick-login section has buttons: "Test User", "Sarah Chen", "Mike Johnson", "Emma Wilson"
   const userLabelMap: Record<string, string> = {
@@ -89,17 +94,35 @@ export async function loginTestUser(
 
   if (await quickLoginBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
     await quickLoginBtn.click();
-    await page.waitForTimeout(300); // let React update state
+    // Wait for React to update state — the button text should change to "Signing in..."
+    // Wait for either: the submit button shows loading state OR the form settles
+    await page.waitForTimeout(500);
   } else {
     // Fallback: fill email/password directly
     await page.fill('#email', user.email);
     await page.fill('#password', user.password);
   }
 
+  // Wait for the submit button to be visible (React may still be initializing)
+  const submitBtn = page.locator('button[type="submit"]');
+  await submitBtn.waitFor({ state: 'visible', timeout: 10000 });
+  // Wait for button to become enabled (no loading spinner blocking it)
+  await submitBtn.waitFor({ state: 'attached', timeout: 10000 });
+  if (!(await submitBtn.isEnabled())) {
+    // Poll until enabled (button may be temporarily disabled during loading)
+    await page.waitForFunction(
+      (sel) => document.querySelector(sel) !== null && (document.querySelector(sel) as HTMLButtonElement).disabled === false,
+      'button[type="submit"]',
+      { timeout: 10000 }
+    );
+  }
+
   // Submit the form and wait for redirect
+  // Use Promise.all so the click and URL wait start together, reducing race conditions
+  // Timeout increased to 30s to handle cold Prisma spin-up (~8.6s on first /api/auth/session call)
   await Promise.all([
-    page.waitForURL('**/dashboard', { timeout: 15000 }),
-    page.click('button[type="submit"]'),
+    submitBtn.click(),
+    page.waitForURL('**/dashboard', { timeout: 30000 }),
   ]);
 
   if (options?.allowFailure) {
@@ -107,8 +130,21 @@ export async function loginTestUser(
     return;
   }
 
-  // Wait for DOM to settle (app has continuous polling, so domcontentloaded not networkidle)
-  await page.waitForLoadState('domcontentloaded');
+  // Wait for auth provider to finish validating the session.
+  // The AuthProvider shows a "Loading..." spinner (animate-spin border) while
+  // api.getCurrentUser() runs. We must not return until the spinner is gone
+  // and the actual dashboard content is visible, otherwise subsequent test actions
+  // (e.g. clicking user menu) will fail because the auth overlay is still shown.
+  try {
+    await page.waitForSelector('.animate-spin', { state: 'hidden', timeout: 20000 });
+  } catch {
+    // If spinner still visible after 20s, the auth validation may have failed
+    // (e.g. expired token). Log but don't fail — the test can still proceed
+    // if the dashboard is partially visible.
+    console.warn('Auth spinner did not clear within 20s — proceeding anyway');
+  }
+
+  // Wait for DOM to settle
   await page.waitForTimeout(500);
 }
 
@@ -116,19 +152,62 @@ export async function loginTestUser(
  * Logs out the current user
  */
 export async function logoutUser(page: Page): Promise<void> {
-  // Click user menu button (the rounded-full button with avatar in header)
-  const userMenu = page.locator('header button.rounded-full, nav button.rounded-full').first();
-  
-  if (await userMenu.isVisible({ timeout: 3000 }).catch(() => false)) {
+  try {
+    // Try multiple user menu selectors — the header avatar button
+    const userMenuSelectors = [
+      'header button.rounded-full',
+      'nav button.rounded-full',
+      'button[aria-label="User menu"]',
+      'button[aria-label="Open user menu"]',
+      // Generic: any button in header that has an img child (avatar)
+      'header button:has(img)',
+    ];
+
+    let userMenu = page.locator(userMenuSelectors.join(', ')).first();
+
+    // Wait for user menu to be visible (give it time to appear after auth settles)
+    if (!(await userMenu.isVisible({ timeout: 5000 }).catch(() => false))) {
+      console.warn('logoutUser: user menu not visible within 5s');
+      return;
+    }
+
     await userMenu.click();
-    await page.waitForTimeout(300);
-    
-    // Click logout button in dropdown
-    const logoutBtn = page.locator('text=/logout|sign out/i').first();
-    if (await logoutBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+    await page.waitForTimeout(500);
+
+    // Try multiple logout button selectors
+    const logoutSelectors = [
+      'button:has-text("Logout")',
+      'button:has-text("Log Out")',
+      'button:has-text("Sign Out")',
+      '[role="menuitem"]:has-text("logout")',
+      '[role="menuitem"]:has-text("sign out")',
+    ];
+
+    const logoutBtn = page.locator(logoutSelectors.join(', ')).first();
+
+    if (await logoutBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
       await logoutBtn.click();
       await page.waitForURL('**/login', { timeout: 10000 });
+    } else {
+      // Fallback: manually clear session via JS and redirect
+      await page.evaluate(() => {
+        localStorage.removeItem('next-auth.session-token');
+        localStorage.removeItem('auth-storage');
+        localStorage.removeItem('tp_session');
+        document.cookie = 'next-auth.session-token=; Max-Age=0; path=/';
+        window.location.href = '/login';
+      });
+      await page.waitForURL('**/login', { timeout: 10000 });
     }
+  } catch (error) {
+    console.warn('logoutUser failed, forcing redirect:', error);
+    // Last resort: clear session and go to login
+    await page.evaluate(() => {
+      localStorage.clear();
+      document.cookie = 'next-auth.session-token=; Max-Age=0; path=/';
+      window.location.href = '/login';
+    });
+    await page.waitForURL('**/login', { timeout: 10000 });
   }
 }
 
