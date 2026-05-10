@@ -4,6 +4,7 @@ import { Card } from './ui/card';
 import { Badge } from './ui/badge';
 import { Avatar, AvatarGroup } from './ui/avatar';
 import { formatDateRange, cn } from '@/lib/utils';
+import { getDefaultTripImage } from '@/lib/trip-default-images';
 import { Calendar, MapPin, Users } from 'lucide-react';
 
 interface MemberInfo {
@@ -35,7 +36,7 @@ export const TripCard: React.FC<TripCardProps> = ({
   const imageIndex = trip.id
     .split('')
     .reduce((sum, char) => sum + char.charCodeAt(0), 0) % destinationImages.length;
-  const coverImage = trip.coverImage || destinationImages[imageIndex];
+  const coverImage = trip.coverImage || getDefaultTripImage(trip.destination) || destinationImages[imageIndex];
 
   return (
     <Card

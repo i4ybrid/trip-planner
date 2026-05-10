@@ -1,9 +1,9 @@
 'use client';
 
 import { AppShell } from '@/components/layout/AppShell';
-import { Avatar } from '@/components/ui/Avatar';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import { Avatar } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Send, Paperclip, Smile } from 'lucide-react';
 import { useParams } from 'next/navigation';
 
@@ -35,7 +35,7 @@ export default function ChatPage() {
       <div className="flex flex-col" style={{ height: 'calc(100dvh - 120px)', maxHeight: 'calc(100dvh - 120px)' }}>
         {/* Member count indicator */}
         <div className="mb-2 text-[var(--text-sm)] text-[var(--color-text-secondary)]">
-          {members.length} members in this chat
+          {TRIP_1_MEMBERS.length} members in this chat
         </div>
 
         {/* Messages area */}
@@ -47,31 +47,34 @@ export default function ChatPage() {
               </p>
             </div>
           ) : (
-            messages.map((msg) => (
-            <div key={msg.id} className={`flex gap-2 ${msg.isSelf ? 'justify-end' : 'justify-start'}`}>
-              {!msg.isSelf && <Avatar name={msg.sender} size="sm" className="flex-shrink-0 mt-1" />}
-              <div className={`max-w-[75%] flex flex-col gap-1 ${msg.isSelf ? 'items-end' : 'items-start'}`}>
-                {!msg.isSelf && (
-                  <span className="text-[var(--text-xs)] text-[var(--color-text-muted)] px-1">{msg.sender}</span>
-                )}
-                <div
-                  className={`px-4 py-3 rounded-2xl text-[var(--text-sm)] leading-relaxed
-                    ${msg.isSelf
-                      ? 'bg-[var(--color-accent)] text-white rounded-br-md'
-                      : 'bg-[var(--color-surface-raised)] text-[var(--color-text-primary)] rounded-bl-md'
-                    }`}
-                >
-                  {msg.text}
+            <div className="flex flex-col gap-4">
+              {messages.map((msg) => (
+                <div key={msg.id} className={`flex gap-2 ${msg.isSelf ? 'justify-end' : 'justify-start'}`}>
+                  {!msg.isSelf && <Avatar name={msg.sender} size="sm" className="flex-shrink-0 mt-1" />}
+                  <div className={`max-w-[75%] flex flex-col gap-1 ${msg.isSelf ? 'items-end' : 'items-start'}`}>
+                    {!msg.isSelf && (
+                      <span className="text-[var(--text-xs)] text-[var(--color-text-muted)] px-1">{msg.sender}</span>
+                    )}
+                    <div
+                      className={`px-4 py-3 rounded-2xl text-[var(--text-sm)] leading-relaxed
+                        ${msg.isSelf
+                          ? 'bg-[var(--color-accent)] text-white rounded-br-md'
+                          : 'bg-[var(--color-surface-raised)] text-[var(--color-text-primary)] rounded-bl-md'
+                        }`}
+                    >
+                      {msg.text}
+                    </div>
+                    <span className="text-[var(--text-xs)] text-[var(--color-text-muted)] px-1">{msg.time}</span>
+                  </div>
                 </div>
-                <span className="text-[var(--text-xs)] text-[var(--color-text-muted)] px-1">{msg.time}</span>
-              </div>
+              ))}
             </div>
-          ))}
+          )}
         </div>
 
         {/* Input bar */}
         <div className="flex items-end gap-2 pt-3 border-t border-[var(--color-border)]">
-          <Button variant="ghost" size="icon-sm" aria-label="Attach file">
+          <Button variant="ghost" size="icon" aria-label="Attach file">
             <Paperclip size={16} />
           </Button>
           <div className="flex-1">
@@ -81,10 +84,10 @@ export default function ChatPage() {
               className="rounded-full bg-[var(--color-surface-raised)] border-0"
             />
           </div>
-          <Button variant="ghost" size="icon-sm" aria-label="Emoji">
+          <Button variant="ghost" size="icon" aria-label="Emoji">
             <Smile size={16} />
           </Button>
-          <Button variant="primary" size="default" type="submit" aria-label="Send message">
+          <Button variant="primary" type="submit" aria-label="Send message">
             <Send size={16} />
           </Button>
         </div>
@@ -93,7 +96,7 @@ export default function ChatPage() {
         <div className="mt-4 pt-3 border-t border-[var(--color-border)]">
           <h3 className="text-[var(--text-sm)] font-semibold text-[var(--color-text-primary)] mb-2">Members</h3>
           <div className="flex flex-wrap gap-2">
-            {members.map((member) => (
+            {TRIP_1_MEMBERS.map((member) => (
               <div key={member.id} className="flex items-center gap-2">
                 <Avatar name={member.name} size="sm" />
                 <span className="text-[var(--text-xs)] text-[var(--color-text-secondary)]">{member.name}</span>

@@ -103,6 +103,16 @@ export async function loginTestUser(
     await page.fill('#password', user.password);
   }
 
+  // DEBUG: Check current URL and page state
+  const currentUrl = page.url();
+  const hasSubmitBtn = await page.locator('button[type="submit"]').count();
+  console.log(`[DEBUG login] URL: ${currentUrl}, submit buttons: ${hasSubmitBtn}`);
+  
+  if (currentUrl.includes('/dashboard')) {
+    console.log('[DEBUG login] Already on dashboard, skipping submit button wait');
+    return; // Already logged in, skip rest
+  }
+
   // Wait for the submit button to be visible (React may still be initializing)
   const submitBtn = page.locator('button[type="submit"]');
   await submitBtn.waitFor({ state: 'visible', timeout: 10000 });

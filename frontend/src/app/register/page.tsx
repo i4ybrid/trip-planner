@@ -3,7 +3,7 @@
 import { signIn } from 'next-auth/react';
 import { AppShell } from '@/components/layout/AppShell';
 import { FormField } from '@/components/ui/FormField';
-import { Input } from '@/components/ui/Input';
+import { Input } from '@/components/ui/input';
 import Link from 'next/link';
 import { ArrowRight, Eye, EyeOff, Loader } from 'lucide-react';
 import React, { useState } from 'react';
