@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, Bell, Sun, Moon } from 'lucide-react';
+import { Bell, ChevronLeft, Moon, Star, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
 
@@ -68,8 +68,9 @@ export function TopBar({
 
       {/* Center: Title */}
       <div className="flex-1 text-center truncate px-2">
-        <h1 className="text-md text-[var(--color-text-primary)] truncate">
-          {title ?? 'TripPlanner'}
+        <h1 className="inline-flex max-w-full items-center justify-center gap-2 truncate font-display text-xl font-bold text-[var(--color-text-primary)]">
+          {!title && <Star className="h-5 w-5 shrink-0 fill-[var(--color-accent)] text-[var(--color-accent)]" />}
+          <span className="truncate">{title ?? 'Trip Planner'}</span>
         </h1>
       </div>
 

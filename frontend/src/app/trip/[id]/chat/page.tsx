@@ -1,9 +1,7 @@
 'use client';
 
 import { AppShell } from '@/components/layout/AppShell';
-import { Avatar } from '@/components/ui/Avatar';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import { Avatar, Button, Input } from '@/components';
 import { Send, Paperclip, Smile } from 'lucide-react';
 import { useParams } from 'next/navigation';
 
@@ -29,6 +27,7 @@ export default function ChatPage() {
 
   // Only trip-1 (Hawaii) has messages; other trips show empty state
   const messages = tripId === 'trip-1' ? MOCK_MESSAGES_Hawaii : [];
+  const members = tripId === 'trip-1' ? TRIP_1_MEMBERS : [];
 
   return (
     <AppShell title="Group Chat" showBack backHref="/dashboard" hideBottomBar>
@@ -66,12 +65,13 @@ export default function ChatPage() {
                 <span className="text-[var(--text-xs)] text-[var(--color-text-muted)] px-1">{msg.time}</span>
               </div>
             </div>
-          ))}
+          ))
+          )}
         </div>
 
         {/* Input bar */}
         <div className="flex items-end gap-2 pt-3 border-t border-[var(--color-border)]">
-          <Button variant="ghost" size="icon-sm" aria-label="Attach file">
+          <Button variant="ghost" size="icon" aria-label="Attach file">
             <Paperclip size={16} />
           </Button>
           <div className="flex-1">
@@ -81,10 +81,10 @@ export default function ChatPage() {
               className="rounded-full bg-[var(--color-surface-raised)] border-0"
             />
           </div>
-          <Button variant="ghost" size="icon-sm" aria-label="Emoji">
+          <Button variant="ghost" size="icon" aria-label="Emoji">
             <Smile size={16} />
           </Button>
-          <Button variant="primary" size="default" type="submit" aria-label="Send message">
+          <Button variant="primary" size="md" type="submit" aria-label="Send message">
             <Send size={16} />
           </Button>
         </div>

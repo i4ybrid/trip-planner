@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Award,
@@ -8,6 +8,8 @@ import {
   ChevronRight,
   Compass,
   Crown,
+  Crosshair,
+  Loader2,
   Mail,
   MapPin,
   Menu,
@@ -19,6 +21,7 @@ import {
   Waves,
 } from 'lucide-react';
 import { BottomTabBar } from '@/components/layout/BottomTabBar';
+import { PublicBrowseLocationPanel } from '@/components/browse/public-browse-location-panel';
 import { NotificationBell } from '@/components/notification/notification-bell';
 import { PendingInvites } from '@/components/notification/pending-invites';
 import { ThemeSwitcher } from '@/components/theme-switcher';
@@ -137,21 +140,64 @@ const reasons = [
 
 const navItems = [
   { label: 'Home', href: '/dashboard' },
-  { label: 'Packages', href: '/browse' },
-  { label: 'Tours', href: '/trip/new' },
+  { label: 'Browse', href: '/browse' },
+  { label: 'New Trip', href: '/trip/new' },
   { label: 'Friends', href: '/friends' },
-  { label: 'Contact', href: '/messages' },
+  { label: 'Messages', href: '/messages' },
 ];
 
 const desktopQuickActions = [
-  { label: 'Browse packages', href: '/browse', Icon: Compass },
-  { label: 'Plan new tour', href: '/trip/new', Icon: Plus },
+  { label: 'Browse events', href: '/browse', Icon: Compass },
+  { label: 'Plan new trip', href: '/trip/new', Icon: Plus },
   { label: 'Trip calendar', href: '/feed', Icon: CalendarDays },
 ];
 
 export default function DashboardPage() {
   const router = useRouter();
   const { trips, isLoading, error, fetchTrips } = useTripStore();
+
+  // Browse location state
+  const [browseCity, setBrowseCity] = useState('');
+  const [browseState, setBrowseState] = useState('');
+  const [browseCountry, setBrowseCountry] = useState('US');
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+
+  // Pre-fill browse from user profile
+  useEffect(() => {
+    async function loadProfileLocation() {
+      try {
+        const { api } = await import('@/services/api');
+        const user = await api.getCurrentUser();
+        const { city, state, country } = user.data || {};
+        if (city && !browseCity) setBrowseCity(city);
+        if (state && !browseState) setBrowseState(state);
+        if (country && !browseCountry) setBrowseCountry(country);
+      } catch {}
+    }
+    loadProfileLocation();
+  }, [browseCity, browseState, browseCountry]);
+
+  const handleUseMyLocation = () => {
+    if (!navigator.geolocation) return;
+    setIsLoadingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { api } = await import('@/services/api');
+          const result = await api.reverseGeocodeLocation(position.coords.latitude, position.coords.longitude);
+          const loc = result.data;
+          if (loc) {
+            setBrowseCity(loc.city || '');
+            setBrowseState(loc.state || '');
+            setBrowseCountry(loc.country || 'US');
+          }
+        } catch {} finally {
+          setIsLoadingLocation(false);
+        }
+      },
+      () => setIsLoadingLocation(false)
+    );
+  };
 
   useEffect(() => {
     fetchTrips();
@@ -166,7 +212,7 @@ export default function DashboardPage() {
   const hasTrips = trips.length > 0;
 
   return (
-    <div className="min-h-screen bg-[#f7fbfa] text-[#20312f]">
+    <div className="min-h-screen bg-stone-100">
       <header className="absolute left-0 right-0 top-0 z-30">
         <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 text-white sm:px-6 lg:px-8">
           <button
@@ -181,7 +227,7 @@ export default function DashboardPage() {
           >
             <Star className="h-8 w-8 fill-[#008c95] text-[#008c95]" />
             <span className="font-display text-2xl font-bold leading-none">
-              Star Travels
+              Trip Planner
             </span>
           </button>
           <nav className="hidden items-center gap-8 text-sm font-semibold text-white/90 lg:flex">
@@ -199,7 +245,7 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      <main className="pb-24 lg:pb-0">
+      <main className="min-h-screen bg-gradient-farmhouse pb-24 lg:pb-0">
         <section className="relative min-h-[720px] overflow-hidden text-white sm:min-h-[760px] lg:min-h-[820px] xl:min-h-[900px]">
           <img
             src={heroImage}
@@ -233,7 +279,7 @@ export default function DashboardPage() {
                     onClick={() => router.push('/browse')}
                     className="rounded-md border border-white/45 bg-white/12 px-6 py-3 text-sm font-bold uppercase tracking-[0.14em] text-white backdrop-blur transition hover:bg-white/20"
                   >
-                    View Packages
+                    Browse Events
                   </button>
                 </div>
               </div>
@@ -330,7 +376,7 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        <section className="bg-[url('/images/reference/travel-company-final.png')] bg-cover bg-center py-14 sm:py-20">
+        <section className="bg-stone-100">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             {error && (
               <div className="mb-6 rounded-lg border border-red-200 bg-red-50/95 p-4 text-sm font-semibold text-red-700">
@@ -342,36 +388,44 @@ export default function DashboardPage() {
 
             <div className="mt-10 text-center">
               <h2 className="font-script text-4xl font-semibold text-[#20312f]">
-                Popular Destinations
+                Browse Events
               </h2>
+              <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-[#6d7a78]">
+                Find public events happening near you or anywhere in the world.
+              </p>
+            </div>
+            <div className="mt-8 rounded-lg border border-white/55 bg-white/88 p-4 text-left text-[#54615f] shadow-2xl backdrop-blur">
+              <PublicBrowseLocationPanel
+                city={browseCity}
+                state={browseState}
+                country={browseCountry}
+                onCityChange={setBrowseCity}
+                onStateChange={setBrowseState}
+                onCountryChange={setBrowseCountry}
+                onClearLocation={() => {
+                  setBrowseCity('');
+                  setBrowseState('');
+                  setBrowseCountry('US');
+                }}
+              />
             </div>
             <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {destinations.map((destination) => (
-                <article
-                  key={destination.title}
-                  className="group overflow-hidden rounded-lg bg-white shadow-xl shadow-[#0d4e5b]/10"
+              {[
+                { label: 'Use my location', icon: Crosshair, action: handleUseMyLocation, loading: isLoadingLocation },
+                { label: browseCity || browseState || 'Any location', icon: MapPin, action: () => router.push(`/browse${browseCity || browseState ? `?city=${encodeURIComponent(browseCity)}&state=${encodeURIComponent(browseState)}&country=${encodeURIComponent(browseCountry)}` : ''}`) },
+              ].map(({ label, icon: Icon, action, loading }) => (
+                <button
+                  key={label}
+                  onClick={action}
+                  className="flex items-center gap-3 rounded-lg bg-white/80 px-4 py-3 text-left text-sm font-semibold text-[#20312f] shadow-lg transition hover:bg-white"
                 >
-                  <div className="h-52 overflow-hidden">
-                    <img
-                      src={destination.image}
-                      alt={destination.title}
-                      className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
-                    />
-                  </div>
-                  <div className="flex items-end justify-between gap-4 p-4">
-                    <div>
-                      <h3 className="font-display text-lg font-bold">
-                        {destination.title}
-                      </h3>
-                      <p className="mt-1 text-xs leading-5 text-[#7c8b88]">
-                        Curated stays, shared plans, and easy group decisions.
-                      </p>
-                    </div>
-                    <p className="text-lg font-semibold text-[#a0aaa8]">
-                      {destination.price}
-                    </p>
-                  </div>
-                </article>
+                  {loading ? (
+                    <Loader2 className="h-5 w-5 animate-spin text-[#008c95]" />
+                  ) : (
+                    <Icon className="h-5 w-5 text-[#008c95]" />
+                  )}
+                  {label}
+                </button>
               ))}
             </div>
           </div>
@@ -534,7 +588,7 @@ export default function DashboardPage() {
               onClick={() => router.push(hasTrips ? '/browse' : '/trip/new')}
               className="mt-5 rounded-md bg-[#008c95] px-6 py-3 text-xs font-bold uppercase tracking-[0.14em] text-white shadow-lg shadow-[#008c95]/20 transition hover:bg-[#007681]"
             >
-              {hasTrips ? 'View Packages' : 'Create a Trip'}
+              {hasTrips ? 'Browse Events' : 'Create a Trip'}
             </button>
           </div>
         </section>
@@ -644,11 +698,11 @@ export default function DashboardPage() {
         </section>
       </main>
 
-      <footer className="bg-[url('/images/reference/travel-company-final.png')] bg-cover bg-bottom px-4 py-14 text-center text-[#20312f]">
+      <footer className="bg-stone-100 px-4 py-14 text-center text-stone-700">
         <div className="mx-auto max-w-4xl">
           <div className="flex items-center justify-center gap-3">
             <Star className="h-16 w-16 fill-[#008c95] text-[#008c95]" />
-            <span className="font-display text-5xl font-bold">Star Travels</span>
+            <span className="font-display text-5xl font-bold">Trip Planner</span>
           </div>
           <nav className="mt-8 flex flex-wrap justify-center gap-x-10 gap-y-3 text-sm font-semibold">
             {navItems.map((item) => (
@@ -658,7 +712,7 @@ export default function DashboardPage() {
             ))}
           </nav>
           <p className="mt-8 text-xs text-[#7c8b88]">
-            Copyright 2026 StarTravels.com | All Rights Reserved.
+            Copyright 2026 Trip Planner | All Rights Reserved.
           </p>
         </div>
       </footer>

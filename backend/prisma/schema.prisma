@@ -25,9 +25,10 @@ enum TripStyle {
 }
 
 enum MemberRole {
-  OWNER // Trip owner - full control
-  EDITOR // Can manage activities and payments (former ORGANIZER/MEMBER)
-  VIEWER // Can view only - can't vote or spend
+  MASTER   // Trip owner - full control
+  ORGANIZER // Can manage activities and payments
+  MEMBER   // Regular member
+  VIEWER   // Can view only - can't vote or spend
 }
 
 enum MemberStatus {

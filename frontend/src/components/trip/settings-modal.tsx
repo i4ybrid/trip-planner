@@ -166,110 +166,102 @@ export function TripSettingsModal({ isOpen, onClose, trip, onTripUpdated }: Trip
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Trip Settings" size="lg" className="max-w-2xl">
-      <div className="space-y-6">
+      <div className="space-y-5">
         {error && (
-          <div className="rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-600">
+          <div className="rounded-lg border border-red-500/50 bg-red-500/20 p-3 text-sm text-red-200">
             {error}
           </div>
         )}
         {/* Trip Info Section */}
-        <div className="space-y-4">
-          <h3 className="flex items-center gap-2 text-lg font-semibold">
-            <Settings className="h-5 w-5" />
+        <div className="rounded-lg border border-white/20 bg-white/14 p-4">
+          <h3 className="flex items-center gap-2 text-lg font-semibold text-white mb-4">
+            <Settings className="h-5 w-5 text-white/80" />
             Trip Information
           </h3>
-          
-          <div className="grid gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Trip Name</label>
+
+          <div className="space-y-4">
+            <Input
+              label="Trip Name"
+              value={tripData.name}
+              onChange={(e) => setTripData({ ...tripData, name: e.target.value })}
+              disabled={!isOwner}
+              variant="glass"
+            />
+
+            <textarea
+              className="w-full rounded-lg border border-white/25 bg-white/14 px-4 py-3 text-sm text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-white/30"
+              rows={3}
+              placeholder="Description"
+              value={tripData.description}
+              onChange={(e) => setTripData({ ...tripData, description: e.target.value })}
+              disabled={!isOwner}
+            />
+
+            <div className="grid grid-cols-2 gap-4">
               <Input
-                value={tripData.name}
-                onChange={(e) => setTripData({ ...tripData, name: e.target.value })}
+                label="Destination"
+                value={tripData.destination}
+                onChange={(e) => setTripData({ ...tripData, destination: e.target.value })}
                 disabled={!isOwner}
+                variant="glass"
+              />
+
+              <Select
+                label="Trip Style"
+                value={tripData.style}
+                onChange={(e) => setTripData({ ...tripData, style: e.target.value as TripStyle })}
+                disabled={!isOwner}
+                options={[
+                  { value: 'OPEN', label: 'Open - Anyone can invite' },
+                  { value: 'MANAGED', label: 'Managed - Only organizers can invite' },
+                ]}
+                variant="glass"
               />
             </div>
-            
-            <div>
-              <label className="block text-sm font-medium mb-1">Description</label>
-              <textarea
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                rows={3}
-                value={tripData.description}
-                onChange={(e) => setTripData({ ...tripData, description: e.target.value })}
+
+            <div className="grid grid-cols-2 gap-4">
+              <Input
+                label="Start Date"
+                type="datetime-local"
+                value={tripData.startDate}
+                onChange={(e) => setTripData({ ...tripData, startDate: e.target.value })}
                 disabled={!isOwner}
+                variant="glass"
               />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Destination</label>
-                <Input
-                  value={tripData.destination}
-                  onChange={(e) => setTripData({ ...tripData, destination: e.target.value })}
-                  disabled={!isOwner}
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-1">Trip Style</label>
-                <Select
-                  value={tripData.style}
-                  onChange={(e) => setTripData({ ...tripData, style: e.target.value as TripStyle })}
-                  disabled={!isOwner}
-                  options={[
-                    { value: 'OPEN', label: 'Open - Anyone can invite' },
-                    { value: 'MANAGED', label: 'Managed - Only organizers can invite' },
-                  ]}
-                />
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Start Date</label>
-                <Input
-                  type="datetime-local"
-                  value={tripData.startDate}
-                  onChange={(e) => setTripData({ ...tripData, startDate: e.target.value })}
-                  disabled={!isOwner}
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-1">End Date</label>
-                <Input
-                  type="datetime-local"
-                  value={tripData.endDate}
-                  onFocus={() => {
-                    if (!tripData.endDate && tripData.startDate) {
-                      // Extract date portion (before any T)
-                      const dateOnly = tripData.startDate.split('T')[0];
-                      setTripData({ ...tripData, endDate: dateOnly });
-                    }
-                  }}
-                  onChange={(e) => setTripData({ ...tripData, endDate: e.target.value })}
-                  disabled={!isOwner}
-                />
-              </div>
+
+              <Input
+                label="End Date"
+                type="datetime-local"
+                value={tripData.endDate}
+                onFocus={() => {
+                  if (!tripData.endDate && tripData.startDate) {
+                    const dateOnly = tripData.startDate.split('T')[0];
+                    setTripData({ ...tripData, endDate: dateOnly });
+                  }
+                }}
+                onChange={(e) => setTripData({ ...tripData, endDate: e.target.value })}
+                disabled={!isOwner}
+                variant="glass"
+              />
             </div>
           </div>
         </div>
 
         {/* Members Section */}
-        <div className="space-y-4">
-          <h3 className="flex items-center gap-2 text-lg font-semibold">
-            <Users className="h-5 w-5" />
+        <div className="rounded-lg border border-white/20 bg-white/14 p-4">
+          <h3 className="flex items-center gap-2 text-lg font-semibold text-white mb-4">
+            <Users className="h-5 w-5 text-white/80" />
             Members ({confirmedMembers.length})
           </h3>
-          
+
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin" />
+              <Loader2 className="h-6 w-6 animate-spin text-white/50" />
             </div>
           ) : (
             <div className="space-y-3 max-h-64 overflow-y-auto">
               {confirmedMembers.map((member) => (
-                <div key={member.userId} className="flex items-center justify-between p-3 rounded-lg border border-border">
+                <div key={member.userId} className="flex items-center justify-between p-3 rounded-lg border border-white/20 bg-white/14">
                   <div className="flex items-center gap-3">
                     <Avatar
                       src={member.user?.avatarUrl || undefined}
@@ -278,9 +270,9 @@ export function TripSettingsModal({ isOpen, onClose, trip, onTripUpdated }: Trip
                     />
                     <div>
                       <div className="flex items-center gap-2">
-                        <p className="font-medium">{member.user?.name || 'User'}</p>
+                        <p className="font-medium text-white">{member.user?.name || 'User'}</p>
                         {member.userId === user?.id && (
-                          <span className="text-xs text-muted-foreground">(You)</span>
+                          <span className="text-xs text-white/50">(You)</span>
                         )}
                       </div>
                       <div className="flex items-center gap-2 mt-1">
@@ -295,14 +287,14 @@ export function TripSettingsModal({ isOpen, onClose, trip, onTripUpdated }: Trip
                       </div>
                     </div>
                   </div>
-                  
+
                   {isOwner && member.role !== 'OWNER' && (
                     <HoverDropdown
                       mode="click"
                       align="right"
                       trigger={
-                        <button className="p-1.5 rounded-md hover:bg-secondary transition-colors">
-                          <MoreHorizontal className="h-4 w-4" />
+                        <button className="p-1.5 rounded-md hover:bg-white/20 transition-colors">
+                          <MoreHorizontal className="h-4 w-4 text-white/70" />
                         </button>
                       }
                       items={[
@@ -334,14 +326,14 @@ export function TripSettingsModal({ isOpen, onClose, trip, onTripUpdated }: Trip
         {/* Pending Members Section (for MANAGED trips) */}
         {pendingMembers.length > 0 && (
           <div className="space-y-4">
-            <h3 className="flex items-center gap-2 text-lg font-semibold">
-              <AlertTriangle className="h-5 w-5 text-yellow-500" />
+            <h3 className="flex items-center gap-2 text-lg font-semibold text-white">
+              <AlertTriangle className="h-5 w-5 text-yellow-400" />
               Pending Approval ({pendingMembers.length})
             </h3>
-            
+
             <div className="space-y-3 max-h-48 overflow-y-auto">
               {pendingMembers.map((member) => (
-                <div key={member.userId} className="flex items-center justify-between p-3 rounded-lg border border-yellow-200 bg-yellow-50">
+                <div key={member.userId} className="flex items-center justify-between p-3 rounded-lg border border-white/20 bg-white/14">
                   <div className="flex items-center gap-3">
                     <Avatar
                       src={member.user?.avatarUrl || undefined}
@@ -349,7 +341,7 @@ export function TripSettingsModal({ isOpen, onClose, trip, onTripUpdated }: Trip
                       size="sm"
                     />
                     <div>
-                      <p className="font-medium">{member.user?.name || 'User'}</p>
+                      <p className="font-medium text-white">{member.user?.name || 'User'}</p>
                       <div className="flex items-center gap-2 mt-1">
                         <Badge className={getStatusBadgeColor(member.status)}>
                           {member.status}
@@ -357,29 +349,27 @@ export function TripSettingsModal({ isOpen, onClose, trip, onTripUpdated }: Trip
                       </div>
                     </div>
                   </div>
-                  
-                  {isOrganizer && (
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleApproveMember(member.userId)}
-                        className="text-green-600 hover:text-green-700"
-                        title="Approve"
-                      >
-                        <Check className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeclineMember(member.userId)}
-                        className="text-red-600 hover:text-red-700"
-                        title="Decline"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
+
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleApproveMember(member.userId)}
+                      className="text-green-400 hover:text-green-300 hover:bg-green-400/20"
+                      title="Approve"
+                    >
+                      <Check className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDeclineMember(member.userId)}
+                      className="text-red-400 hover:text-red-300 hover:bg-red-400/20"
+                      title="Decline"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -387,12 +377,12 @@ export function TripSettingsModal({ isOpen, onClose, trip, onTripUpdated }: Trip
         )}
 
         {/* Action Buttons */}
-        <div className="flex justify-end gap-3 pt-4 border-t border-border">
-          <Button variant="outline" onClick={onClose}>
+        <div className="flex justify-end gap-3 pt-4 border-t border-white/20">
+          <Button variant="glass" onClick={onClose} className="rounded-lg">
             Cancel
           </Button>
           {isOwner && (
-            <Button onClick={handleSave} disabled={isSaving}>
+            <Button variant="glass" onClick={handleSave} disabled={isSaving} className="rounded-lg">
               {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Save Changes
             </Button>

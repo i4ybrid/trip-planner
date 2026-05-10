@@ -55,23 +55,23 @@ export const Modal: React.FC<ModalProps> = ({
         role="dialog"
         aria-modal="true"
         className={cn(
-          'relative z-50 w-full rounded-lg border border-border/70 bg-card p-5 shadow-2xl sm:p-6',
+          'relative z-50 w-full rounded-lg border border-white/25 bg-white/14 p-5 text-white shadow-2xl shadow-black/20 backdrop-blur-xl',
           sizes[size],
           className
         )}
         onClick={(e) => e.stopPropagation()}
       >
         {title && (
-          <div className="mb-4 flex items-start justify-between">
+          <div className="mb-4 flex items-start justify-between border-b border-white/20 pb-4">
             <div>
-              <h2 className="text-lg font-semibold">{title}</h2>
+              <h2 className="font-display text-xl font-bold">{title}</h2>
               {description && (
-                <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+                <p className="mt-1 text-sm text-white/70">{description}</p>
               )}
             </div>
             <button
               onClick={onClose}
-              className="rounded-md p-1 hover:bg-secondary"
+              className="rounded-md p-1.5 hover:bg-white/20 transition-colors"
             >
               <X className="h-5 w-5" />
             </button>
@@ -80,7 +80,7 @@ export const Modal: React.FC<ModalProps> = ({
         {!title && (
           <button
             onClick={onClose}
-            className="absolute right-4 top-4 rounded-md p-1 hover:bg-secondary"
+            className="absolute right-4 top-4 rounded-md p-1.5 hover:bg-white/20 transition-colors"
           >
             <X className="h-5 w-5" />
           </button>

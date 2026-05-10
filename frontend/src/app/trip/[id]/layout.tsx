@@ -66,7 +66,7 @@ export default function TripLayout({
         title={trip?.name || `Trip ${tripId}`}
       />
 
-      <div className="ml-sidebar border-b border-white/55 bg-card/75 backdrop-blur-xl">
+      <div className="ml-sidebar border-b border-white/55">
         <div className="mx-auto max-w-6xl">
           <Tabs tabs={visibleTabs} basePath={`/trip/${tripId}`} />
         </div>

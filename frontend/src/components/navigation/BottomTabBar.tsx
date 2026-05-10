@@ -2,7 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Home, Users, MessageCircle, User } from 'lucide-react';
+import { Compass, Home, MessageCircle, Settings } from 'lucide-react';
 
 /** ============================================================
  * BottomTabBar — Mobile Bottom Navigation
@@ -13,9 +13,9 @@ import { Home, Users, MessageCircle, User } from 'lucide-react';
 
 const TABS = [
   { href: '/dashboard', label: 'Home', icon: Home },
-  { href: '/friends', label: 'Friends', icon: Users },
+  { href: '/browse', label: 'Packages', icon: Compass },
   { href: '/messages', label: 'Messages', icon: MessageCircle },
-  { href: '/profile', label: 'Profile', icon: User },
+  { href: '/settings', label: 'Settings', icon: Settings },
 ] as const;
 
 // Routes where bottom tab bar should be hidden

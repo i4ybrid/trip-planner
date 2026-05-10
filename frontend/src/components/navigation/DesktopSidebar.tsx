@@ -6,11 +6,10 @@ import {
   Home,
   Users,
   MessageCircle,
-  User,
   Compass,
   Settings,
-  Plane,
   ChevronLeft,
+  Star,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -22,10 +21,9 @@ import { useState } from 'react';
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Home', icon: Home },
-  { href: '/explore', label: 'Explore', icon: Compass },
+  { href: '/browse', label: 'Packages', icon: Compass },
   { href: '/friends', label: 'Friends', icon: Users },
   { href: '/messages', label: 'Messages', icon: MessageCircle },
-  { href: '/profile', label: 'Profile', icon: User },
 ] as const;
 
 const BOTTOM_ITEMS = [
@@ -40,7 +38,7 @@ export function DesktopSidebar() {
     <aside
       className={`
         hidden lg:flex flex-col
-        bg-[var(--color-surface)] border-r border-[var(--color-border)]
+        bg-[var(--color-surface)] border-r border-[var(--color-border)] backdrop-blur-xl
         transition-all duration-300 ease-out-expo
         relative flex-shrink-0
         ${expanded ? 'w-[220px]' : 'w-[72px]'}
@@ -49,17 +47,15 @@ export function DesktopSidebar() {
     >
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 h-16 border-b border-[var(--color-border)] flex-shrink-0">
-        {/* Logo mark — indigo accent bg */}
         <div
-          className="w-10 h-10 rounded-[var(--radius-md)] bg-[var(--color-accent)] flex items-center justify-center flex-shrink-0"
+          className="w-10 h-10 rounded-[var(--radius-md)] bg-[var(--color-accent)] flex items-center justify-center flex-shrink-0 shadow-lg shadow-[var(--color-accent)]/20"
         >
-          <Plane size={20} className="text-white" />
+          <Star size={22} className="fill-white text-white" />
         </div>
 
-        {/* Wordmark — visible when expanded */}
         {expanded && (
           <span className="font-display text-lg text-[var(--color-text-primary)]">
-            TripPlanner
+            Trip Planner
           </span>
         )}
       </div>
@@ -77,8 +73,8 @@ export function DesktopSidebar() {
                 px-3 py-2.5 transition-all duration-200 ease-out-expo
                 relative
                 ${isActive
-                  ? 'bg-[var(--color-accent-subtle)] text-[var(--color-accent)]'
-                  : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-raised)] hover:text-[var(--color-text-primary)]'
+                  ? 'bg-[var(--color-accent)] text-white shadow-lg shadow-[var(--color-accent)]/20'
+                  : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-accent-subtle)] hover:text-[var(--color-accent)]'
                 }
                 ${!expanded ? 'justify-center' : ''}
               `}
@@ -88,7 +84,7 @@ export function DesktopSidebar() {
               {/* Active left border */}
               {isActive && (
                 <span
-                  className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-full bg-[var(--color-accent)]"
+                  className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-full bg-white/80"
                 />
               )}
 
@@ -114,8 +110,8 @@ export function DesktopSidebar() {
                 flex items-center gap-3 rounded-[var(--radius-md)]
                 px-3 py-2.5 transition-all duration-200 ease-out-expo
                 ${isActive
-                  ? 'bg-[var(--color-accent-subtle)] text-[var(--color-accent)]'
-                  : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-raised)] hover:text-[var(--color-text-primary)]'
+                  ? 'bg-[var(--color-accent)] text-white shadow-lg shadow-[var(--color-accent)]/20'
+                  : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-accent-subtle)] hover:text-[var(--color-accent)]'
                 }
                 ${!expanded ? 'justify-center' : ''}
               `}
@@ -134,7 +130,7 @@ export function DesktopSidebar() {
           className={`
             w-full flex items-center gap-3 rounded-[var(--radius-md)]
             px-3 py-2.5 transition-all duration-200 ease-out-expo
-            text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-raised)] hover:text-[var(--color-text-primary)]
+            text-[var(--color-text-secondary)] hover:bg-[var(--color-accent-subtle)] hover:text-[var(--color-accent)]
             ${!expanded ? 'justify-center' : ''}
           `}
           aria-label={expanded ? 'Collapse sidebar' : 'Expand sidebar'}

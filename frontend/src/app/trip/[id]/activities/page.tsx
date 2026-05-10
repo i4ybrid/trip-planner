@@ -337,13 +337,13 @@ export default function TripActivities() {
         title="Add Activity"
         description="Propose something the group can vote on."
         size="lg"
-        className="max-h-[90vh] overflow-y-auto bg-card/95 shadow-[var(--travel-card-shadow)] backdrop-blur"
+        className="max-h-[90vh] overflow-y-auto"
       >
         <form onSubmit={handleCreateActivity} className="space-y-5">
-          <div className="rounded-lg border border-border/70 bg-background/55 p-4">
+          <div className="rounded-lg border border-white/20 bg-white/14 p-4">
             <div className="mb-4 flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-primary" />
-              <h3 className="font-semibold">Activity details</h3>
+              <Sparkles className="h-4 w-4 text-white/80" />
+              <h3 className="font-semibold text-white">Activity details</h3>
             </div>
             <div className="grid gap-4">
               <Input
@@ -351,7 +351,8 @@ export default function TripActivities() {
                 placeholder="Surfing lessons"
                 value={newActivity.title}
                 onChange={(e) => setNewActivity({ ...newActivity, title: e.target.value })}
-                className="h-12 rounded-lg border-border/70 bg-card/80"
+                variant="glass"
+                className="h-12"
                 required
               />
               <Textarea
@@ -359,7 +360,8 @@ export default function TripActivities() {
                 placeholder="What should the group know?"
                 value={newActivity.description || ''}
                 onChange={(e) => setNewActivity({ ...newActivity, description: e.target.value })}
-                className="min-h-24 rounded-lg border-border/70 bg-card/80"
+                variant="glass"
+                className="min-h-24"
               />
               <div className="grid gap-4 md:grid-cols-2">
                 <Select
@@ -374,24 +376,26 @@ export default function TripActivities() {
                     }
                   }}
                   options={categoryOptions}
-                  className="h-12 rounded-lg border-border/70 bg-card/80"
+                  variant="glass"
+                  className="h-12"
                 />
                 <Input
                   label="Location"
                   placeholder="Beach, museum, dinner spot..."
                   value={newActivity.location || ''}
                   onChange={(e) => setNewActivity({ ...newActivity, location: e.target.value })}
-                  className="h-12 rounded-lg border-border/70 bg-card/80"
+                  variant="glass"
+                  className="h-12"
                 />
               </div>
             </div>
           </div>
 
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
-            <div className="rounded-lg border border-border/70 bg-background/55 p-4">
+            <div className="rounded-lg border border-white/20 bg-white/14 p-4">
               <div className="mb-4 flex items-center gap-2">
-                <CalendarDays className="h-4 w-4 text-primary" />
-                <h3 className="font-semibold">Timing</h3>
+                <CalendarDays className="h-4 w-4 text-white/80" />
+                <h3 className="font-semibold text-white">Timing</h3>
               </div>
               <div className="grid gap-4 md:grid-cols-2">
                 <DateTimeField
@@ -436,12 +440,12 @@ export default function TripActivities() {
               </div>
             </div>
 
-            <div className="rounded-lg border border-border/70 bg-background/55 p-4">
+            <div className="rounded-lg border border-white/20 bg-white/14 p-4">
               <div className="mb-4 flex items-center gap-2">
-                <DollarSign className="h-4 w-4 text-accent" />
-                <h3 className="font-semibold">Cost</h3>
+                <DollarSign className="h-4 w-4 text-white/80" />
+                <h3 className="font-semibold text-white">Cost</h3>
               </div>
-              <label className="mb-1.5 block text-sm font-medium">Estimated cost</label>
+              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.1em] text-white/70">Estimated cost</label>
               <div className="flex items-center gap-2">
                 <div className="relative flex-1">
                   <Input
@@ -450,10 +454,11 @@ export default function TripActivities() {
                     value={newActivity.cost || ''}
                     onChange={(e) => setNewActivity({ ...newActivity, cost: Number(e.target.value) })}
                     onBlur={(e) => { const v = parseFloat(e.target.value); if (isNaN(v)) e.target.value = ''; }}
-                    className="h-12 rounded-lg border-border/70 bg-card/80 pr-9 appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                    variant="glass"
+                    className="h-12 pr-9 appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                   />
                   <span className={cn(
-                    'absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground',
+                    'absolute right-3 top-1/2 -translate-y-1/2 text-xs text-white/50',
                     (newActivity.costType || 'PER_PERSON') !== 'PER_PERSON' && 'opacity-50'
                   )}>/pp</span>
                 </div>
@@ -463,25 +468,25 @@ export default function TripActivities() {
                   className={cn(
                     'h-12 rounded-lg border px-3 text-xs font-semibold transition-colors',
                     (newActivity.costType || 'PER_PERSON') === 'PER_PERSON'
-                      ? 'border-primary bg-primary text-primary-foreground'
-                      : 'border-border/70 bg-card/80 text-muted-foreground hover:text-foreground'
+                      ? 'border-white/40 bg-white/20 text-white'
+                      : 'border-white/25 bg-white/14 text-white/70 hover:bg-white/20'
                   )}
                 >
                   /pp
                 </button>
               </div>
-              <p className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+              <p className="mt-2 flex items-center gap-1.5 text-xs text-white/50">
                 <Tags className="h-3.5 w-3.5" />
                 Toggle per-person or fixed group cost.
               </p>
             </div>
           </div>
 
-          <div className="flex flex-col-reverse gap-2 border-t border-border/70 pt-4 sm:flex-row sm:justify-end">
-            <Button type="button" variant="outline" onClick={() => setShowModal(false)} className="rounded-lg">
+          <div className="flex flex-col-reverse gap-2 border-t border-white/20 pt-4 sm:flex-row sm:justify-end">
+            <Button type="button" variant="glass" onClick={() => setShowModal(false)} className="rounded-lg">
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting} className="rounded-lg">
+            <Button type="submit" variant="glass" disabled={isSubmitting} className="rounded-lg">
               {isSubmitting ? (
                 <>
                   <Loader className="mr-2 h-4 w-4 animate-spin" />

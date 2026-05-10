@@ -4,9 +4,9 @@ import { signIn } from 'next-auth/react';
 import { AppShell } from '@/components/layout/AppShell';
 import { OAuthButton } from '@/components/ui/OAuthButton';
 import { FormField } from '@/components/ui/FormField';
-import { Input } from '@/components/ui/Input';
+import { Input } from '@/components';
 import Link from 'next/link';
-import { ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { ArrowRight, Eye, EyeOff, Star } from 'lucide-react';
 import React, { useState, useRef } from 'react';
 
 export default function LoginPage() {
@@ -70,7 +70,6 @@ export default function LoginPage() {
             p-6 sm:p-8
           "
         >
-          {/* Logo mark */}
           <div
             className="
               w-10 h-10 rounded-[var(--radius-md)]
@@ -79,7 +78,7 @@ export default function LoginPage() {
               mx-auto
             "
           >
-            <span className="text-white font-bold text-lg">T</span>
+            <Star className="h-5 w-5 fill-white text-white" />
           </div>
 
           {/* Heading */}
@@ -87,7 +86,7 @@ export default function LoginPage() {
             Welcome back
           </h1>
           <p className="text-[var(--text-sm)] text-[var(--color-text-secondary)] mt-1 mb-6 text-center">
-            Sign in to continue planning
+            Sign in to continue planning with Trip Planner
           </p>
 
           {/* OAuth buttons */}

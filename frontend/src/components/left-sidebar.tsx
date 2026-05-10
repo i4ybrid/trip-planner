@@ -5,9 +5,8 @@ import { useRouter, usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { 
   Home, Users, MessageCircle, Settings, Bell, Compass, 
-  Plus, ChevronRight
+  Plus, Star
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 
 interface NavItem {
   icon: React.ReactNode;
@@ -126,10 +125,10 @@ export function LeftSidebar() {
           isMobile && isCollapsed ? "justify-center px-2" : "gap-3 px-6"
         )}>
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground shadow-lg shadow-accent/25">
-            <Compass className="h-5 w-5" />
+            <Star className="h-5 w-5 fill-current" />
           </div>
           {!(isMobile && isCollapsed) && (
-            <span className="font-display text-xl font-bold whitespace-nowrap">TripPlanner</span>
+            <span className="font-display text-xl font-bold whitespace-nowrap">Trip Planner</span>
           )}
         </div>
 

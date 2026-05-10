@@ -36,7 +36,7 @@ export function Tabs({ tabs, basePath, iconMap = defaultIconMap, className }: Ta
   return (
     <nav
       className={cn(
-        "flex snap-x gap-1.5 overflow-x-auto px-3 py-2.5 [scrollbar-width:none] sm:gap-2 sm:px-6 sm:py-3 [&::-webkit-scrollbar]:hidden",
+        "flex w-fit overflow-hidden rounded-t-lg bg-[#008c95] text-xs font-bold uppercase tracking-[0.12em] text-white shadow-xl",
         className
       )}
     >
@@ -46,10 +46,10 @@ export function Tabs({ tabs, basePath, iconMap = defaultIconMap, className }: Ta
           onClick={() => router.push(`${basePath}${tab.href}`)}
           aria-current={currentTab === tab.id ? 'page' : undefined}
           className={cn(
-            "flex shrink-0 snap-start items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-xs font-semibold transition-all sm:gap-2 sm:px-4 sm:py-2 sm:text-sm",
+            "flex items-center gap-2 px-5 py-3 transition hover:bg-white/15",
             currentTab === tab.id
-              ? "border-primary bg-primary text-primary-foreground shadow-md shadow-primary/20"
-              : "border-border/70 bg-card/70 text-muted-foreground hover:border-primary/40 hover:bg-secondary hover:text-foreground"
+              ? "bg-white/15 text-white"
+              : "text-white/75 hover:text-white"
           )}
         >
           {iconMap[tab.id] || tab.icon}

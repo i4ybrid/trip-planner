@@ -214,14 +214,14 @@ export function AddExpenseModal({ isOpen, onClose, tripId, members, onSuccess }:
       className="max-h-[92vh] overflow-hidden p-0"
     >
       <div className="flex max-h-[92vh] flex-col">
-        <div className="border-b border-border/70 bg-accent px-5 py-5 text-accent-foreground sm:px-6">
+        <div className="border-b border-white/20 bg-white/14 px-5 py-5 sm:px-6">
           <div className="flex items-start gap-3 pr-9">
-            <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/15">
-              <ReceiptText className="h-5 w-5" />
+            <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/20">
+              <ReceiptText className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h2 className="font-display text-2xl font-bold">Add Expense</h2>
-              <p className="mt-1 text-sm leading-6 text-accent-foreground/78">
+              <h2 className="font-display text-2xl font-bold text-white">Add Expense</h2>
+              <p className="mt-1 text-sm leading-6 text-white/70">
                 Add a restaurant bill, excursion fee, or other shared trip cost.
               </p>
             </div>
@@ -239,8 +239,8 @@ export function AddExpenseModal({ isOpen, onClose, tripId, members, onSuccess }:
 
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Category selector */}
-          <section className="rounded-lg border border-border/70 bg-muted/30 p-4">
-            <label className="text-sm font-semibold uppercase tracking-[0.14em] text-muted-foreground">Category</label>
+          <section className="rounded-lg border border-white/20 bg-white/14 p-4">
+            <label className="text-xs font-semibold uppercase tracking-[0.1em] text-white/70">Category</label>
             <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
               {[
                 { value: 'restaurant', label: 'Restaurant', icon: <Utensils className="h-5 w-5" /> },
@@ -253,10 +253,10 @@ export function AddExpenseModal({ isOpen, onClose, tripId, members, onSuccess }:
                   type="button"
                   onClick={() => setCategory(cat.value as typeof category)}
                   className={cn(
-                    "flex min-h-20 flex-col items-center justify-center gap-2 rounded-md border bg-card px-3 py-3 text-sm font-semibold transition-all",
+                    "flex min-h-20 flex-col items-center justify-center gap-2 rounded-md border border-white/20 bg-white/14 px-3 py-3 text-sm font-semibold text-white/80 transition-all",
                     category === cat.value
-                      ? "border-primary bg-primary/10 text-primary shadow-sm"
-                      : "border-border/70 text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                      ? "border-white/40 bg-white/20 text-white shadow-sm"
+                      : "hover:border-white/40 hover:bg-white/20 hover:text-white"
                   )}
                 >
                   <span>{cat.icon}</span>
@@ -266,21 +266,22 @@ export function AddExpenseModal({ isOpen, onClose, tripId, members, onSuccess }:
             </div>
           </section>
 
-          {/* Description */}
-          <section className="grid gap-4 rounded-lg border border-border/70 bg-card/80 p-4 lg:grid-cols-[minmax(0,1fr)_300px]">
+{/* Description */}
+          <section className="grid gap-4 rounded-lg border border-white/20 bg-white/14 p-4 lg:grid-cols-[minmax(0,1fr)_300px]">
             <div className="space-y-4">
               <Input
                 label="Description"
                 placeholder={category === 'restaurant' ? "Dinner at Restaurant X" : category === 'excursion' ? "Scuba diving tour" : category === 'house' ? "Beach house rental" : "Expense description"}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
+                variant="glass"
                 required
               />
 
               {/* Subtotal, Tax, Tip */}
               <div className="grid gap-3 sm:grid-cols-3">
                 <div>
-                  <label className="text-sm font-medium mb-1.5 block">Subtotal</label>
+                  <label className="text-xs font-semibold uppercase tracking-[0.1em] text-white/70 mb-1.5 block">Subtotal</label>
               <div className="flex items-center gap-2">
                 <div className="relative flex-1">
                   <Input
@@ -290,11 +291,12 @@ export function AddExpenseModal({ isOpen, onClose, tripId, members, onSuccess }:
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                     onBlur={(e) => { const v = parseFloat(e.target.value); if (isNaN(v)) e.target.value = ''; }}
-                    className="pr-8 appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                    variant="glass"
+                    className="pr-8 appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none]"
                     required
                   />
                   <span className={cn(
-                    "absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground",
+                    "absolute right-3 top-1/2 -translate-y-1/2 text-xs text-white/50",
                     costType !== 'PER_PERSON' && "opacity-50"
                   )}>/pp</span>
                 </div>
@@ -302,10 +304,10 @@ export function AddExpenseModal({ isOpen, onClose, tripId, members, onSuccess }:
                   type="button"
                   onClick={() => setCostType(costType === 'PER_PERSON' ? 'FIXED' : 'PER_PERSON')}
                   className={cn(
-                    "px-3 py-1.5 text-xs font-medium rounded-md border border-border transition-colors shrink-0",
+                    "px-3 py-1.5 text-xs font-medium rounded-lg border border-white/25 bg-white/14 text-white/70 transition-colors shrink-0",
                     costType === 'PER_PERSON'
-                      ? "bg-primary text-white border-primary"
-                      : "bg-secondary text-muted-foreground border-border opacity-50"
+                      ? "bg-white/20 border-white/40 text-white"
+                      : "hover:bg-white/20"
                   )}
                 >
                   /pp
@@ -320,7 +322,8 @@ export function AddExpenseModal({ isOpen, onClose, tripId, members, onSuccess }:
                   value={tax}
                   onChange={(e) => setTax(e.target.value)}
                   onBlur={(e) => { const v = parseFloat(e.target.value); if (isNaN(v)) e.target.value = ''; }}
-                  className="appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                  variant="glass"
+                  className="appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none]"
                 />
                 <Input
                   label="Tip"
@@ -330,32 +333,33 @@ export function AddExpenseModal({ isOpen, onClose, tripId, members, onSuccess }:
                   value={tip}
                   onChange={(e) => setTip(e.target.value)}
                   onBlur={(e) => { const v = parseFloat(e.target.value); if (isNaN(v)) e.target.value = ''; }}
-                  className="appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                  variant="glass"
+                  className="appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none]"
                 />
               </div>
             </div>
 
             {/* Total display */}
-            <div className="flex flex-col justify-between rounded-lg bg-muted p-4">
-              <span className="text-sm font-medium text-muted-foreground">Total</span>
-              <span className="mt-2 text-3xl font-bold">{formatCurrency(totalAmount)}</span>
-              <span className="mt-3 text-xs leading-5 text-muted-foreground">
+            <div className="flex flex-col justify-between rounded-lg border border-white/20 bg-white/14 p-4">
+              <span className="text-xs font-semibold uppercase tracking-[0.1em] text-white/70">Total</span>
+              <span className="mt-2 text-3xl font-bold text-white">{formatCurrency(totalAmount)}</span>
+              <span className="mt-3 text-xs leading-5 text-white/50">
                 {costType === 'PER_PERSON' ? 'Subtotal is treated as a per-person cost.' : 'Subtotal is treated as a fixed bill total.'}
               </span>
             </div>
           </section>
 
           {/* Paid By & Date */}
-          <section className="grid gap-4 rounded-lg border border-border/70 bg-card/80 p-4 sm:grid-cols-2">
+          <section className="grid gap-4 rounded-lg border border-white/20 bg-white/14 p-4 sm:grid-cols-2">
             <div>
-              <label className="text-sm font-medium">Paid By</label>
+              <label className="text-xs font-semibold uppercase tracking-[0.1em] text-white/70 mb-1.5 block">Paid By</label>
               <select
                 value={paidBy}
                 onChange={(e) => setPaidBy(e.target.value)}
-                className="mt-1.5 h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                className="mt-1.5 h-11 w-full rounded-lg border border-white/25 bg-white/14 px-4 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-white/30"
               >
                 {members.map(m => (
-                  <option key={m.userId} value={m.userId}>{m.user?.name || 'User'}</option>
+                  <option key={m.userId} value={m.userId} className="bg-[#1B8A8A] text-white">{m.user?.name || 'User'}</option>
                 ))}
               </select>
             </div>
@@ -364,12 +368,13 @@ export function AddExpenseModal({ isOpen, onClose, tripId, members, onSuccess }:
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
+              variant="glass"
             />
           </section>
 
           {/* Split Type selector */}
-          <section className="rounded-lg border border-border/70 bg-card/80 p-4">
-            <label className="text-sm font-semibold uppercase tracking-[0.14em] text-muted-foreground">Split Type</label>
+          <section className="rounded-lg border border-white/20 bg-white/14 p-4">
+            <label className="text-xs font-semibold uppercase tracking-[0.1em] text-white/70">Split Type</label>
             <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
               {['equal', 'shares', 'percentage', 'custom'].map((type) => (
                 <button
@@ -377,10 +382,10 @@ export function AddExpenseModal({ isOpen, onClose, tripId, members, onSuccess }:
                   type="button"
                   onClick={() => setSplitType(type as typeof splitType)}
                   className={cn(
-                    "rounded-md border px-3 py-2 text-sm font-semibold capitalize transition-all",
+                    "rounded-lg border border-white/20 bg-white/14 px-3 py-2 text-sm font-semibold capitalize text-white/70 transition-all",
                     splitType === type
-                      ? "border-primary bg-primary/10 text-primary"
-                      : "border-border/70 text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                      ? "border-white/40 bg-white/20 text-white"
+                      : "hover:border-white/40 hover:bg-white/20 hover:text-white"
                   )}
                 >
                   {type}
@@ -392,29 +397,29 @@ export function AddExpenseModal({ isOpen, onClose, tripId, members, onSuccess }:
           {/* Split Details */}
           {costType === 'FIXED' ? (
             // FIXED cost type: only the payer owes the full amount
-            <section className="space-y-3 rounded-lg border border-border/70 bg-card/80 p-4">
+            <section className="space-y-3 rounded-lg border border-white/20 bg-white/14 p-4">
               <div className="flex items-center justify-between">
-                <label className="text-sm font-medium">Split Details</label>
-                <span className="text-xs text-muted-foreground">Fixed cost — payer covers total</span>
+                <label className="text-xs font-semibold uppercase tracking-[0.1em] text-white/70">Split Details</label>
+                <span className="text-xs text-white/50">Fixed cost — payer covers total</span>
               </div>
               <div className="space-y-2">
                 {members.map((member) => {
                   const isPayer = member.userId === paidBy;
                   const splitAmount = isPayer ? totalAmount : 0;
                   return (
-                    <div key={member.userId} className="flex items-center justify-between rounded-md bg-muted/50 px-3 py-2">
+                    <div key={member.userId} className="flex items-center justify-between rounded-md bg-white/14 px-3 py-2">
                       <div className="flex items-center gap-2">
                         <Avatar
                           src={member.user?.avatarUrl || undefined}
                           name={member.user?.name || 'User'}
                           size="sm"
                         />
-                        <span className="text-sm">{member.user?.name || 'User'}</span>
-                        {isPayer && <span className="text-xs text-muted-foreground">(payer)</span>}
+                        <span className="text-sm text-white">{member.user?.name || 'User'}</span>
+                        {isPayer && <span className="text-xs text-white/50">(payer)</span>}
                       </div>
                       <span className={cn(
                         "w-20 text-right text-sm font-medium",
-                        isPayer ? "text-primary" : "text-muted-foreground"
+                        isPayer ? "text-white" : "text-white/70"
                       )}>
                         {formatCurrency(splitAmount)}
                       </span>
@@ -425,13 +430,13 @@ export function AddExpenseModal({ isOpen, onClose, tripId, members, onSuccess }:
             </section>
           ) : (
             // PER_PERSON cost type: normal split configuration
-            <section className="space-y-3 rounded-lg border border-border/70 bg-card/80 p-4">
+            <section className="space-y-3 rounded-lg border border-white/20 bg-white/14 p-4">
               <div className="flex items-center justify-between">
-                <label className="text-sm font-medium">Split Details</label>
+                <label className="text-xs font-semibold uppercase tracking-[0.1em] text-white/70">Split Details</label>
                 {splitType === 'percentage' && (
                   <span className={cn(
                     "text-xs font-medium",
-                    Math.abs(totalPercentage - 100) < 0.1 ? "text-green-600" : "text-amber-600"
+                    Math.abs(totalPercentage - 100) < 0.1 ? "text-green-400" : "text-amber-400"
                   )}>
                     Total: {totalPercentage.toFixed(1)}%
                   </span>
@@ -467,14 +472,14 @@ export function AddExpenseModal({ isOpen, onClose, tripId, members, onSuccess }:
                   }
 
                   return (
-                    <div key={member.userId} className="grid gap-3 rounded-md bg-muted/50 px-3 py-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+<div key={member.userId} className="grid gap-3 rounded-md bg-white/14 px-3 py-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
                       <div className="flex min-w-0 items-center gap-2">
                         <Avatar
                           src={member.user?.avatarUrl || undefined}
                           name={member.user?.name || 'User'}
                           size="sm"
                         />
-                        <span className="min-w-0 truncate text-sm font-medium">{member.user?.name || 'User'}</span>
+                        <span className="min-w-0 truncate text-sm font-medium text-white">{member.user?.name || 'User'}</span>
                       </div>
                       <div className="flex flex-wrap items-center justify-start gap-2 sm:justify-end">
                         {splitType === 'shares' && (
@@ -484,7 +489,7 @@ export function AddExpenseModal({ isOpen, onClose, tripId, members, onSuccess }:
                             value={split?.shares || 1}
                             onChange={(e) => setSplits(splits.map(s => s.userId === member.userId ? { ...s, shares: parseInt(e.target.value) || 0 } : s))}
                             onBlur={(e) => { const v = parseFloat(e.target.value); if (isNaN(v)) e.target.value = ''; }}
-                            className="w-16 h-8 rounded-md border border-border bg-background px-2 text-center text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                            className="w-16 h-8 rounded-lg border border-white/25 bg-white/14 px-2 text-center text-sm text-white focus:outline-none focus:ring-2 focus:ring-white/30 appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none]"
                           />
                         )}
                         {splitType === 'percentage' && (
@@ -506,9 +511,9 @@ export function AddExpenseModal({ isOpen, onClose, tripId, members, onSuccess }:
                                 setLastEditedIndex(memberIndex);
                               }}
                               onBlur={(e) => { const v = parseFloat(e.target.value); if (isNaN(v)) e.target.value = ''; }}
-                              className="w-16 h-8 rounded-md border border-border bg-background px-2 text-center text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                              className="w-16 h-8 rounded-lg border border-white/25 bg-white/14 px-2 text-center text-sm text-white focus:outline-none focus:ring-2 focus:ring-white/30 appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none]"
                             />
-                            <span>%</span>
+                            <span className="text-white/50">%</span>
                           </div>
                         )}
                         {splitType === 'custom' && (
@@ -529,11 +534,11 @@ export function AddExpenseModal({ isOpen, onClose, tripId, members, onSuccess }:
                               setLastEditedIndex(memberIndex);
                             }}
                             onBlur={(e) => { const v = parseFloat(e.target.value); if (isNaN(v)) e.target.value = ''; }}
-                            className="w-24 h-8 rounded-md border border-border bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                            className="w-24 h-8 rounded-lg border border-white/25 bg-white/14 px-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-white/30 appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none]"
                             placeholder="0.00"
                           />
                         )}
-                        <span className="w-20 text-right text-sm font-medium">{formatCurrency(splitAmount)}</span>
+                        <span className="w-20 text-right text-sm font-medium text-white">{formatCurrency(splitAmount)}</span>
                       </div>
                     </div>
                   );
@@ -543,20 +548,21 @@ export function AddExpenseModal({ isOpen, onClose, tripId, members, onSuccess }:
           )}
 
           {/* Notes */}
-          <section className="rounded-lg border border-border/70 bg-card/80 p-4">
+          <section className="rounded-lg border border-white/20 bg-white/14 p-4">
             <Textarea
               label="Notes (optional)"
               placeholder="Add notes about this expense..."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={2}
+              variant="glass"
             />
           </section>
 
           {/* Actions */}
-          <div className="sticky bottom-0 -mx-5 flex justify-end gap-2 border-t border-border/70 bg-card/95 px-5 py-4 backdrop-blur sm:-mx-6 sm:px-6">
-            <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting}>Cancel</Button>
-            <Button type="submit" disabled={isSubmitting}>
+          <div className="sticky bottom-0 -mx-5 flex justify-end gap-2 border-t border-white/20 bg-white/10 px-5 py-4 backdrop-blur-sm sm:-mx-6 sm:px-6">
+            <Button type="button" variant="glass" onClick={handleClose} disabled={isSubmitting} className="rounded-lg">Cancel</Button>
+            <Button type="submit" variant="glass" disabled={isSubmitting} className="rounded-lg">
               {isSubmitting ? (
                 <>
                   <Loader className="mr-2 h-4 w-4 animate-spin" />

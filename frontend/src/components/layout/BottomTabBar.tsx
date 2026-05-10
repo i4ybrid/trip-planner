@@ -34,13 +34,7 @@ export function BottomTabBar({ unreadCount = 0 }: BottomTabBarProps) {
   ];
 
   return (
-    <nav
-      className={cn(
-        'fixed bottom-0 left-0 right-0 z-50 flex h-16 items-center justify-around',
-        'border-t border-border bg-card/95 shadow-2xl shadow-black/10 backdrop-blur-xl',
-        'lg:hidden'
-      )}
-    >
+    <nav className={cn('bottom-tab-bar', 'lg:hidden')}>
       {tabs.map((tab) => {
         const Icon = tab.icon;
         const isActive = pathname === tab.href || pathname.startsWith(`${tab.href}/`);
@@ -51,22 +45,19 @@ export function BottomTabBar({ unreadCount = 0 }: BottomTabBarProps) {
             key={tab.href}
             href={tab.href}
             className={cn(
-              'flex min-w-0 flex-1 flex-col items-center justify-center gap-1 px-2 py-2',
-              'text-muted-foreground transition-colors',
-              isActive && 'text-primary'
+              'tab-item',
+              isActive && 'active'
             )}
           >
             <div className="relative">
-              <Icon className={cn('h-5 w-5', isActive && 'text-primary')} />
+              <Icon className="h-5 w-5" />
               {badgeCount > 0 && (
                 <span className="absolute -right-2 -top-2 flex min-h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white ring-2 ring-card">
                   {badgeCount > 9 ? '9+' : badgeCount}
                 </span>
               )}
             </div>
-            <span className={cn('text-[10px]', isActive && 'font-medium text-primary')}>
-              {tab.label}
-            </span>
+            <span>{tab.label}</span>
           </Link>
         );
       })}

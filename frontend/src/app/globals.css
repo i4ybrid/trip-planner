@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap');
 
 /* Fallback styles - always load these first as a baseline */
 *, *::before, *::after {
@@ -44,6 +44,28 @@ body {
      Travel editorial: warm sand, coral, lagoon
      =========================== */
   :root {
+    --color-bg: #f7fbfa;
+    --color-surface: rgba(255, 255, 255, 0.86);
+    --color-surface-raised: #ffffff;
+    --color-border: #dce8e5;
+    --color-accent: #008c95;
+    --color-accent-hover: #007681;
+    --color-accent-strong: #007681;
+    --color-accent-subtle: #e7f7f5;
+    --color-text-primary: #20312f;
+    --color-text-secondary: #6d7a78;
+    --color-text-muted: #7c8b88;
+    --color-error: #dc2626;
+    --text-xs: 0.75rem;
+    --text-sm: 0.875rem;
+    --text-base: 1rem;
+    --text-xl: 1.25rem;
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 8px;
+    --shadow-travel: 0 24px 60px -36px rgba(13, 78, 91, 0.45);
+    --shadow-overlay: var(--shadow-travel);
+
     /* Primary - Sunset coral */
     --primary: 14 87% 58%;
     --primary-foreground: 0 0% 100%;
@@ -92,6 +114,21 @@ body {
      Warm brown: cozy, earthy, dark
      =========================== */
   [data-theme="dark"] {
+    --color-bg: #0f1d20;
+    --color-surface: rgba(20, 38, 41, 0.88);
+    --color-surface-raised: #182a2d;
+    --color-border: #284245;
+    --color-accent: #40c7c9;
+    --color-accent-hover: #69d6d5;
+    --color-accent-strong: #69d6d5;
+    --color-accent-subtle: rgba(64, 199, 201, 0.13);
+    --color-text-primary: #f4efe5;
+    --color-text-secondary: #b9c7c4;
+    --color-text-muted: #91a4a2;
+    --color-error: #f87171;
+    --shadow-travel: 0 24px 60px -36px rgba(0, 0, 0, 0.8);
+    --shadow-overlay: var(--shadow-travel);
+
     /* Primary - Burnt coral */
     --primary: 14 78% 58%;
     --primary-foreground: 0 0% 100%;
@@ -291,6 +328,101 @@ body {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0)),
     hsl(var(--card));
+}
+
+.top-bar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  min-height: 64px;
+  align-items: center;
+  gap: 1rem;
+  border-bottom: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-surface) 88%, transparent);
+  padding: 0 1rem;
+  box-shadow: 0 16px 44px -38px rgba(13, 78, 91, 0.55);
+  backdrop-filter: blur(18px);
+}
+
+.bottom-tab-bar {
+  position: fixed;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  left: 0.75rem;
+  z-index: 40;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(54px, 1fr));
+  gap: 0.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.62);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--color-surface) 92%, transparent);
+  padding: 0.35rem;
+  box-shadow: 0 22px 55px -34px rgba(13, 78, 91, 0.65);
+  backdrop-filter: blur(18px);
+}
+
+.tab-item {
+  display: flex;
+  min-height: 54px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+  font-size: 0.72rem;
+  font-weight: 700;
+  transition: background-color 200ms ease, color 200ms ease, transform 200ms ease;
+}
+
+.tab-item.active {
+  background: var(--color-accent);
+  color: white;
+  transform: translateY(-1px);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  transition: background-color 200ms ease, color 200ms ease, border-color 200ms ease;
+}
+
+.btn-ghost {
+  color: var(--color-text-secondary);
+}
+
+.btn-ghost:hover {
+  background: var(--color-accent-subtle);
+  color: var(--color-accent);
+}
+
+.page-enter {
+  animation: page-enter 260ms ease-out both;
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (min-width: 1024px) {
+  .bottom-tab-bar {
+    display: none;
+  }
+
+  .top-bar {
+    padding: 0 2rem;
+  }
 }
 
 /* Status badges */

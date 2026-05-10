@@ -6,8 +6,8 @@ import { SocketProvider } from '@/components/socket-provider';
 import { CrashReporter } from '@/components/crash-reporter';
 
 export const metadata: Metadata = {
-  title: 'TripPlanner - Plan trips with friends',
-  description: 'Collaborative trip planning for groups of friends',
+  title: 'Trip Planner - Collaborative trip planning',
+  description: 'A travel-agency inspired workspace for planning group trips with friends.',
 };
 
 export default function RootLayout({

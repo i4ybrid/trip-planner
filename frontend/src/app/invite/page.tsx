@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Compass, UserPlus, Check, X, Loader2 } from 'lucide-react';
+import { Check, Loader2, Star, UserPlus, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
@@ -79,12 +79,12 @@ export default function InvitePage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-amber-50 to-orange-50">
-      <Card className="w-full max-w-md p-8">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-stone-100 bg-cover bg-center">
+      <Card className="w-full max-w-md border-white/60 bg-white/88 p-8 shadow-[var(--shadow-travel)] backdrop-blur">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-4">
-            <Compass className="w-12 h-12 text-amber-600" />
-            <h1 className="text-3xl font-bold text-amber-800">TripPlanner</h1>
+            <Star className="w-12 h-12 fill-[var(--color-accent)] text-[var(--color-accent)]" />
+            <h1 className="font-display text-3xl font-bold text-[var(--color-text-primary)]">Trip Planner</h1>
           </div>
           <h2 className="text-xl font-semibold mb-2">You've been invited!</h2>
           <p className="text-muted-foreground">

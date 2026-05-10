@@ -78,22 +78,22 @@ export default function NewTripPage() {
   return (
     <PageLayout title="New Trip" showBack onBack={() => router.back()} className="px-4 pb-24 pt-5 sm:px-6 lg:px-8 lg:pb-8">
       <div className="mx-auto max-w-6xl space-y-6">
-        <form onSubmit={handleSubmit} className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_20rem]">
-          <Card className="border-border/70 bg-card/85 p-5 shadow-[var(--travel-card-shadow)] backdrop-blur md:p-6">
+        <form onSubmit={handleSubmit} className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
+          <div className="rounded-lg border border-white/20 bg-white/14 p-5 md:p-6">
             <div className="mb-5 flex items-start gap-3">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white/20 text-white">
                 <Compass className="h-5 w-5" />
               </div>
               <div>
-                <h2 className="font-display text-2xl font-bold">Trip details</h2>
-                <p className="mt-1 text-sm text-muted-foreground">
+                <h2 className="font-display text-2xl font-bold text-white">Trip details</h2>
+                <p className="mt-1 text-sm text-white/70">
                   Keep this lightweight. You can tune dates, milestones, and payments after creation.
                 </p>
               </div>
             </div>
 
             {(hookError || error) && (
-              <div className="mb-5 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+              <div className="mb-5 rounded-lg border border-red-500/50 bg-red-500/20 p-3 text-sm text-red-200">
                 {hookError || error}
               </div>
             )}
@@ -105,7 +105,8 @@ export default function NewTripPage() {
                 placeholder="Summer Vacation 2026"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="h-12 rounded-lg border-border/70 bg-background/75"
+                variant="glass"
+                className="h-12"
                 required
               />
 
@@ -115,7 +116,8 @@ export default function NewTripPage() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={4}
-                className="min-h-28 rounded-lg border-border/70 bg-background/75"
+                variant="glass"
+                className="min-h-28"
               />
 
               <Input
@@ -123,7 +125,8 @@ export default function NewTripPage() {
                 placeholder="Hawaii, Lisbon, New York..."
                 value={destination}
                 onChange={(e) => setDestination(e.target.value)}
-                className="h-12 rounded-lg border-border/70 bg-background/75"
+                variant="glass"
+                className="h-12"
               />
 
               <div className="grid gap-4 md:grid-cols-2">
@@ -140,17 +143,17 @@ export default function NewTripPage() {
                 />
               </div>
             </div>
-          </Card>
+          </div>
 
           <aside className="grid gap-4 lg:grid-cols-2 xl:block xl:space-y-4">
-            <Card className="border-border/70 bg-card/85 p-5 shadow-[var(--travel-card-shadow)] backdrop-blur">
+            <div className="rounded-lg border border-white/20 bg-white/14 p-5">
               <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent/15 text-accent">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/20 text-white">
                   <Users className="h-5 w-5" />
                 </div>
                 <div>
-                  <h2 className="font-display text-xl font-bold">Invite style</h2>
-                  <p className="mt-1 text-sm text-muted-foreground">Choose how people join from invite links.</p>
+                  <h2 className="font-display text-xl font-bold text-white">Invite style</h2>
+                  <p className="mt-1 text-sm text-white/70">Choose how people join from invite links.</p>
                 </div>
               </div>
 
@@ -177,82 +180,82 @@ export default function NewTripPage() {
                       type="button"
                       onClick={() => setStyle(option.value)}
                       className={cn(
-                        'flex min-h-20 items-start gap-3 rounded-lg border p-3 text-left transition-all',
+                        'flex min-h-20 items-start gap-3 rounded-lg border border-white/20 bg-white/14 p-3 text-left transition-all',
                         selected
-                          ? 'border-primary bg-primary/10 shadow-sm shadow-primary/10'
-                          : 'border-border/70 bg-background/65 hover:border-primary/40 hover:bg-secondary/60'
+                          ? 'border-white/40 bg-white/20 shadow-sm'
+                          : 'hover:border-white/40 hover:bg-white/20'
                       )}
                     >
                       <span className={cn(
                         'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg',
-                        selected ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                        selected ? 'bg-white/30 text-white' : 'bg-white/14 text-white/70'
                       )}>
                         <Icon className="h-4 w-4" />
                       </span>
                       <span className="min-w-0 flex-1">
-                        <span className="flex items-center gap-2 font-semibold">
+                        <span className="flex items-center gap-2 font-semibold text-white">
                           {option.title}
-                          {selected && <Check className="h-4 w-4 text-primary" />}
+                          {selected && <Check className="h-4 w-4 text-white" />}
                         </span>
-                        <span className="mt-1 block text-sm leading-5 text-muted-foreground">{option.description}</span>
+                        <span className="mt-1 block text-sm leading-5 text-white/70">{option.description}</span>
                       </span>
                     </button>
                   );
                 })}
               </div>
 
-              <div className="mt-4 border-t border-border/70 pt-4">
+              <div className="mt-4 border-t border-white/20 pt-4">
                 <button
                   type="button"
                   onClick={() => router.push('/public-events/new')}
                   aria-describedby="public-event-tooltip"
-                  className="group relative flex w-full items-start gap-3 rounded-lg border border-border/70 bg-background/65 p-3 text-left transition-all hover:border-primary/40 hover:bg-secondary/60"
+                  className="group relative flex w-full items-start gap-3 rounded-lg border border-white/20 bg-white/14 p-3 text-left transition-all hover:border-white/40 hover:bg-white/20"
                 >
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/14 text-white/70">
                     <Radio className="h-4 w-4" />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="font-semibold">Create public event</span>
-                    <span className="mt-1 block text-sm leading-5 text-muted-foreground">
+                    <span className="font-semibold text-white">Create public event</span>
+                    <span className="mt-1 block text-sm leading-5 text-white/70">
                       Use the event workflow for a promoted public listing.
                     </span>
                   </span>
                   <span
                     id="public-event-tooltip"
                     role="tooltip"
-                    className="pointer-events-none absolute bottom-[calc(100%+0.5rem)] left-3 right-3 z-20 rounded-lg border border-border/70 bg-popover px-3 py-2 text-xs font-medium text-popover-foreground opacity-0 shadow-[var(--travel-card-shadow)] transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
+                    className="pointer-events-none absolute bottom-[calc(100%+0.5rem)] left-3 right-3 z-20 rounded-lg border border-white/20 bg-[#1B8A8A] px-3 py-2 text-xs font-medium text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
                   >
                     Public event promotion requires a premium payment.
                   </span>
                 </button>
               </div>
-            </Card>
+            </div>
 
-            <Card className="border-border/70 bg-card/85 p-5 shadow-[var(--travel-card-shadow)] backdrop-blur">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Next up</p>
-              <div className="mt-4 space-y-3 text-sm text-muted-foreground">
+            <div className="rounded-lg border border-white/20 bg-white/14 p-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/70">Next up</p>
+              <div className="mt-4 space-y-3 text-sm text-white/70">
                 <p className="flex gap-2">
-                  <Plane className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                  <Plane className="mt-0.5 h-4 w-4 shrink-0 text-white/80" />
                   Add activities and collect votes.
                 </p>
                 <p className="flex gap-2">
-                  <CalendarDays className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
+                  <CalendarDays className="mt-0.5 h-4 w-4 shrink-0 text-white/80" />
                   Milestones generate once dates are set.
                 </p>
                 <p className="flex gap-2">
-                  <Users className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                  <Users className="mt-0.5 h-4 w-4 shrink-0 text-white/80" />
                   Invite travelers from the trip dashboard.
                 </p>
               </div>
-            </Card>
+            </div>
           </aside>
 
-          <div className="flex flex-col-reverse gap-3 rounded-lg border border-border/70 bg-card/85 p-3 shadow-[var(--travel-card-shadow)] backdrop-blur sm:flex-row sm:items-center sm:justify-between xl:col-span-2">
-            <Button type="button" variant="ghost" onClick={() => router.back()} className="gap-2">
+          <div className="flex flex-col-reverse gap-3 rounded-lg border border-white/20 bg-white/14 p-3 sm:flex-row sm:items-center sm:justify-between xl:col-span-2">
+            <Button type="button" variant="ghost" onClick={() => router.back()} className="gap-2 text-white/70 hover:text-white hover:bg-white/20">
               <ArrowLeft className="h-4 w-4" />
               Cancel
             </Button>
-            <Button type="submit" size="lg" disabled={!canSubmit} className="gap-2">
+            <Button type="submit" size="lg" disabled={!canSubmit} variant="glass" className="gap-2 rounded-lg">
               {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : <Plane className="h-5 w-5" />}
               {isSubmitting ? 'Creating...' : 'Create Trip'}
             </Button>

@@ -3,9 +3,9 @@
 import { signIn } from 'next-auth/react';
 import { AppShell } from '@/components/layout/AppShell';
 import { FormField } from '@/components/ui/FormField';
-import { Input } from '@/components/ui/Input';
+import { Input } from '@/components';
 import Link from 'next/link';
-import { ArrowRight, Eye, EyeOff, Loader } from 'lucide-react';
+import { ArrowRight, Eye, EyeOff, Loader, Star } from 'lucide-react';
 import React, { useState } from 'react';
 
 export default function RegisterPage() {
@@ -62,10 +62,10 @@ export default function RegisterPage() {
       <div className="flex items-center justify-center min-h-[calc(100vh-64px)]">
         <div className="w-full max-w-sm rounded-[var(--radius-lg)] bg-[var(--color-surface)] border border-[var(--color-border)] shadow-[var(--shadow-overlay)] p-6 sm:p-8">
           <div className="w-10 h-10 rounded-[var(--radius-md)] bg-[var(--color-accent)] flex items-center justify-center mx-auto">
-            <span className="text-white font-bold text-lg">T</span>
+            <Star className="h-5 w-5 fill-white text-white" />
           </div>
           <h1 className="text-[var(--text-xl)] font-semibold text-[var(--color-text-primary)] mt-6 text-center">Create your account</h1>
-          <p className="text-[var(--text-sm)] text-[var(--color-text-secondary)] mt-1 mb-6 text-center">Join TripPlanner and start planning</p>
+          <p className="text-[var(--text-sm)] text-[var(--color-text-secondary)] mt-1 mb-6 text-center">Join Trip Planner and start planning</p>
           <form onSubmit={handleRegister}>
             <FormField label="Name" htmlFor="name">
               <Input id="name" name="name" type="text" placeholder="Your name" autoComplete="name" required value={name} onChange={e => setName(e.target.value)} />

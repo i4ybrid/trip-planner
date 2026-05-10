@@ -39,7 +39,7 @@ export function AppShell({
   hideSidebar,
 }: AppShellProps) {
   return (
-    <div className="flex min-h-screen bg-[var(--color-bg)]">
+    <div className="flex min-h-screen bg-[var(--color-bg)] text-[var(--color-text-primary)]">
       {/* Desktop Sidebar — hidden on mobile and auth routes */}
       {!hideSidebar && <DesktopSidebar />}
 
@@ -60,7 +60,7 @@ export function AppShell({
           className="
             flex-1 px-4 pb-20 pt-4
             lg:px-8 lg:py-6 lg:pb-6
-            max-w-5xl mx-auto w-full
+            max-w-6xl mx-auto w-full
           "
         >
           <div className="page-enter">
