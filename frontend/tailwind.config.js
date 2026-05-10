@@ -56,6 +56,7 @@ module.exports = {
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
         display: ['Playfair Display', 'Georgia', 'serif'],
+        script: ['Caveat', 'cursive'],
       },
     },
   },
