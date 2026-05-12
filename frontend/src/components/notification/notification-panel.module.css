@@ -5,6 +5,7 @@
   width: 380px;
   max-height: 480px;
   background: hsl(var(--card));
+  backdrop-filter: blur(12px);
   border: 1px solid var(--border);
   border-radius: 12px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);

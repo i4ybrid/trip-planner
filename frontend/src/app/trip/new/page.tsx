@@ -85,8 +85,8 @@ export default function NewTripPage() {
                 <Compass className="h-5 w-5" />
               </div>
               <div>
-                <h2 className="font-display text-2xl font-bold text-white">Trip details</h2>
-                <p className="mt-1 text-sm text-white/70">
+                <h2 className="font-display text-2xl font-bold text-glass">Trip details</h2>
+                <p className="mt-1 text-sm text-glass-muted">
                   Keep this lightweight. You can tune dates, milestones, and payments after creation.
                 </p>
               </div>
@@ -152,8 +152,8 @@ export default function NewTripPage() {
                   <Users className="h-5 w-5" />
                 </div>
                 <div>
-                  <h2 className="font-display text-xl font-bold text-white">Invite style</h2>
-                  <p className="mt-1 text-sm text-white/70">Choose how people join from invite links.</p>
+                  <h2 className="font-display text-xl font-bold text-glass">Invite style</h2>
+                  <p className="mt-1 text-sm text-glass-muted">Choose how people join from invite links.</p>
                 </div>
               </div>
 
@@ -197,7 +197,7 @@ export default function NewTripPage() {
                           {option.title}
                           {selected && <Check className="h-4 w-4 text-white" />}
                         </span>
-                        <span className="mt-1 block text-sm leading-5 text-white/70">{option.description}</span>
+                        <span className="mt-1 block text-sm leading-5 text-glass-muted">{option.description}</span>
                       </span>
                     </button>
                   );
@@ -215,8 +215,8 @@ export default function NewTripPage() {
                     <Radio className="h-4 w-4" />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="font-semibold text-white">Create public event</span>
-                    <span className="mt-1 block text-sm leading-5 text-white/70">
+                    <span className="font-semibold text-glass">Create public event</span>
+                    <span className="mt-1 block text-sm leading-5 text-glass-muted">
                       Use the event workflow for a promoted public listing.
                     </span>
                   </span>
@@ -232,18 +232,18 @@ export default function NewTripPage() {
             </div>
 
             <div className="rounded-lg border border-white/20 bg-white/14 p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/70">Next up</p>
-              <div className="mt-4 space-y-3 text-sm text-white/70">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-glass-muted">Next up</p>
+              <div className="mt-4 space-y-3 text-sm text-glass-muted">
                 <p className="flex gap-2">
-                  <Plane className="mt-0.5 h-4 w-4 shrink-0 text-white/80" />
+                  <Plane className="mt-0.5 h-4 w-4 shrink-0 text-glass-muted" />
                   Add activities and collect votes.
                 </p>
                 <p className="flex gap-2">
-                  <CalendarDays className="mt-0.5 h-4 w-4 shrink-0 text-white/80" />
+                  <CalendarDays className="mt-0.5 h-4 w-4 shrink-0 text-glass-muted" />
                   Milestones generate once dates are set.
                 </p>
                 <p className="flex gap-2">
-                  <Users className="mt-0.5 h-4 w-4 shrink-0 text-white/80" />
+                  <Users className="mt-0.5 h-4 w-4 shrink-0 text-glass-muted" />
                   Invite travelers from the trip dashboard.
                 </p>
               </div>
