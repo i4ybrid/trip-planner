@@ -86,6 +86,32 @@ export function PublicBrowseLocationPanel({
     setIsSuggestionsOpen(false);
   };
 
+  const [isLocating, setIsLocating] = useState(false);
+
+  const handleGeolocate = () => {
+    if (!navigator.geolocation) return;
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const result = await api.reverseGeocodeLocation(
+            position.coords.latitude,
+            position.coords.longitude
+          );
+          const loc = result.data;
+          if (loc) {
+            onCityChange(loc.city || '');
+            onStateChange(loc.state || '');
+            onCountryChange(loc.country || 'US');
+          }
+        } catch {} finally {
+          setIsLocating(false);
+        }
+      },
+      () => setIsLocating(false)
+    );
+  };
+
   return (
     <div className={cn(
       'rounded-lg border border-border/70 bg-background/75 backdrop-blur',
@@ -98,10 +124,19 @@ export function PublicBrowseLocationPanel({
             Enter a city, state, or both. A state-only browse shows all promoted events in that state; adding a city brings nearby places forward when coordinates are available.
           </p>
         </div>
-        <div className="flex shrink-0 items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-          <Crosshair className="h-3.5 w-3.5" />
+        <button
+          type="button"
+          onClick={handleGeolocate}
+          disabled={isLocating}
+          className="flex shrink-0 items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary transition-opacity hover:bg-primary/15 disabled:opacity-50"
+        >
+          {isLocating ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Crosshair className="h-3.5 w-3.5" />
+          )}
           {locationHint}
-        </div>
+        </button>
       </div>
 
       <div className={cn(

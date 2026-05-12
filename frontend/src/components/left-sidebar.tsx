@@ -5,7 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { 
   Home, Users, MessageCircle, Settings, Bell, Compass, 
-  Plus, Star
+  Plus
 } from 'lucide-react';
 
 interface NavItem {
@@ -124,8 +124,8 @@ export function LeftSidebar() {
           "flex h-16 items-center border-b border-border/70",
           isMobile && isCollapsed ? "justify-center px-2" : "gap-3 px-6"
         )}>
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground shadow-lg shadow-accent/25">
-            <Star className="h-5 w-5 fill-current" />
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-white/20 bg-white/12 backdrop-blur">
+            <Compass className="h-5 w-5 text-white" />
           </div>
           {!(isMobile && isCollapsed) && (
             <span className="font-display text-xl font-bold whitespace-nowrap">Trip Planner</span>

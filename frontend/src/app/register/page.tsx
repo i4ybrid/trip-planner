@@ -5,7 +5,7 @@ import { AppShell } from '@/components/layout/AppShell';
 import { FormField } from '@/components/ui/FormField';
 import { Input } from '@/components';
 import Link from 'next/link';
-import { ArrowRight, Eye, EyeOff, Loader, Star } from 'lucide-react';
+import { ArrowRight, Eye, EyeOff, Loader, Compass } from 'lucide-react';
 import React, { useState } from 'react';
 
 export default function RegisterPage() {
@@ -61,8 +61,8 @@ export default function RegisterPage() {
     <AppShell hideTopBar hideBottomBar hideSidebar>
       <div className="flex items-center justify-center min-h-[calc(100vh-64px)]">
         <div className="w-full max-w-sm rounded-[var(--radius-lg)] bg-[var(--color-surface)] border border-[var(--color-border)] shadow-[var(--shadow-overlay)] p-6 sm:p-8">
-          <div className="w-10 h-10 rounded-[var(--radius-md)] bg-[var(--color-accent)] flex items-center justify-center mx-auto">
-            <Star className="h-5 w-5 fill-white text-white" />
+          <div className="w-10 h-10 rounded-[var(--radius-md)] flex items-center justify-center mx-auto border border-white/20 bg-white/12 backdrop-blur">
+            <Compass className="h-5 w-5 text-white" />
           </div>
           <h1 className="text-[var(--text-xl)] font-semibold text-[var(--color-text-primary)] mt-6 text-center">Create your account</h1>
           <p className="text-[var(--text-sm)] text-[var(--color-text-secondary)] mt-1 mb-6 text-center">Join Trip Planner and start planning</p>

@@ -99,12 +99,13 @@ body {
     --input: 38 33% 88%;
     --ring: 14 87% 58%;
     
-    /* Status Colors */
+/* Status Colors */
     --success: 142 60% 45%;
     --warning: 38 80% 55%;
     --error: 0 70% 50%;
     --info: 200 70% 50%;
-    
+    --destructive: 0 70% 50%;
+
     /* Radius */
     --radius: 0.5rem;
   }
@@ -167,13 +168,14 @@ body {
     --warning: 35 70% 50%;
     --error: 0 60% 50%;
     --info: 200 60% 50%;
-    
+    --destructive: 0 70% 50%;
+
     /* Radius */
     --radius: 0.5rem;
   }
 
-  * {
-    @apply border-border;
+  /* ===========================
+     DARK THEME
   }
   
   body {

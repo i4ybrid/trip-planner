@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, usePathname } from 'next/navigation';
-import { Clock, MessageCircle, Wallet, Images, Star, Map } from 'lucide-react';
+import { Clock, MessageCircle, Wallet, Images, Compass, Map } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export interface Tab {
@@ -13,7 +13,7 @@ export interface Tab {
 
 const defaultIconMap: Record<string, React.ReactNode> = {
   overview: <Map className="h-4 w-4 text-current" />,
-  activities: <Star className="h-4 w-4 text-current" />,
+  activities: <Compass className="h-4 w-4 text-current" />,
   timeline: <Clock className="h-4 w-4 text-current" />,
   chat: <MessageCircle className="h-4 w-4 text-current" />,
   payments: <Wallet className="h-4 w-4 text-current" />,
@@ -36,7 +36,7 @@ export function Tabs({ tabs, basePath, iconMap = defaultIconMap, className }: Ta
   return (
     <nav
       className={cn(
-        "flex w-fit overflow-hidden rounded-t-lg bg-[#008c95] text-xs font-bold uppercase tracking-[0.12em] text-white shadow-xl",
+        "flex w-full overflow-x-auto rounded-t-lg bg-[#008c95] text-xs font-bold uppercase tracking-[0.12em] text-white shadow-xl sm:w-fit",
         className
       )}
     >
@@ -46,14 +46,14 @@ export function Tabs({ tabs, basePath, iconMap = defaultIconMap, className }: Ta
           onClick={() => router.push(`${basePath}${tab.href}`)}
           aria-current={currentTab === tab.id ? 'page' : undefined}
           className={cn(
-            "flex items-center gap-2 px-5 py-3 transition hover:bg-white/15",
+            "flex items-center gap-2 px-3 py-3 transition hover:bg-white/15 sm:px-5",
             currentTab === tab.id
               ? "bg-white/15 text-white"
               : "text-white/75 hover:text-white"
           )}
         >
           {iconMap[tab.id] || tab.icon}
-          {tab.label}
+          <span className="max-sm:hidden">{tab.label}</span>
         </button>
       ))}
     </nav>

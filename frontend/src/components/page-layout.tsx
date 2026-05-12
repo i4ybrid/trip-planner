@@ -1,15 +1,14 @@
 'use client';
 
 import { ReactNode } from 'react';
-import { LeftSidebar } from '@/components/left-sidebar';
-import { AppHeader } from '@/components/app-header';
+import { NavigationBar } from '@/components/navigation/NavigationBar';
 
 interface PageLayoutProps {
   children: ReactNode;
   title?: string;
   showBack?: boolean;
   onBack?: () => void;
-  actions?: ReactNode;
+  actions?: React.ReactNode;
   className?: string;
 }
 
@@ -22,15 +21,14 @@ export function PageLayout({
   className 
 }: PageLayoutProps) {
   return (
-    <div className="bg-background">
-      <LeftSidebar />
-      <AppHeader 
+    <div className="bg-gradient-farmhouse">
+      <NavigationBar 
         title={title}
         showBack={showBack}
         onBack={onBack}
         actions={actions}
       />
-      <div className={`ml-sidebar ${className || 'px-6 pb-24 pt-6 lg:pb-6'}`}>
+      <div className={className || 'px-6 pb-24 pt-6 lg:pb-6'}>
         {children}
       </div>
     </div>

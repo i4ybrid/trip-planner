@@ -114,19 +114,19 @@ export function getInitials(name: string): string {
 
 export function getStatusColor(status: string): string {
   const colors: Record<string, string> = {
-    IDEA: 'bg-gray-100 text-gray-800',
-    PLANNING: 'bg-blue-100 text-blue-800',
-    CONFIRMED: 'bg-green-100 text-green-800',
-    HAPPENING: 'bg-purple-100 text-purple-800',
-    COMPLETED: 'bg-gray-100 text-gray-600',
-    CANCELLED: 'bg-red-100 text-red-800',
-    INVITED: 'bg-yellow-100 text-yellow-800',
-    DECLINED: 'bg-red-100 text-red-800',
-    MAYBE: 'bg-orange-100 text-orange-800',
-    REMOVED: 'bg-gray-100 text-gray-500',
+    IDEA: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200',
+    PLANNING: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+    CONFIRMED: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+    HAPPENING: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
+    COMPLETED: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300',
+    CANCELLED: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+    INVITED: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
+    DECLINED: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+    MAYBE: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
+    REMOVED: 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400',
     PAID: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
   };
-  return colors[status] || 'bg-gray-100 text-gray-800';
+  return colors[status] || 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
 }
 
 export function getRelativeTime(date: string | Date): string {

@@ -4,8 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { useSearchParams } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardContent, Button, Input, Label, Avatar } from '@/components';
-import { LeftSidebar } from '@/components/left-sidebar';
-import { AppHeader } from '@/components/app-header';
+import { NavigationBar } from '@/components/navigation/NavigationBar';
 import { Mail, Lock, Bell, Wallet, Save, Trash2, Plus, Check, MessageSquare, Smartphone, Camera, Image, Loader2, Clock, BellOff, Crosshair, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { api } from '@/services/api';
@@ -416,11 +415,9 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-theme-gradient">
-      <LeftSidebar />
-      
-      <AppHeader title="Settings" />
+      <NavigationBar title="Settings" />
 
-      <main className="ml-sidebar px-6 pb-24 pt-6 lg:pb-6">
+      <main className="px-6 pb-24 pt-6 lg:pb-6">
         <div className="mx-auto max-w-4xl">
 
           {error && (

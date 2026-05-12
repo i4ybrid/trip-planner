@@ -2,8 +2,7 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { LeftSidebar } from '@/components/left-sidebar';
-import { AppHeader } from '@/components/app-header';
+import { NavigationBar } from '@/components/navigation/NavigationBar';
 import { Tabs } from '@/components/tabs';
 import { api } from '@/services/api';
 import { Trip, TripMember } from '@/types';
@@ -61,18 +60,17 @@ export default function TripLayout({
 
   return (
     <div className="min-h-screen bg-gradient-farmhouse">
-      <LeftSidebar />
-      <AppHeader 
+      <NavigationBar 
         title={trip?.name || `Trip ${tripId}`}
       />
 
-      <div className="ml-sidebar border-b border-white/55">
+      <div className="border-b border-white/55">
         <div className="mx-auto max-w-6xl">
           <Tabs tabs={visibleTabs} basePath={`/trip/${tripId}`} />
         </div>
       </div>
 
-      <main className="ml-sidebar px-4 pb-24 pt-5 sm:px-6 lg:px-8 lg:pb-8">
+      <main className="px-4 pb-24 pt-5 sm:px-6 lg:px-8 lg:pb-8">
         <div className="mx-auto max-w-6xl">
           {children}
         </div>

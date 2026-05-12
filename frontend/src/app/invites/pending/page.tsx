@@ -7,8 +7,7 @@ import { ArrowLeft, Users, Check, X, MapPin, Calendar, Loader2 } from 'lucide-re
 import { api } from '@/services/api';
 import { Invite } from '@/types';
 import { Button } from '@/components';
-import { LeftSidebar } from '@/components/left-sidebar';
-import { AppHeader } from '@/components/app-header';
+import { NavigationBar } from '@/components/navigation/NavigationBar';
 import styles from './page.module.css';
 import { logger } from '@/lib/logger';
 
@@ -70,9 +69,8 @@ export default function PendingInvitesPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-theme-gradient">
-        <LeftSidebar />
-        <AppHeader />
-        <main className="ml-sidebar px-6 pb-24 pt-6 lg:pb-6">
+        <NavigationBar />
+        <main className="px-6 pb-24 pt-6 lg:pb-6">
           <div className="mx-auto max-w-2xl">
             <div className={styles.loading}>
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -86,10 +84,9 @@ export default function PendingInvitesPage() {
 
   return (
     <div className="min-h-screen bg-theme-gradient">
-      <LeftSidebar />
-      <AppHeader />
+      <NavigationBar />
 
-      <main className="ml-sidebar px-6 pb-24 pt-6 lg:pb-6">
+      <main className="px-6 pb-24 pt-6 lg:pb-6">
         <div className="mx-auto max-w-2xl">
           <div className={styles.header}>
             <Link href="/dashboard" className={styles.backLink}>

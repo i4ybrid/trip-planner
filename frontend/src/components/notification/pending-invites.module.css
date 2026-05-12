@@ -148,12 +148,12 @@
 }
 
 .acceptButton {
-  background: #22c55e;
-  color: white;
+  background: hsl(var(--success));
+  color: hsl(var(--foreground));
 }
 
 .acceptButton:hover:not(:disabled) {
-  background: #16a34a;
+  background: hsl(var(--success) / 0.85);
 }
 
 .declineButton {

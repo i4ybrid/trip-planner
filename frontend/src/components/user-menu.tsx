@@ -107,7 +107,7 @@ export function UserMenu() {
           />
           
           {/* Dropdown menu */}
-          <div className="absolute right-0 mt-2 w-56 rounded-lg border border-border bg-popover py-2 shadow-lg z-50">
+          <div className="absolute right-0 mt-2 w-56 rounded-lg border border-[#c4c0b8] bg-popover py-2 shadow-lg shadow-black/10 z-50">
             {/* User info - show if we have displayUser, otherwise hide this section */}
             {displayUser && (
               <div className="border-b border-border px-4 pb-3 mb-2">

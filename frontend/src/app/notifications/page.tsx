@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Bell, Check, CheckCheck, Trash2, Filter, Loader2 } from 'lucide-react';
 import { api } from '@/services/api';
 import { Notification, NotificationCategory } from '@/types';
-import { AppHeader } from '@/components/app-header';
+import { NavigationBar } from '@/components/navigation/NavigationBar';
 import { Button } from '@/components/ui/button';
 import styles from './notifications.module.css';
 
@@ -178,7 +178,7 @@ export default function NotificationsPage() {
 
   return (
     <div>
-      <AppHeader title="Notifications"
+      <NavigationBar title="Notifications"
         actions={<div className="flex items-center gap-2">{unreadCount > 0 && <Button variant="ghost" size="sm" onClick={handleMarkAllAsRead}><CheckCheck size={16} className="mr-1" />Mark all read</Button>}</div>}
       />
       <main className={styles.main}>

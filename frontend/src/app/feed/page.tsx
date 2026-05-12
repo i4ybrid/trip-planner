@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { LeftSidebar } from '@/components/left-sidebar';
-import { AppHeader } from '@/components/app-header';
+import { NavigationBar } from '@/components/navigation/NavigationBar';
 import { Bell, Heart, MessageCircle, Share2, MapPin, DollarSign, Users, Filter, Flag } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -78,9 +77,8 @@ export default function FeedPage() {
 
   return (
     <div className="min-h-screen bg-gradient-farmhouse text-foreground">
-      <LeftSidebar />
-      <AppHeader title="Activity Feed" />
-      <main className="ml-sidebar px-4 pb-24 pt-6 sm:px-6 lg:pb-8">
+      <NavigationBar title="Activity Feed" />
+      <main className="px-4 pb-24 pt-6 sm:px-6 lg:pb-8">
         <div className="mx-auto max-w-5xl space-y-6">
           <section className="rounded-lg border border-border/70 bg-card/85 p-5 shadow-[var(--travel-card-shadow)] backdrop-blur md:p-7">
             <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">

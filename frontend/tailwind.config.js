@@ -46,6 +46,7 @@ module.exports = {
         success: 'hsl(var(--success))',
         warning: 'hsl(var(--warning))',
         error: 'hsl(var(--error))',
+        destructive: 'hsl(var(--destructive))',
         info: 'hsl(var(--info))',
       },
       borderRadius: {

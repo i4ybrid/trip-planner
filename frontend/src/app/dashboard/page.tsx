@@ -12,13 +12,12 @@ import {
   Loader2,
   Mail,
   MapPin,
-  Menu,
   Plane,
   Plus,
   Search,
   ShieldCheck,
-  Star,
   Waves,
+  X,
 } from 'lucide-react';
 import { BottomTabBar } from '@/components/layout/BottomTabBar';
 import { PublicBrowseLocationPanel } from '@/components/browse/public-browse-location-panel';
@@ -162,7 +161,6 @@ export default function DashboardPage() {
   const [browseCountry, setBrowseCountry] = useState('US');
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
 
-  // Pre-fill browse from user profile
   useEffect(() => {
     async function loadProfileLocation() {
       try {
@@ -215,17 +213,14 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-stone-100">
       <header className="absolute left-0 right-0 top-0 z-30">
         <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 text-white sm:px-6 lg:px-8">
-          <button
-            aria-label="Open menu"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/25 bg-white/10 backdrop-blur lg:hidden"
-          >
-            <Menu className="h-5 w-5" />
-          </button>
+          
           <button
             onClick={() => router.push('/dashboard')}
             className="flex items-center gap-2 text-left"
           >
-            <Star className="h-8 w-8 fill-[#008c95] text-[#008c95]" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/20 bg-white/12 backdrop-blur">
+              <Compass className="h-6 w-6 text-white" />
+            </div>
             <span className="font-display text-2xl font-bold leading-none">
               Trip Planner
             </span>
@@ -244,6 +239,8 @@ export default function DashboardPage() {
           </div>
         </div>
       </header>
+
+      
 
       <main className="min-h-screen bg-gradient-farmhouse pb-24 lg:pb-0">
         <section className="relative min-h-[720px] overflow-hidden text-white sm:min-h-[760px] lg:min-h-[820px] xl:min-h-[900px]">
@@ -328,268 +325,6 @@ export default function DashboardPage() {
                 </div>
               </aside>
             </div>
-
-            <div className="mx-auto mt-10 w-full max-w-4xl lg:max-w-6xl">
-              <div className="mx-auto flex w-fit overflow-hidden rounded-t-lg bg-[#008c95] text-xs font-bold uppercase tracking-[0.12em] text-white shadow-xl">
-                {['Flights', 'Hotels', 'Tours'].map((tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => router.push(tab === 'Tours' ? '/trip/new' : '/browse')}
-                    className="px-5 py-3 transition hover:bg-white/15"
-                  >
-                    {tab}
-                  </button>
-                ))}
-              </div>
-              <div className="grid gap-3 rounded-lg border border-white/55 bg-white/88 p-3 text-left text-[#54615f] shadow-2xl backdrop-blur md:grid-cols-[1fr_1fr_1fr_1fr_auto] md:rounded-t-none lg:p-4">
-                {[
-                  ['From', 'Where to?'],
-                  ['To', 'Destination'],
-                  ['Depart', 'Select dates'],
-                  ['Travelers', '2 adults'],
-                ].map(([label, value]) => (
-                  <button
-                    key={label}
-                    onClick={() => router.push('/browse')}
-                    className="flex min-h-16 items-center gap-3 rounded-md px-3 hover:bg-[#e7f7f5] lg:min-h-20"
-                  >
-                    <MapPin className="h-4 w-4 text-[#008c95]" />
-                    <span>
-                      <span className="block text-xs font-bold uppercase tracking-[0.12em] text-[#7c8b88]">
-                        {label}
-                      </span>
-                      <span className="block text-sm font-semibold text-[#20312f]">
-                        {value}
-                      </span>
-                    </span>
-                  </button>
-                ))}
-                <button
-                  onClick={() => router.push('/browse')}
-                  aria-label="Search packages"
-                  className="flex min-h-16 items-center justify-center rounded-md bg-[#008c95] px-5 text-white shadow-lg shadow-[#008c95]/20 transition hover:bg-[#007681] lg:min-h-20"
-                >
-                  <Search className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="bg-stone-100">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            {error && (
-              <div className="mb-6 rounded-lg border border-red-200 bg-red-50/95 p-4 text-sm font-semibold text-red-700">
-                {error}
-              </div>
-            )}
-
-            <PendingInvites onInviteProcessed={fetchTrips} />
-
-            <div className="mt-10 text-center">
-              <h2 className="font-script text-4xl font-semibold text-[#20312f]">
-                Browse Events
-              </h2>
-              <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-[#6d7a78]">
-                Find public events happening near you or anywhere in the world.
-              </p>
-            </div>
-            <div className="mt-8 rounded-lg border border-white/55 bg-white/88 p-4 text-left text-[#54615f] shadow-2xl backdrop-blur">
-              <PublicBrowseLocationPanel
-                city={browseCity}
-                state={browseState}
-                country={browseCountry}
-                onCityChange={setBrowseCity}
-                onStateChange={setBrowseState}
-                onCountryChange={setBrowseCountry}
-                onClearLocation={() => {
-                  setBrowseCity('');
-                  setBrowseState('');
-                  setBrowseCountry('US');
-                }}
-              />
-            </div>
-            <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {[
-                { label: 'Use my location', icon: Crosshair, action: handleUseMyLocation, loading: isLoadingLocation },
-                { label: browseCity || browseState || 'Any location', icon: MapPin, action: () => router.push(`/browse${browseCity || browseState ? `?city=${encodeURIComponent(browseCity)}&state=${encodeURIComponent(browseState)}&country=${encodeURIComponent(browseCountry)}` : ''}`) },
-              ].map(({ label, icon: Icon, action, loading }) => (
-                <button
-                  key={label}
-                  onClick={action}
-                  className="flex items-center gap-3 rounded-lg bg-white/80 px-4 py-3 text-left text-sm font-semibold text-[#20312f] shadow-lg transition hover:bg-white"
-                >
-                  {loading ? (
-                    <Loader2 className="h-5 w-5 animate-spin text-[#008c95]" />
-                  ) : (
-                    <Icon className="h-5 w-5 text-[#008c95]" />
-                  )}
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="relative min-h-[420px] overflow-hidden sm:min-h-[560px]">
-          <img
-            src="https://images.unsplash.com/photo-1518509562904-e7ef99cdcc86?auto=format&fit=crop&w=1800&q=85"
-            alt=""
-            className="absolute inset-0 h-full w-full object-cover"
-          />
-          <div className="absolute inset-0 bg-black/10" />
-          <button
-            onClick={() => router.push('/browse')}
-            aria-label="Browse travel experiences"
-            className="absolute left-1/2 top-1/2 flex h-24 w-24 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-white bg-white/10 text-white backdrop-blur transition hover:scale-105 sm:h-32 sm:w-32"
-          >
-            <Plane className="h-10 w-10" />
-          </button>
-        </section>
-
-        <section className="bg-[#f7fbfa] py-16 sm:py-20">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <h2 className="text-center font-script text-4xl font-semibold">
-              Why Us?
-            </h2>
-            <div className="mt-8 grid gap-5 md:grid-cols-3">
-              {reasons.map(({ Icon, title, copy }) => (
-                <article
-                  key={title}
-                  className="min-h-56 rounded-lg border border-[#dce8e5] bg-white/76 p-8 text-center shadow-lg shadow-[#0d4e5b]/5 backdrop-blur"
-                >
-                  <Icon className="mx-auto h-7 w-7 text-[#008c95]" />
-                  <h3 className="mt-5 font-display text-lg font-bold uppercase tracking-[0.08em]">
-                    {title}
-                  </h3>
-                  <p className="mx-auto mt-3 max-w-xs text-sm leading-6 text-[#6d7a78]">
-                    {copy}
-                  </p>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="bg-[#eef8f7] py-14 sm:py-20">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <h2 className="text-center font-script text-4xl font-semibold">
-              Have an Adventure Today
-            </h2>
-            <div className="mt-8 grid gap-4 lg:grid-cols-3">
-              {adventures.map((adventure, index) => (
-                <article
-                  key={adventure.title}
-                  className={`group relative min-h-60 overflow-hidden rounded-lg bg-[#dbecea] shadow-xl shadow-[#0d4e5b]/10 ${
-                    index === 0 ? 'lg:row-span-2 lg:min-h-[500px]' : ''
-                  }`}
-                >
-                  <img
-                    src={adventure.image}
-                    alt={adventure.title}
-                    className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-x-4 bottom-4 flex items-end justify-between gap-4 bg-white/86 p-4 backdrop-blur">
-                    <div>
-                      <h3 className="font-display text-base font-bold">
-                        {adventure.title}
-                      </h3>
-                      <p className="mt-1 text-xs leading-5 text-[#6d7a78]">
-                        Add this experience to your next shared itinerary.
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => router.push('/trip/new')}
-                      aria-label={`Plan ${adventure.title}`}
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#008c95] text-[#008c95]"
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </button>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="bg-[#f7fbfa] py-16 sm:py-20">
-          <div className="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:px-8">
-            <div className="rounded-lg border border-[#dce8e5] bg-white/78 p-8 shadow-xl shadow-[#0d4e5b]/8 backdrop-blur sm:p-12">
-              <Mail className="mx-auto h-8 w-8 text-[#008c95]" />
-              <h2 className="mt-5 text-center font-display text-2xl font-bold uppercase tracking-[0.08em]">
-                Newsletter
-              </h2>
-              <p className="mx-auto mt-4 max-w-sm text-center text-sm leading-6 text-[#6d7a78]">
-                Get seasonal destination ideas and planning prompts for your
-                travel crew.
-              </p>
-              <div className="mt-8 space-y-4">
-                <input
-                  aria-label="Name"
-                  placeholder="Name"
-                  className="h-12 w-full rounded-none border-0 bg-[#edf5f3] px-4 text-sm outline-none ring-1 ring-transparent focus:ring-[#008c95]"
-                />
-                <input
-                  aria-label="Email"
-                  placeholder="Email"
-                  className="h-12 w-full rounded-none border-0 bg-[#edf5f3] px-4 text-sm outline-none ring-1 ring-transparent focus:ring-[#008c95]"
-                />
-              </div>
-              <button className="mt-8 w-full rounded-md bg-[#008c95] px-5 py-3 text-sm font-bold uppercase tracking-[0.12em] text-white transition hover:bg-[#007681]">
-                Subscribe
-              </button>
-            </div>
-
-            <div className="flex flex-col justify-center">
-              <h2 className="font-script text-4xl font-semibold">
-                Award Winning
-              </h2>
-              <p className="mt-3 max-w-xl text-sm leading-6 text-[#6d7a78]">
-                Discover top-rated categories and turn inspiration into a
-                coordinated group plan.
-              </p>
-              <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3">
-                {awards.map((award) => (
-                  <button
-                    key={award.title}
-                    onClick={() => router.push('/browse')}
-                    className="grid grid-cols-[82px_1fr] items-center gap-3 text-left"
-                  >
-                    <img
-                      src={award.image}
-                      alt={award.title}
-                      className="h-20 w-20 rounded-sm object-cover"
-                    />
-                    <span>
-                      <span className="block text-sm font-bold">
-                        {award.title}
-                      </span>
-                      <span className="mt-1 block text-xs text-[#7c8b88]">
-                        Top 10 {award.title}
-                      </span>
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="bg-white/80 py-12 text-center">
-          <div className="mx-auto max-w-3xl px-4">
-            <h2 className="font-script text-4xl font-semibold">
-              Looking for an experience?
-            </h2>
-            <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-[#6d7a78]">
-              Browse public events or create a private trip board for your
-              friends.
-            </p>
-            <button
-              onClick={() => router.push(hasTrips ? '/browse' : '/trip/new')}
-              className="mt-5 rounded-md bg-[#008c95] px-6 py-3 text-xs font-bold uppercase tracking-[0.14em] text-white shadow-lg shadow-[#008c95]/20 transition hover:bg-[#007681]"
-            >
-              {hasTrips ? 'Browse Events' : 'Create a Trip'}
-            </button>
           </div>
         </section>
 
@@ -701,7 +436,9 @@ export default function DashboardPage() {
       <footer className="bg-stone-100 px-4 py-14 text-center text-stone-700">
         <div className="mx-auto max-w-4xl">
           <div className="flex items-center justify-center gap-3">
-            <Star className="h-16 w-16 fill-[#008c95] text-[#008c95]" />
+            <div className="flex h-16 w-16 items-center justify-center rounded-xl border border-white/20 bg-white/12 backdrop-blur">
+              <Compass className="h-10 w-10 text-white" />
+            </div>
             <span className="font-display text-5xl font-bold">Trip Planner</span>
           </div>
           <nav className="mt-8 flex flex-wrap justify-center gap-x-10 gap-y-3 text-sm font-semibold">

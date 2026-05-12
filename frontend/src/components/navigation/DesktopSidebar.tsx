@@ -50,7 +50,7 @@ export function DesktopSidebar() {
         <div
           className="w-10 h-10 rounded-[var(--radius-md)] bg-[var(--color-accent)] flex items-center justify-center flex-shrink-0 shadow-lg shadow-[var(--color-accent)]/20"
         >
-          <Star size={22} className="fill-white text-white" />
+          <Compass size={22} className="fill-white text-white" />
         </div>
 
         {expanded && (

@@ -6,7 +6,7 @@ import { OAuthButton } from '@/components/ui/OAuthButton';
 import { FormField } from '@/components/ui/FormField';
 import { Input } from '@/components';
 import Link from 'next/link';
-import { ArrowRight, Eye, EyeOff, Star } from 'lucide-react';
+import { ArrowRight, Compass, Eye, EyeOff } from 'lucide-react';
 import React, { useState, useRef } from 'react';
 
 export default function LoginPage() {
@@ -73,12 +73,14 @@ export default function LoginPage() {
           <div
             className="
               w-10 h-10 rounded-[var(--radius-md)]
-              bg-[var(--color-accent)]
               flex items-center justify-center
               mx-auto
+              border border-white/20
+              bg-white/12
+              backdrop-blur
             "
           >
-            <Star className="h-5 w-5 fill-white text-white" />
+            <Compass className="h-5 w-5 text-white" />
           </div>
 
           {/* Heading */}
