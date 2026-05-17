@@ -241,7 +241,7 @@ export default function DashboardPage() {
 
       
 
-      <main className="min-h-screen pt-16">
+      <main className="min-h-screen pt-20">
         <section className="relative min-h-[480px] sm:min-h-[520px] lg:min-h-[580px]">
           <div className="relative mx-auto flex max-w-[1500px] flex-col justify-start px-4 sm:px-6 lg:px-10">
             <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_380px] xl:grid-cols-[minmax(0,1fr)_430px]">
@@ -321,37 +321,8 @@ export default function DashboardPage() {
 
         <section className="bg-transparent py-14 lg:py-20">
           <div className="mx-auto max-w-[1500px] px-4 sm:px-6 lg:px-10">
-            <div className="grid gap-8 xl:grid-cols-[300px_minmax(0,1fr)]">
-              <aside className="hidden xl:block">
-                <div className="sticky top-6 rounded-lg border border-[#dce8e5] bg-white/82 p-6 shadow-xl shadow-[#0d4e5b]/8 backdrop-blur">
-                  <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#008c95]">
-                    Workspace
-                  </p>
-                  <h2 className="mt-3 font-display text-3xl font-bold leading-tight">
-                    Your trip command center
-                  </h2>
-                  <p className="mt-3 text-sm leading-6 text-[#6d7a78]">
-                    Desktop mode gives planning room for trip cards, quick
-                    actions, and status at a glance.
-                  </p>
-                  <div className="mt-6 space-y-3">
-                    {desktopQuickActions.map(({ label, href, Icon }) => (
-                      <button
-                        key={href}
-                        onClick={() => router.push(href)}
-                        className="flex w-full items-center gap-3 rounded-md border border-[#dce8e5] bg-[#f7fbfa] px-4 py-3 text-left text-sm font-bold text-[#20312f] transition hover:border-[#008c95] hover:text-[#008c95]"
-                      >
-                        <Icon className="h-4 w-4" />
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </aside>
-
-              <div>
-                <div className="mb-6 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
-                  <div>
+            <div className="mb-6 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+                <div>
                     <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#008c95]">
                       Your Trips
                     </p>
@@ -418,8 +389,6 @@ export default function DashboardPage() {
                     </div>
                   </div>
                 )}
-              </div>
-            </div>
           </div>
         </section>
       </main>
