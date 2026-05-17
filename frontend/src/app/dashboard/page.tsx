@@ -244,14 +244,6 @@ export default function DashboardPage() {
 
       <main className="min-h-screen bg-gradient-farmhouse pb-24 lg:pb-0">
         <section className="relative min-h-[720px] overflow-hidden text-white sm:min-h-[760px] lg:min-h-[820px] xl:min-h-[900px]">
-          <img
-            src={heroImage}
-            alt=""
-            className="absolute inset-0 h-full w-full object-cover"
-          />
-          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(2,38,45,0.35)_0%,rgba(2,38,45,0.08)_42%,rgba(2,38,45,0.42)_100%)]" />
-          <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#f7fbfa] to-transparent" />
-
           <div className="relative mx-auto flex min-h-[720px] max-w-[1500px] flex-col justify-center px-4 pt-20 sm:min-h-[760px] sm:px-6 lg:min-h-[820px] lg:px-10 xl:min-h-[900px]">
             <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_380px] xl:grid-cols-[minmax(0,1fr)_430px]">
               <div className="mx-auto max-w-3xl text-center lg:mx-0 lg:text-left">
