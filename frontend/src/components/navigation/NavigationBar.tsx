@@ -16,9 +16,9 @@ interface NavigationBarProps {
 }
 
 const navItems = [
-  { label: 'Dashboard', href: '/dashboard' },
-  { label: 'Trips', href: '/trip/new' },
+  { label: 'Home', href: '/dashboard' },
   { label: 'Browse', href: '/browse' },
+  { label: 'Friends', href: '/friends' },
   { label: 'Messages', href: '/messages' },
 ];
 

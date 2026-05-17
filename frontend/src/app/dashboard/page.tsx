@@ -140,7 +140,6 @@ const reasons = [
 const navItems = [
   { label: 'Home', href: '/dashboard' },
   { label: 'Browse', href: '/browse' },
-  { label: 'New Trip', href: '/trip/new' },
   { label: 'Friends', href: '/friends' },
   { label: 'Messages', href: '/messages' },
 ];
@@ -210,29 +209,29 @@ export default function DashboardPage() {
   const hasTrips = trips.length > 0;
 
   return (
-    <div className="min-h-screen bg-stone-100">
-      <header className="absolute left-0 right-0 top-0 z-30">
-        <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 text-white sm:px-6 lg:px-8">
+    <div className="min-h-screen">
+      <header className="absolute left-0 right-0 top-0 z-30 w-full">
+        <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 text-foreground sm:px-6 lg:px-8">
           
           <button
             onClick={() => router.push('/dashboard')}
             className="flex items-center gap-2 text-left"
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/20 bg-white/12 backdrop-blur">
-              <Compass className="h-6 w-6 text-white" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-card backdrop-blur">
+              <Compass className="h-6 w-6 text-foreground" />
             </div>
-            <span className="font-display text-2xl font-bold leading-none">
+            <span className="font-display text-2xl font-bold leading-none text-foreground">
               Trip Planner
             </span>
           </button>
-          <nav className="hidden items-center gap-8 text-sm font-semibold text-white/90 lg:flex">
+          <nav className="hidden items-center gap-8 text-sm font-semibold text-muted-foreground lg:flex">
             {navItems.map((item) => (
               <button key={item.href} onClick={() => router.push(item.href)}>
                 {item.label}
               </button>
             ))}
           </nav>
-          <div className="flex items-center gap-2 rounded-full border border-white/20 bg-white/12 px-2 py-1 backdrop-blur">
+          <div className="flex items-center gap-2 rounded-full border border-border bg-card px-2 py-1 backdrop-blur">
             <ThemeSwitcher />
             <NotificationBell />
             <UserMenu />
@@ -242,18 +241,18 @@ export default function DashboardPage() {
 
       
 
-      <main className="min-h-screen bg-gradient-farmhouse pb-24 lg:pb-0">
-        <section className="relative min-h-[720px] overflow-hidden text-white sm:min-h-[760px] lg:min-h-[820px] xl:min-h-[900px]">
+      <main className="min-h-screen">
+        <section className="relative min-h-[720px] sm:min-h-[760px] lg:min-h-[820px] xl:min-h-[900px]">
           <div className="relative mx-auto flex min-h-[720px] max-w-[1500px] flex-col justify-center px-4 pt-20 sm:min-h-[760px] sm:px-6 lg:min-h-[820px] lg:px-10 xl:min-h-[900px]">
             <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_380px] xl:grid-cols-[minmax(0,1fr)_430px]">
               <div className="mx-auto max-w-3xl text-center lg:mx-0 lg:text-left">
-                <p className="mb-4 font-script text-2xl font-semibold text-white drop-shadow md:text-4xl">
+                <p className="mb-4 font-script text-2xl font-semibold text-primary drop-shadow md:text-4xl">
                   Explore the World with us.
                 </p>
-                <h1 className="font-display text-5xl font-bold leading-[0.95] drop-shadow-xl sm:text-6xl lg:text-7xl xl:text-8xl">
+                <h1 className="font-display text-5xl font-bold leading-[0.95] text-foreground sm:text-6xl lg:text-7xl xl:text-8xl">
                   Your Dream Vacation Awaits
                 </h1>
-                <p className="mx-auto mt-5 max-w-xl text-base leading-7 text-white/88 sm:text-lg lg:mx-0">
+                <p className="mx-auto mt-5 max-w-xl text-base leading-7 text-muted-foreground sm:text-lg lg:mx-0">
                   Build beautiful group trips, compare destinations, and keep the
                   whole crew moving from first idea to final booking.
                 </p>
@@ -266,18 +265,18 @@ export default function DashboardPage() {
                   </button>
                   <button
                     onClick={() => router.push('/browse')}
-                    className="rounded-md border border-white/45 bg-white/12 px-6 py-3 text-sm font-bold uppercase tracking-[0.14em] text-white backdrop-blur transition hover:bg-white/20"
+                    className="rounded-md border border-border bg-card px-6 py-3 text-sm font-bold uppercase tracking-[0.14em] text-foreground backdrop-blur transition hover:bg-accent"
                   >
                     Browse Events
                   </button>
                 </div>
               </div>
 
-              <aside className="hidden rounded-lg border border-white/25 bg-white/14 p-5 text-white shadow-2xl shadow-black/20 backdrop-blur-xl lg:block">
-                <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/70">
+              <aside className="hidden rounded-lg border border-border/50 bg-card/60 p-5 shadow-2xl shadow-black/20 backdrop-blur-xl lg:block">
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">
                   Desktop Planner
                 </p>
-                <h2 className="mt-3 font-display text-3xl font-bold">
+                <h2 className="mt-3 font-display text-3xl font-bold text-foreground">
                   Plan faster on a wide canvas.
                 </h2>
                 <div className="mt-6 space-y-3">
@@ -285,7 +284,7 @@ export default function DashboardPage() {
                     <button
                       key={href}
                       onClick={() => router.push(href)}
-                      className="flex w-full items-center justify-between rounded-lg border border-white/18 bg-white/12 px-4 py-3 text-left transition hover:bg-white/20"
+                      className="flex w-full items-center justify-between rounded-lg border border-border bg-card px-4 py-3 text-left transition hover:bg-accent"
                     >
                       <span className="flex items-center gap-3 text-sm font-semibold">
                         <Icon className="h-4 w-4" />
@@ -298,19 +297,19 @@ export default function DashboardPage() {
                 <div className="mt-6 grid grid-cols-3 gap-3 border-t border-white/20 pt-5 text-center">
                   <div>
                     <p className="font-display text-2xl font-bold">{activeTrips.length}</p>
-                    <p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-white/65">
+                    <p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
                       Active
                     </p>
                   </div>
                   <div>
                     <p className="font-display text-2xl font-bold">{pastTrips.length}</p>
-                    <p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-white/65">
+                    <p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
                       Past
                     </p>
                   </div>
                   <div>
                     <p className="font-display text-2xl font-bold">{trips.length}</p>
-                    <p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-white/65">
+                    <p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
                       Total
                     </p>
                   </div>
@@ -320,7 +319,7 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        <section className="bg-[#eef8f7] py-14 lg:py-20">
+        <section className="bg-transparent py-14 lg:py-20">
           <div className="mx-auto max-w-[1500px] px-4 sm:px-6 lg:px-10">
             <div className="grid gap-8 xl:grid-cols-[300px_minmax(0,1fr)]">
               <aside className="hidden xl:block">
@@ -425,13 +424,13 @@ export default function DashboardPage() {
         </section>
       </main>
 
-      <footer className="bg-stone-100 px-4 py-14 text-center text-stone-700">
+      <footer className="bg-transparent px-4 py-14 text-center text-muted-foreground">
         <div className="mx-auto max-w-4xl">
           <div className="flex items-center justify-center gap-3">
-            <div className="flex h-16 w-16 items-center justify-center rounded-xl border border-white/20 bg-white/12 backdrop-blur">
-              <Compass className="h-10 w-10 text-white" />
+            <div className="flex h-16 w-16 items-center justify-center rounded-xl border border-border bg-card shadow">
+              <Compass className="h-10 w-10 text-foreground" />
             </div>
-            <span className="font-display text-5xl font-bold">Trip Planner</span>
+            <span className="font-display text-5xl font-bold text-foreground">Trip Planner</span>
           </div>
           <nav className="mt-8 flex flex-wrap justify-center gap-x-10 gap-y-3 text-sm font-semibold">
             {navItems.map((item) => (
@@ -440,7 +439,7 @@ export default function DashboardPage() {
               </button>
             ))}
           </nav>
-          <p className="mt-8 text-xs text-[#7c8b88]">
+          <p className="mt-8 text-xs text-muted-foreground">
             Copyright 2026 Trip Planner | All Rights Reserved.
           </p>
         </div>

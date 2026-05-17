@@ -21,7 +21,7 @@ export function PageLayout({
   className 
 }: PageLayoutProps) {
   return (
-    <div className="bg-gradient-farmhouse">
+    <div className="min-h-screen">
       <NavigationBar 
         title={title}
         showBack={showBack}

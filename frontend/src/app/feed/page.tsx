@@ -76,7 +76,7 @@ export default function FeedPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-farmhouse text-foreground">
+    <div className="min-h-screen text-foreground">
       <NavigationBar title="Activity Feed" />
       <main className="px-4 pb-24 pt-6 sm:px-6 lg:pb-8">
         <div className="mx-auto max-w-5xl space-y-6">

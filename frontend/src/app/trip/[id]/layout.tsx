@@ -59,7 +59,7 @@ export default function TripLayout({
   const visibleTabs = userRole === 'VIEWER' ? viewerTabs : allTripTabs;
 
   return (
-    <div className="min-h-screen bg-gradient-farmhouse">
+    <div className="min-h-screen">
       <NavigationBar 
         title={trip?.name || `Trip ${tripId}`}
       />
