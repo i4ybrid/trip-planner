@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, usePathname } from 'next/navigation';
-import { Compass } from 'lucide-react';
+import { Compass, MessageCircle } from 'lucide-react';
 import { ThemeSwitcher } from '@/components/theme-switcher';
 import { NotificationBell } from '@/components/notification/notification-bell';
 import { UserMenu } from '@/components/user-menu';

@@ -242,8 +242,8 @@ export default function DashboardPage() {
       
 
       <main className="min-h-screen">
-        <section className="relative min-h-[720px] sm:min-h-[760px] lg:min-h-[820px] xl:min-h-[900px]">
-          <div className="relative mx-auto flex min-h-[720px] max-w-[1500px] flex-col justify-center px-4 pt-20 sm:min-h-[760px] sm:px-6 lg:min-h-[820px] lg:px-10 xl:min-h-[900px]">
+        <section className="relative min-h-[500px] sm:min-h-[560px] lg:min-h-[640px]">
+          <div className="relative mx-auto flex max-w-[1500px] flex-col justify-start px-4 pt-16 sm:min-h-[560px] sm:px-6 lg:min-h-[640px] lg:px-10">
             <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_380px] xl:grid-cols-[minmax(0,1fr)_430px]">
               <div className="mx-auto max-w-3xl text-center lg:mx-0 lg:text-left">
                 <p className="mb-4 font-script text-2xl font-semibold text-primary drop-shadow md:text-4xl">

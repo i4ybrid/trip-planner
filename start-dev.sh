@@ -44,14 +44,16 @@ done
 
 # Start frontend in a screen session
 cd ./frontend
+# Clear Next.js build artifacts to avoid stale code issues
+rm -rf .next
 # Enable polling for Next.js (useful for shared folders/VMs)
 export WATCHPACK_POLLING=true
 if [ "$BUILD_FRONTEND" = true ]; then
     echo "Starting frontend screen session (build + dev)..."
-    screen -dmS frontend bash -c "export WATCHPACK_POLLING=true && (npm run build && npm run dev) 2>&1 | tee ../logs/frontend.log"
+    screen -dmS frontend bash -c "rm -rf .next && export WATCHPACK_POLLING=true && (npm run build && npm run dev) 2>&1 | tee ../logs/frontend.log"
 else
     echo "Starting frontend screen session (dev)..."
-    screen -dmS frontend bash -c "export WATCHPACK_POLLING=true && npm run dev 2>&1 | tee ../logs/frontend.log"
+    screen -dmS frontend bash -c "rm -rf .next && export WATCHPACK_POLLING=true && npm run dev 2>&1 | tee ../logs/frontend.log"
 fi
 
 # Start backend in a screen session
