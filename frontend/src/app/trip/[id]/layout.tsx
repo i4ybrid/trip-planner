@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { NavigationBar } from '@/components/navigation/NavigationBar';
+import { PageLayout } from '@/components/page-layout';
 import { Tabs } from '@/components/tabs';
 import { api } from '@/services/api';
 import { Trip, TripMember } from '@/types';
@@ -59,22 +59,20 @@ export default function TripLayout({
   const visibleTabs = userRole === 'VIEWER' ? viewerTabs : allTripTabs;
 
   return (
-    <div className="min-h-screen">
-      <NavigationBar 
-        title={trip?.name || `Trip ${tripId}`}
-      />
-
-      <div className="border-b border-white/55">
-        <div className="mx-auto max-w-6xl">
+    <PageLayout
+      title={trip?.name || `Trip ${tripId}`}
+      actions={
+        <div className="border-b border-white/55 w-full">
           <Tabs tabs={visibleTabs} basePath={`/trip/${tripId}`} />
         </div>
-      </div>
-
-      <main className="px-4 pb-24 pt-5 sm:px-6 lg:px-8 lg:pb-8">
+      }
+      className="px-0 pb-24 pt-0 sm:pb-8"
+    >
+      <main className="px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-6xl">
           {children}
         </div>
       </main>
-    </div>
+    </PageLayout>
   );
 }

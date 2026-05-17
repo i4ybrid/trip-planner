@@ -1,9 +1,9 @@
 'use client';
 
-import { AppShell } from '@/components/layout/AppShell';
-import { Avatar, Button, Input } from '@/components';
+import { PageLayout } from '@/components/page-layout';
+import { useRouter, useParams } from 'next/navigation';
 import { Send, Paperclip, Smile } from 'lucide-react';
-import { useParams } from 'next/navigation';
+import { Avatar, Button, Input } from '@/components';
 
 // Mock messages for trip-1 (Hawaii) - real API would fetch these
 const MOCK_MESSAGES_Hawaii = [
@@ -22,6 +22,7 @@ const TRIP_1_MEMBERS = [
 ];
 
 export default function ChatPage() {
+  const router = useRouter();
   const params = useParams<{ id: string }>();
   const tripId = params.id;
 
@@ -30,7 +31,7 @@ export default function ChatPage() {
   const members = tripId === 'trip-1' ? TRIP_1_MEMBERS : [];
 
   return (
-    <AppShell title="Group Chat" showBack backHref="/dashboard" hideBottomBar>
+    <PageLayout title="Group Chat" showBack onBack={() => router.push('/dashboard')} className="pb-24 pt-5 sm:pb-8">
       <div className="flex flex-col" style={{ height: 'calc(100dvh - 120px)', maxHeight: 'calc(100dvh - 120px)' }}>
         {/* Member count indicator */}
         <div className="mb-2 text-[var(--text-sm)] text-[var(--color-text-secondary)]">
@@ -105,6 +106,6 @@ export default function ChatPage() {
           </div>
         </div>
       </div>
-    </AppShell>
+    </PageLayout>
   );
 }
