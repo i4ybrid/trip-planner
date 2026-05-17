@@ -2,20 +2,24 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Compass, Home, MessageCircle, Settings } from 'lucide-react';
+import { Compass, Home, MessageCircle, Users } from 'lucide-react';
 
 /** ============================================================
  * BottomTabBar — Mobile Bottom Navigation
  * Shows on all routes EXCEPT immersive trip sub-routes:
  * /trip/[id]/timeline, /trip/[id]/payments,
- * /trip/[id]/chat, /trip/[id]/activities
+ * /trip/[id]/chat, /trip/[id]/activities, /trip/[id]/memories
  * ============================================================ */
+
+interface BottomTabBarProps {
+  unreadCount?: number;
+}
 
 const TABS = [
   { href: '/dashboard', label: 'Home', icon: Home },
-  { href: '/browse', label: 'Packages', icon: Compass },
+  { href: '/browse', label: 'Browse', icon: Compass },
+  { href: '/friends', label: 'Friends', icon: Users },
   { href: '/messages', label: 'Messages', icon: MessageCircle },
-  { href: '/settings', label: 'Settings', icon: Settings },
 ] as const;
 
 // Routes where bottom tab bar should be hidden
@@ -27,7 +31,7 @@ function isImmersiveRoute(pathname: string): boolean {
   return IMMERSIVE_ROUTES.some((regex) => regex.test(pathname));
 }
 
-export function BottomTabBar() {
+export function BottomTabBar({ unreadCount = 0 }: BottomTabBarProps) {
   const pathname = usePathname();
 
   if (isImmersiveRoute(pathname)) {
@@ -49,7 +53,14 @@ export function BottomTabBar() {
             aria-label={label}
             aria-current={isActive ? 'page' : undefined}
           >
-            <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
+            <div className="relative">
+              <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
+              {unreadCount > 0 && label === 'Messages' && (
+                <span className="absolute -right-2 -top-2 flex min-h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white ring-2 ring-card">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </div>
             <span>{label}</span>
           </Link>
         );

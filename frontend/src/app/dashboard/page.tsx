@@ -19,12 +19,12 @@ import {
   Waves,
   X,
 } from 'lucide-react';
-import { BottomTabBar } from '@/components/layout/BottomTabBar';
+import { BottomTabBar } from '@/components/navigation/BottomTabBar';
 import { PublicBrowseLocationPanel } from '@/components/browse/public-browse-location-panel';
 import { NotificationBell } from '@/components/notification/notification-bell';
 import { PendingInvites } from '@/components/notification/pending-invites';
 import { ThemeSwitcher } from '@/components/theme-switcher';
-import { TripCard } from '@/components';
+import { TripCard } from '@/components/trip-card';
 import { UserMenu } from '@/components/user-menu';
 import { useTripStore } from '@/store';
 

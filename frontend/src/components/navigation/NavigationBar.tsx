@@ -5,7 +5,7 @@ import { Compass } from 'lucide-react';
 import { ThemeSwitcher } from '@/components/theme-switcher';
 import { NotificationBell } from '@/components/notification/notification-bell';
 import { UserMenu } from '@/components/user-menu';
-import { BottomTabBar } from '@/components/layout/BottomTabBar';
+import { BottomTabBar } from '@/components/navigation/BottomTabBar';
 
 interface NavigationBarProps {
   title?: string;
