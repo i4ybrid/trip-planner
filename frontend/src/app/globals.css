@@ -215,6 +215,14 @@ body {
     @apply pl-0 lg:pl-20;
   }
 
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+
   /* Glass text: grey with subtle shadow for contrast on glass panels in light mode */
   .text-glass {
     color: var(--color-text-primary);

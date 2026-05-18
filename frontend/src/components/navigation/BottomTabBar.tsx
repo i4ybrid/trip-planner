@@ -7,8 +7,8 @@ import { Compass, Home, MessageCircle, Users } from 'lucide-react';
 /** ============================================================
  * BottomTabBar — Mobile Bottom Navigation
  * Shows on all routes EXCEPT immersive trip sub-routes:
- * /trip/[id]/timeline, /trip/[id]/payments,
- * /trip/[id]/chat, /trip/[id]/activities, /trip/[id]/memories
+ * /trip/[id]/overview, /trip/[id]/timeline, /trip/[id]/payments,
+ * /trip/[id]/chat, /trip/[id]/activities, /trip/[id]/history, /trip/[id]/memories
  * ============================================================ */
 
 interface BottomTabBarProps {
@@ -24,7 +24,7 @@ const TABS = [
 
 // Routes where bottom tab bar should be hidden
 const IMMERSIVE_ROUTES = [
-  /^\/trip\/[^/]+\/(timeline|payments|chat|activities|memories)$/,
+  /^\/trip\/[^/]+\/(overview|timeline|history|payments|chat|activities|memories)$/,
 ];
 
 function isImmersiveRoute(pathname: string): boolean {
