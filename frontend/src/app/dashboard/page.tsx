@@ -272,7 +272,7 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              <aside className="hidden lg:block lg:w-[380px] xl:w-[430px] lg:ml-auto rounded-lg border border-border/50 bg-card/60 p-5 shadow-2xl shadow-black/20 backdrop-blur-xl">
+              <aside className="lg:w-[380px] xl:w-[430px] rounded-lg border border-border/50 bg-card/60 p-5 shadow-2xl shadow-black/20 backdrop-blur-xl">
                 <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">
                   Desktop Planner
                 </p>
