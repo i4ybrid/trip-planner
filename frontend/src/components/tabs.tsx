@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, usePathname } from 'next/navigation';
-import { Clock, History, Images, Map, MessageCircle, Palmtree, Wallet } from 'lucide-react';
+import { Clock, Images, Map, MessageCircle, Palmtree, Wallet } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export interface Tab {
@@ -15,7 +15,6 @@ const defaultIconMap: Record<string, React.ReactNode> = {
   overview: <Map className="h-4 w-4 text-current" />,
   activities: <Palmtree className="h-4 w-4 text-current" />,
   timeline: <Clock className="h-4 w-4 text-current" />,
-  history: <History className="h-4 w-4 text-current" />,
   chat: <MessageCircle className="h-4 w-4 text-current" />,
   payments: <Wallet className="h-4 w-4 text-current" />,
   memories: <Images className="h-4 w-4 text-current" />,

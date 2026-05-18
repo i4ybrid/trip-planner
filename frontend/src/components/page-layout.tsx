@@ -10,6 +10,7 @@ interface PageLayoutProps {
   onBack?: () => void;
   actions?: React.ReactNode;
   className?: string;
+  stickyHeader?: boolean;
 }
 
 export function PageLayout({ 
@@ -18,7 +19,8 @@ export function PageLayout({
   showBack, 
   onBack, 
   actions,
-  className 
+  className,
+  stickyHeader = true,
 }: PageLayoutProps) {
   return (
     <div className="min-h-screen">
@@ -27,6 +29,7 @@ export function PageLayout({
         showBack={showBack}
         onBack={onBack}
         actions={actions}
+        sticky={stickyHeader}
       />
       <div className={className || 'px-6 pb-24 pt-6 lg:pb-6'}>
         {children}

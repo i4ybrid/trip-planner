@@ -14,7 +14,6 @@ const allTripTabs = [
   { id: 'overview', label: 'Overview', href: '/overview' },
   { id: 'activities', label: 'Activities', href: '/activities' },
   { id: 'timeline', label: 'Timeline', href: '/timeline' },
-  { id: 'history', label: 'History', href: '/history' },
   { id: 'chat', label: 'Chat', href: '/chat' },
   { id: 'payments', label: 'Payments', href: '/payments' },
   { id: 'memories', label: 'Memories', href: '/memories' },
@@ -75,6 +74,7 @@ export default function TripLayout({
   return (
     <PageLayout
       title={trip?.name || `Trip ${tripId}`}
+      stickyHeader={false}
       className="px-0 pb-24 pt-0 sm:pb-8"
     >
       <main className="px-4 pt-4 sm:px-6 lg:px-8">

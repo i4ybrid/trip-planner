@@ -13,6 +13,7 @@ interface NavigationBarProps {
   onBack?: () => void;
   actions?: React.ReactNode;
   className?: string;
+  sticky?: boolean;
 }
 
 const navItems = [
@@ -22,13 +23,13 @@ const navItems = [
   { label: 'Messages', href: '/messages' },
 ];
 
-export function NavigationBar({ title, showBack, onBack, actions, className }: NavigationBarProps) {
+export function NavigationBar({ title, showBack, onBack, actions, className, sticky = true }: NavigationBarProps) {
   const router = useRouter();
   const pathname = usePathname();
 
   return (
     <>
-      <header className={`sticky top-0 z-30 w-full ${className || ''}`}>
+      <header className={`${sticky ? 'sticky top-0' : 'relative'} z-30 w-full ${className || ''}`}>
         <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 text-[#20312f] dark:text-white sm:px-6 lg:px-8">
           {/* Brand / Logo */}
           <button
