@@ -244,7 +244,7 @@ export default function DashboardPage() {
       <main className="min-h-screen pt-20">
         <section className="relative min-h-[380px] sm:min-h-[420px] lg:min-h-[480px]">
           <div className="relative mx-auto flex max-w-[1500px] flex-col justify-start px-4 sm:px-6 lg:px-10">
-            <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_380px] xl:grid-cols-[minmax(0,1fr)_430px]">
+            <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_380px] xl:grid-cols-[minmax(0,1fr)_430px]">
               <div className="mx-auto max-w-3xl text-center lg:mx-0 lg:text-left">
                 <p className="mb-4 font-script text-2xl font-semibold text-primary drop-shadow md:text-4xl">
                   Get your friends excited to hang out!
@@ -272,7 +272,7 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              <aside className="rounded-lg border border-border/50 bg-card/60 p-5 shadow-2xl shadow-black/20 backdrop-blur-xl">
+              <aside className="hidden lg:block lg:w-[380px] xl:w-[430px] lg:ml-auto rounded-lg border border-border/50 bg-card/60 p-5 shadow-2xl shadow-black/20 backdrop-blur-xl">
                 <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">
                   Desktop Planner
                 </p>
