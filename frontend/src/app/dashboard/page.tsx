@@ -147,7 +147,7 @@ const navItems = [
 const desktopQuickActions = [
   { label: 'Browse events', href: '/browse', Icon: Compass },
   { label: 'Plan new trip', href: '/trip/new', Icon: Plus },
-  { label: 'Trip calendar', href: '/feed', Icon: CalendarDays },
+  { label: 'Activity feed', href: '/feed', Icon: CalendarDays },
 ];
 
 export default function DashboardPage() {
@@ -242,19 +242,19 @@ export default function DashboardPage() {
       
 
       <main className="min-h-screen pt-20">
-        <section className="relative min-h-[480px] sm:min-h-[520px] lg:min-h-[580px]">
+        <section className="relative min-h-[380px] sm:min-h-[420px] lg:min-h-[480px]">
           <div className="relative mx-auto flex max-w-[1500px] flex-col justify-start px-4 sm:px-6 lg:px-10">
             <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_380px] xl:grid-cols-[minmax(0,1fr)_430px]">
               <div className="mx-auto max-w-3xl text-center lg:mx-0 lg:text-left">
                 <p className="mb-4 font-script text-2xl font-semibold text-primary drop-shadow md:text-4xl">
-                  Explore the World with us.
+                  Get your friends excited to hang out!
                 </p>
-                <h1 className="font-display text-5xl font-bold leading-[0.95] text-foreground sm:text-6xl lg:text-7xl xl:text-8xl">
-                  Your Dream Vacation Awaits
+                <h1 className="font-display text-5xl font-bold leading-[0.95] text-foreground sm:text-5xl lg:text-6xl xl:text-7xl">
+                  Plan with Friends
                 </h1>
                 <p className="mx-auto mt-5 max-w-xl text-base leading-7 text-muted-foreground sm:text-lg lg:mx-0">
-                  Build beautiful group trips, compare destinations, and keep the
-                  whole crew moving from first idea to final booking.
+                  Plan your next outting with your friends. It could be a dinner at a restaurant, a weekend getaway, or a week long trip to Paris!
+                  Get commitment, vote on activities, and split the costs all in this convenient app!
                 </p>
                 <div className="mt-8 hidden items-center gap-3 lg:flex">
                   <button
