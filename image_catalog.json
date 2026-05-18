@@ -680,7 +680,7 @@
   },
   {
     "title": "Stockholm",
-    "filename": "stockholm-sweden.jpg",,
+    "filename": "stockholm-sweden.jpg",
     "synonyms": [
       "country: sweden",
       "stockholm",
@@ -2317,7 +2317,7 @@
   },
   {
     "title": "House Party (2)",
-    "filename": "house-party.jpg",
+    "filename": "house-party-2.jpg",
     "synonyms": [
       "friends",
       "gathering",
@@ -2478,6 +2478,74 @@
     "filename": "hot-tub.jpg",
     "synonyms": [
       "hot tub"
+    ]
+  },
+  {
+    "title": "Skiing",
+    "filename": "skiing.jpg",
+    "synonyms": [
+      "skiing",
+      "snow",
+      "winter sports",
+      "ski resort"
+    ]
+  },
+  {
+    "title": "Sunset Beach",
+    "filename": "sunset-beach.jpg",
+    "synonyms": [
+      "beach",
+      "sunset",
+      "tropical",
+      "evening",
+      "ocean"
+    ]
+  },
+  {
+    "title": "Waterfall",
+    "filename": "waterfall.jpg",
+    "synonyms": [
+      "waterfall",
+      "nature",
+      "cascade",
+      "river",
+      "outdoor"
+    ]
+  },
+  {
+    "title": "Mountain Lake",
+    "filename": "mountain-lake.jpg",
+    "synonyms": [
+      "mountain",
+      "lake",
+      "alpine",
+      "reflection",
+      "nature",
+      "scenic"
+    ]
+  },
+  {
+    "title": "Northern Lights",
+    "filename": "northern-lights.jpg",
+    "synonyms": [
+      "northern lights",
+      "aurora",
+      "aurora borealis",
+      "arctic",
+      "night sky",
+      "winter"
+    ]
+  },
+  {
+    "title": "Desert Oasis",
+    "filename": "desert-oasis.jpg",
+    "synonyms": [
+      "desert",
+      "oasis",
+      "palm trees",
+      "swimming pool",
+      "tropical",
+      "relaxation"
     ]
   }
 ]
