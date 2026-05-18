@@ -1,0 +1,2483 @@
+[
+  {
+    "title": "NYC (times square)",
+    "filename": "nyc-new-york-usa.jpg",
+    "synonyms": [
+      "country: united states",
+      "new york",
+      "nyc",
+      "nyc (times square)",
+      "province: new york",
+      "square",
+      "state: new york",
+      "times",
+      "united states"
+    ]
+  },
+  {
+    "title": "LA (Hollywood sign)",
+    "filename": "la-california-usa.jpg",
+    "synonyms": [
+      "california",
+      "country: united states",
+      "hollywood",
+      "la",
+      "la (hollywood sign)",
+      "province: california",
+      "sign",
+      "state: california",
+      "united states"
+    ]
+  },
+  {
+    "title": "Miami",
+    "filename": "miami-florida-usa.jpg",
+    "synonyms": [
+      "country: united states",
+      "florida",
+      "miami",
+      "province: florida",
+      "state: florida",
+      "united states"
+    ]
+  },
+  {
+    "title": "Texas",
+    "filename": "texas-usa.jpg",
+    "synonyms": [
+      "country: united states",
+      "province: texas",
+      "state: texas",
+      "texas",
+      "united states"
+    ]
+  },
+  {
+    "title": "Las Vegas",
+    "filename": "las-vegas-nevada-usa.jpg",
+    "synonyms": [
+      "country: united states",
+      "las vegas",
+      "nevada",
+      "province: nevada",
+      "state: nevada",
+      "united states",
+      "vegas"
+    ]
+  },
+  {
+    "title": "Grand Canyon",
+    "filename": "grand-canyon-arizona-usa.jpg",
+    "synonyms": [
+      "arizona",
+      "canyon",
+      "country: united states",
+      "grand",
+      "grand canyon",
+      "province: arizona",
+      "state: arizona",
+      "united states"
+    ]
+  },
+  {
+    "title": "San Francisco (Golden Gate Bridge)",
+    "filename": "san-francisco-california-usa.jpg",
+    "synonyms": [
+      "california",
+      "country: united states",
+      "francisco",
+      "gate",
+      "golden",
+      "province: california",
+      "san francisco",
+      "san francisco (golden gate bridge)",
+      "state: california",
+      "united states"
+    ]
+  },
+  {
+    "title": "Chicago (The Bean)",
+    "filename": "chicago-illinois-usa.jpg",
+    "synonyms": [
+      "bean",
+      "chicago",
+      "chicago (the bean)",
+      "country: united states",
+      "illinois",
+      "province: illinois",
+      "state: illinois",
+      "united states"
+    ]
+  },
+  {
+    "title": "Boston",
+    "filename": "boston-massachusetts-usa.jpg",
+    "synonyms": [
+      "boston",
+      "country: united states",
+      "massachusetts",
+      "province: massachusetts",
+      "state: massachusetts",
+      "united states"
+    ]
+  },
+  {
+    "title": "Washington DC (White House)",
+    "filename": "washington-dc-district-of-columbia-usa.jpg",
+    "synonyms": [
+      "country: united states",
+      "district of columbia",
+      "house",
+      "province: district of columbia",
+      "state: district of columbia",
+      "united states",
+      "washington",
+      "washington dc",
+      "washington dc (white house)",
+      "white"
+    ]
+  },
+  {
+    "title": "New Orleans",
+    "filename": "new-orleans-louisiana-usa.jpg",
+    "synonyms": [
+      "country: united states",
+      "louisiana",
+      "new orleans",
+      "orleans",
+      "province: louisiana",
+      "state: louisiana",
+      "united states"
+    ]
+  },
+  {
+    "title": "Yellowstone",
+    "filename": "yellowstone-wyoming-usa.jpg",
+    "synonyms": [
+      "country: united states",
+      "province: wyoming",
+      "state: wyoming",
+      "united states",
+      "wyoming",
+      "yellowstone"
+    ]
+  },
+  {
+    "title": "Hawaii",
+    "filename": "hawaii.jpg",
+    "synonyms": [
+      "beach",
+      "country: united states",
+      "hawaii",
+      "province: hawaii",
+      "state: hawaii",
+      "tropical",
+      "united states"
+    ]
+  },
+  {
+    "title": "Alaska",
+    "filename": "alaska-usa.jpg",
+    "synonyms": [
+      "alaska",
+      "country: united states",
+      "province: alaska",
+      "state: alaska",
+      "united states"
+    ]
+  },
+  {
+    "title": "Toronto, Canada",
+    "filename": "toronto-canada.jpg",
+    "synonyms": [
+      "canada",
+      "country: canada",
+      "ontario",
+      "province: ontario",
+      "state: ontario",
+      "toronto",
+      "toronto, canada"
+    ]
+  },
+  {
+    "title": "Vancouver, Canada",
+    "filename": "vancouver-canada.jpg",
+    "synonyms": [
+      "british columbia",
+      "canada",
+      "country: canada",
+      "province: british columbia",
+      "state: british columbia",
+      "vancouver",
+      "vancouver, canada"
+    ]
+  },
+  {
+    "title": "Mexico City, Mexico",
+    "filename": "mexico-city-mexico.jpg",
+    "synonyms": [
+      "city",
+      "country: mexico",
+      "mexico",
+      "mexico city",
+      "mexico city, mexico",
+      "province: mexico city",
+      "state: mexico city"
+    ]
+  },
+  {
+    "title": "Cancun, Mexico",
+    "filename": "cancun-quintana-roo-mexico.jpg",
+    "synonyms": [
+      "beach",
+      "cancun",
+      "cancun, mexico",
+      "country: mexico",
+      "mexico",
+      "province: quintana roo",
+      "quintana roo",
+      "state: quintana roo",
+      "tropical"
+    ]
+  },
+  {
+    "title": "Playa del Carmen, Mexico",
+    "filename": "playa-del-carmen-quintana-roo-mexico.jpg",
+    "synonyms": [
+      "carmen",
+      "country: mexico",
+      "mexico",
+      "playa",
+      "playa del carmen",
+      "playa del carmen, mexico",
+      "province: quintana roo",
+      "quintana roo",
+      "state: quintana roo"
+    ]
+  },
+  {
+    "title": "Puerto Vallarta, Mexico",
+    "filename": "puerto-vallarta-jalisco-mexico.jpg",
+    "synonyms": [
+      "country: mexico",
+      "jalisco",
+      "mexico",
+      "province: jalisco",
+      "puerto",
+      "puerto vallarta",
+      "puerto vallarta, mexico",
+      "state: jalisco",
+      "vallarta"
+    ]
+  },
+  {
+    "title": "Panama City, Panama",
+    "filename": "panama-city-panama.jpg",
+    "synonyms": [
+      "city",
+      "country: panama",
+      "panama",
+      "panama city",
+      "panama city, panama",
+      "panama province",
+      "province: panama province",
+      "state: panama province"
+    ]
+  },
+  {
+    "title": "San Jose, Costa Rica",
+    "filename": "san-jose-costa-rica.jpg",
+    "synonyms": [
+      "costa",
+      "costa rica",
+      "country: costa rica",
+      "jose",
+      "province: san josé province",
+      "rica",
+      "san jose",
+      "san jose, costa rica",
+      "san josé province",
+      "state: san josé province"
+    ]
+  },
+  {
+    "title": "Guatemala City, Guatemala",
+    "filename": "guatemala-city-guatemala.jpg",
+    "synonyms": [
+      "city",
+      "country: guatemala",
+      "guatemala",
+      "guatemala city",
+      "guatemala city, guatemala",
+      "guatemala department",
+      "province: guatemale department",
+      "state: guatemala department"
+    ]
+  },
+  {
+    "title": "Belize City, Belize",
+    "filename": "belize-city-belize.jpg",
+    "synonyms": [
+      "belize",
+      "belize city",
+      "belize city, belize",
+      "belize district",
+      "city",
+      "country: belize",
+      "province: belize district",
+      "state: belize district"
+    ]
+  },
+  {
+    "title": "Colombia",
+    "filename": "colombia.jpg",
+    "synonyms": [
+      "colombia",
+      "country: colombia"
+    ]
+  },
+  {
+    "title": "Ecuador",
+    "filename": "ecuador.jpg",
+    "synonyms": [
+      "country: ecuador",
+      "ecuador"
+    ]
+  },
+  {
+    "title": "Peru",
+    "filename": "peru-south-america.jpg",
+    "synonyms": [
+      "country: peru",
+      "peru"
+    ]
+  },
+  {
+    "title": "Machu Picchu, Peru",
+    "filename": "machu-picchu-peru.jpg",
+    "synonyms": [
+      "country: peru",
+      "cusco region",
+      "machu",
+      "machu picchu",
+      "machu picchu, peru",
+      "peru",
+      "picchu",
+      "province: cusco region",
+      "state: cusco region"
+    ]
+  },
+  {
+    "title": "Bolivia",
+    "filename": "bolivia.jpg",
+    "synonyms": [
+      "bolivia",
+      "country: bolivia"
+    ]
+  },
+  {
+    "title": "Rio de Janeiro, Brazil",
+    "filename": "rio-de-janeiro-brazil.jpg",
+    "synonyms": [
+      "brazil",
+      "country: brazil",
+      "janeiro",
+      "province: rio de janeiro state",
+      "rio de janeiro",
+      "rio de janeiro state",
+      "rio de janeiro, brazil",
+      "state: rio de janeiro state"
+    ]
+  },
+  {
+    "title": "Sao Paulo, Brazil",
+    "filename": "sao-paulo-brazil.jpg",
+    "synonyms": [
+      "brazil",
+      "country: brazil",
+      "paulo",
+      "province: são paulo state",
+      "sao paulo",
+      "sao paulo, brazil",
+      "state: são paulo state",
+      "são paulo state"
+    ]
+  },
+  {
+    "title": "Chile",
+    "filename": "chile.jpg",
+    "synonyms": [
+      "chile",
+      "country: chile"
+    ]
+  },
+  {
+    "title": "Uruguay",
+    "filename": "uruguay.jpg",
+    "synonyms": [
+      "country: urguay",
+      "uruguay"
+    ]
+  },
+  {
+    "title": "Venezuela",
+    "filename": "venezuela.jpg",
+    "synonyms": [
+      "country: venezuela",
+      "venezuela"
+    ]
+  },
+  {
+    "title": "Puerto Rico",
+    "filename": "puerto-rico-caribbean.jpg",
+    "synonyms": [
+      "country: puerto rico",
+      "puerto",
+      "puerto rico",
+      "rico"
+    ]
+  },
+  {
+    "title": "Dominican Republic",
+    "filename": "dominican-republic.jpg",
+    "synonyms": [
+      "country: dominican republic",
+      "dominican",
+      "dominican republic",
+      "republic"
+    ]
+  },
+  {
+    "title": "Bahamas",
+    "filename": "bahamas.jpg",
+    "synonyms": [
+      "bahamas",
+      "beach",
+      "country: bahamas",
+      "tropical"
+    ]
+  },
+  {
+    "title": "Aruba",
+    "filename": "aruba-caribbean.jpg",
+    "synonyms": [
+      "aruba",
+      "beach",
+      "country: aruba",
+      "tropical"
+    ]
+  },
+  {
+    "title": "Jamaica",
+    "filename": "jamaica.jpg",
+    "synonyms": [
+      "beach",
+      "country: jamaica",
+      "jamaica",
+      "tropical"
+    ]
+  },
+  {
+    "title": "Barbados",
+    "filename": "barbados.jpg",
+    "synonyms": [
+      "barbados",
+      "beach",
+      "country: barbados",
+      "tropical"
+    ]
+  },
+  {
+    "title": "Turks & Caicos",
+    "filename": "turks-and-caicos-caribbean.jpg",
+    "synonyms": [
+      "beach",
+      "caicos",
+      "country: turks and caicos",
+      "tropical",
+      "turks",
+      "turks & caicos",
+      "turks and caicos"
+    ]
+  },
+  {
+    "title": "Haiti",
+    "filename": "haiti.jpg",
+    "synonyms": [
+      "country: haiti",
+      "haiti"
+    ]
+  },
+  {
+    "title": "Cayman Islands",
+    "filename": "cayman-islands-caribbean.jpg",
+    "synonyms": [
+      "beach",
+      "cayman",
+      "cayman islands",
+      "country: cayman islands",
+      "islands",
+      "tropical"
+    ]
+  },
+  {
+    "title": "British Virgin Islands",
+    "filename": "british-virgin-islands-caribbean.jpg",
+    "synonyms": [
+      "beach",
+      "british",
+      "british virgin islands",
+      "country: british virgin islands",
+      "islands",
+      "tropical",
+      "virgin"
+    ]
+  },
+  {
+    "title": "Paris",
+    "filename": "paris-france.jpg",
+    "synonyms": [
+      "country: france",
+      "france",
+      "paris"
+    ]
+  },
+  {
+    "title": "Rome",
+    "filename": "rome-italy.jpg",
+    "synonyms": [
+      "country: italy",
+      "italy",
+      "rome"
+    ]
+  },
+  {
+    "title": "Florence/Venice (mix the two)",
+    "filename": "florence-venice-italy.jpg",
+    "synonyms": [
+      "florence",
+      "florence/venice",
+      "florence/venice (mix the two)",
+      "venice"
+    ]
+  },
+  {
+    "title": "London",
+    "filename": "london-uk.jpg",
+    "synonyms": [
+      "country: united kingdom",
+      "london",
+      "united kingdom"
+    ]
+  },
+  {
+    "title": "Edinburgh, Scotland",
+    "filename": "edinburgh-scotland.jpg",
+    "synonyms": [
+      "country: united kingdom",
+      "edinburgh",
+      "edinburgh, scotland",
+      "province: scotland",
+      "scotland",
+      "state: scotland",
+      "united kingdom"
+    ]
+  },
+  {
+    "title": "Barcelona, Spain",
+    "filename": "barcelona-spain.jpg",
+    "synonyms": [
+      "barcelona",
+      "barcelona, spain",
+      "catalonia",
+      "country: spain",
+      "province: catalonia",
+      "relaxation",
+      "spain",
+      "state: catalonia",
+      "wellness"
+    ]
+  },
+  {
+    "title": "Ibiza, Spain",
+    "filename": "ibiza-spain.jpg",
+    "synonyms": [
+      "balearic islands",
+      "country: spain",
+      "ibiza",
+      "ibiza, spain",
+      "province: balearic islands",
+      "relaxation",
+      "spain",
+      "state: balearic islands",
+      "wellness"
+    ]
+  },
+  {
+    "title": "Amsterdam",
+    "filename": "amsterdam-netherlands.jpg",
+    "synonyms": [
+      "amsterdam",
+      "country: netherlands",
+      "netherlands"
+    ]
+  },
+  {
+    "title": "Prague",
+    "filename": "prague-czech-republic.jpg",
+    "synonyms": [
+      "country: czech republic",
+      "czech republic",
+      "prague"
+    ]
+  },
+  {
+    "title": "Athens",
+    "filename": "athens-greece.jpg",
+    "synonyms": [
+      "athens",
+      "country: greece",
+      "greece"
+    ]
+  },
+  {
+    "title": "Mykonos/Santorini (mix the two)",
+    "filename": "mykonos-santorini-greece.jpg",
+    "synonyms": [
+      "mykonos",
+      "mykonos/santorini",
+      "mykonos/santorini (mix the two)",
+      "santorini"
+    ]
+  },
+  {
+    "title": "The Alps",
+    "filename": "the-alps-switzerland.jpg",
+    "synonyms": [
+      "alps",
+      "country: switzerland",
+      "switzerland",
+      "the alps"
+    ]
+  },
+  {
+    "title": "Dolomites",
+    "filename": "dolomites.jpg",
+    "synonyms": [
+      "country: italy",
+      "dolomites",
+      "italy"
+    ]
+  },
+  {
+    "title": "Madrid",
+    "filename": "madrid.jpg",
+    "synonyms": [
+      "country: spain",
+      "madrid",
+      "spain"
+    ]
+  },
+  {
+    "title": "Stockholm",
+    "filename": "stockholm.jpg",
+    "synonyms": [
+      "country: sweden",
+      "stockholm",
+      "sweden"
+    ]
+  },
+  {
+    "title": "Moscow, Russia",
+    "filename": "moscow-russia.jpg",
+    "synonyms": [
+      "country: russia",
+      "moscow",
+      "moscow, russia",
+      "province: moscow",
+      "russia",
+      "state: moscow"
+    ]
+  },
+  {
+    "title": "St. Petersburg, Russia",
+    "filename": "st-petersburg-russia.jpg",
+    "synonyms": [
+      "country: russia",
+      "petersburg",
+      "province: saint petersburg",
+      "russia",
+      "saint petersburg",
+      "st. petersburg",
+      "st. petersburg, russia",
+      "state: saint petersburg"
+    ]
+  },
+  {
+    "title": "Dublin",
+    "filename": "dublin.jpg",
+    "synonyms": [
+      "country: ireland",
+      "dublin",
+      "ireland"
+    ]
+  },
+  {
+    "title": "Faroe Islands",
+    "filename": "faroe-islands-norway.jpg",
+    "synonyms": [
+      "beach",
+      "country: faroe islands",
+      "faroe",
+      "faroe islands",
+      "islands",
+      "tropical"
+    ]
+  },
+  {
+    "title": "Munich, Germany",
+    "filename": "munich-germany.jpg",
+    "synonyms": [
+      "bavaria",
+      "country: germany",
+      "germany",
+      "munich",
+      "munich, germany",
+      "province: bavaria",
+      "state: bavaria"
+    ]
+  },
+  {
+    "title": "Brussels, Belgium",
+    "filename": "brussels-belgium.jpg",
+    "synonyms": [
+      "belgium",
+      "brussels",
+      "brussels, belgium",
+      "brussels-capital region",
+      "country: belgium",
+      "province: brussels-capital region",
+      "state: brussels-capital region"
+    ]
+  },
+  {
+    "title": "Greenland",
+    "filename": "greenland.jpg",
+    "synonyms": [
+      "country: greenland",
+      "greenland"
+    ]
+  },
+  {
+    "title": "Iceland",
+    "filename": "iceland.jpg",
+    "synonyms": [
+      "country: iceland",
+      "iceland"
+    ]
+  },
+  {
+    "title": "Budapest",
+    "filename": "budapest.jpg",
+    "synonyms": [
+      "budapest",
+      "country: hungary",
+      "hungary"
+    ]
+  },
+  {
+    "title": "Poland",
+    "filename": "poland.jpg",
+    "synonyms": [
+      "country: poland",
+      "poland"
+    ]
+  },
+  {
+    "title": "Helsinki, Finland",
+    "filename": "helsinki-finland.jpg",
+    "synonyms": [
+      "country: finland",
+      "finland",
+      "helsinki",
+      "helsinki, finland",
+      "province: uusimaa",
+      "state: uusimaa",
+      "uusimaa"
+    ]
+  },
+  {
+    "title": "Tokyo, Japan",
+    "filename": "tokyo-japan.jpg",
+    "synonyms": [
+      "country: japan",
+      "japan",
+      "province: tokyo metropolis",
+      "state: tokyo metropolis",
+      "tokyo",
+      "tokyo metropolis",
+      "tokyo, japan"
+    ]
+  },
+  {
+    "title": "Kyoto, Japan",
+    "filename": "kyoto-japan.jpg",
+    "synonyms": [
+      "country: japan",
+      "japan",
+      "kyoto",
+      "kyoto prefecture",
+      "kyoto, japan",
+      "province: kyoto prefecture",
+      "state: kyoto prefecture"
+    ]
+  },
+  {
+    "title": "Osaka, Japan",
+    "filename": "osaka-japan.jpg",
+    "synonyms": [
+      "country: japan",
+      "japan",
+      "osaka",
+      "osaka prefecture",
+      "osaka, japan",
+      "province: osaka prefecture",
+      "state: osaka prefecture"
+    ]
+  },
+  {
+    "title": "Hokkaido, Japan",
+    "filename": "hokkaido-japan.jpg",
+    "synonyms": [
+      "country: japan",
+      "hokkaido",
+      "hokkaido, japan",
+      "japan",
+      "province: hokkaido",
+      "state: hokkaido"
+    ]
+  },
+  {
+    "title": "Seoul, South Korea",
+    "filename": "seoul-south-korea.jpg",
+    "synonyms": [
+      "country: south korea",
+      "korea",
+      "province: seoul",
+      "seoul",
+      "seoul, south korea",
+      "south",
+      "south korea",
+      "state: seoul"
+    ]
+  },
+  {
+    "title": "Jeju, South Korea",
+    "filename": "jeju-south-korea.jpg",
+    "synonyms": [
+      "country: south korea",
+      "jeju",
+      "jeju province",
+      "jeju, south korea",
+      "korea",
+      "province: jeju province",
+      "south",
+      "south korea",
+      "state: jeju province"
+    ]
+  },
+  {
+    "title": "Busan, South Korea",
+    "filename": "busan-south-korea.jpg",
+    "synonyms": [
+      "busan",
+      "busan, south korea",
+      "country: south korea",
+      "korea",
+      "province: busan",
+      "south",
+      "south korea",
+      "state: busan"
+    ]
+  },
+  {
+    "title": "Taipei",
+    "filename": "taipei.jpg",
+    "synonyms": [
+      "country: taiwan",
+      "taipei",
+      "taiwan"
+    ]
+  },
+  {
+    "title": "Beijing / Great Wall (mix the two), China",
+    "filename": "beijing-great-wall-china.jpg",
+    "synonyms": [
+      "beijing",
+      "beijing / great wall (mix the two), china",
+      "beijing / great wall, china",
+      "beijing municipality",
+      "china",
+      "country: china",
+      "great",
+      "great wall",
+      "province: beijing municipality",
+      "state: beijing municipality",
+      "wall"
+    ]
+  },
+  {
+    "title": "Shanghai, China",
+    "filename": "shanghai-china.jpg",
+    "synonyms": [
+      "china",
+      "country: china",
+      "province: shanghai municipality",
+      "shanghai",
+      "shanghai municipality",
+      "shanghai, china",
+      "state: shanghai municipality"
+    ]
+  },
+  {
+    "title": "Chengdu, China",
+    "filename": "chengdu-china.jpg",
+    "synonyms": [
+      "chengdu",
+      "chengdu, china",
+      "china",
+      "country: china",
+      "province: sichuan",
+      "sichuan",
+      "state: sichuan"
+    ]
+  },
+  {
+    "title": "Hong Kong",
+    "filename": "hong-kong-china.jpg",
+    "synonyms": [
+      "china",
+      "country: china",
+      "hong",
+      "hong kong",
+      "kong"
+    ]
+  },
+  {
+    "title": "Nepal/Tibet",
+    "filename": "nepal-tibet-asia.jpg",
+    "synonyms": [
+      "country: nepal",
+      "nepal",
+      "nepal/tibet",
+      "tibet"
+    ]
+  },
+  {
+    "title": "Mumbai, India",
+    "filename": "mumbai-india.jpg",
+    "synonyms": [
+      "country: india",
+      "india",
+      "maharashtra",
+      "mumbai",
+      "mumbai, india",
+      "province: maharashtra",
+      "state: maharashtra"
+    ]
+  },
+  {
+    "title": "Delhi, India",
+    "filename": "delhi-india.jpg",
+    "synonyms": [
+      "country: india",
+      "delhi",
+      "delhi, india",
+      "india",
+      "province: delhi",
+      "state: delhi"
+    ]
+  },
+  {
+    "title": "Bangalore, India",
+    "filename": "bangalore-india.jpg",
+    "synonyms": [
+      "bangalore",
+      "bangalore, india",
+      "country: india",
+      "india",
+      "karnataka",
+      "province: karnataka",
+      "state: karnataka"
+    ]
+  },
+  {
+    "title": "Colombo, Sri Lanka",
+    "filename": "colombo-sri-lanka.jpg",
+    "synonyms": [
+      "colombo",
+      "colombo, sri lanka",
+      "country: sri lanka",
+      "lanka",
+      "province: western province",
+      "sri lanka",
+      "state: western province",
+      "western province"
+    ]
+  },
+  {
+    "title": "Maldives",
+    "filename": "maldives.jpg",
+    "synonyms": [
+      "country: maldives",
+      "maldives"
+    ]
+  },
+  {
+    "title": "Ho Chi Minh City, Vietnam",
+    "filename": "ho-chi-minh-city-vietnam.jpg",
+    "synonyms": [
+      "city",
+      "country: vietnam",
+      "ho chi minh city",
+      "ho chi minh city, vietnam",
+      "minh",
+      "province: ho chi minh city",
+      "state: ho chi minh city",
+      "vietnam"
+    ]
+  },
+  {
+    "title": "Hanoi, Vietnam",
+    "filename": "hanoi-vietnam.jpg",
+    "synonyms": [
+      "country: vietnam",
+      "hanoi",
+      "hanoi, vietnam",
+      "province: hanoi",
+      "state: hanoi",
+      "vietnam"
+    ]
+  },
+  {
+    "title": "Da Nang, Vietnam",
+    "filename": "da-nang-vietnam.jpg",
+    "synonyms": [
+      "country: vietnam",
+      "da nang",
+      "da nang municipality",
+      "da nang, vietnam",
+      "nang",
+      "province: da nang municipality",
+      "state: da nang municipality",
+      "vietnam"
+    ]
+  },
+  {
+    "title": "Bangkok, Thailand",
+    "filename": "bangkok-thailand.jpg",
+    "synonyms": [
+      "bangkok",
+      "bangkok, thailand",
+      "country: thailand",
+      "province: bangkok",
+      "state: bangkok",
+      "thailand"
+    ]
+  },
+  {
+    "title": "Chiang Mai, Thailand",
+    "filename": "chiang-mai-thailand.jpg",
+    "synonyms": [
+      "chiang",
+      "chiang mai",
+      "chiang mai province",
+      "chiang mai, thailand",
+      "country: thailand",
+      "province: chiang mai province",
+      "state: chiang mai province",
+      "thailand"
+    ]
+  },
+  {
+    "title": "Pattaya, Thailand",
+    "filename": "pattaya-thailand.jpg",
+    "synonyms": [
+      "chonburi province",
+      "country: thailand",
+      "pattaya",
+      "pattaya, thailand",
+      "province: chonburi province",
+      "state: chonburi province",
+      "thailand"
+    ]
+  },
+  {
+    "title": "Phuket, Thailand",
+    "filename": "phuket-thailand.jpg",
+    "synonyms": [
+      "country: thailand",
+      "phuket",
+      "phuket province",
+      "phuket, thailand",
+      "province: phuket province",
+      "state: phuket province",
+      "thailand"
+    ]
+  },
+  {
+    "title": "Bali, Indonesia",
+    "filename": "bali-indonesia.jpg",
+    "synonyms": [
+      "bali",
+      "bali province",
+      "bali, indonesia",
+      "beach",
+      "country: indonesia",
+      "indonesia",
+      "province: bali province",
+      "state: bali province",
+      "tropical"
+    ]
+  },
+  {
+    "title": "Kuala Lumpur, Malaysia",
+    "filename": "kuala-lumpur-malaysia.jpg",
+    "synonyms": [
+      "country: malaysia",
+      "kuala",
+      "kuala lumpur",
+      "kuala lumpur, malaysia",
+      "lumpur",
+      "malaysia",
+      "province: kuala lumpur",
+      "state: kuala lumpur"
+    ]
+  },
+  {
+    "title": "Singapore",
+    "filename": "singapore.jpg",
+    "synonyms": [
+      "country: singapore",
+      "singapore"
+    ]
+  },
+  {
+    "title": "Luang Prabang, Laos",
+    "filename": "luang-prabang-laos.jpg",
+    "synonyms": [
+      "country: laos",
+      "laos",
+      "luang",
+      "luang prabang",
+      "luang prabang province",
+      "luang prabang, laos",
+      "prabang",
+      "province: luang prabang province",
+      "state: luang prabang province"
+    ]
+  },
+  {
+    "title": "Siem Reap, Cambodia",
+    "filename": "siem-reap-cambodia.jpg",
+    "synonyms": [
+      "cambodia",
+      "country: cambodia",
+      "province: siem reap province",
+      "reap",
+      "siem",
+      "siem reap",
+      "siem reap province",
+      "siem reap, cambodia",
+      "state: siem reap province"
+    ]
+  },
+  {
+    "title": "Boracay, Philippines",
+    "filename": "boracay-philippines.jpg",
+    "synonyms": [
+      "aklan",
+      "boracay",
+      "boracay, philippines",
+      "country: philippines",
+      "philippines",
+      "province: aklan",
+      "state: aklan"
+    ]
+  },
+  {
+    "title": "Manila, Philippines",
+    "filename": "manila-philippines.jpg",
+    "synonyms": [
+      "country: philippines",
+      "manila",
+      "manila, philippines",
+      "metro manila",
+      "philippines",
+      "province: metro manila",
+      "state: metro manila"
+    ]
+  },
+  {
+    "title": "Dubai, UAE",
+    "filename": "dubai-uae.jpg",
+    "synonyms": [
+      "country: uae",
+      "dubai",
+      "dubai emirate",
+      "dubai, uae",
+      "province: dubai emirate",
+      "state: dubai emirate",
+      "uae"
+    ]
+  },
+  {
+    "title": "Kazakhstan",
+    "filename": "kazakhstan.jpg",
+    "synonyms": [
+      "country: kazakhstan",
+      "kazakhstan"
+    ]
+  },
+  {
+    "title": "Abu Dhabi, UAE",
+    "filename": "abu-dhabi-uae.jpg",
+    "synonyms": [
+      "abu dhabi",
+      "abu dhabi emirate",
+      "abu dhabi, uae",
+      "country: uae",
+      "dhabi",
+      "province: abu dhabi emirate",
+      "state: abu dhabi emirate",
+      "uae"
+    ]
+  },
+  {
+    "title": "Doha, Qatar",
+    "filename": "doha-qatar.jpg",
+    "synonyms": [
+      "country: qatar",
+      "doha",
+      "doha municipality",
+      "doha, qatar",
+      "province: doha municipality",
+      "qatar",
+      "state: doha municipality"
+    ]
+  },
+  {
+    "title": "Istanbul, Turkey",
+    "filename": "istanbul-turkey.jpg",
+    "synonyms": [
+      "country: turkey",
+      "istanbul",
+      "istanbul province",
+      "istanbul, turkey",
+      "province: istanbul province",
+      "state: istanbul province",
+      "turkey"
+    ]
+  },
+  {
+    "title": "Tel Aviv, Israel",
+    "filename": "tel-aviv-israel.jpg",
+    "synonyms": [
+      "aviv",
+      "country: israel",
+      "israel",
+      "province: tel aviv district",
+      "state: tel aviv district",
+      "tel aviv",
+      "tel aviv district",
+      "tel aviv, israel"
+    ]
+  },
+  {
+    "title": "Sydney, Australia",
+    "filename": "sydney-australia.jpg",
+    "synonyms": [
+      "australia",
+      "country: australia",
+      "new south wales",
+      "province: new south wales",
+      "state: new south wales",
+      "sydney",
+      "sydney, australia"
+    ]
+  },
+  {
+    "title": "Melbourne, Australia",
+    "filename": "melbourne-australia.jpg",
+    "synonyms": [
+      "australia",
+      "country: australia",
+      "melbourne",
+      "melbourne, australia",
+      "province: victoria",
+      "state: victoria",
+      "victoria"
+    ]
+  },
+  {
+    "title": "Brisbane, Australia",
+    "filename": "brisbane-australia.jpg",
+    "synonyms": [
+      "australia",
+      "brisbane",
+      "brisbane, australia",
+      "country: australia",
+      "province: queensland",
+      "queensland",
+      "state: queensland"
+    ]
+  },
+  {
+    "title": "New Zealand",
+    "filename": "new-zealand-oceania.jpg",
+    "synonyms": [
+      "country: new zealand",
+      "new zealand",
+      "zealand"
+    ]
+  },
+  {
+    "title": "Fiji",
+    "filename": "fiji.jpg",
+    "synonyms": [
+      "country: fiji",
+      "fiji"
+    ]
+  },
+  {
+    "title": "Tahiti",
+    "filename": "tahiti-french-polynesia.jpg",
+    "synonyms": [
+      "country: french polynesia",
+      "french polynesia",
+      "tahiti"
+    ]
+  },
+  {
+    "title": "Egypt",
+    "filename": "egypt.jpg",
+    "synonyms": [
+      "country: egypt",
+      "egypt"
+    ]
+  },
+  {
+    "title": "Cairo, Egypt",
+    "filename": "cairo-egypt.jpg",
+    "synonyms": [
+      "cairo",
+      "cairo governorate",
+      "cairo, egypt",
+      "country: egypt",
+      "egypt",
+      "province: cairo governorate",
+      "state: cairo governorate"
+    ]
+  },
+  {
+    "title": "Morocco",
+    "filename": "morocco-africa.jpg",
+    "synonyms": [
+      "country: morocco",
+      "morocco"
+    ]
+  },
+  {
+    "title": "Lebanon",
+    "filename": "lebanon.jpg",
+    "synonyms": [
+      "country: lebanon",
+      "lebanon"
+    ]
+  },
+  {
+    "title": "Jordan",
+    "filename": "jordan.jpg",
+    "synonyms": [
+      "country: jordan",
+      "jordan"
+    ]
+  },
+  {
+    "title": "Johannesburg, South Africa",
+    "filename": "johannesburg-south-africa.jpg",
+    "synonyms": [
+      "africa",
+      "country: south africa",
+      "gauteng",
+      "johannesburg",
+      "johannesburg, south africa",
+      "province: gauteng",
+      "south",
+      "south africa",
+      "state: gauteng"
+    ]
+  },
+  {
+    "title": "Cape Town, South Africa",
+    "filename": "cape-town-south-africa.jpg",
+    "synonyms": [
+      "cape",
+      "cape town",
+      "cape town, south africa",
+      "country: south africa",
+      "province: western cape",
+      "south",
+      "south africa",
+      "state: western cape",
+      "town",
+      "western cape"
+    ]
+  },
+  {
+    "title": "Nairobi Kenya",
+    "filename": "nairobi-kenya.jpg",
+    "synonyms": [
+      "country: kenya",
+      "kenya",
+      "nairobi",
+      "nairobi county",
+      "nairobi kenya",
+      "province: nairobi county",
+      "state: nairobi county"
+    ]
+  },
+  {
+    "title": "Ghana",
+    "filename": "ghana.jpg",
+    "synonyms": [
+      "country: ghana",
+      "ghana"
+    ]
+  },
+  {
+    "title": "Botswana",
+    "filename": "botswana.jpg",
+    "synonyms": [
+      "botswana",
+      "country: botswana"
+    ]
+  },
+  {
+    "title": "Tanzania",
+    "filename": "tanzania.jpg",
+    "synonyms": [
+      "country: tanzania",
+      "tanzania"
+    ]
+  },
+  {
+    "title": "Fancy restaurant",
+    "filename": "fancy-restaurant.jpg",
+    "synonyms": [
+      "date night",
+      "dining",
+      "fancy",
+      "fancy restaurant",
+      "foodie",
+      "meal",
+      "restaurant"
+    ]
+  },
+  {
+    "title": "Divey restaurant",
+    "filename": "divey-restaurant.jpg",
+    "synonyms": [
+      "date night",
+      "dining",
+      "divey",
+      "divey restaurant",
+      "foodie",
+      "meal",
+      "restaurant"
+    ]
+  },
+  {
+    "title": "Street fair",
+    "filename": "street-fair.jpg",
+    "synonyms": [
+      "community",
+      "fair",
+      "festival",
+      "street",
+      "street fair",
+      "vendors"
+    ]
+  },
+  {
+    "title": "Parade",
+    "filename": "parade.jpg",
+    "synonyms": [
+      "celebration",
+      "floats",
+      "march",
+      "parade"
+    ]
+  },
+  {
+    "title": "Brunch",
+    "filename": "brunch.jpg",
+    "synonyms": [
+      "brunch",
+      "daytime dining",
+      "weekend brunch"
+    ]
+  },
+  {
+    "title": "Nightclub",
+    "filename": "nightclub.jpg",
+    "synonyms": [
+      "clubbing",
+      "dance floor",
+      "nightclub",
+      "nightlife"
+    ]
+  },
+  {
+    "title": "EDM Festival",
+    "filename": "edm-festival.jpg",
+    "synonyms": [
+      "crowd",
+      "edm festival",
+      "festival",
+      "live music",
+      "music festival"
+    ]
+  },
+  {
+    "title": "Modern Lounge/Bar",
+    "filename": "modern-lounge-bar.jpg",
+    "synonyms": [
+      "bar",
+      "cocktail bar",
+      "lounge",
+      "modern",
+      "modern lounge",
+      "modern lounge/bar",
+      "upscale bar"
+    ]
+  },
+  {
+    "title": "Dive Bar",
+    "filename": "dive-bar.jpg",
+    "synonyms": [
+      "casual drinks",
+      "dive",
+      "dive bar",
+      "local bar"
+    ]
+  },
+  {
+    "title": "House Party",
+    "filename": "house-party.jpg",
+    "synonyms": [
+      "friends",
+      "gathering",
+      "house",
+      "house party",
+      "party",
+      "social event"
+    ]
+  },
+  {
+    "title": "Backyard BBQ",
+    "filename": "backyard-bbq.jpg",
+    "synonyms": [
+      "backyard",
+      "backyard bbq",
+      "barbecue",
+      "cookout",
+      "grilling"
+    ]
+  },
+  {
+    "title": "BBQ Competition",
+    "filename": "bbq-competition.jpg",
+    "synonyms": [
+      "barbecue",
+      "bbq competition",
+      "competition",
+      "cookout",
+      "grilling"
+    ]
+  },
+  {
+    "title": "Amusement Park",
+    "filename": "amusement-park.jpg",
+    "synonyms": [
+      "amusement",
+      "amusement park",
+      "family fun",
+      "park",
+      "rides",
+      "theme park"
+    ]
+  },
+  {
+    "title": "Kids Birthday Party",
+    "filename": "kids-birthday-party.jpg",
+    "synonyms": [
+      "birthday",
+      "birthday party",
+      "celebration",
+      "kids",
+      "kids birthday party",
+      "party"
+    ]
+  },
+  {
+    "title": "Birthday celebration",
+    "filename": "birthday-celebration.jpg",
+    "synonyms": [
+      "birthday",
+      "birthday celebration",
+      "birthday party",
+      "celebration"
+    ]
+  },
+  {
+    "title": "Painting Class",
+    "filename": "painting-class.jpg",
+    "synonyms": [
+      "art class",
+      "class",
+      "creative activity",
+      "painting",
+      "painting class"
+    ]
+  },
+  {
+    "title": "Escape Room",
+    "filename": "escape-room.jpg",
+    "synonyms": [
+      "escape",
+      "escape room",
+      "puzzle game",
+      "room",
+      "team challenge"
+    ]
+  },
+  {
+    "title": "Go Karting",
+    "filename": "go-karting.jpg",
+    "synonyms": [
+      "go karting",
+      "kart racing",
+      "karting",
+      "motorsport"
+    ]
+  },
+  {
+    "title": "Paintball",
+    "filename": "paintball.jpg",
+    "synonyms": [
+      "outdoor game",
+      "paintball",
+      "team sport"
+    ]
+  },
+  {
+    "title": "Fishing off a bridge",
+    "filename": "fishing-off-a-bridge.jpg",
+    "synonyms": [
+      "angler",
+      "bridge",
+      "fishing",
+      "fishing off a bridge",
+      "outdoor recreation"
+    ]
+  },
+  {
+    "title": "Fishing Charter",
+    "filename": "fishing-charter.jpg",
+    "synonyms": [
+      "angler",
+      "charter",
+      "fishing",
+      "fishing charter",
+      "outdoor recreation"
+    ]
+  },
+  {
+    "title": "Crabbing",
+    "filename": "crabbing.jpg",
+    "synonyms": [
+      "crabbing"
+    ]
+  },
+  {
+    "title": "Hunting",
+    "filename": "hunting.jpg",
+    "synonyms": [
+      "hunting",
+      "outdoors",
+      "sport hunting"
+    ]
+  },
+  {
+    "title": "Off-Roading / ATVs",
+    "filename": "off-roading-atvs.jpg",
+    "synonyms": [
+      "4x4",
+      "adventure",
+      "atv",
+      "atvs",
+      "off-roading",
+      "off-roading / atvs",
+      "roading"
+    ]
+  },
+  {
+    "title": "Gun Range",
+    "filename": "gun-range.jpg",
+    "synonyms": [
+      "gun range",
+      "range",
+      "shooting range",
+      "target practice"
+    ]
+  },
+  {
+    "title": "County fairs",
+    "filename": "county-fairs.jpg",
+    "synonyms": [
+      "county",
+      "county fairs",
+      "fairs"
+    ]
+  },
+  {
+    "title": "Food Festival",
+    "filename": "food-festival.jpg",
+    "synonyms": [
+      "crowd",
+      "festival",
+      "food",
+      "food festival",
+      "live music",
+      "music festival"
+    ]
+  },
+  {
+    "title": "Boating",
+    "filename": "boating.jpg",
+    "synonyms": [
+      "boating"
+    ]
+  },
+  {
+    "title": "Golf",
+    "filename": "golf.jpg",
+    "synonyms": [
+      "golf",
+      "golf course",
+      "tee time"
+    ]
+  },
+  {
+    "title": "Rodeos",
+    "filename": "rodeos.jpg",
+    "synonyms": [
+      "bull riding",
+      "rodeos",
+      "western event"
+    ]
+  },
+  {
+    "title": "Watching NASCAR",
+    "filename": "watching-nascar.jpg",
+    "synonyms": [
+      "game night",
+      "motorsports",
+      "nascar",
+      "race day",
+      "sports viewing",
+      "watching",
+      "watching nascar"
+    ]
+  },
+  {
+    "title": "Country Music Festival",
+    "filename": "country-music-festival.jpg",
+    "synonyms": [
+      "country",
+      "country music festival",
+      "crowd",
+      "festival",
+      "live music",
+      "music",
+      "music festival"
+    ]
+  },
+  {
+    "title": "Motorcycle Rallies",
+    "filename": "motorcycle-rallies.jpg",
+    "synonyms": [
+      "motorcycle",
+      "motorcycle rallies",
+      "rallies"
+    ]
+  },
+  {
+    "title": "Car Show",
+    "filename": "car-show.jpg",
+    "synonyms": [
+      "auto show",
+      "car show",
+      "classic cars",
+      "show"
+    ]
+  },
+  {
+    "title": "Tailgating",
+    "filename": "tailgating.jpg",
+    "synonyms": [
+      "parking lot party",
+      "pregame",
+      "tailgating"
+    ]
+  },
+  {
+    "title": "Renaissance Fairs",
+    "filename": "renaissance-fairs.jpg",
+    "synonyms": [
+      "costume event",
+      "fairs",
+      "medieval fair",
+      "renaissance",
+      "renaissance fairs"
+    ]
+  },
+  {
+    "title": "Quiet farmhouse AirBNB",
+    "filename": "quiet-farmhouse-airbnb.jpg",
+    "synonyms": [
+      "airbnb",
+      "farmhouse",
+      "quiet",
+      "quiet farmhouse airbnb"
+    ]
+  },
+  {
+    "title": "Modern City (mix of Chicago, Philly, NYC)",
+    "filename": "modern-city.jpg",
+    "synonyms": [
+      "chicago",
+      "city",
+      "country: philly, nyc)",
+      "modern",
+      "modern city",
+      "modern city (mix of chicago, philly, nyc)",
+      "nyc)",
+      "philly, nyc)"
+    ]
+  },
+  {
+    "title": "Ski Mountain",
+    "filename": "ski-mountain.jpg",
+    "synonyms": [
+      "mountain",
+      "ski mountain",
+      "snow",
+      "winter sports"
+    ]
+  },
+  {
+    "title": "Scuba Diving trip",
+    "filename": "scuba-diving-trip.jpg",
+    "synonyms": [
+      "beach",
+      "diving",
+      "scuba",
+      "scuba diving trip",
+      "trip",
+      "tropical",
+      "underwater"
+    ]
+  },
+  {
+    "title": "Fishing trip",
+    "filename": "fishing-trip.jpg",
+    "synonyms": [
+      "angler",
+      "fishing",
+      "fishing trip",
+      "outdoor recreation",
+      "trip"
+    ]
+  },
+  {
+    "title": "Jungle Safari",
+    "filename": "jungle-safari.jpg",
+    "synonyms": [
+      "jungle",
+      "jungle safari",
+      "safari"
+    ]
+  },
+  {
+    "title": "Winter Tundra",
+    "filename": "winter-tundra.jpg",
+    "synonyms": [
+      "tundra",
+      "winter",
+      "winter tundra"
+    ]
+  },
+  {
+    "title": "Cruise Boat",
+    "filename": "cruise-boat.jpg",
+    "synonyms": [
+      "boat",
+      "cruise",
+      "cruise boat"
+    ]
+  },
+  {
+    "title": "Cave Spelunking Trip",
+    "filename": "cave-spelunking-trip.jpg",
+    "synonyms": [
+      "cave",
+      "cave spelunking trip",
+      "spelunking",
+      "trip"
+    ]
+  },
+  {
+    "title": "Camping",
+    "filename": "camping.jpg",
+    "synonyms": [
+      "campfire",
+      "camping",
+      "outdoors"
+    ]
+  },
+  {
+    "title": "Hiking",
+    "filename": "hiking.jpg",
+    "synonyms": [
+      "hiking",
+      "trail",
+      "trekking"
+    ]
+  },
+  {
+    "title": "Road Trip",
+    "filename": "road-trip.jpg",
+    "synonyms": [
+      "drive",
+      "road",
+      "road trip",
+      "travel",
+      "trip"
+    ]
+  },
+  {
+    "title": "Train Ride",
+    "filename": "train-ride.jpg",
+    "synonyms": [
+      "ride",
+      "train",
+      "train ride"
+    ]
+  },
+  {
+    "title": "Winery",
+    "filename": "winery.jpg",
+    "synonyms": [
+      "vineyard",
+      "wine tasting",
+      "winery"
+    ]
+  },
+  {
+    "title": "Video game LAN",
+    "filename": "video-game-lan.jpg",
+    "synonyms": [
+      "game",
+      "video",
+      "video game lan"
+    ]
+  },
+  {
+    "title": "E-Sport Tournament",
+    "filename": "e-sport-tournament.jpg",
+    "synonyms": [
+      "competition",
+      "e-sport tournament",
+      "esports",
+      "sport",
+      "tournament"
+    ]
+  },
+  {
+    "title": "Sunday Night Football in mancave/basement",
+    "filename": "sunday-night-football-in-mancave-basement.jpg",
+    "synonyms": [
+      "basement",
+      "football",
+      "night",
+      "sunday",
+      "sunday night football in mancave",
+      "sunday night football in mancave/basement"
+    ]
+  },
+  {
+    "title": "Watching NFL",
+    "filename": "watching-nfl.jpg",
+    "synonyms": [
+      "game night",
+      "sports viewing",
+      "watching",
+      "watching nfl"
+    ]
+  },
+  {
+    "title": "Watching Baseball",
+    "filename": "watching-baseball.jpg",
+    "synonyms": [
+      "baseball",
+      "game night",
+      "sports viewing",
+      "watching",
+      "watching baseball"
+    ]
+  },
+  {
+    "title": "Watching NBA",
+    "filename": "watching-nba.jpg",
+    "synonyms": [
+      "game night",
+      "sports viewing",
+      "watching",
+      "watching nba"
+    ]
+  },
+  {
+    "title": "Watching Soccer",
+    "filename": "watching-soccer.jpg",
+    "synonyms": [
+      "game night",
+      "soccer",
+      "sports viewing",
+      "watching",
+      "watching soccer"
+    ]
+  },
+  {
+    "title": "Watching Horse Racing",
+    "filename": "watching-horse-racing.jpg",
+    "synonyms": [
+      "game night",
+      "horse",
+      "racing",
+      "sports viewing",
+      "watching",
+      "watching horse racing"
+    ]
+  },
+  {
+    "title": "Watching Tennis",
+    "filename": "watching-tennis.jpg",
+    "synonyms": [
+      "game night",
+      "sports viewing",
+      "tennis",
+      "watching",
+      "watching tennis"
+    ]
+  },
+  {
+    "title": "Watching PGA Tournament",
+    "filename": "watching-pga-tournament.jpg",
+    "synonyms": [
+      "competition",
+      "esports",
+      "game night",
+      "sports viewing",
+      "tournament",
+      "watching",
+      "watching pga tournament"
+    ]
+  },
+  {
+    "title": "Watching NHL",
+    "filename": "watching-nhl.jpg",
+    "synonyms": [
+      "game night",
+      "sports viewing",
+      "watching",
+      "watching nhl"
+    ]
+  },
+  {
+    "title": "Rock Climbing in gym",
+    "filename": "rock-climbing-in-gym.jpg",
+    "synonyms": [
+      "climbing",
+      "rock",
+      "rock climbing in gym"
+    ]
+  },
+  {
+    "title": "Outdoor rock climbing",
+    "filename": "outdoor-rock-climbing.jpg",
+    "synonyms": [
+      "climbing",
+      "outdoor",
+      "outdoor rock climbing",
+      "rock"
+    ]
+  },
+  {
+    "title": "Downhill Mountain Biking",
+    "filename": "downhill-mountain-biking.jpg",
+    "synonyms": [
+      "biking",
+      "downhill",
+      "downhill mountain biking",
+      "mountain"
+    ]
+  },
+  {
+    "title": "Road bike Racing",
+    "filename": "road-bike-racing.jpg",
+    "synonyms": [
+      "bike",
+      "racing",
+      "road",
+      "road bike racing"
+    ]
+  },
+  {
+    "title": "Jogging",
+    "filename": "jogging.jpg",
+    "synonyms": [
+      "jogging"
+    ]
+  },
+  {
+    "title": "Marathon",
+    "filename": "marathon.jpg",
+    "synonyms": [
+      "marathon"
+    ]
+  },
+  {
+    "title": "obstacle course races (Like Spartan Race)",
+    "filename": "obstacle-course-races.jpg",
+    "synonyms": [
+      "course",
+      "obstacle",
+      "obstacle course races",
+      "obstacle course races (like spartan race)",
+      "races",
+      "relaxation",
+      "wellness"
+    ]
+  },
+  {
+    "title": "Workout Gym",
+    "filename": "workout-gym.jpg",
+    "synonyms": [
+      "workout",
+      "workout gym"
+    ]
+  },
+  {
+    "title": "Yoga",
+    "filename": "yoga.jpg",
+    "synonyms": [
+      "stretching",
+      "wellness",
+      "yoga"
+    ]
+  },
+  {
+    "title": "Pilates",
+    "filename": "pilates.jpg",
+    "synonyms": [
+      "core workout",
+      "fitness class",
+      "pilates"
+    ]
+  },
+  {
+    "title": "Meditation",
+    "filename": "meditation.jpg",
+    "synonyms": [
+      "meditation",
+      "mindfulness",
+      "relaxation"
+    ]
+  },
+  {
+    "title": "Yacht Party",
+    "filename": "yacht-party.jpg",
+    "synonyms": [
+      "party",
+      "yacht",
+      "yacht party"
+    ]
+  },
+  {
+    "title": "Latin Dance / Sport Dance",
+    "filename": "latin-dance-sport-dance.jpg",
+    "synonyms": [
+      "dance",
+      "dance class",
+      "latin",
+      "latin dance",
+      "latin dance / sport dance",
+      "social dancing",
+      "sport",
+      "sport dance"
+    ]
+  },
+  {
+    "title": "Salsa Dance",
+    "filename": "salsa-dance.jpg",
+    "synonyms": [
+      "dance",
+      "dance class",
+      "salsa",
+      "salsa dance",
+      "social dancing"
+    ]
+  },
+  {
+    "title": "Hip Hop Dance Class",
+    "filename": "hip-hop-dance-class.jpg",
+    "synonyms": [
+      "class",
+      "dance",
+      "dance class",
+      "hip hop dance class",
+      "social dancing"
+    ]
+  },
+  {
+    "title": "Social Dance",
+    "filename": "social-dance.jpg",
+    "synonyms": [
+      "dance",
+      "dance class",
+      "social",
+      "social dance",
+      "social dancing"
+    ]
+  },
+  {
+    "title": "Beach day",
+    "filename": "beach-day.jpg",
+    "synonyms": [
+      "beach",
+      "beach day",
+      "coast",
+      "ocean",
+      "seaside",
+      "tropical"
+    ]
+  },
+  {
+    "title": "Snorkeling",
+    "filename": "snorkeling.jpg",
+    "synonyms": [
+      "beach",
+      "snorkeling",
+      "tropical"
+    ]
+  },
+  {
+    "title": "Scuba Diving",
+    "filename": "scuba-diving.jpg",
+    "synonyms": [
+      "beach",
+      "diving",
+      "scuba",
+      "scuba diving",
+      "tropical",
+      "underwater"
+    ]
+  },
+  {
+    "title": "Art Museum",
+    "filename": "art-museum.jpg",
+    "synonyms": [
+      "art museum",
+      "exhibition",
+      "gallery",
+      "museum"
+    ]
+  },
+  {
+    "title": "House Party (2)",
+    "filename": "house-party.jpg",
+    "synonyms": [
+      "friends",
+      "gathering",
+      "house",
+      "house party",
+      "house party (2)",
+      "party",
+      "social event"
+    ]
+  },
+  {
+    "title": "Dinner party",
+    "filename": "dinner-party.jpg",
+    "synonyms": [
+      "dinner",
+      "dinner party",
+      "party"
+    ]
+  },
+  {
+    "title": "Playing pickleball",
+    "filename": "playing-pickleball.jpg",
+    "synonyms": [
+      "pickleball",
+      "playing",
+      "playing pickleball"
+    ]
+  },
+  {
+    "title": "Playing badminton",
+    "filename": "playing-badminton.jpg",
+    "synonyms": [
+      "badminton",
+      "playing",
+      "playing badminton"
+    ]
+  },
+  {
+    "title": "Wellness Spa",
+    "filename": "wellness-spa.jpg",
+    "synonyms": [
+      "relaxation",
+      "wellness",
+      "wellness spa"
+    ]
+  },
+  {
+    "title": "Massages at a spa",
+    "filename": "massages-at-a-spa.jpg",
+    "synonyms": [
+      "massages",
+      "massages at a spa",
+      "relaxation",
+      "wellness"
+    ]
+  },
+  {
+    "title": "Zumba workout",
+    "filename": "zumba-workout.jpg",
+    "synonyms": [
+      "workout",
+      "zumba",
+      "zumba workout"
+    ]
+  },
+  {
+    "title": "Swimming in a swimming pool",
+    "filename": "swimming-in-a-swimming-pool.jpg",
+    "synonyms": [
+      "pool",
+      "swimming",
+      "swimming in a swimming pool"
+    ]
+  },
+  {
+    "title": "Weightlifting gym",
+    "filename": "weightlifting-gym.jpg",
+    "synonyms": [
+      "weightlifting",
+      "weightlifting gym"
+    ]
+  },
+  {
+    "title": "Crossfit gym",
+    "filename": "crossfit-gym.jpg",
+    "synonyms": [
+      "crossfit",
+      "crossfit gym"
+    ]
+  },
+  {
+    "title": "Spin class",
+    "filename": "spin-class.jpg",
+    "synonyms": [
+      "class",
+      "spin",
+      "spin class"
+    ]
+  },
+  {
+    "title": "HIIT workouts",
+    "filename": "hiit-workouts.jpg",
+    "synonyms": [
+      "hiit",
+      "hiit workouts",
+      "workouts"
+    ]
+  },
+  {
+    "title": "Surfing",
+    "filename": "surfing.jpg",
+    "synonyms": [
+      "beach",
+      "beach sport",
+      "surfing",
+      "tropical",
+      "waves"
+    ]
+  },
+  {
+    "title": "Skydiving",
+    "filename": "skydiving.jpg",
+    "synonyms": [
+      "adrenaline",
+      "extreme sport",
+      "skydiving"
+    ]
+  },
+  {
+    "title": "Playing volleyball",
+    "filename": "playing-volleyball.jpg",
+    "synonyms": [
+      "playing",
+      "playing volleyball",
+      "volleyball"
+    ]
+  },
+  {
+    "title": "Playing chess",
+    "filename": "playing-chess.jpg",
+    "synonyms": [
+      "chess",
+      "playing",
+      "playing chess"
+    ]
+  },
+  {
+    "title": "Playing frisbee",
+    "filename": "playing-frisbee.jpg",
+    "synonyms": [
+      "frisbee",
+      "playing",
+      "playing frisbee"
+    ]
+  },
+  {
+    "title": "Hot tub",
+    "filename": "hot-tub.jpg",
+    "synonyms": [
+      "hot tub"
+    ]
+  }
+]
