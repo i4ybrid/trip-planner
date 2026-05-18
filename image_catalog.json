@@ -449,7 +449,7 @@
   },
   {
     "title": "Bahamas",
-    "filename": "bahamas.jpg",
+    "filename": "bahamas-caribbean.jpg",
     "synonyms": [
       "bahamas",
       "beach",
@@ -671,7 +671,7 @@
   },
   {
     "title": "Madrid",
-    "filename": "madrid.jpg",
+    "filename": "madrid-spain.jpg",
     "synonyms": [
       "country: spain",
       "madrid",
@@ -680,7 +680,7 @@
   },
   {
     "title": "Stockholm",
-    "filename": "stockholm.jpg",
+    "filename": "stockholm-sweden.jpg",,
     "synonyms": [
       "country: sweden",
       "stockholm",
@@ -715,7 +715,7 @@
   },
   {
     "title": "Dublin",
-    "filename": "dublin.jpg",
+    "filename": "dublin-ireland.jpg",
     "synonyms": [
       "country: ireland",
       "dublin",
