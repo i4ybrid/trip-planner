@@ -1,0 +1,221 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const auth_1 = require("@/middleware/auth");
+const activity_service_1 = require("@/services/activity.service");
+const vote_service_1 = require("@/services/vote.service");
+const validations_1 = require("@/lib/validations");
+const trip_service_1 = require("@/services/trip.service");
+const router = (0, express_1.Router)();
+// All routes require authentication
+router.use(auth_1.authMiddleware);
+// GET /api/trips/:tripId/activities - Get trip activities
+router.get('/trips/:tripId/activities', async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const tripId = req.params.tripId;
+        // Check permission
+        const permission = await trip_service_1.tripService.checkMemberPermission(tripId, userId);
+        if (!permission.hasPermission) {
+            res.status(403).json({ error: 'Unauthorized' });
+            return;
+        }
+        const activities = await activity_service_1.activityService.getTripActivities(tripId);
+        res.json({ data: activities });
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+// POST /api/trips/:tripId/activities - Create activity
+router.post('/trips/:tripId/activities', async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const tripId = req.params.tripId;
+        // Check permission
+        const permission = await trip_service_1.tripService.checkMemberPermission(tripId, userId);
+        if (!permission.hasPermission) {
+            res.status(403).json({ error: 'Unauthorized' });
+            return;
+        }
+        const validatedData = validations_1.createActivitySchema.parse(req.body);
+        const activity = await activity_service_1.activityService.createActivity({
+            tripId,
+            proposedBy: userId,
+            title: validatedData.title,
+            description: validatedData.description,
+            location: validatedData.location,
+            startTime: validatedData.startTime ? new Date(validatedData.startTime) : undefined,
+            endTime: validatedData.endTime ? new Date(validatedData.endTime) : undefined,
+            cost: validatedData.cost,
+            currency: validatedData.currency,
+            category: validatedData.category,
+        });
+        res.status(201).json({ data: activity });
+    }
+    catch (error) {
+        if (error.name === 'ZodError') {
+            res.status(400).json({ error: 'Validation error', details: error.errors });
+            return;
+        }
+        res.status(500).json({ error: error.message });
+    }
+});
+// GET /api/activities/:id - Get activity details
+router.get('/activities/:id', async (req, res) => {
+    try {
+        const activity = await activity_service_1.activityService.getActivityById(req.params.id);
+        if (!activity) {
+            res.status(404).json({ error: 'Activity not found' });
+            return;
+        }
+        res.json({ data: activity });
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+// PATCH /api/activities/:id - Update activity
+router.patch('/activities/:id', async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const activityId = req.params.id;
+        const activity = await activity_service_1.activityService.getActivityById(activityId);
+        if (!activity) {
+            res.status(404).json({ error: 'Activity not found' });
+            return;
+        }
+        // Check permission (only proposer or trip organizer can edit)
+        const permission = await trip_service_1.tripService.checkMemberPermission(activity.tripId, userId, ['OWNER', 'EDITOR']);
+        if (!permission.hasPermission && activity.proposedBy !== userId) {
+            res.status(403).json({ error: 'Unauthorized' });
+            return;
+        }
+        // Strip cost fields — price is locked at creation (defense-in-depth)
+        const { cost, costType, currency, ...updateBody } = req.body;
+        const validatedData = validations_1.updateActivitySchema.parse(updateBody);
+        const updated = await activity_service_1.activityService.updateActivity(activityId, {
+            title: validatedData.title,
+            description: validatedData.description,
+            location: validatedData.location,
+            startTime: validatedData.startTime ? new Date(validatedData.startTime) : undefined,
+            endTime: validatedData.endTime ? new Date(validatedData.endTime) : undefined,
+            category: validatedData.category,
+        });
+        res.json({ data: updated });
+    }
+    catch (error) {
+        if (error.name === 'ZodError') {
+            res.status(400).json({ error: 'Validation error', details: error.errors });
+            return;
+        }
+        res.status(500).json({ error: error.message });
+    }
+});
+// DELETE /api/activities/:id - Delete activity
+router.delete('/activities/:id', async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const activityId = req.params.id;
+        const activity = await activity_service_1.activityService.getActivityById(activityId);
+        if (!activity) {
+            res.status(404).json({ error: 'Activity not found' });
+            return;
+        }
+        // Check permission — only EDITOR or OWNER can delete
+        const permission = await trip_service_1.tripService.checkMemberPermission(activity.tripId, userId, ['OWNER', 'EDITOR']);
+        if (!permission.hasPermission) {
+            res.status(403).json({ error: 'Unauthorized' });
+            return;
+        }
+        await activity_service_1.activityService.deleteActivity(activityId);
+        res.json({ message: 'Activity deleted successfully' });
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+// GET /api/activities/:id/votes - Get votes for activity
+router.get('/activities/:id/votes', async (req, res) => {
+    try {
+        const activityId = req.params.id;
+        const activity = await activity_service_1.activityService.getActivityById(activityId);
+        if (!activity) {
+            res.status(404).json({ error: 'Activity not found' });
+            return;
+        }
+        const votes = await vote_service_1.voteService.getVotes(activityId);
+        const voteCounts = await activity_service_1.activityService.getVoteCounts(activityId);
+        res.json({ data: { votes, counts: voteCounts } });
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+// POST /api/activities/:id/votes - Cast vote
+router.post('/activities/:id/votes', async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const activityId = req.params.id;
+        const validatedData = validations_1.createVoteSchema.parse(req.body);
+        const vote = await vote_service_1.voteService.castVote(activityId, userId, validatedData.option);
+        res.status(201).json({ data: vote });
+    }
+    catch (error) {
+        if (error.name === 'ZodError') {
+            res.status(400).json({ error: 'Validation error', details: error.errors });
+            return;
+        }
+        res.status(500).json({ error: error.message });
+    }
+});
+// DELETE /api/activities/:id/votes - Remove vote
+router.delete('/activities/:id/votes', async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const activityId = req.params.id;
+        await vote_service_1.voteService.removeVote(activityId, userId);
+        res.json({ message: 'Vote removed successfully' });
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+// PATCH /api/trips/:tripId/activities/:activityId/confirm - Confirm activity
+router.patch('/trips/:tripId/activities/:activityId/confirm', async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const { tripId, activityId } = req.params;
+        // Check permission
+        const permission = await trip_service_1.tripService.checkMemberPermission(tripId, userId, ['OWNER', 'EDITOR']);
+        if (!permission.hasPermission) {
+            res.status(403).json({ error: 'Unauthorized' });
+            return;
+        }
+        const activity = await activity_service_1.activityService.confirmActivity(activityId, userId, tripId);
+        res.json({ data: activity });
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+// PATCH /api/trips/:tripId/activities/:activityId/reject - Reject activity
+router.patch('/trips/:tripId/activities/:activityId/reject', async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const { tripId, activityId } = req.params;
+        // Check permission
+        const permission = await trip_service_1.tripService.checkMemberPermission(tripId, userId, ['OWNER', 'EDITOR']);
+        if (!permission.hasPermission) {
+            res.status(403).json({ error: 'Unauthorized' });
+            return;
+        }
+        const activity = await activity_service_1.activityService.rejectActivity(activityId, userId);
+        res.json({ data: activity });
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+exports.default = router;
+//# sourceMappingURL=activities.js.map

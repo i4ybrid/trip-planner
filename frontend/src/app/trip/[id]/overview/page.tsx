@@ -11,7 +11,7 @@ import { TripSettingsModal } from '@/components/trip/settings-modal';
 import { formatDateRange, formatCurrency, cn, getNextStatus, getNextStatusLabel, canMoveToHappening } from '@/lib/utils';
 import { format } from 'date-fns';
 import { logger } from '@/lib/logger';
-import { MapPin, Calendar, Users, DollarSign, Share2, Settings } from 'lucide-react';
+import { Calendar, Users, DollarSign } from 'lucide-react';
 import { api } from '@/services/api';
 import { TripMember, User, Activity, BillSplit, MemberRole, TripStyle, TripStatus } from '@/types';
 import { useAuth } from '@/hooks/use-auth';
@@ -35,10 +35,6 @@ export default function TripOverview() {
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const currentUserMember = members.find(m => m.userId === user?.id);
-  const canInvite = !!(currentUserMember && (
-    currentUserMember.role === 'OWNER' ||
-    (currentTrip?.style === 'OPEN' && ['EDITOR'].includes(currentUserMember.role))
-  ));
   const isOwner = currentUserMember?.role === 'OWNER';
 
   const nextStatus = currentTrip ? getNextStatus(currentTrip.status) : null;
@@ -137,31 +133,6 @@ export default function TripOverview() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">{currentTrip.name}</h2>
-          {currentTrip.destination && (
-            <p className="flex items-center gap-1 text-muted-foreground">
-              <MapPin className="h-4 w-4" />
-              {currentTrip.destination}
-            </p>
-          )}
-        </div>
-        <div className="flex gap-2">
-          {canInvite && (
-            <Button variant="outline" onClick={() => setShowInviteModal(true)}>
-              <Share2 className="mr-2 h-4 w-4" />
-              Invite
-            </Button>
-          )}
-          {isOwner && (
-            <Button variant="outline" onClick={() => setShowSettingsModal(true)} data-testid="settings-btn" aria-label="Trip Settings">
-              <Settings className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
-      </div>
-
       <InviteModal
         isOpen={showInviteModal}
         onClose={() => setShowInviteModal(false)}

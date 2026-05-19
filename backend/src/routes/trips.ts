@@ -87,15 +87,17 @@ router.patch('/trips/:id', async (req: AuthRequest, res) => {
     }
 
     const validatedData = updateTripSchema.parse(req.body);
+    const { title, description, startDate, endDate, coverImage, destination, style, status, heroImageId } = req.body as any;
     const trip = await tripService.updateTrip(tripId, {
       name: validatedData.name,
       description: validatedData.description,
       destination: validatedData.destination,
-      startDate: validatedData.startDate ? normalizeDate(validatedData.startDate, false) : undefined,
-      endDate: validatedData.endDate ? normalizeDate(validatedData.endDate, true) : undefined,
-      coverImage: validatedData.coverImage,
-      status: validatedData.status,
-      style: validatedData.style,
+      startDate: startDate ? normalizeDate(startDate, false) : undefined,
+      endDate: endDate ? normalizeDate(endDate, true) : undefined,
+      coverImage,
+      status,
+      style,
+      ...(heroImageId !== undefined && { heroImageId }),
     });
 
     res.json({ data: trip });

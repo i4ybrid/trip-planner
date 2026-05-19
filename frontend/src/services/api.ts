@@ -33,12 +33,7 @@ import {
   MilestoneActionType,
   MilestoneStatus,
   PublicEvent,
-  PublicEventLocationSuggestion,
-  CreatePublicEventInput,
-  CreatePublicEventPromotionInput,
-  PublicEventPromotionPayment,
-  Expense,
-  CreateExpenseInput,
+  HeroImage,
 } from '@/types';
 import { logger } from '@/lib/logger';
 
@@ -327,6 +322,33 @@ export const api = {
     const result = await handleResponse<ApiResponse<void>>(response);
     // Invalidate caches
     invalidateCacheByPrefix(`trip:${id}`);
+    invalidateCacheByPrefix('trips:');
+    return result;
+  },
+
+  // Hero Images
+  async getHeroImages(): Promise<ApiResponse<HeroImage[]>> {
+    const response = await fetch(`${API_BASE_URL}/hero-images`, {
+      headers: await getHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  async searchHeroImages(query: string): Promise<ApiResponse<HeroImage[]>> {
+    const response = await fetch(`${API_BASE_URL}/hero-images/search?q=${encodeURIComponent(query)}`, {
+      headers: await getHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  async updateTripHeroImage(tripId: string, heroImageId: string): Promise<ApiResponse<Trip>> {
+    const response = await fetch(`${API_BASE_URL}/trips/${tripId}`, {
+      method: 'PATCH',
+      headers: await getHeaders(),
+      body: JSON.stringify({ heroImageId }),
+    });
+    const result = await handleResponse<ApiResponse<Trip>>(response);
+    invalidateCacheByPrefix(`trip:${tripId}`);
     invalidateCacheByPrefix('trips:');
     return result;
   },

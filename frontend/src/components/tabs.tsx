@@ -37,7 +37,7 @@ export function Tabs({ tabs, basePath, iconMap = defaultIconMap, className }: Ta
     <nav
       aria-label="Trip folders"
       className={cn(
-        "scrollbar-none -mb-px flex w-full gap-1 overflow-x-auto border-b border-border/80 px-1 pt-2 text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground",
+        "glass scrollbar-none -mb-px flex w-full gap-1 overflow-x-auto border-b border-border/80 px-1 pt-2 text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground",
         className
       )}
     >
@@ -47,10 +47,10 @@ export function Tabs({ tabs, basePath, iconMap = defaultIconMap, className }: Ta
           onClick={() => router.push(`${basePath}${tab.href}`)}
           aria-current={currentTab === tab.id ? 'page' : undefined}
           className={cn(
-            "relative flex shrink-0 items-center gap-2 rounded-t-lg border border-border/75 border-b-0 bg-card/55 px-4 py-3 shadow-[0_-10px_26px_-24px_rgba(13,78,91,0.55)] transition hover:bg-card/90 hover:text-foreground sm:px-5",
+            "relative flex shrink-0 items-center gap-2 rounded-t-xl border border-border/75 border-b-0 bg-secondary/40 px-4 py-3 shadow-[0_-10px_26px_-24px_rgba(13,78,91,0.55)] transition hover:bg-secondary/70 hover:text-foreground sm:px-5",
             currentTab === tab.id
-              ? "z-10 -mb-px bg-card text-foreground shadow-[0_-12px_32px_-24px_rgba(13,78,91,0.65)]"
-              : "text-muted-foreground"
+              ? "z-10 -mb-px rounded-t-xl bg-gradient-to-b from-card to-card/80 text-foreground shadow-[0_-4px_20px_-8px_rgba(0,0,0,0.4),0_4px_8px_-4px_rgba(0,0,0,0.3)] border-t-2 border-primary/30"
+              : "rounded-t-lg text-muted-foreground hover:border-border/50"
           )}
         >
           {iconMap[tab.id] || tab.icon}

@@ -91,6 +91,7 @@ export class TripService {
         activities: {
           orderBy: { createdAt: 'desc' },
         },
+        heroImage: true,
         _count: {
           select: {
             activities: true,
@@ -163,6 +164,7 @@ export class TripService {
             avatarUrl: true,
           },
         },
+        heroImage: true,
       },
     });
 

@@ -4,11 +4,12 @@ import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { PageLayout } from '@/components/page-layout';
 import { Tabs } from '@/components/tabs';
+import { HeroImagePicker } from '@/components/trip/HeroImagePicker';
 import { api } from '@/services/api';
-import { Trip, TripMember } from '@/types';
+import { Trip, TripMember, HeroImage } from '@/types';
 import { useAuth } from '@/hooks/use-auth';
 import { formatDateRange } from '@/lib/utils';
-import { CalendarDays, MapPin, Sparkles, Users } from 'lucide-react';
+import { CalendarDays, MapPin, Sparkles, Users, Pencil } from 'lucide-react';
 
 const allTripTabs = [
   { id: 'overview', label: 'Overview', href: '/overview' },
@@ -41,6 +42,7 @@ export default function TripLayout({
   const [trip, setTrip] = useState<Trip | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [memberCount, setMemberCount] = useState(0);
+  const [heroPickerOpen, setHeroPickerOpen] = useState(false);
   const { user, isAuthenticated, isLoading } = useAuth();
 
   useEffect(() => {
@@ -70,6 +72,14 @@ export default function TripLayout({
   }, [tripId, user?.id]);
 
   const visibleTabs = userRole === 'VIEWER' ? viewerTabs : allTripTabs;
+  const canEditHero = userRole === 'OWNER' || userRole === 'EDITOR';
+
+  const handleHeroSelect = async (heroImage: HeroImage) => {
+    if (!trip) return;
+    await api.updateTripHeroImage(trip.id, heroImage.id);
+    const result = await api.getTrip(tripId);
+    if (result.data) setTrip(result.data);
+  };
 
   return (
     <PageLayout
@@ -79,16 +89,36 @@ export default function TripLayout({
     >
       <main className="px-4 pt-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
-          <section className="overflow-hidden rounded-lg border border-border/70 bg-card/90 shadow-[var(--travel-card-shadow)] backdrop-blur">
+          <section 
+            className="overflow-hidden rounded-lg border border-border/70 glass shadow-[var(--travel-card-shadow)]"
+            style={trip?.heroImage ? {
+              backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.8) 100%), url('/images/heroes/${trip.heroImage.filename}')`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            } : undefined}
+          >
             <div className="grid gap-5 p-5 sm:p-6 lg:grid-cols-[1fr_auto] lg:items-end">
               <div className="min-w-0">
                 <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-primary">
                   <Sparkles className="h-3.5 w-3.5" />
                   Trip folders
                 </div>
-                <h1 className="font-display text-4xl font-bold leading-tight text-glass sm:text-5xl">
-                  {trip?.name || `Trip ${tripId}`}
-                </h1>
+                <div className="flex items-center gap-3">
+                  <h1 className="font-display text-4xl font-bold leading-tight text-glass sm:text-5xl">
+                    {trip?.name || `Trip ${tripId}`}
+                  </h1>
+                  {canEditHero && (
+                    <span className="mt-2 rounded-lg bg-black/30 p-1.5 hover:bg-black/50">
+                      <button
+                        onClick={() => setHeroPickerOpen(true)}
+                        className="text-white/90 hover:text-white"
+                        title="Change cover image"
+                      >
+                        <Pencil className="h-5 w-5" />
+                      </button>
+                    </span>
+                  )}
+                </div>
                 <div className="mt-4 flex flex-wrap gap-3 text-sm font-medium text-muted-foreground">
                   {trip?.destination && (
                     <span className="inline-flex items-center gap-1.5">
@@ -133,6 +163,14 @@ export default function TripLayout({
           </div>
         </div>
       </main>
+
+      <HeroImagePicker
+        isOpen={heroPickerOpen}
+        onClose={() => setHeroPickerOpen(false)}
+        currentHeroImageId={trip?.heroImage?.id}
+        tripId={tripId}
+        onSelect={handleHeroSelect}
+      />
     </PageLayout>
   );
 }

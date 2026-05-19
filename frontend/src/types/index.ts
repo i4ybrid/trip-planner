@@ -109,6 +109,14 @@ export interface Settings {
   timezone?: string;
 }
 
+export interface HeroImage {
+  id: string;
+  title: string;
+  filename: string;
+  synonyms: string[];
+  createdAt: string;
+}
+
 export interface Trip {
   id: string;
   name: string;
@@ -124,6 +132,7 @@ export interface Trip {
   createdAt: string;
   updatedAt: string;
   autoMilestonesGenerated?: boolean;
+  heroImage?: HeroImage | null;
   _count?: {
     members: number;
     activities?: number;
