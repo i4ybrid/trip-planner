@@ -37,7 +37,7 @@ export function Tabs({ tabs, basePath, iconMap = defaultIconMap, className }: Ta
     <nav
       aria-label="Trip folders"
       className={cn(
-        "glass scrollbar-none -mb-px flex w-full gap-1 overflow-x-auto border-b border-border/80 px-1 pt-2 text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground",
+        "backdrop-blur-xl bg-[var(--color-surface)]/80 scrollbar-none -mb-px flex w-full gap-1 overflow-x-auto border-b border-border/80 px-1 pt-2 text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground",
         className
       )}
     >

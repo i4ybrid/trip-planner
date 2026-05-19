@@ -90,12 +90,14 @@ export default function TripLayout({
       <main className="px-4 pt-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <section 
-            className="overflow-hidden rounded-lg border border-border/70 glass shadow-[var(--travel-card-shadow)]"
-            style={trip?.heroImage ? {
-              backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.8) 100%), url('/images/heroes/${trip.heroImage.filename}')`,
+            className="overflow-hidden rounded-lg border border-border/70 bg-card/80 backdrop-blur-xl shadow-[var(--travel-card-shadow)]"
+            style={{
+              backgroundImage: trip?.heroImage
+                ? `linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.85) 100%), url('/images/heroes/${trip.heroImage.filename}')`
+                : `linear-gradient(135deg, hsl(var(--primary) / 0.12) 0%, hsl(var(--accent) / 0.12) 50%, hsl(var(--secondary) / 0.12) 100%), hsl(var(--card))`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
-            } : undefined}
+            }}
           >
             <div className="grid gap-5 p-5 sm:p-6 lg:grid-cols-[1fr_auto] lg:items-end">
               <div className="min-w-0">
@@ -108,15 +110,13 @@ export default function TripLayout({
                     {trip?.name || `Trip ${tripId}`}
                   </h1>
                   {canEditHero && (
-                    <span className="mt-2 rounded-lg bg-black/30 p-1.5 hover:bg-black/50">
-                      <button
-                        onClick={() => setHeroPickerOpen(true)}
-                        className="text-white/90 hover:text-white"
-                        title="Change cover image"
-                      >
-                        <Pencil className="h-5 w-5" />
-                      </button>
-                    </span>
+                    <button
+                      onClick={() => setHeroPickerOpen(true)}
+                      className="mt-2 flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-accent)] text-white shadow-lg hover:bg-[var(--color-accent)]/90 transition-colors"
+                      title="Change cover image"
+                    >
+                      <Pencil className="h-5 w-5" />
+                    </button>
                   )}
                 </div>
                 <div className="mt-4 flex flex-wrap gap-3 text-sm font-medium text-muted-foreground">
