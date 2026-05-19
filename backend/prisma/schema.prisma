@@ -291,6 +291,18 @@ model Settings {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+model HeroImage {
+  id        String   @id @default(cuid())
+  title     String
+  filename  String
+  synonyms  String[]
+  createdAt DateTime @default(now())
+
+  trips     Trip[]
+
+  @@index([synonyms], type: Gin)
+}
+
 model Trip {
   id           String     @id @default(cuid())
   name         String
@@ -303,6 +315,9 @@ model Trip {
   tripMasterId String
   style        TripStyle  @default(OPEN)
   budget       Decimal?   @db.Decimal(10, 2)
+
+  heroImageId  String?
+  heroImage    HeroImage? @relation(fields: [heroImageId], references: [id])
 
   tripMaster              User                 @relation("TripMaster", fields: [tripMasterId], references: [id])
   members                 TripMember[]

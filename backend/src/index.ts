@@ -25,6 +25,7 @@ import settlementRouter from './routes/settlement';
 import pushRoutes from './routes/push.routes';
 import publicEventsRouter from './routes/public-events';
 import expensesRouter from './routes/expenses';
+import heroImagesRouter from './routes/heroImages';
 
 // Load environment variables
 dotenv.config();
@@ -115,6 +116,7 @@ app.use('/api', settlementRouter);
 app.use('/api', pushRoutes);
 app.use('/api', publicEventsRouter);
 app.use('/api', expensesRouter);
+app.use('/api/hero-images', heroImagesRouter);
 
 // 404 handler
 app.use((_req, res) => {
